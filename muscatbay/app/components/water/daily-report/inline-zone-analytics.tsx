@@ -1,9 +1,6 @@
 "use client";
 
-// ─── ZoneAnalyticsPanel — extracted verbatim from DailyWaterReport.tsx.
-//     Pure relocation; uses the inline palette (CHART_COLORS.teal/brand) — NOT
-//     the enhanced zone-analytics.tsx (which uses CHART_COLORS.bulk/individual
-//     + toggleable legend).
+// ─── ZoneAnalyticsPanel — the zone drill-down for the Daily report.
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,14 +38,17 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
         return map;
     }, [monthData]);
 
-    // Active zone report row
+    // Active zone report row. `l2Value` stays `null` when the zone bulk meter
+    // was not read — rendering that as a 0 gauge implied "no water entered the
+    // zone", which is a completely different (and wrong) statement.
     const zoneRow = reportData.zoneRows.find(r => r.zoneName === activeZoneName) ?? null;
-    const l2Value = zoneRow?.l2Value ?? 0;
+    const l2Value = zoneRow?.l2Value ?? null;
     const l3Sum = zoneRow?.l3Sum ?? 0;
     const diff = zoneRow?.diff ?? null;
+    const l2Missing = l2Value === null;
 
     // Shared gauge scale (same as Zone Analysis page)
-    const gaugeMax = Math.max(l2Value, l3Sum) * 1.2 || 100;
+    const gaugeMax = Math.max(l2Value ?? 0, l3Sum) * 1.2 || 100;
 
     // 31-day trend for the active zone
     const trendData = useMemo(() => {
@@ -70,7 +70,11 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 dayNum: day,
                 'L2 Bulk': l2 !== null ? r2(l2) : null,
                 'ΣL3': r2(l3),
-                Loss: l2 !== null ? r2(Math.max(0, l2 - l3)) : null,
+                // Not clamped at 0. A negative value means ΣL3 exceeded the zone
+                // bulk — an over-reading L3 or an under-reading L2 — and the
+                // Exceptions register flags exactly that as Critical. Hiding it
+                // here made the chart contradict the register.
+                Loss: l2 !== null ? r2(l2 - l3) : null,
             });
         }
         return results;
@@ -86,7 +90,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 <h2 className="text-xl font-medium text-foreground">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                     <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
                     <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
                     <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
@@ -95,18 +99,34 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
             {/* ── Two gauges with the loss written in between (supply → use) ─── */}
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6 md:gap-10">
-                <LiquidProgressRing
-                    value={l2Value}
-                    max={gaugeMax}
-                    label="L2 Bulk Meter"
-                    sublabel="Total water entering zone"
-                    color={CHART_COLORS.teal}
-                    size={160}
-                    showPercentage={false}
-                    unit="m³"
-                    elementId="daily-gauge-1"
-                />
-                <DailyLossConnector loss={diff} of={l2Value} />
+                {l2Missing ? (
+                    // Honest stand-in for the gauge: an unread bulk meter is not
+                    // "0 m³ entered the zone", and no loss can be derived from it.
+                    <div
+                        className="flex flex-col items-center justify-center rounded-full border border-dashed border-border text-center"
+                        style={{ width: 160, height: 160 }}
+                        role="img"
+                        aria-label="L2 bulk meter: no reading recorded for this day"
+                    >
+                        <span className="text-sm font-semibold text-muted-foreground">No reading</span>
+                        <span className="mt-1 max-w-[120px] text-[11px] text-muted-foreground">
+                            L2 bulk meter not read — zone loss cannot be computed
+                        </span>
+                    </div>
+                ) : (
+                    <LiquidProgressRing
+                        value={l2Value}
+                        max={gaugeMax}
+                        label="L2 Bulk Meter"
+                        sublabel="Total water entering zone"
+                        color={CHART_COLORS.teal}
+                        size={160}
+                        showPercentage={false}
+                        unit="m³"
+                        elementId="daily-gauge-1"
+                    />
+                )}
+                <DailyLossConnector loss={diff} of={l2Value ?? 0} />
                 <LiquidProgressRing
                     value={l3Sum}
                     max={gaugeMax}
@@ -126,13 +146,13 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     <CardTitle className="text-base sm:text-lg">
                         Zone Daily Consumption Trend
                     </CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-0.5">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
                         Day-by-day comparison of L2 Bulk vs ΣL3 totals — {activeZoneName}, {month}
                     </p>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
                             No trend data available for this zone
                         </div>
                     ) : (

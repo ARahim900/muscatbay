@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase } from "@/lib/supabase";
-import { ELECTRICITY_RATES } from "@/lib/config";
+import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
@@ -28,6 +28,10 @@ import { ElectricityLoadingSkeleton } from "@/components/electricity/electricity
 import { ElectricityOverviewCharts } from "@/components/electricity/electricity-overview-charts";
 import { ElectricityAnalysisView } from "@/components/electricity/electricity-analysis-view";
 import { LoadWatch } from "@/components/electricity/load-watch";
+import { SectionBoundary } from "@/components/shared/section-boundary";
+import {
+    AnomalyLegend, ReadingValue, describeReading, readingBaseline,
+} from "@/components/electricity/reading-cell";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -372,7 +376,15 @@ export default function ElectricityPage() {
                 'Account #': m.account_number,
                 Type: m.type,
             };
-            months.forEach(month => { row[month] = m.readings[month] || 0; });
+            // The API deliberately keeps NULL ("closed / not in service") absent
+            // from the readings map so it stays distinguishable from a genuine
+            // 0 kWh (functions/api/electricity.ts). Coercing to 0 here destroyed
+            // that distinction in every exported file, so an empty month is
+            // exported as an empty cell.
+            months.forEach(month => {
+                const v = m.readings[month];
+                row[month] = v === undefined || v === null ? '' : v;
+            });
             row['Total (kWh)'] = Number(total.toFixed(1));
             row['Cost (OMR)'] = Number((total * ratePerKWh).toFixed(1));
             return row;
@@ -437,7 +449,11 @@ export default function ElectricityPage() {
                 label: "TOTAL COST",
                 value: totalCost.toLocaleString('en-US', { maximumFractionDigits: 1 }),
                 unit: "OMR",
-                subtitle: `@ ${ratePerKWh} OMR/kWh`,
+                // Cost is always stated with its rate, and against the configured
+                // budget when one exists — never against an invented figure.
+                subtitle: ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR !== null
+                    ? `@ ${ratePerKWh} OMR/kWh · budget ${ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR.toLocaleString('en-US')} OMR/month`
+                    : `@ ${ratePerKWh} OMR/kWh · no budget configured`,
                 icon: DollarSign,
                 variant: "success" as const,
                 trend: costTrend.trend,
@@ -505,6 +521,35 @@ export default function ElectricityPage() {
             setEndMonth(allMonths[allMonths.length - 1]);
         }
     };
+
+    // Newest month that actually carries a reading — NOT the browser fetch time.
+    // "Last sync 14:32" tells an operator nothing about whether the readings are
+    // three months old.
+    const latestDataDate = useMemo(() => {
+        for (let i = allMonths.length - 1; i >= 0; i--) {
+            const month = allMonths[i];
+            if (meters.some(m => typeof m.readings[month] === 'number')) {
+                const [mon, yr] = month.split('-');
+                return new Date(parseInt('20' + yr, 10), (MONTH_INDEX[mon] || 1) - 1, 1);
+            }
+        }
+        return null;
+    }, [allMonths, meters]);
+
+    // Heatmap drill-through: selecting a category × month cell in Load Watch
+    // scopes the range to that month, filters to that category and opens the
+    // Meters & Data tab — previously the heatmap was a dead end.
+    const handleInspectCell = useCallback((type: string, month: string) => {
+        const year = '20' + month.split('-')[1];
+        setSelectedYear(year);
+        setStartMonth(month);
+        setEndMonth(month);
+        setAnalysisType(type);
+        setSelectedMeter('All');
+        setDbSelectedTypes([type]);
+        setDbCurrentPage(1);
+        setActiveTab('data');
+    }, []);
 
     // 2. Get available types and their counts
     const meterTypes = useMemo(() => {
@@ -721,6 +766,7 @@ export default function ElectricityPage() {
                     isConnected={dataSource === 'supabase'}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
+                    latestDataDate={latestDataDate}
                     error={debugError ? `Error: ${debugError}` : null}
                 >
 
@@ -746,7 +792,7 @@ export default function ElectricityPage() {
                             {/* Year Selector Row */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-muted-foreground dark:text-muted-foreground">Filter by Year:</span>
+                                    <span className="text-sm font-medium text-muted-foreground">Filter by Year:</span>
                                     <div className="flex items-center gap-2">
                                         <Button
                                             variant={selectedYear === "" ? "default" : "outline"}
@@ -760,7 +806,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                         >
                                             All
                                         </Button>
@@ -779,7 +825,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -797,7 +843,7 @@ export default function ElectricityPage() {
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
                                                 aria-label="Filter by meter type"
-                                                className="px-2.5 py-1.5 rounded-lg border border-border dark:border-border bg-white/50 dark:bg-muted/50 text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -815,7 +861,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-muted text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (
@@ -859,22 +905,29 @@ export default function ElectricityPage() {
                         startMonth={startMonth || allMonths[0]}
                         endMonth={endMonth || allMonths[allMonths.length - 1]}
                         onInspectType={(type) => { setAnalysisType(type); setSelectedMeter("All"); setActiveTab('data'); }}
+                        onInspectCell={handleInspectCell}
                     />
-                    <StatsGrid stats={stats} />
-                    <ElectricityOverviewCharts
-                        filteredMonthlyData={filteredMonthlyData}
-                        consumptionByType={consumptionByType}
-                    />
+                    <SectionBoundary title="Consumption KPIs">
+                        <StatsGrid stats={stats} />
+                    </SectionBoundary>
+                    <SectionBoundary title="Consumption trends">
+                        <ElectricityOverviewCharts
+                            filteredMonthlyData={filteredMonthlyData}
+                            consumptionByType={consumptionByType}
+                        />
+                    </SectionBoundary>
                 </div>
             )}
 
             {activeTab === 'data' && (
-                <ElectricityAnalysisView
-                    analysisData={analysisData}
-                    analysisType={analysisType}
-                    selectedMeter={selectedMeter}
-                    metersOfSelectedType={metersOfSelectedType}
-                />
+                <SectionBoundary title="Meter analysis">
+                    <ElectricityAnalysisView
+                        analysisData={analysisData}
+                        analysisType={analysisType}
+                        selectedMeter={selectedMeter}
+                        metersOfSelectedType={metersOfSelectedType}
+                    />
+                </SectionBoundary>
             )}
 
             {activeTab === 'data' && (() => {
@@ -888,20 +941,14 @@ export default function ElectricityPage() {
                     0,
                 );
 
-                // Helper to detect anomalies: compares value to meter's average across all months
-                const getAnomalyClass = (value: number, meter: typeof meters[0]) => {
-                    const allVals = Object.values(meter.readings).filter(v => v > 0);
-                    if (allVals.length < 3 || value === 0) return '';
-                    const avg = allVals.reduce((a, b) => a + b, 0) / allVals.length;
-                    if (avg === 0) return '';
-                    const ratio = value / avg;
-                    if (ratio > 2) return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 font-bold';
-                    if (ratio > 1.5) return 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 font-semibold';
-                    if (ratio < 0.3) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-semibold';
-                    return '';
-                };
+                // Anomaly classification now lives in components/electricity/reading-cell,
+                // driven by lib/thresholds — the table can no longer disagree with
+                // Load Watch, and every flagged cell carries an icon + label + title
+                // rather than colour alone.
+                const baselineOf = (meter: MeterReading) => readingBaseline(meter.readings);
 
                 return (
+                    <SectionBoundary title="Meter consumption & anomalies">
                     <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Section heading — this single table replaces the former
                             "Monthly Breakdown" plus the separate anomaly table. */}
@@ -922,7 +969,7 @@ export default function ElectricityPage() {
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
@@ -937,7 +984,7 @@ export default function ElectricityPage() {
                             {dbHasActiveFilters && (
                                 <button
                                     onClick={() => { setDbSearchTerm(''); setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground transition-colors"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors"
                                 >
                                     <X className="w-3.5 h-3.5" />
                                     Clear
@@ -953,29 +1000,17 @@ export default function ElectricityPage() {
                             </button>
 
                             <div className="text-sm text-muted-foreground whitespace-nowrap">
-                                <span className="font-semibold text-foreground dark:text-muted-foreground/70">{dbFilteredMeters.length}</span>
+                                <span className="font-semibold text-foreground">{dbFilteredMeters.length}</span>
                                 {dbFilteredMeters.length !== meters.length && (
                                     <span> of {meters.length}</span>
                                 )} meters
                             </div>
                         </TableToolbar>
 
-                        {/* Anomaly Legend */}
-                        <div className="flex items-center gap-4 px-1 text-xs text-muted-foreground">
-                            <span className="font-medium text-muted-foreground">Anomaly Detection:</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 rounded bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800" />
-                                &gt;2× average (High)
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 rounded bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800" />
-                                &gt;1.5× average (Elevated)
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="w-3 h-3 rounded bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800" />
-                                &lt;0.3× average (Low)
-                            </span>
-                        </div>
+                        {/* Anomaly legend — wraps on narrow screens (the old one was a
+                            single non-wrapping flex row that overflowed on mobile) and
+                            prints the live gate values from lib/thresholds. */}
+                        <AnomalyLegend />
 
                         {/* Active Filter Pills */}
                         <ActiveFilterPills pills={[
@@ -987,12 +1022,70 @@ export default function ElectricityPage() {
                             ...(dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length ? [{
                                 key: 'types',
                                 label: `${dbSelectedTypes.length} type${dbSelectedTypes.length !== 1 ? 's' : ''}`,
-                                colorClass: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300',
                                 onRemove: () => { setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }
                             }] : []),
                         ]} />
 
-                        {/* Table */}
+                        {/* Mobile card view — the desktop table is 3 fixed + N month
+                            columns and only scrolled horizontally on phones, which is
+                            unusable in the field. STP already shipped an md:hidden card
+                            list; this is its electricity equivalent. */}
+                        <div className="space-y-3 md:hidden">
+                            {dbPaginatedMeters.map((meter) => {
+                                const { baseline, samples } = baselineOf(meter);
+                                const rangeTotal = displayMonths.reduce((a, month) => a + (meter.readings[month] || 0), 0);
+                                return (
+                                    <div key={meter.id} className="space-y-3 rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard">
+                                        <div className="flex items-start justify-between gap-2">
+                                            <p className="min-w-0 text-sm font-semibold text-foreground">{meter.name}</p>
+                                            <StatusBadge label={meter.type} color={getMeterTypeColor(meter.type)} />
+                                        </div>
+                                        <p className="meter text-[11px] text-muted-foreground">{meter.account_number}</p>
+
+                                        <ul className="grid list-none grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                                            {displayMonths.map(month => {
+                                                const val = meter.readings[month];
+                                                const d = describeReading(val, month, baseline, samples);
+                                                return (
+                                                    <li key={month} className="flex items-center justify-between gap-2" title={d.title}>
+                                                        <span className="text-muted-foreground">{month}</span>
+                                                        <span className={`rounded px-1 font-mono ${d.className}`}>
+                                                            <ReadingValue value={val} descriptor={d} />
+                                                        </span>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+
+                                        <div className="flex items-center justify-between border-t border-border/60 pt-2 text-xs">
+                                            <span className="text-muted-foreground">Total · Cost</span>
+                                            <span className="font-mono font-semibold text-foreground">
+                                                {rangeTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh
+                                                <span className="text-mb-success-text"> · {(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {dbFilteredMeters.length === 0 && (
+                                <div className="py-12 text-center text-muted-foreground">
+                                    <Gauge className="mx-auto mb-2 h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
+                                    <p className="text-sm font-medium">No meters found matching your filters.</p>
+                                </div>
+                            )}
+                            {dbFilteredMeters.length > 1 && (
+                                <div className="rounded-[10.5px] border border-border bg-muted/60 p-4">
+                                    <p className="text-sm font-semibold text-foreground"><Gauge className="mr-1.5 inline h-3.5 w-3.5 text-module-electricity" aria-hidden="true" />Total · {dbFilteredMeters.length} meters</p>
+                                    <p className="mt-1 font-mono text-sm font-semibold text-foreground">
+                                        {grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })} kWh ·{' '}
+                                        {(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Table (desktop) */}
+                        <div className="hidden md:block">
                         <Table data-density="compact">
                             <TableHeader>
                                 <TableRow>
@@ -1011,6 +1104,7 @@ export default function ElectricityPage() {
                                     // Total + cost reflect the selected range (matching the KPI cards),
                                     // not the meter's full history.
                                     const rangeTotal = displayMonths.reduce((a, month) => a + (meter.readings[month] || 0), 0);
+                                    const { baseline, samples } = baselineOf(meter);
                                     return (
                                         <TableRow key={meter.id}>
                                             <TableCell className="col-sticky strong">{meter.name}</TableCell>
@@ -1019,16 +1113,20 @@ export default function ElectricityPage() {
                                                 <StatusBadge label={meter.type} color={getMeterTypeColor(meter.type)} />
                                             </TableCell>
                                             {displayMonths.map(month => {
-                                                const val = meter.readings[month] || 0;
-                                                const anomaly = getAnomalyClass(val, meter);
+                                                // NOTE: `meter.readings[month]` is read raw — `|| 0` would
+                                                // collapse a missing month into 0 and a negative reading
+                                                // into "—", which is exactly what hid the documented
+                                                // Bank Muscat Sep-24 = −2 kWh from this table.
+                                                const val = meter.readings[month];
+                                                const d = describeReading(val, month, baseline, samples);
                                                 return (
-                                                    <TableCell key={month} className={`num ${anomaly || ''}`}>
-                                                        {val > 0 ? val.toLocaleString('en-US', { maximumFractionDigits: 1 }) : <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>}
+                                                    <TableCell key={month} className={`num ${d.className}`} title={d.title}>
+                                                        <ReadingValue value={val} descriptor={d} />
                                                     </TableCell>
                                                 );
                                             })}
                                             <TableCell className="num">{rangeTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                            <TableCell className="num text-mb-success dark:text-mb-success-hover">{(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="num text-mb-success-text">{(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                         </TableRow>
                                     );
                                 })}
@@ -1048,16 +1146,17 @@ export default function ElectricityPage() {
                                             const monthTotal = dbFilteredMeters.reduce((s, m) => s + (m.readings[month] || 0), 0);
                                             return (
                                                 <TableCell key={`total-${month}`} className="num">
-                                                    {monthTotal > 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '—'}
+                                                    {monthTotal !== 0 ? monthTotal.toLocaleString('en-US', { maximumFractionDigits: 0 }) : '0'}
                                                 </TableCell>
                                             );
                                         })}
                                         <TableCell className="num">{grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="num text-mb-success dark:text-mb-success-hover">{(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
+                                        <TableCell className="num text-mb-success-text">{(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>
                         </Table>
+                        </div>
 
                         {/* Pagination */}
                         {dbFilteredMeters.length > 0 && (
@@ -1073,6 +1172,7 @@ export default function ElectricityPage() {
                             />
                         )}
                     </div>
+                    </SectionBoundary>
                 );
             })()}
         </div >

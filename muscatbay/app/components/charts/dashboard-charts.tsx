@@ -3,14 +3,18 @@
 import React, { useMemo } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Droplets, ArrowUpRight, Recycle } from "lucide-react";
+import { Droplets, ArrowUpRight, Recycle, CheckCircle2, AlertTriangle } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar, Legend, ReferenceLine, ReferenceDot } from "recharts";
 import { LiquidTooltip } from "./liquid-tooltip";
 import { ChartContainer } from "./chart-container";
 import { ToggleableLegendContent, useChartLegendToggle } from "./toggleable-legend";
 import { AnimateOnScroll } from "@/components/shared/scroll-animation";
 import { calcTrend } from "@/lib/trends";
-import type { ChartData } from "@/hooks/useDashboardData";
+import {
+    STP_RECOVERY_CRITICAL_PCT,
+    STP_RECOVERY_TARGET_PCT,
+    type ChartData,
+} from "@/hooks/useDashboardData";
 
 const CHART_COLORS = { teal: 'var(--chart-teal)', brand: 'var(--chart-brand)' } as const;
 
@@ -48,14 +52,38 @@ function buildWaterInsight(data: ChartData[], avg: number): string {
     return `Latest month is ${t.trendValue} ${t.trend} vs the prior month; running average is ${avg.toFixed(1)}k m³.`;
 }
 
-function buildStpInsight(data: ChartData[]): string {
-    if (data.length === 0) return "";
+/**
+ * Reuse rate across the plotted window, stated against the operating bands so
+ * the card answers "are we on target?" rather than just "what is the number?".
+ * Returns null when there is no inlet to divide by — no invented verdict.
+ */
+function buildStpInsight(
+    data: ChartData[],
+): { text: string; status: "normal" | "warning" | "danger" } | null {
+    if (data.length === 0) return null;
     const totalInlet = data.reduce((s, d) => s + ((d.inlet as number) || 0), 0);
     const totalTse = data.reduce((s, d) => s + ((d.tse as number) || 0), 0);
-    if (totalInlet === 0) return "";
+    if (totalInlet === 0) return null;
     const reusePct = (totalTse / totalInlet) * 100;
-    return `TSE reuse is ${reusePct.toFixed(0)}% of inlet across the period — every recycled m³ avoids tanker cost.`;
+    const status = reusePct >= STP_RECOVERY_TARGET_PCT ? "normal"
+        : reusePct >= STP_RECOVERY_CRITICAL_PCT ? "warning"
+            : "danger";
+    const verdict = status === "normal" ? "on target"
+        : status === "warning" ? "below target"
+            : "below the critical band";
+    return {
+        text: `TSE reuse is ${reusePct.toFixed(0)}% of inlet across the period — ${verdict} `
+            + `(target ≥ ${STP_RECOVERY_TARGET_PCT}%, critical below ${STP_RECOVERY_CRITICAL_PCT}%).`,
+        status,
+    };
 }
+
+/** Status token per verdict — colour always paired with the sentence itself. */
+const INSIGHT_STATUS_COLOR = {
+    normal: "var(--status-normal)",
+    warning: "var(--status-warning)",
+    danger: "var(--status-danger)",
+} as const;
 
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
     const stpLegend = useChartLegendToggle();
@@ -91,7 +119,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                 <Card
                     interactive
                     data-glow
-                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -145,7 +173,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                 <Card
                     interactive
                     data-glow
-                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -155,8 +183,14 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                         </CardTitle>
                         <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                         {stpInsight && (
-                            <p className="mt-1 text-[11px] sm:text-xs italic text-foreground/70">
-                                {stpInsight}
+                            <p
+                                className="mt-1 flex items-start gap-1.5 text-[11px] sm:text-xs"
+                                style={{ color: INSIGHT_STATUS_COLOR[stpInsight.status] }}
+                            >
+                                {stpInsight.status === "normal"
+                                    ? <CheckCircle2 className="h-3.5 w-3.5 mt-px flex-shrink-0" aria-hidden="true" />
+                                    : <AlertTriangle className="h-3.5 w-3.5 mt-px flex-shrink-0" aria-hidden="true" />}
+                                <span className="min-w-0">{stpInsight.text}</span>
                             </p>
                         )}
                     </CardHeader>

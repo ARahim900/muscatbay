@@ -36,7 +36,7 @@ export function DailyExceptions({
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
                 <HierarchyStatCard
-                    label="Open Exceptions"
+                    label="Exceptions Identified"
                     value={String(rows.length)}
                     icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />}
                     color={PALETTE.primary}
@@ -67,6 +67,7 @@ export function DailyExceptions({
                             <p className="mt-1 text-xs text-muted-foreground">
                                 Auto-generated from the day&apos;s readings: high-loss zones, negative balances, missing bulk
                                 readings, rising-loss leak signatures, building mismatches, consumption spikes and zero-streaks.
+                                This register identifies issues and suggests a next step — it does not assign or track them.
                             </p>
                         </div>
                         <button
@@ -93,15 +94,17 @@ export function DailyExceptions({
                     ) : (
                         <div className="overflow-hidden rounded-[10.5px] border border-border">
                             <div className="overflow-auto" style={{ maxHeight: 560 }}>
-                                <table className="w-full border-collapse text-[12px]" style={{ minWidth: 880 }}>
+                                <table className="w-full border-collapse text-[12px]" style={{ minWidth: 720 }}>
+                                    <caption className="sr-only">
+                                        {rows.length} exceptions detected on day {selectedDay} of {month}, each with its category,
+                                        the item affected, a severity band, the measured value and a suggested next step.
+                                    </caption>
                                     <thead>
                                         <tr>
                                             <th scope="col" className={thBase}>Category</th>
                                             <th scope="col" className={thBase}>Item</th>
                                             <th scope="col" className={thBase}>Severity</th>
                                             <th scope="col" className={cn(thBase, "text-right")}>Value</th>
-                                            <th scope="col" className={thBase}>Owner</th>
-                                            <th scope="col" className={thBase}>Status</th>
                                             <th scope="col" className={thBase}>Suggested Action</th>
                                         </tr>
                                     </thead>
@@ -112,15 +115,11 @@ export function DailyExceptions({
                                                 className={cn("border-b border-border/60", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}
                                             >
                                                 <td className={cn(tdBase, "whitespace-nowrap font-semibold text-foreground")}>{r.Category}</td>
-                                                <td className={cn(tdBase, "text-foreground")}>{r.Item}</td>
+                                                <th scope="row" className={cn(tdBase, "text-left font-normal text-foreground")}>{r.Item}</th>
                                                 <td className={tdBase}>
                                                     <StatusChip label={r.Severity} color={r.Severity === "Critical" ? "danger" : "warning"} />
                                                 </td>
                                                 <td className={cn(tdBase, "whitespace-nowrap text-right tabular-nums text-foreground")}>{r.Value}</td>
-                                                <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.Owner}</td>
-                                                <td className={tdBase}>
-                                                    <StatusChip label={r.Status} color="default" />
-                                                </td>
                                                 <td className={cn(tdBase, "min-w-[240px] text-muted-foreground")}>{r.Action}</td>
                                             </tr>
                                         ))}

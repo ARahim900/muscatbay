@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { BarChart3, CalendarDays } from "lucide-react";
+import { BarChart3, CalendarDays, DatabaseZap, RefreshCw, AlertTriangle } from "lucide-react";
 
 // Water data
-import { WATER_METERS as MOCK_WATER_METERS, type WaterMeter } from "@/lib/water-data";
+import type { WaterMeter } from "@/lib/water-data";
 
-// Supabase
-import { getWaterMetersFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
+// Supabase — the result-returning fetch, so a failure is reported rather than
+// silently swallowed (it also hands back the negative-reading register).
+import { fetchWaterMeters, type NegativeReading } from "@/functions/api/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 
 // Shared layout / shell
@@ -15,6 +16,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
 // Monthly dashboard (Supabase-wired) + Daily report (lazy)
@@ -22,7 +24,7 @@ import { WaterMonthlyDashboard } from "@/components/water/monthly/water-monthly-
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import dynamic from "next/dynamic";
 const DailyWaterReport = dynamic(
-    () => import("@/components/water/DailyWaterReport").then((m) => ({ default: m.DailyWaterReport })),
+    () => import("@/components/water/daily-water-report").then((m) => ({ default: m.DailyWaterReport })),
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
 );
 
@@ -41,46 +43,88 @@ interface WaterPageCache {
     lastUpdated: Date;
 }
 
+/**
+ * Honest failure state.
+ *
+ * This page used to fall back to `MOCK_WATER_METERS` whenever the fetch failed
+ * or returned nothing, and render it as an ordinary dashboard — a manager could
+ * read fabricated supply/loss figures with no indication they weren't real.
+ * Nothing is ever substituted for live data now: we say what went wrong and
+ * offer a retry.
+ */
+function WaterErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+    return (
+        <div
+            role="alert"
+            className="flex flex-col items-center justify-center gap-3 rounded-[10.5px] border border-mb-danger bg-mb-danger-light px-4 py-14 text-center"
+        >
+            <AlertTriangle className="h-9 w-9 text-mb-danger-text" aria-hidden="true" />
+            <h2 className="text-lg font-semibold text-foreground">Water data could not be loaded</h2>
+            <p className="max-w-md text-sm text-mb-danger-text">{message}</p>
+            <p className="max-w-md text-xs text-muted-foreground">
+                No figures are shown for this period — nothing is estimated or substituted. Retry once the
+                connection is restored.
+            </p>
+            <Button onClick={onRetry} variant="outline" className="mt-1 gap-2">
+                <RefreshCw className="h-4 w-4" aria-hidden="true" /> Retry
+            </Button>
+        </div>
+    );
+}
+
+/** Benign "connected, but there is nothing to show yet" state. */
+function WaterEmptyState({ onRetry }: { onRetry: () => void }) {
+    return (
+        <div className="flex flex-col items-center justify-center gap-3 rounded-[10.5px] border border-border bg-card px-4 py-14 text-center">
+            <DatabaseZap className="h-9 w-9 text-muted-foreground" aria-hidden="true" />
+            <h2 className="text-lg font-semibold text-foreground">No water meters found</h2>
+            <p className="max-w-md text-sm text-muted-foreground">
+                The database is reachable but returned no meters. Once meters and monthly readings are
+                loaded they will appear here.
+            </p>
+            <Button onClick={onRetry} variant="outline" className="mt-1 gap-2">
+                <RefreshCw className="h-4 w-4" aria-hidden="true" /> Check again
+            </Button>
+        </div>
+    );
+}
+
 export default function WaterPage() {
     const [dashboardView, setDashboardView] = useState<DashboardView>("monthly");
 
     // Supabase data state — seeded from the session cache when available
     const [cached] = useState(() => getPageCache<WaterPageCache>(WATER_CACHE_KEY));
-    const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(cached?.meters ?? MOCK_WATER_METERS);
+    const [waterMeters, setWaterMeters] = useState<WaterMeter[]>(cached?.meters ?? []);
     const [isLoading, setIsLoading] = useState(!cached);
-    const [dataSource, setDataSource] = useState<"supabase" | "mock">(cached ? "supabase" : "mock");
+    const [error, setError] = useState<string | null>(null);
+    const [negatives, setNegatives] = useState<NegativeReading[]>([]);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
     // Stable fetch function — used both on mount and by the real-time handler
     const fetchWaterData = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
-        try {
-            if (isSupabaseConfigured()) {
-                const supabaseData = await getWaterMetersFromSupabase();
-                if (supabaseData.length > 0) {
-                    setWaterMeters(supabaseData);
-                    setDataSource("supabase");
-                    const now = new Date();
-                    setLastUpdated(now);
-                    setPageCache<WaterPageCache>(WATER_CACHE_KEY, { meters: supabaseData, lastUpdated: now });
-                } else if (!silent) {
-                    setWaterMeters(MOCK_WATER_METERS);
-                    setDataSource("mock");
-                }
-            } else if (!silent) {
-                setWaterMeters(MOCK_WATER_METERS);
-                setDataSource("mock");
-            }
-        } catch (error) {
-            if (!silent) {
-                console.error("Error fetching water data:", error);
-                setWaterMeters(MOCK_WATER_METERS);
-                setDataSource("mock");
-            }
-        } finally {
-            if (!silent) setIsLoading(false);
+        const result = await fetchWaterMeters();
+        if (silent && result.error) {
+            // A background refresh failed: keep showing the data already on
+            // screen (it is real, just not fresh) rather than blanking the page.
+            return;
         }
+        setError(result.error);
+        setNegatives(result.negatives);
+        if (!result.error) {
+            setWaterMeters(result.meters);
+            const now = new Date();
+            setLastUpdated(now);
+            if (result.meters.length > 0) {
+                setPageCache<WaterPageCache>(WATER_CACHE_KEY, { meters: result.meters, lastUpdated: now });
+            }
+        }
+        if (!silent) setIsLoading(false);
     }, []);
+
+    const retry = useCallback(() => {
+        fetchWaterData(false);
+    }, [fetchWaterData]);
 
     // ── Supabase real-time subscription for the water tables ───────────────
     // Subscribe to the base tables the app reads ("Water System" is a view —
@@ -90,17 +134,23 @@ export default function WaterPage() {
         table: WATER_REALTIME_TABLES,
         channelName: "water-system-rt",
         onChanged: () => fetchWaterData(true),
-        enabled: dataSource === "supabase",
+        enabled: !error && waterMeters.length > 0,
     });
 
     // Fetch on mount + restore the saved view. When the session cache seeded
     // the state, fetch silently — the page is already rendering last data and
     // this call only freshens it in place (stale-while-revalidate).
+    // Mount-only: `fetchWaterData` is a stable useCallback and `cached` is read
+    // once from the session cache, so re-running this would only refetch.
     useEffect(() => {
         fetchWaterData(Boolean(cached));
         const savedPrefs = loadFilterPreferences<{ dashboardView?: DashboardView }>("water");
+        // localStorage is client-only, so restoring the saved view must happen after
+        // hydration; a lazy useState initialiser would render a different value on the
+        // server than on the client.
         if (savedPrefs?.dashboardView) setDashboardView(savedPrefs.dashboardView);
-    }, [fetchWaterData, cached]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only; deps are stable by construction
+    }, []);
 
     // Persist the selected view
     useEffect(() => {
@@ -136,6 +186,8 @@ export default function WaterPage() {
         );
     }
 
+    const hasData = waterMeters.length > 0;
+
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             {/* Header */}
@@ -145,34 +197,57 @@ export default function WaterPage() {
                     description="Comprehensive water consumption and loss analysis across the network"
                 />
                 <PageStatusBar
-                    isConnected={dataSource === "supabase"}
+                    isConnected={!error && hasData}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
-                />
+                    loading={isLoading}
+                    error={error}
+                    disconnectedLabel="No live data"
+                >
+                    {negatives.length > 0 && (
+                        <span
+                            className="inline-flex items-center gap-1.5 rounded-full bg-mb-warning-light px-2.5 py-1 text-[11px] font-semibold text-mb-warning-text"
+                            title={negatives
+                                .slice(0, 10)
+                                .map((r) => `${r.label} (${r.account}) ${r.month}: ${r.value} m³`)
+                                .join("\n")}
+                        >
+                            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                            {negatives.length} negative reading{negatives.length === 1 ? "" : "s"}
+                        </span>
+                    )}
+                </PageStatusBar>
             </div>
 
-            {/* View switching tabs — solid-pill (primary) style, matching the section tabs */}
-            <TabNavigation
-                activeTab={dashboardView}
-                onTabChange={(key) => setDashboardView(key as DashboardView)}
-                tabs={[
-                    { key: "monthly", label: "Monthly", icon: BarChart3 },
-                    { key: "daily", label: "Daily", icon: CalendarDays },
-                ]}
-            />
+            {error && <WaterErrorState message={error} onRetry={retry} />}
+            {!error && !hasData && <WaterEmptyState onRetry={retry} />}
 
-            {/* Monthly Dashboard View */}
-            {dashboardView === "monthly" && (
-                <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <WaterMonthlyDashboard waterMeters={waterMeters} />
-                </div>
-            )}
+            {!error && hasData && (
+                <>
+                    {/* View switching tabs — solid-pill (primary) style, matching the section tabs */}
+                    <TabNavigation
+                        activeTab={dashboardView}
+                        onTabChange={(key) => setDashboardView(key as DashboardView)}
+                        tabs={[
+                            { key: "monthly", label: "Monthly", icon: BarChart3 },
+                            { key: "daily", label: "Daily", icon: CalendarDays },
+                        ]}
+                    />
 
-            {/* Daily Dashboard View */}
-            {dashboardView === "daily" && (
-                <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <DailyWaterReport />
-                </div>
+                    {/* Monthly Dashboard View */}
+                    {dashboardView === "monthly" && (
+                        <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <WaterMonthlyDashboard waterMeters={waterMeters} />
+                        </div>
+                    )}
+
+                    {/* Daily Dashboard View */}
+                    {dashboardView === "daily" && (
+                        <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <DailyWaterReport />
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

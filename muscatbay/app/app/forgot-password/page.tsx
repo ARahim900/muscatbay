@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthBrandLockup } from "@/components/auth/brand-lockup";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
@@ -66,7 +67,7 @@ export default function ForgotPasswordPage() {
                             Please check your inbox and follow the instructions.
                         </p>
                         <Link href="/login">
-                            <Button className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground">
+                            <Button className="bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground">
                                 Back to Login
                             </Button>
                         </Link>
@@ -79,17 +80,9 @@ export default function ForgotPasswordPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
             <div className="w-full max-w-md">
-                {/* Logo */}
+                {/* Logo — shared lockup (see components/auth/brand-lockup) */}
                 <div className="flex justify-center mb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                            <span className="text-primary-foreground font-bold text-xl">MB</span>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
-                            <p className="text-sm text-muted-foreground">Operations Dashboard</p>
-                        </div>
-                    </div>
+                    <AuthBrandLockup />
                 </div>
 
                 <Card className="card-elevated">
@@ -110,7 +103,7 @@ export default function ForgotPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -119,7 +112,7 @@ export default function ForgotPasswordPage() {
                                         onChange={(e) => setEmail(e.target.value)}
                                         aria-invalid={error ? true : undefined}
                                         aria-describedby={error ? "email-error" : undefined}
-                                        className="pl-10"
+                                        className="ps-10"
                                         required
                                         autoComplete="email"
                                     />
@@ -130,12 +123,12 @@ export default function ForgotPasswordPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                                 disabled={loading}
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                         Sending...
                                     </>
                                 ) : (
@@ -145,7 +138,7 @@ export default function ForgotPasswordPage() {
 
                             <Link
                                 href="/login"
-                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-[var(--mb-primary)]"
+                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-mb-primary"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Back to login

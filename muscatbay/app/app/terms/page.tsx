@@ -8,17 +8,17 @@ export const metadata = {
 
 export default function TermsPage() {
     return (
-        <div className="min-h-screen bg-muted dark:bg-muted py-12 px-4 sm:px-6">
+        <div className="min-h-screen bg-muted py-12 px-4 sm:px-6">
             <div className="max-w-3xl mx-auto">
                 <Link
                     href="/login"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground dark:text-muted-foreground hover:text-primary dark:hover:text-secondary transition-colors mb-8"
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary dark:hover:text-secondary transition-colors mb-8"
                 >
                     <ArrowLeft className="h-4 w-4" />
                     Back to sign in
                 </Link>
 
-                <div className="bg-white dark:bg-muted rounded-2xl shadow-sm border border-border dark:border-border p-8 sm:p-10">
+                <div className="bg-card rounded-xl shadow-sm border border-border p-8 sm:p-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-secondary/10 flex items-center justify-center">
                             <FileText className="h-5 w-5 text-primary dark:text-secondary" />
@@ -31,7 +31,7 @@ export default function TermsPage() {
                         Last updated: April 2026
                     </p>
 
-                    <div className="space-y-6 text-sm sm:text-base text-foreground dark:text-muted-foreground/70 leading-relaxed">
+                    <div className="space-y-6 text-sm sm:text-base text-foreground leading-relaxed">
                         <section>
                             <h2 className="text-lg font-semibold text-foreground mb-2">
                                 1. Acceptance

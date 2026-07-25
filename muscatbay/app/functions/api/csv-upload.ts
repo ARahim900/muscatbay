@@ -346,7 +346,7 @@ export async function filterMetersByConfiguration(
             if (!row.type) row.type = configuredMeter.type || '';
 
             // Always convert zone code (e.g., "Zone_03_(B)") to display format (e.g., "Zone 3B")
-            // to match the format used in water_loss_daily and DailyWaterReport filtering
+            // to match the format used in water_loss_daily and daily-water-report.tsx filtering
             if (row.zone) {
                 row.zone = resolveZoneDisplay(row.zone) || row.zone;
             }
@@ -588,7 +588,7 @@ function resolveZoneDisplay(zone: string): string | null {
  * Compute and upsert water_loss_daily records from imported consumption data.
  *
  * After CSV data is imported into water_daily_consumption, the zone analysis
- * (progress rings, chart) in DailyWaterReport reads from the water_loss_daily table.
+ * (progress rings, chart) in daily-water-report.tsx reads from the water_loss_daily table.
  * This function aggregates the imported meter data by zone and day to produce
  * the L2 bulk total, L3/L4 individual total, and loss calculations,
  * then upserts them into water_loss_daily.

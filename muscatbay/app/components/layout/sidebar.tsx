@@ -92,7 +92,7 @@ const bottomNavItems: NavigationItem[] = [
 ];
 
 export function Sidebar() {
-  const { isOpen, setIsOpen, isCollapsed, toggleCollapse } = useSidebar();
+  const { isCollapsed, toggleCollapse } = useSidebar();
   const pathname = usePathname();
   const { logout, isDevMode } = useAuth();
   const role = useUserRole();
@@ -160,37 +160,21 @@ export function Sidebar() {
   const visibleBottomItems = isDevMode ? bottomNavItems : bottomNavItems
     .filter((it) => !it.module || canAccessModule(role, it.module));
 
-  const handleItemClick = () => {
-    // Close sidebar on mobile when an item is clicked
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
-      setIsOpen(false);
-    }
-  };
-
   return (
     <>
-      {/* Mobile overlay - only shown on mobile when sidebar is open.
-          Solid scrim (no backdrop-blur) so paint cost stays low on low-end phones. */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 md:hidden transition-opacity duration-200"
-          onClick={() => setIsOpen(false)}
-          aria-hidden="true"
-        />
-      )}
-
-      {/* Sidebar Container — sits below the fixed 76px topbar so
-          the brand-purple topbar spans edge-to-edge above it. */}
+      {/* Sidebar Container — desktop only. On mobile it stays translated
+          off-canvas and the bottom-nav dock provides navigation, so there is
+          no drawer state, overlay or trigger to maintain. */}
       <aside
         ref={asideRef}
         className={`
           fixed top-0 start-0 h-dvh z-40
           flex flex-col
           bg-[var(--sidebar)] border-e border-white/10
-          transition-[width,transform] duration-200 ease-out
-          ${isOpen ? "translate-x-0 rtl:-translate-x-0" : "-translate-x-full rtl:translate-x-full"}
+          transition-[width] duration-200 ease-out
+          -translate-x-full rtl:translate-x-full
           ${isCollapsed ? "w-[72px]" : "w-[220px]"}
-          md:translate-x-0
+          md:translate-x-0 md:rtl:translate-x-0
         `}
         // Respect notched-device safe areas in landscape so nav content doesn't
         // sit under a hardware cutout.
@@ -277,7 +261,6 @@ export function Sidebar() {
                     <li key={item.id}>
                       <Link
                         href={item.href}
-                        onClick={handleItemClick}
                         aria-current={isActive ? "page" : undefined}
                         className={`
                           group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
@@ -323,7 +306,6 @@ export function Sidebar() {
               <Link
                 key={item.id}
                 href={item.href}
-                onClick={handleItemClick}
                 aria-current={isActive ? "page" : undefined}
                 className={`
                   group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset

@@ -2,11 +2,12 @@
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sun, Moon, Settings, LogOut, ChevronDown } from "lucide-react";
+import { Sun, Moon, Settings, LogOut, ChevronDown, Search } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "@/components/providers/app-providers";
 import { NotificationBell } from "@/components/layout/notification-bell";
+import { openCommandPalette } from "@/components/shared/command-palette";
 
 export function Topbar() {
     const { setTheme, resolvedTheme } = useTheme();
@@ -53,9 +54,24 @@ export function Topbar() {
     }, [isProfileOpen]);
 
     return (
-        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-40 bg-white dark:bg-[var(--card)] flex items-center justify-end px-4 sm:px-6 border-b border-border/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
+        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-40 bg-card flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-border/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
-            <div className="flex items-center gap-0.5 sm:gap-1">
+            {/* Search / command palette — the only visible way in for pointer
+                and touch users; ⌘K alone left mobile with no access at all. */}
+            <button
+                type="button"
+                onClick={openCommandPalette}
+                aria-label="Search modules and actions"
+                className="group flex items-center gap-2 min-w-11 h-11 sm:h-9 justify-center sm:justify-start sm:w-full sm:max-w-xs px-0 sm:px-3 rounded-lg text-muted-foreground sm:border sm:border-border sm:dark:border-white/10 sm:bg-muted/50 sm:dark:bg-white/[0.03] hover:bg-muted dark:hover:bg-white/[0.06] hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+            >
+                <Search className="w-[17px] h-[17px] flex-shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline flex-1 text-start text-sm truncate">Search…</span>
+                <kbd className="hidden lg:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono border border-border dark:border-white/10 bg-card text-muted-foreground">
+                    ⌘K
+                </kbd>
+            </button>
+
+            <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
                 {/* Alerts */}
                 <NotificationBell />
 

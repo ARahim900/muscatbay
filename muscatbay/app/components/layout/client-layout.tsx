@@ -6,6 +6,7 @@ import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
 import { BottomNav } from './bottom-nav';
 import { GlowDelegate } from '@/components/motion/glow-delegate';
+import { RouteRoleGuard } from '@/components/auth/require-role';
 
 // This internal component consumes the context to adjust its margin
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
       {/* Skip to main content — accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[200] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-white focus:text-sm focus:font-medium focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[200] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-primary focus:text-primary-foreground focus:text-sm focus:font-medium focus:shadow-lg"
       >
         Skip to main content
       </a>
@@ -41,9 +42,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
         `}
       >
-        {/* Layout shell with mobile-first responsive padding */}
+        {/* Layout shell with mobile-first responsive padding.
+            RouteRoleGuard enforces lib/rbac.ts at the layout level: a role
+            without access to the current module never renders the page, so
+            gating no longer depends on hidden nav links alone. */}
         <div className="layout-shell w-full pt-4 pb-3 sm:pt-6 sm:pb-4 md:pt-8 md:pb-6">
-          {children}
+          <RouteRoleGuard>
+            {children}
+          </RouteRoleGuard>
         </div>
       </main>
 

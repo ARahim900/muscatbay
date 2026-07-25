@@ -38,7 +38,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
       data-slot="table-footer"
-      className={cn("bg-muted/50 dark:bg-muted/30 border-t border-border dark:border-border font-medium [&>tr]:last:border-b-0", className)}
+      className={cn("bg-muted/50 dark:bg-muted/30 border-t border-border font-medium [&>tr]:last:border-b-0", className)}
       {...props}
     />
   )
@@ -58,10 +58,14 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead({ className, scope = "col", ...props }: React.ComponentProps<"th">) {
   return (
+    // `scope="col"` by default: every <TableHead> is a column header unless a
+    // consumer explicitly passes scope="row"/"rowgroup". Without it screen
+    // readers cannot announce which header a cell belongs to (WCAG 1.3.1).
     <th
       data-slot="table-head"
+      scope={scope}
       className={cn(
         "text-start align-middle whitespace-nowrap transition-colors",
         "[&:has([role=checkbox])]:pr-0",

@@ -1,7 +1,10 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+    LucideIcon, TrendingUp, TrendingDown, Minus,
+    AlertTriangle, CheckCircle2, Clock, HelpCircle, XCircle,
+} from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { CountUp } from "@/components/motion/count-up";
 import Link from "next/link";
@@ -50,6 +53,19 @@ const variantIconClass: Record<StatVariant, string> = {
     info: "text-[var(--status-info)]",
     water: "text-[var(--module-water)]",
     default: "text-muted-foreground",
+};
+
+// Status is never carried by colour alone (WCAG 1.4.1): the tile renders a
+// shape-distinct icon plus the status word. Glyphs and --status-* tokens match
+// data-table/status-badge.tsx, alerts-feed and module-coverage, so one status means
+// one glyph + one hue app-wide.
+type StatStatus = NonNullable<StatItem["status"]>;
+const STATUS_UI: Record<StatStatus, { Icon: LucideIcon; token: string }> = {
+    normal:  { Icon: CheckCircle2,  token: "var(--status-normal)" },
+    warning: { Icon: AlertTriangle, token: "var(--status-warning)" },
+    danger:  { Icon: XCircle,       token: "var(--status-danger)" },
+    stale:   { Icon: Clock,         token: "var(--status-stale)" },
+    missing: { Icon: HelpCircle,    token: "var(--status-missing)" },
 };
 
 // Soft tile background behind the icon, per variant — mirrors the water/monthly
@@ -132,8 +148,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                             <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
                                 <span className={cn(
                                     "flex items-center font-medium",
-                                    isGoodTrend  ? "text-[var(--status-normal)]" :
-                                    isBadTrend   ? "text-[var(--status-danger)]" :
+                                    isGoodTrend  ? "text-[var(--mb-success-text)]" :
+                                    isBadTrend   ? "text-[var(--mb-danger-text)]" :
                                                    "text-muted-foreground"
                                 )}>
                                     {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
@@ -149,16 +165,19 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
                             <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
                         )}
 
-                        {stat.status && (
-                            <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                <span
-                                    aria-hidden="true"
-                                    className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0"
-                                    style={{ backgroundColor: stat.status === 'normal' ? 'var(--status-normal)' : stat.status === 'warning' ? 'var(--status-warning)' : stat.status === 'danger' ? 'var(--status-danger)' : stat.status === 'stale' ? 'var(--status-stale)' : 'var(--status-missing)' }}
-                                />
-                                <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
-                            </div>
-                        )}
+                        {stat.status && (() => {
+                            const { Icon: StatusIcon, token } = STATUS_UI[stat.status];
+                            return (
+                                <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                    <StatusIcon
+                                        aria-hidden="true"
+                                        className="w-3.5 h-3.5 flex-shrink-0"
+                                        style={{ color: token }}
+                                    />
+                                    <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
+                                </div>
+                            );
+                        })()}
                         {stat.lastUpdated && (
                             <p className="mt-1 text-[11px] text-muted-foreground/70 tabular-nums">Updated {stat.lastUpdated}</p>
                         )}

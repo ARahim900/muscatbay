@@ -63,10 +63,19 @@ export interface YearCache {
     typ: string;
     /** Parent meter name (used to roll apartments up to a building bulk). */
     parent: string;
-    /** 12 monthly readings, January-first; `0` where there is no reading. */
-    vals: number[];
-    /** Sum of `vals`. */
+    /**
+     * 12 monthly readings, January-first.
+     *
+     * `null` means **no reading was recorded** for that month; `0` means the
+     * meter genuinely reported zero. These used to be collapsed onto `0`, which
+     * made the "Missing reading" flag unreachable, mislabelled unread months as
+     * "Zero consumption", and silently deflated the A1/A2/A3 balance.
+     */
+    vals: (number | null)[];
+    /** Sum of the readings that exist (missing months contribute nothing). */
     total: number;
+    /** How many of the 12 months actually have a reading. */
+    readings: number;
 }
 
 /** A meter and all of its per-year reading caches. */
@@ -110,6 +119,10 @@ export interface ZoneRow {
     loss: number;
     lossPct: number;
     meters: number;
+    /** End-user meters in this zone with no reading in the period. */
+    missing: number;
+    /** True when the zone-bulk (L2) meter itself has no reading in the period. */
+    bulkMissing: boolean;
 }
 
 /** Per-type aggregation for a period. */
@@ -151,6 +164,15 @@ export interface PeriodResult {
     types: TypeRow[];
     dcs: DcRow[];
     buildings: BuildingRow[];
+    /**
+     * Meters (excluding `N/A`) with no reading at all in this period. The
+     * balance above treats them as contributing nothing, which is the only
+     * option available — so the count is surfaced rather than hidden, because
+     * a missing L2/L3 inflates apparent loss.
+     */
+    missingMeters: number;
+    /** Meters whose reading for this period is negative (physically impossible). */
+    negativeMeters: number;
 }
 
 /** Loss-severity descriptor (text colour + background + chart fill + label). */
@@ -182,15 +204,41 @@ export const pct = (a: number, b: number): number => (b ? +((a / b) * 100).toFix
 /** Type guard: is the selection an inclusive `[start, end]` range? */
 export const isRangeSel = (sel: Sel): sel is [number, number] => Array.isArray(sel);
 
-/** Sum `vals[start..end]` inclusive, coercing nullish entries to `0`. */
-export const sumRange = (vals: number[] = [], start = 0, end = vals.length - 1): number =>
-    vals.slice(start, end + 1).reduce((a, b) => a + (Number(b) || 0), 0);
+/**
+ * Sum `vals[start..end]` inclusive over the readings that exist.
+ *
+ * Missing months are skipped, not counted as zero — use {@link hasReading} to
+ * tell "nothing consumed" apart from "nothing recorded".
+ */
+export const sumRange = (
+    vals: ReadonlyArray<number | null> = [],
+    start = 0,
+    end = vals.length - 1,
+): number => vals.slice(start, end + 1).reduce<number>((a, b) => a + (b ?? 0), 0);
 
-/** Resolve a year-cache value for the current selection. */
-export const periodValue = (c: YearCache, sel: Sel): number => {
-    if (sel == null) return c.total;
-    if (isRangeSel(sel)) return sumRange(c.vals, sel[0], sel[1]);
-    return c.vals[sel] ?? 0;
+/** Does any month in `vals[start..end]` have a reading? */
+export const hasReading = (
+    vals: ReadonlyArray<number | null> = [],
+    start = 0,
+    end = vals.length - 1,
+): boolean => vals.slice(start, end + 1).some((v) => v != null);
+
+/** Mean of the readings that exist; `0` when there are none. */
+export const meanReading = (vals: ReadonlyArray<number | null> = []): number => {
+    const present = vals.filter((v): v is number => v != null);
+    return present.length ? present.reduce((a, b) => a + b, 0) / present.length : 0;
+};
+
+/**
+ * Resolve a year-cache value for the current selection.
+ *
+ * Returns `null` when the selection contains **no reading at all**, so callers
+ * can render "no reading" instead of a confident `0`.
+ */
+export const periodValue = (c: YearCache, sel: Sel): number | null => {
+    if (sel == null) return c.readings > 0 ? c.total : null;
+    if (isRangeSel(sel)) return hasReading(c.vals, sel[0], sel[1]) ? sumRange(c.vals, sel[0], sel[1]) : null;
+    return c.vals[sel] ?? null;
 };
 
 /** Is month index `i` part of the current selection? */
@@ -237,12 +285,13 @@ export const actionFromLoss = (p: number, missing = 0): string =>
 export const lastReadingLabel = (
     year: string,
     nMonths: number,
-    vals: number[] = [],
+    vals: ReadonlyArray<number | null> = [],
     sel: Sel = null,
 ): string => {
     if (isRangeSel(sel)) return `${MONTHS[sel[0]]} ${year} – ${MONTHS[sel[1]]} ${year}`;
     const idx = sel == null ? Math.min(nMonths - 1, vals.length - 1) : sel;
     if (idx < 0) return "No reading";
+    if (vals.length && vals[idx] == null) return `${MONTHS[idx]} ${year} · not read`;
     return `${MONTHS[idx]} ${year}`;
 };
 
@@ -273,7 +322,13 @@ export function downloadRows(rows: CsvRow[], filename: string): void {
 /*  Anomaly flags                                                      */
 /* ------------------------------------------------------------------ */
 
-/** Compute data-quality flags for a meter reading; `["Normal"]` when clean. */
+/**
+ * Compute data-quality flags for a meter reading; `["Normal"]` when clean.
+ *
+ * `value == null` means the meter was not read — a different problem from a
+ * meter that reported `0`. Both branches are live now that the adapter keeps
+ * missing readings as `null` instead of coercing them to `0`.
+ */
 export function meterFlags(
     m: Pick<YearCache, "label">,
     value: number | null,
@@ -305,9 +360,12 @@ const isEnd = (c: YearCache): boolean =>
  */
 export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodResult {
     let A1 = 0, L2 = 0, DC = 0, END = 0;
+    let missingMeters = 0, negativeMeters = 0;
     const zb: Record<string, number> = {};
     const ze: Record<string, number> = {};
     const zc: Record<string, number> = {};
+    const zmiss: Record<string, number> = {};
+    const zbulkMiss: Record<string, boolean> = {};
     const zname: Record<string, string> = {};
     const tt: Record<string, number> = {};
     const dcs: DcRow[] = [];
@@ -317,15 +375,29 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
     for (const m of data.meters) {
         const c = m.y[year];
         if (!c) continue;
-        const v = periodValue(c, sel);
         if (c.label === "N/A") continue;
+        const raw = periodValue(c, sel);
+        // The balance can only aggregate readings that exist. Unread meters are
+        // counted separately (`missingMeters`) so the UI can say the totals are
+        // incomplete rather than presenting a deflated figure as complete.
+        const missing = raw == null;
+        const v = raw ?? 0;
+        if (missing) missingMeters += 1;
+        if (v < 0) negativeMeters += 1;
+
         if (c.label === "L1") A1 += v;
-        else if (c.label === "L2") { L2 += v; zb[c.zone] = (zb[c.zone] || 0) + v; zname[c.zone] = c.zoneName; }
+        else if (c.label === "L2") {
+            L2 += v;
+            zb[c.zone] = (zb[c.zone] || 0) + v;
+            zname[c.zone] = c.zoneName;
+            if (missing) zbulkMiss[c.zone] = true;
+        }
         else if (c.label === "DC") { DC += v; if (v) dcs.push({ name: m.name.replace("DC |", "").trim(), typ: c.typ, total: v }); }
         else if (isEnd(c)) {
             END += v;
             ze[c.zone] = (ze[c.zone] || 0) + v;
             zc[c.zone] = (zc[c.zone] || 0) + 1;
+            if (missing) zmiss[c.zone] = (zmiss[c.zone] || 0) + 1;
             zname[c.zone] = c.zoneName;
             tt[c.typ] = (tt[c.typ] || 0) + v;
         }
@@ -338,7 +410,11 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
     const zones: ZoneRow[] = Object.keys(zb)
         .map((z) => {
             const b = zb[z], e = ze[z] || 0;
-            return { zone: z, name: zname[z] || z, bulk: b, end: e, loss: b - e, lossPct: pct(b - e, b), meters: zc[z] || 0 };
+            return {
+                zone: z, name: zname[z] || z, bulk: b, end: e, loss: b - e,
+                lossPct: pct(b - e, b), meters: zc[z] || 0,
+                missing: zmiss[z] || 0, bulkMissing: Boolean(zbulkMiss[z]),
+            };
         })
         .filter((z) => z.bulk > 0)
         .sort((a, b) => b.loss - a.loss);
@@ -364,6 +440,8 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
         types,
         dcs: dcs.sort((a, b) => b.total - a.total),
         buildings,
+        missingMeters,
+        negativeMeters,
     };
 }
 
@@ -401,6 +479,10 @@ function parseMonthKey(key: string): { year: string; monthIndex: number } | null
  *    the hierarchy level; the dashboard's `name`/`label` mirror that mapping.
  *  - `monthsWithData[year]` counts months with at least one non-null reading,
  *    so partial years (e.g. a current year mid-way through) report honestly.
+ *  - A month with no reading stays `null` in `vals` (it is **not** coerced to
+ *    `0`), and a negative reading keeps its sign. Both are then visible to
+ *    {@link meterFlags} and to the missing/negative counters in
+ *    {@link computePeriod}.
  */
 export function buildMonthlyData(meters: WaterMeter[]): WaterData {
     const yearsWithData = new Set<string>();
@@ -421,13 +503,18 @@ export function buildMonthlyData(meters: WaterMeter[]): WaterData {
                     zoneName: zoneNameFor(m.zone),
                     typ: m.type,
                     parent: m.parentMeter,
-                    vals: new Array<number>(12).fill(0),
+                    vals: new Array<number | null>(12).fill(null),
                     total: 0,
+                    readings: 0,
                 });
-            const value = raw == null ? 0 : Number(raw) || 0;
+            // `null` (no reading) and a non-finite value both stay `null`; a
+            // real number — including a negative one — is kept verbatim.
+            const num = raw == null ? null : Number(raw);
+            const value = num == null || !Number.isFinite(num) ? null : num;
             cache.vals[monthIndex] = value;
-            cache.total += value;
-            if (raw != null) {
+            if (value != null) {
+                cache.total += value;
+                cache.readings += 1;
                 yearsWithData.add(year);
                 (monthsPresent[year] ??= new Set<number>()).add(monthIndex);
             }

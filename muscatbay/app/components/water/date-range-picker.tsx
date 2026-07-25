@@ -162,7 +162,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
         }
     }, [getValueFromPointer, min, max, onValueChange]);
 
-    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-primary bg-white dark:border-secondary dark:bg-muted shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
+    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-primary bg-card dark:border-secondary shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
 
     return (
         <div
@@ -176,7 +176,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
             <div className="absolute inset-x-0 h-2 rounded-full bg-border dark:bg-muted-foreground/30" />
             {/* Active range — brand teal is bright in both themes; pinned explicitly for dark. */}
             <div
-                className="absolute h-2 rounded-full bg-secondary dark:bg-secondary"
+                className="absolute h-2 rounded-full bg-secondary"
                 style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}
@@ -411,12 +411,12 @@ export function DateRangePicker({
                     </div>
                     <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-foreground dark:text-muted-foreground tracking-tight">Date Range</h3>
+                            <h3 className="text-sm font-semibold text-foreground tracking-tight">Date Range</h3>
                             <span className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full bg-secondary/10 text-primary dark:bg-secondary/15 dark:text-secondary tabular-nums ring-1 ring-secondary/20 dark:ring-secondary/20">
                                 {selectedDataMonths} mo
                             </span>
                         </div>
-                        <p className="text-[13px] text-muted-foreground dark:text-muted-foreground leading-tight truncate">
+                        <p className="text-[13px] text-muted-foreground leading-tight truncate">
                             <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayStartMonth)}</span>
                             <span className="mx-1.5 text-muted-foreground/70 dark:text-muted-foreground">&rarr;</span>
                             <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayEndMonth)}</span>
@@ -464,7 +464,7 @@ export function DateRangePicker({
                                 min-h-11 px-3 py-2 text-[11px] font-semibold rounded-md transition-all duration-200 sm:min-h-0 sm:px-2 sm:py-1
                                 ${activePreset === key
                                     ? 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary ring-1 ring-primary/20 dark:ring-secondary/25'
-                                    : 'text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-muted/50 hover:text-muted-foreground dark:hover:text-muted-foreground/70'
+                                    : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/50 hover:text-muted-foreground dark:hover:text-muted-foreground/70'
                                 }
                             `}
                         >
@@ -476,7 +476,7 @@ export function DateRangePicker({
                             setActivePreset(null);
                             onReset();
                         }}
-                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-red-50 hover:text-red-500 sm:min-h-0 sm:px-2 sm:py-1 dark:text-muted-foreground dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-mb-danger-light hover:text-mb-danger-text sm:min-h-0 sm:px-2 sm:py-1"
                     >
                         <RotateCcw className="w-3 h-3" />
                         Reset
@@ -537,7 +537,7 @@ export function DateRangePicker({
                                             : isInRange
                                                 ? 'font-semibold text-secondary dark:text-secondary/90'
                                                 : hasData
-                                                    ? 'font-medium text-muted-foreground dark:text-muted-foreground'
+                                                    ? 'font-medium text-muted-foreground'
                                                     : 'font-medium text-muted-foreground/70 dark:text-muted-foreground'
                                         }
                                     `}
@@ -555,7 +555,7 @@ export function DateRangePicker({
                                                 ? 'bg-secondary dark:bg-secondary/70 w-1 h-1'
                                                 : hasData
                                                     ? 'bg-border dark:bg-muted w-1 h-1'
-                                                    : 'border border-border dark:border-border w-1 h-1'
+                                                    : 'border border-border w-1 h-1'
                                         }
                                     `}
                                 />

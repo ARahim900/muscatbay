@@ -11,7 +11,7 @@ import { validateEmail, checkRateLimit, resetRateLimit, recordRateLimitAttempt }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CountUp } from "@/components/motion/count-up";
+import { AuthBrandLockup } from "@/components/auth/brand-lockup";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -41,7 +41,7 @@ function LoginContent() {
 
     // Entrance choreography: brand panel and form settle in as one sequence.
     // DOM order drives the stagger, so the story reads logo → headline →
-    // live systems → form. Skipped entirely under prefers-reduced-motion.
+    // capability list → form. Skipped entirely under prefers-reduced-motion.
     useIsomorphicLayoutEffect(() => {
         const root = rootRef.current;
         if (!root || prefersReducedMotion()) return;
@@ -162,18 +162,26 @@ function LoginContent() {
                             </p>
                         </div>
 
-                        {/* Operational Systems Preview — shows actual system data
-                            instead of generic marketing bullets */}
+                        {/* What the app covers.
+                            NOTE: this panel renders BEFORE authentication, so it
+                            has no access to any operational data — it must never
+                            display readings, statuses or counts. A previous
+                            version hardcoded "Water Production 2,847 m³ today",
+                            "Electricity 148 kWh" and "STP Treated 892 m³" under a
+                            "Live System Status" heading with pulsing status pills:
+                            entirely fabricated figures presented as live telemetry.
+                            Keep this list to capability names only. */}
                         <div className="space-y-2">
                             <p className="text-primary-foreground/50 text-[10px] font-semibold uppercase tracking-[0.14em]" data-reveal>
-                                Live System Status
+                                What you can manage
                             </p>
 
                             {([
-                                { label: "Water Production",  value: "2,847",  unit: "m³ today",   color: "var(--module-water)",       status: "Normal",  statusColor: "var(--mb-success)" },
-                                { label: "Electricity",       value: "148",    unit: "kWh current", color: "var(--module-electricity)", status: "Nominal", statusColor: "var(--mb-warning)" },
-                                { label: "STP Treated",       value: "892",    unit: "m³ today",   color: "var(--module-stp)",         status: "Active",  statusColor: "var(--secondary)" },
-                            ] as const).map((sys, sysIndex) => (
+                                { label: "Water", detail: "Supply chain, zone loss and meter-level consumption", color: "var(--module-water)" },
+                                { label: "Electricity", detail: "Meter readings, load profile and tariff cost", color: "var(--module-electricity)" },
+                                { label: "STP Plant", detail: "Daily inlet, treated irrigation output and recovery", color: "var(--module-stp)" },
+                                { label: "Operations", detail: "Assets, contractors, HVAC, fire safety and pest control", color: "var(--module-assets)" },
+                            ] as const).map((sys) => (
                                 <div
                                     key={sys.label}
                                     data-reveal
@@ -186,39 +194,24 @@ function LoginContent() {
                                         style={{ backgroundColor: sys.color }}
                                     />
 
-                                    {/* Label + value */}
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-primary-foreground/55 text-[10px] uppercase tracking-wide font-medium leading-none mb-1">
+                                        <p className="text-primary-foreground font-semibold text-sm leading-none mb-1">
                                             {sys.label}
                                         </p>
-                                        <p className="text-primary-foreground font-semibold text-sm tabular-nums leading-none">
-                                            <CountUp value={sys.value} delay={0.55 + sysIndex * 0.12} duration={1.2} />
-                                            <span className="text-primary-foreground/45 font-normal text-xs ms-1.5">{sys.unit}</span>
+                                        <p className="text-primary-foreground/55 text-xs leading-snug">
+                                            {sys.detail}
                                         </p>
                                     </div>
-
-                                    {/* Status pill */}
-                                    <span
-                                        className="flex items-center gap-1.5 text-[10px] font-semibold flex-shrink-0"
-                                        style={{ color: sys.statusColor }}
-                                    >
-                                        <span
-                                            aria-hidden="true"
-                                            className="w-1.5 h-1.5 rounded-full flex-shrink-0 motion-safe:animate-pulse"
-                                            style={{ backgroundColor: sys.statusColor }}
-                                        />
-                                        {sys.status}
-                                    </span>
                                 </div>
                             ))}
 
-                            {/* Grounding footer */}
+                            {/* Grounding footer — location only. Any figure here
+                                would be an unverifiable claim shown to signed-out
+                                visitors. */}
                             <div className="flex items-center gap-3 pt-0.5" data-reveal>
-                                <span className="text-primary-foreground/40 text-xs">8 utility systems</span>
-                                <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
                                 <span className="text-primary-foreground/40 text-xs">Muscat Bay, Oman</span>
                                 <span aria-hidden="true" className="w-px h-2.5 bg-white/15 flex-shrink-0" />
-                                <span className="text-primary-foreground/40 text-xs">Since 2022</span>
+                                <span className="text-primary-foreground/40 text-xs">Sign in to view live operations data</span>
                             </div>
                         </div>
                     </div>
@@ -233,24 +226,9 @@ function LoginContent() {
             {/* Right Panel - Login Form */}
             <div className="w-full lg:w-1/2 flex items-center justify-center bg-background p-6 lg:p-12">
                 <div className="w-full max-w-md">
-                    {/* Mobile Logo */}
+                    {/* Mobile Logo — shared lockup (see components/auth/brand-lockup) */}
                     <div className="flex justify-center mb-8 lg:hidden" data-reveal>
-                        <div className="flex items-center gap-3">
-                            <div className="relative w-12 h-12 bg-primary rounded-xl p-2 shadow-lg">
-                                <Image
-                                    src="/logo.png"
-                                    alt="Muscat Bay Logo"
-                                    fill
-                                    sizes="48px"
-                                    className="object-contain p-1"
-                                    priority
-                                />
-                            </div>
-                            <div>
-                                <h1 className="text-xl font-bold text-foreground">Muscat Bay</h1>
-                                <p className="text-sm text-primary dark:text-secondary">Operations Dashboard</p>
-                            </div>
-                        </div>
+                        <AuthBrandLockup />
                     </div>
 
                     {/* Welcome Text */}
@@ -288,7 +266,7 @@ function LoginContent() {
                                     Email Address <span aria-hidden="true" className="text-destructive">*</span>
                                 </Label>
                                 <div className="relative">
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    <div className={`absolute start-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'email' ? 'text-primary' : 'text-muted-foreground'}`}>
                                         <Mail className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -301,7 +279,7 @@ function LoginContent() {
                                         onBlur={() => setFocusedField(null)}
                                         aria-describedby={emailError ? "email-error" : undefined}
                                         aria-invalid={emailError ? true : undefined}
-                                        className={`pl-12 h-12 rounded-xl border-2 transition-design ${emailError
+                                        className={`ps-12 h-12 rounded-xl border-2 transition-design ${emailError
                                             ? 'border-destructive focus:border-destructive'
                                             : focusedField === 'email'
                                                 ? 'border-primary shadow-lg shadow-primary/10'
@@ -333,7 +311,7 @@ function LoginContent() {
                                     </Link>
                                 </div>
                                 <div className="relative">
-                                    <div className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-primary' : 'text-muted-foreground'}`}>
+                                    <div className={`absolute start-4 top-1/2 -translate-y-1/2 transition-colors duration-200 ${focusedField === 'password' ? 'text-primary' : 'text-muted-foreground'}`}>
                                         <Lock className="h-5 w-5" />
                                     </div>
                                     <Input
@@ -346,7 +324,7 @@ function LoginContent() {
                                         onBlur={() => setFocusedField(null)}
                                         aria-describedby={error ? "password-error" : undefined}
                                         aria-invalid={error ? true : undefined}
-                                        className={`pl-12 pr-12 h-12 rounded-xl border-2 transition-design ${focusedField === 'password'
+                                        className={`ps-12 pe-12 h-12 rounded-xl border-2 transition-design ${focusedField === 'password'
                                             ? 'border-primary shadow-lg shadow-primary/10'
                                             : 'border-border hover:border-muted-foreground/40'
                                             }`}
@@ -357,7 +335,7 @@ function LoginContent() {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors duration-200"
+                                        className="absolute end-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors duration-200"
                                     >
                                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                     </button>
@@ -416,7 +394,7 @@ function LoginContent() {
                                 Privacy Policy
                             </Link>
                         </p>
-                        <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                             © 2026 Muscat Bay. All rights reserved.
                         </p>
                     </div>

@@ -1,34 +1,46 @@
 /**
- * Design-system color tokens for JS runtime usage (Recharts, SVG fill, etc.).
- * CSS variables cannot be used directly in SVG attributes — these hex values
- * mirror globals.css and must stay in sync with it.
+ * Design-system color tokens for JS runtime usage (Recharts series, SVG fills).
  *
- * Aligned with the Muscat Bay palette defined in globals.css.
+ * These resolve the CSS variables in `globals.css` rather than duplicating their
+ * hex values. SVG presentation attributes are parsed as CSS property values, so
+ * `fill` / `stroke` / `stop-color` accept `var(...)` — the pattern already used
+ * by every other Recharts surface in the app (`stroke="var(--chart-loss)"`,
+ * `<stop stopColor={CHART_COLORS.primary} />`, …).
+ *
+ * Reading the variables instead of mirroring them fixes two classes of drift:
+ *   1. the mirrored hexes could — and did — fall out of sync with the tokens:
+ *      the categorical teal was `#43B3AE` while `--chart-2` is `#A1D1D5`, so
+ *      pies and bars rendered a teal that appeared nowhere else in the app;
+ *   2. the hexes were single-theme, so brand purple stayed near-black on the
+ *      dark page background; `--chart-5` lightens itself in `.dark`.
+ *
+ * Consumers must not string-concatenate an alpha suffix onto these values
+ * (`${color}1A`) — use `color-mix(in srgb, ${color} 12%, transparent)`.
  */
 
 /** Categorical chart palette (ordered by visual contrast) */
 export const CHART_PALETTE = [
-  '#4E4456', // brand purple  → --primary / --chart-5
-  '#43B3AE', // teal          → --secondary / --chart-2
-  '#E8C064', // amber         → --mb-warning / --chart-3
-  '#D67A7A', // coral         → --mb-danger / --chart-loss
-  '#6B9AC4', // blue          → --mb-info / --chart-1
-  '#84B59F', // sage green    → --mb-success / --chart-4
+  'var(--chart-5)',    // brand purple
+  'var(--chart-2)',    // brand teal
+  'var(--chart-3)',    // amber
+  'var(--chart-loss)', // coral — loss / deficit
+  'var(--chart-1)',    // soft blue
+  'var(--chart-4)',    // sage green
 ] as const;
 
-/** Module / domain accent colors (mirror --chart-*-primary CSS vars). */
+/** Module / domain accent colors (mirror the --chart-*-primary CSS vars). */
 export const MODULE_COLORS = {
-  stp:         '#84B59F', // --chart-stp-primary
-  water:       '#6B9AC4', // --chart-water-primary
-  electricity: '#E8C064', // --chart-electricity-primary
-  hvac:        '#43B3AE', // --chart-hvac-primary (teal)
+  stp:         'var(--chart-stp-primary)',
+  water:       'var(--chart-water-primary)',
+  electricity: 'var(--chart-elec-primary)',
+  hvac:        'var(--module-hvac)',
 } as const;
 
 /** Status colors for HVAC / Gulf Expert ticket status charts */
 export const STATUS_CHART_COLORS: Record<string, string> = {
-  Open:           '#D67A7A', // --mb-danger
-  Closed:         '#84B59F', // --mb-success
-  'Awaiting LPO': '#E8C064', // --mb-warning
-  Quoted:         '#6B9AC4', // --mb-info
-  'In Progress':  '#6B5F73', // --mb-primary-light
+  Open:           'var(--mb-danger)',
+  Closed:         'var(--mb-success)',
+  'Awaiting LPO': 'var(--mb-warning)',
+  Quoted:         'var(--mb-info)',
+  'In Progress':  'var(--mb-primary-light)',
 };

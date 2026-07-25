@@ -9,8 +9,13 @@
  * register with a suggested action on every row.
  *
  * Design contract:
- *  - Tokens only — every colour resolves from the --mb-* status variables in
- *    globals.css, so it flips correctly in light and dark.
+ *  - Tokens only, and ONE severity colour model for the whole app:
+ *      · saturated indicators (dots, card stripes, icons)  → --status-*
+ *      · tinted surfaces (chips, heatmap cells, callouts)  → --mb-*-light
+ *      · text sitting on a tint (WCAG-tuned)               → --mb-*-text
+ *    That is the same split used by StatsGrid, alerts-feed, module-coverage,
+ *    PageStatusBar, firefighting/firefighting-ui.tsx and StatusBadge, so "danger"
+ *    is the same red on every module page and flips correctly in both themes.
  *  - Status is never colour-only: every severity is paired with a text label and
  *    an icon (WCAG AA in the field, per design principle #5).
  *  - Domain-agnostic: sections compute Severity + rows; these primitives render.
@@ -18,10 +23,9 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-    AlertTriangle, CheckCircle2, ClipboardList, Download, TrendingUp, XCircle,
+    AlertTriangle, CheckCircle2, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { exportToCSV } from "@/lib/export-utils";
 
 // ─── Severity model ───────────────────────────────────────────────────────────
 
@@ -48,40 +52,56 @@ type ChipColor = "success" | "danger" | "warning" | "default";
 
 export const SEV_UI: Record<Severity, { base: string; text: string; bg: string; chip: ChipColor }> = {
     nodata: {
-        base: "var(--mb-stale)", text: "var(--mb-stale-text)",
+        base: "var(--status-stale)", text: "var(--mb-stale-text)",
         bg: "color-mix(in srgb, var(--mb-stale) 12%, transparent)", chip: "default",
     },
     good: {
-        base: "var(--mb-success)", text: "var(--mb-success-text)",
+        base: "var(--status-normal)", text: "var(--mb-success-text)",
         bg: "color-mix(in srgb, var(--mb-success) 12%, transparent)", chip: "success",
     },
     watch: {
-        base: "var(--mb-warning)", text: "var(--mb-warning-text)",
+        base: "var(--status-warning)", text: "var(--mb-warning-text)",
         bg: "color-mix(in srgb, var(--mb-warning) 18%, transparent)", chip: "warning",
     },
     high: {
-        base: "var(--mb-danger)", text: "var(--mb-danger-text)",
+        base: "var(--status-danger)", text: "var(--mb-danger-text)",
         bg: "color-mix(in srgb, var(--mb-danger) 15%, transparent)", chip: "danger",
     },
     critical: {
-        base: "var(--mb-danger)", text: "var(--mb-danger-text)",
+        base: "var(--status-danger)", text: "var(--mb-danger-text)",
         bg: "color-mix(in srgb, var(--mb-danger) 30%, transparent)", chip: "danger",
     },
 };
 
+// Token-only: --mb-*-light and --mb-*-text already flip in the .dark block, so
+// one class list is correct in both themes — no dark: variants, no raw palette.
+// This is the same chip tint recipe used by firefighting/firefighting-ui.tsx, the Gulf Expert
+// tabs, reading-cell and the water daily panels — one chip look app-wide.
 const CHIP_STYLES: Record<ChipColor, string> = {
-    success: "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
-    danger: "bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20",
-    warning: "bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
-    default: "bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40 dark:text-muted-foreground dark:ring-border/20",
+    success: "bg-mb-success-light text-mb-success-text ring-mb-success/30",
+    danger: "bg-mb-danger-light text-mb-danger-text ring-mb-danger/30",
+    warning: "bg-mb-warning-light text-mb-warning-text ring-mb-warning/30",
+    default: "bg-muted text-muted-foreground ring-border/20",
+};
+
+// Shape-distinct glyph per severity, so a chip never depends on colour alone
+// (WCAG 1.4.1). Same mapping as StatsGrid / alerts-feed / module-coverage.
+const CHIP_ICON: Record<Severity, LucideIcon> = {
+    nodata: HelpCircle,
+    good: CheckCircle2,
+    watch: AlertTriangle,
+    high: XCircle,
+    critical: XCircle,
 };
 
 export function SeverityChip({ severity, label }: { severity: Severity; label?: string }) {
+    const Icon = CHIP_ICON[severity];
     return (
         <span className={cn(
-            "inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap",
+            "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold ring-1 ring-inset whitespace-nowrap",
             CHIP_STYLES[SEV_UI[severity].chip],
         )}>
+            <Icon className="h-3 w-3 shrink-0" strokeWidth={2.5} aria-hidden="true" />
             {label ?? SEVERITY_LABEL[severity]}
         </span>
     );
@@ -174,7 +194,7 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
                                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 metric.signal.tone === "danger"
                                     ? "bg-mb-danger-light text-mb-danger-text"
-                                    : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+                                    : "bg-mb-warning-light text-mb-warning-text",
                             )}>
                                 <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
                                 {metric.signal.label}
@@ -366,142 +386,6 @@ export function MetricHeatmap({
                             {SEVERITY_LABEL[sev]}
                         </span>
                     ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Exceptions & Actions register — the auto-generated work queue ────────────
-
-export interface ExceptionRow {
-    /** Optional — present when the register spans multiple periods (dates). */
-    Date?: string;
-    Category: string;
-    Item: string;
-    Severity: "Critical" | "Watch";
-    Value: string;
-    Owner?: string;
-    Status: string;
-    Action: string;
-}
-
-const thBase = "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
-const tdBase = "px-4 py-3.5 align-middle text-[13px] font-medium text-card-foreground";
-
-function SummaryStat({ label, value, icon, color, valueColor }: { label: string; value: string; icon: React.ReactNode; color: string; valueColor?: string }) {
-    return (
-        <div className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-card-standard">
-            <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
-            <div className="flex justify-between items-start gap-2">
-                <div className="min-w-0">
-                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold tabular-nums tracking-tight text-foreground" style={valueColor ? { color: valueColor } : undefined}>{value}</h3>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${color}1A`, color }}>{icon}</div>
-            </div>
-        </div>
-    );
-}
-
-export function ExceptionsRegister({
-    rows, title, subtitle, filename, emptyHint, showDate = true, showOwner = true,
-}: {
-    rows: ExceptionRow[];
-    title: string;
-    subtitle: string;
-    filename: string;
-    emptyHint?: string;
-    showDate?: boolean;
-    showOwner?: boolean;
-}) {
-    const critical = rows.filter((r) => r.Severity === "Critical").length;
-    const watch = rows.length - critical;
-
-    const handleExport = () => {
-        const data = rows.map((r) => ({
-            ...(showDate ? { Date: r.Date ?? "" } : {}),
-            Category: r.Category,
-            Item: r.Item,
-            Severity: r.Severity,
-            Value: r.Value,
-            ...(showOwner ? { Owner: r.Owner ?? "" } : {}),
-            Status: r.Status,
-            "Suggested Action": r.Action,
-        }));
-        exportToCSV(data, filename);
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <SummaryStat label="Open Exceptions" value={String(rows.length)} icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--primary)" />
-                <SummaryStat label="Critical" value={String(critical)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-danger)" valueColor={critical > 0 ? "var(--mb-danger-text)" : undefined} />
-                <SummaryStat label="Watch" value={String(watch)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--mb-warning)" />
-            </div>
-
-            <div className="card-elevated rounded-[10.5px] border border-border bg-card">
-                <div className="p-4 sm:p-5 md:p-6 pb-2">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <h3 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                                <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
-                                {title}
-                            </h3>
-                            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleExport}
-                            disabled={rows.length === 0}
-                            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-                        >
-                            <Download className="h-4 w-4" aria-hidden="true" />
-                            Export Actions
-                        </button>
-                    </div>
-                </div>
-                <div className="p-4 sm:p-5 md:p-6 pt-2">
-                    {rows.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 py-10 text-center">
-                            <CheckCircle2 className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
-                            <p className="text-sm font-semibold text-foreground">No open exceptions</p>
-                            {emptyHint && <p className="max-w-md text-xs text-muted-foreground">{emptyHint}</p>}
-                        </div>
-                    ) : (
-                        <div className="overflow-hidden rounded-[10.5px] border border-border">
-                            <div className="overflow-auto" style={{ maxHeight: 560 }}>
-                                <table className="w-full border-collapse text-[12px]" style={{ minWidth: 880 }}>
-                                    <thead>
-                                        <tr>
-                                            {showDate && <th scope="col" className={thBase}>Date</th>}
-                                            <th scope="col" className={thBase}>Category</th>
-                                            <th scope="col" className={thBase}>Item</th>
-                                            <th scope="col" className={thBase}>Severity</th>
-                                            <th scope="col" className={cn(thBase, "text-right")}>Value</th>
-                                            {showOwner && <th scope="col" className={thBase}>Owner</th>}
-                                            <th scope="col" className={thBase}>Status</th>
-                                            <th scope="col" className={thBase}>Suggested Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rows.map((r, i) => (
-                                            <tr key={`${r.Category}-${r.Item}-${r.Date ?? ""}-${i}`} className={cn("border-b border-border/60", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
-                                                {showDate && <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.Date ?? "—"}</td>}
-                                                <td className={cn(tdBase, "whitespace-nowrap font-semibold text-foreground")}>{r.Category}</td>
-                                                <td className={cn(tdBase, "text-foreground")}>{r.Item}</td>
-                                                <td className={tdBase}><SeverityChip severity={r.Severity === "Critical" ? "critical" : "watch"} label={r.Severity} /></td>
-                                                <td className={cn(tdBase, "whitespace-nowrap text-right tabular-nums text-foreground")}>{r.Value}</td>
-                                                {showOwner && <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.Owner ?? "—"}</td>}
-                                                <td className={tdBase}><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40">{r.Status}</span></td>
-                                                <td className={cn(tdBase, "min-w-[240px] text-muted-foreground")}>{r.Action}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>

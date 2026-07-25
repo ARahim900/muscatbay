@@ -1,7 +1,7 @@
 "use client";
 
 // ─── Shared helpers, primitives, types extracted verbatim from
-//     DailyWaterReport.tsx to keep the main file under ~1000 LOC.
+//     daily-water-report.tsx to keep the main file under ~1000 LOC.
 // ─── This module preserves the ORIGINAL inline palette + behavior exactly.
 //     The sibling files (report-types.ts, report-primitives.tsx, zone-panel.tsx,
 //     dc-panel.tsx, zone-analytics.tsx) contain an enhanced parallel
@@ -37,7 +37,23 @@ export const CHART_COLORS = {
  * vertical when the gauges stack on narrow screens.
  */
 export function DailyLossConnector({ loss, of }: { loss: number | null; of: number }) {
-    const v = loss ?? 0;
+    // `null` = the balance could not be computed (the bulk meter was not read).
+    // Showing that as "0 · balanced" claimed the zone reconciled perfectly.
+    if (loss === null) {
+        return (
+            <div className="flex shrink-0 flex-col items-center justify-center">
+                <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" aria-hidden="true" />
+                <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+                <div className="mt-2 flex flex-col items-center rounded-lg border border-dashed border-border px-3 py-1.5">
+                    <span className="whitespace-nowrap text-base font-bold text-muted-foreground sm:text-lg">—</span>
+                    <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                        no reading
+                    </span>
+                </div>
+            </div>
+        );
+    }
+    const v = loss;
     const isLoss = v > 0;
     const tint = isLoss ? CHART_COLORS.loss : CHART_COLORS.success;
     const pct = of > 0 ? Math.abs(Math.round((v / of) * 1000) / 10) : 0;
@@ -231,7 +247,7 @@ export function HierarchyStatCard({
 }) {
     return (
         <div
-            className="relative overflow-hidden bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
+            className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-card-standard hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
         >
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"
@@ -240,11 +256,11 @@ export function HierarchyStatCard({
             />
             <div className="flex justify-between items-start gap-2">
                 <div className="min-w-0">
-                    <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
+                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
                         {label}
                     </p>
                     <h3
-                        className="text-lg sm:text-xl md:text-2xl font-medium tabular-nums tracking-tight text-foreground"
+                        className="text-lg sm:text-xl md:text-2xl font-semibold tabular-nums tracking-tight text-foreground"
                         style={valueColor ? { color: valueColor } : undefined}
                     >
                         {value}
@@ -252,7 +268,7 @@ export function HierarchyStatCard({
                 </div>
                 <div
                     className="p-2 sm:p-3 rounded-lg motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0"
-                    style={{ backgroundColor: `${color}1A`, color }}
+                    style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}
                 >
                     {icon}
                 </div>
@@ -268,7 +284,7 @@ export function HierarchyStatCard({
 // a sticky solid --primary (purple) header with white text, compact 12px cells,
 // not uppercase — so daily tables read identically to the monthly ledgers.
 export const thBase = "sticky top-0 z-10 px-3 py-2 text-left align-middle font-semibold text-[12px] whitespace-nowrap bg-[var(--primary)] text-[var(--primary-foreground)]";
-export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground dark:text-muted-foreground/70";
+export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground";
 
 export type SortDir = 'asc' | 'desc' | null;
 export interface SortState { key: string; dir: SortDir }
@@ -332,13 +348,20 @@ export function TableSearch({ value, onChange, placeholder }: { value: string; o
     );
 }
 
+/**
+ * Status chip.
+ *
+ * Token-only: the `--mb-*` status pairs already flip correctly between light
+ * and dark, whereas the raw Tailwind `emerald/red/amber` palette this used to
+ * carry was a second, divergent status palette that ignored the app's theme.
+ */
 export function StatusChip({ label, color }: { label: string; color: 'success' | 'danger' | 'warning' | 'default' | 'primary' }) {
     const styles = {
-        success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
-        danger: 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
-        warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
-        default: 'bg-muted text-muted-foreground ring-border/10 dark:bg-muted/10 dark:text-muted-foreground dark:ring-border/20',
-        primary: 'bg-secondary text-primary-foreground ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
+        success: 'bg-mb-success-light text-mb-success-text ring-mb-success/30',
+        danger: 'bg-mb-danger-light text-mb-danger-text ring-mb-danger/30',
+        warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/30',
+        default: 'bg-muted text-muted-foreground ring-border/20',
+        primary: 'bg-secondary text-secondary-foreground ring-secondary/60',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
@@ -355,12 +378,12 @@ export function TablePagination({
 }) {
     return (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-            <span className="text-[12px] text-muted-foreground dark:text-muted-foreground tabular-nums">
+            <span className="text-[12px] text-muted-foreground tabular-nums">
                 {totalItems} result{totalItems !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-1">
                 <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page <= 1}
                     onClick={() => onPageChange(page - 1)}
                 >
@@ -373,7 +396,7 @@ export function TablePagination({
                         className={cn(
                             "flex min-h-11 min-w-11 items-center justify-center rounded-full text-[12px] font-medium transition-design sm:min-h-8 sm:min-w-8",
                             p === page
-                                ? "bg-primary text-primary-foreground shadow-sm dark:bg-secondary dark:text-primary-foreground"
+                                ? "bg-primary text-primary-foreground shadow-sm"
                                 : "text-muted-foreground hover:bg-muted dark:hover:bg-muted",
                         )}
                     >
@@ -381,19 +404,19 @@ export function TablePagination({
                     </button>
                 ))}
                 <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border dark:border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
+                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
                     disabled={page >= totalPages}
                     onClick={() => onPageChange(page + 1)}
                 >
                     Next
                 </button>
             </div>
-            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground dark:text-muted-foreground">
+            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
                 Rows
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="min-h-11 rounded-full border border-border dark:border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
+                    className="min-h-11 rounded-full border border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>

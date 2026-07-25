@@ -90,42 +90,166 @@ export async function getAssetsCountFromSupabase(clientOverride?: SupabaseClient
     return count || 0;
 }
 
-export async function getAssetSummaryFromSupabase(clientOverride?: SupabaseClient): Promise<{
+/**
+ * Register-wide KPI counts.
+ *
+ * Every field is ONE query against ONE condition — the label on the KPI card
+ * and the predicate below must always be readable as the same sentence.
+ */
+export interface AssetSummary {
+    /** Every row in the register. */
     total: number;
-    activeFlagged: number;
+    /** status ∈ (Working, Active). */
     workingStatus: number;
+    /** status = 'TO VERIFY'. */
     toVerify: number;
-    criticalLifecycle: number;
-    disciplines: number;
+    /** criticality = 'High' (case-insensitive). */
+    highCriticality: number;
+    /** amc_contractor present and non-blank. */
+    amcCovered: number;
+    /** erl_years ≤ 2 — remaining life is two years or less. */
+    endOfLifeSoon: number;
+    /** criticality = 'High' AND no amc_contractor recorded. */
+    highCriticalityNoAmc: number;
+    /** boq_project_ref present. */
     boqCoverage: number;
-}> {
-    const client = clientOverride ?? getSupabaseClient();
-    if (!client) {
-        return { total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0, criticalLifecycle: 0, disciplines: 0, boqCoverage: 0 };
-    }
+}
 
-    const [totalRes, activeRes, workingRes, verifyRes, criticalRes, disciplineRes, boqRes] = await Promise.all([
+const EMPTY_SUMMARY: AssetSummary = {
+    total: 0, workingStatus: 0, toVerify: 0, highCriticality: 0,
+    amcCovered: 0, endOfLifeSoon: 0, highCriticalityNoAmc: 0, boqCoverage: 0,
+};
+
+export async function getAssetSummaryFromSupabase(clientOverride?: SupabaseClient): Promise<AssetSummary> {
+    const client = clientOverride ?? getSupabaseClient();
+    if (!client) return { ...EMPTY_SUMMARY };
+
+    const [totalRes, workingRes, verifyRes, criticalRes, amcRes, eolRes, criticalNoAmcRes, boqRes] = await Promise.all([
         client.from(TABLE).select('asset_uid', { count: 'exact', head: true }),
-        client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).eq('is_asset_active', true),
         client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).in('status', ['Working', 'Active']),
         client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).eq('status', 'TO VERIFY'),
+        // `ilike` without wildcards = case-insensitive equality, so a 'HIGH'
+        // or 'high' row in the register is still counted as High criticality.
+        client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).ilike('criticality', 'High'),
         client.from(TABLE).select('asset_uid', { count: 'exact', head: true })
-            .or('erl_years.lte.2,criticality.eq.High,status.eq.TO VERIFY'),
-        client.from(TABLE).select('discipline').range(0, 2999),
+            .not('amc_contractor', 'is', null).neq('amc_contractor', ''),
+        client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).lte('erl_years', 2),
+        client.from(TABLE).select('asset_uid', { count: 'exact', head: true })
+            .ilike('criticality', 'High').or('amc_contractor.is.null,amc_contractor.eq.'),
         client.from(TABLE).select('asset_uid', { count: 'exact', head: true }).not('boq_project_ref', 'is', null),
     ]);
 
-    const uniqueDisciplines = new Set(
-        (disciplineRes.data || []).map((d: { discipline: string | null }) => d.discipline).filter(Boolean)
-    );
+    const firstError = [totalRes, workingRes, verifyRes, criticalRes, amcRes, eolRes, criticalNoAmcRes, boqRes]
+        .find(r => r.error)?.error;
+    if (firstError) throw new Error(`Supabase error: ${firstError.message}`);
 
     return {
         total: totalRes.count || 0,
-        activeFlagged: activeRes.count || 0,
         workingStatus: workingRes.count || 0,
         toVerify: verifyRes.count || 0,
-        criticalLifecycle: criticalRes.count || 0,
-        disciplines: uniqueDisciplines.size,
+        highCriticality: criticalRes.count || 0,
+        amcCovered: amcRes.count || 0,
+        endOfLifeSoon: eolRes.count || 0,
+        highCriticalityNoAmc: criticalNoAmcRes.count || 0,
         boqCoverage: boqRes.count || 0,
     };
+}
+
+// ── Register profile (distributions for the Overview charts) ─────────────────
+
+export interface AssetBucket {
+    label: string;
+    count: number;
+}
+
+export interface AssetDistributions {
+    /** Criticality (High / Medium / Low / Not recorded). */
+    criticality: AssetBucket[];
+    /** Condition values exactly as recorded, worst-known first, top 8. */
+    condition: AssetBucket[];
+    /** Remaining-life bands derived from erl_years. */
+    lifecycle: AssetBucket[];
+    /** Distinct discipline count across the whole register. */
+    disciplines: number;
+    /** Rows actually aggregated — always compare against `total` before trusting. */
+    rowsScanned: number;
+}
+
+const PROFILE_PAGE = 1000;
+/** Safety stop so a runaway table can never spin forever (30k rows = 30 pages). */
+const PROFILE_MAX_PAGES = 30;
+
+interface ProfileRow {
+    criticality: string | null;
+    condition: string | null;
+    erl_years: number | null;
+    discipline: string | null;
+}
+
+function bucketize(values: (string | null)[], notRecordedLabel: string): AssetBucket[] {
+    const counts = new Map<string, number>();
+    for (const raw of values) {
+        const label = (raw ?? '').trim() || notRecordedLabel;
+        counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+        .map(([label, count]) => ({ label, count }))
+        .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Aggregate the whole register (paged, 4 narrow columns) so the Overview charts
+ * describe all assets — not just the 25 rows currently on screen.
+ */
+export async function getAssetDistributionsFromSupabase(
+    clientOverride?: SupabaseClient
+): Promise<AssetDistributions> {
+    const client = clientOverride ?? getSupabaseClient();
+    if (!client) {
+        return { criticality: [], condition: [], lifecycle: [], disciplines: 0, rowsScanned: 0 };
+    }
+
+    const rows: ProfileRow[] = [];
+    for (let page = 0; page < PROFILE_MAX_PAGES; page++) {
+        const from = page * PROFILE_PAGE;
+        const { data, error } = await client
+            .from(TABLE)
+            .select('criticality, condition, erl_years, discipline')
+            .range(from, from + PROFILE_PAGE - 1);
+
+        if (error) throw new Error(`Supabase error: ${error.message}`);
+        const batch = (data as unknown as ProfileRow[]) || [];
+        rows.push(...batch);
+        if (batch.length < PROFILE_PAGE) break;
+    }
+
+    const CRIT_ORDER = ['High', 'Medium', 'Low'];
+    const criticality = bucketize(rows.map(r => r.criticality), 'Not recorded')
+        .sort((a, b) => {
+            const ai = CRIT_ORDER.indexOf(a.label);
+            const bi = CRIT_ORDER.indexOf(b.label);
+            if (ai !== -1 || bi !== -1) return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+            return b.count - a.count;
+        });
+
+    const condition = bucketize(rows.map(r => r.condition), 'Not recorded').slice(0, 8);
+
+    const bands = [
+        { label: '≤ 2 yrs', match: (n: number) => n <= 2 },
+        { label: '3–5 yrs', match: (n: number) => n > 2 && n <= 5 },
+        { label: '6–10 yrs', match: (n: number) => n > 5 && n <= 10 },
+        { label: '> 10 yrs', match: (n: number) => n > 10 },
+    ];
+    const lifecycle: AssetBucket[] = bands.map(b => ({
+        label: b.label,
+        count: rows.filter(r => r.erl_years !== null && b.match(r.erl_years)).length,
+    }));
+    const noErl = rows.filter(r => r.erl_years === null).length;
+    if (noErl > 0) lifecycle.push({ label: 'Not recorded', count: noErl });
+
+    const disciplines = new Set(
+        rows.map(r => (r.discipline ?? '').trim()).filter(Boolean)
+    ).size;
+
+    return { criticality, condition, lifecycle, disciplines, rowsScanned: rows.length };
 }

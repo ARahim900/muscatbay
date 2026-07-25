@@ -340,15 +340,19 @@ export function buildNetworkDaySeries(series: ZoneDaySeries[], latestDay: number
     return out;
 }
 
-// ─── Exceptions & actions register ────────────────────────────────────────────
+// ─── Exceptions register ──────────────────────────────────────────────────────
+//
+// Identification only. The former `Owner` and `Status` fields were hardcoded
+// literals ("O&M / FM", "Open"/"Monitor") that looked like assignment and
+// resolution tracking but were neither stored nor editable. Management asked for
+// issues to be surfaced, not tracked, so they have been removed — deliberately
+// without any assignment / acknowledge / close workflow replacing them.
 
 export interface DailyExceptionRow {
     Category: string;
     Item: string;
     Severity: "Critical" | "Watch";
     Value: string;
-    Owner: string;
-    Status: string;
     Action: string;
     /** String-only columns so rows feed the CSV exporter directly. */
     [key: string]: string;
@@ -388,7 +392,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
         if (p.l2 === null && p.l3Sum > 0) {
             rows.push({
                 Category: "Missing L2 reading", Item: s.zoneName, Severity: "Critical",
-                Value: `ΣL3 ${m3(p.l3Sum)} · L2 —`, Owner: "O&M", Status: "Open",
+                Value: `ΣL3 ${m3(p.l3Sum)} · L2 —`,
                 Action: "Zone balance not computable — verify bulk meter / telemetry feed.",
             });
             continue;
@@ -396,7 +400,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
         if (p.loss !== null && p.loss < -5) {
             rows.push({
                 Category: "Negative balance", Item: s.zoneName, Severity: "Critical",
-                Value: `${m3(p.loss)} (ΣL3 > L2)`, Owner: "O&M analyst", Status: "Open",
+                Value: `${m3(p.loss)} (ΣL3 > L2)`,
                 Action: "Individual meters read more than the bulk — check meter over-read or bulk under-read.",
             });
         }
@@ -405,7 +409,6 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
             rows.push({
                 Category: "High daily loss", Item: s.zoneName, Severity: critical ? "Critical" : "Watch",
                 Value: `${m3(p.loss)}${p.lossPct !== null ? ` · ${p.lossPct.toFixed(1)}%` : ""}`,
-                Owner: "O&M / FM", Status: critical ? "Open" : "Monitor",
                 Action: critical
                     ? "Dispatch leak inspection; verify the L2 bulk meter reading."
                     : "Monitor the trend and validate abnormal individual meters.",
@@ -415,7 +418,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
         if (rising >= 3 && (p.loss ?? 0) > 10) {
             rows.push({
                 Category: "Rising-loss signature", Item: s.zoneName, Severity: "Critical",
-                Value: `${rising + 1} days climbing → ${m3(p.loss ?? 0)}`, Owner: "O&M / FM", Status: "Open",
+                Value: `${rising + 1} days climbing → ${m3(p.loss ?? 0)}`,
                 Action: "Loss has increased daily — pattern of a growing underground leak. Inspect the zone network.",
             });
         }
@@ -438,7 +441,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
             if (anyL4 && l4 > 0) {
                 rows.push({
                     Category: "Missing building bulk", Item: `${b.buildingName} (Zone ${b.zone})`, Severity: "Watch",
-                    Value: `ΣL4 ${m3(l4)} · bulk —`, Owner: "FM / Meter reader", Status: "Monitor",
+                    Value: `ΣL4 ${m3(l4)} · bulk —`,
                     Action: "Building balance not computable — validate the building bulk reading.",
                 });
             }
@@ -450,13 +453,12 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
             rows.push({
                 Category: "Building mismatch", Item: `${b.buildingName} (Zone ${b.zone})`, Severity: critical ? "Critical" : "Watch",
                 Value: `bulk ${m3(bulk)} − ΣL4 ${m3(l4)} = ${m3(diff)}`,
-                Owner: "FM / Building team", Status: critical ? "Open" : "Monitor",
                 Action: "Bulk exceeds apartment total — inspect common-area lines and riser for leakage.",
             });
         } else if (diff < -2) {
             rows.push({
                 Category: "Building mismatch", Item: `${b.buildingName} (Zone ${b.zone})`, Severity: "Watch",
-                Value: `ΣL4 exceeds bulk by ${m3(Math.abs(diff))}`, Owner: "FM / Building team", Status: "Monitor",
+                Value: `ΣL4 exceeds bulk by ${m3(Math.abs(diff))}`,
                 Action: "Apartment meters read more than the building bulk — validate meter readings.",
             });
         }
@@ -472,7 +474,6 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
             rows.push({
                 Category: "Consumption spike", Item: `${meter.name} (${meter.account}) · ${meter.context}`, Severity: "Watch",
                 Value: `${m3(spike.value)} vs ${m3(spike.avg)} avg (×${spike.ratio.toFixed(1)})`,
-                Owner: "FM / Meter reader", Status: "Monitor",
                 Action: "Sudden jump vs trailing 7-day average — verify the reading and check for an open line or leak after the meter.",
             });
         }
@@ -481,7 +482,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
         if (streak >= 3 && wasActiveBefore(values, day, streak)) {
             rows.push({
                 Category: "Zero-streak", Item: `${meter.name} (${meter.account}) · ${meter.context}`, Severity: "Watch",
-                Value: `0.0 m³ for ${streak} days`, Owner: "FM / Meter reader", Status: "Monitor",
+                Value: `0.0 m³ for ${streak} days`,
                 Action: "Previously active meter reads zero — check occupancy, valve status and meter operation.",
             });
         }

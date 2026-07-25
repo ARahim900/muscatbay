@@ -110,7 +110,7 @@ const CHART_SKELETON_BAR_HEIGHTS = [55, 72, 40, 85, 63, 48, 78, 35];
 
 export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
     return (
-        <div className={cn("rounded-xl border border-border/60 dark:border-border/50 bg-white dark:bg-muted/50 p-6", height)}>
+        <div className={cn("rounded-xl border border-border/60 dark:border-border/50 bg-card dark:bg-muted/50 p-6", height)}>
             <div className="flex flex-col h-full">
                 <Skeleton className="h-5 w-48 mb-2" />
                 <Skeleton className="h-3 w-32 mb-6" />

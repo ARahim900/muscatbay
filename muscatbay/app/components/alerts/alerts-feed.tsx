@@ -28,7 +28,7 @@ import {
   XCircle,
   type LucideIcon,
 } from "lucide-react";
-import { useAppNotifications } from "@/components/NotificationProvider";
+import { useAppNotifications } from "@/components/providers/notification-provider";
 
 /** Notification level → icon + status token (paired icon+colour, never colour-only). */
 export const LEVEL_META: Record<

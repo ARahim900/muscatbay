@@ -1,0 +1,113 @@
+import type { ExpoConfig } from 'expo/config';
+
+/**
+ * Muscat Bay Operations — Expo app config.
+ *
+ * Phase 1 target is Expo Go: `npx expo start`, scan the QR with Expo Go.
+ * Everything below that only matters for a native build (bundle identifiers,
+ * Info.plist usage strings, config plugins) is inert in Expo Go but is kept
+ * correct so the first `eas build` needs no scramble.
+ *
+ * Secrets are never in this file. Supabase credentials come from
+ * EXPO_PUBLIC_SUPABASE_URL / EXPO_PUBLIC_SUPABASE_ANON_KEY in `mobile/.env`.
+ */
+const config: ExpoConfig = {
+  name: 'Muscat Bay Operations',
+  slug: 'muscatbay-operations',
+  scheme: 'muscatbay',
+  version: '1.0.0',
+  orientation: 'portrait',
+  userInterfaceStyle: 'automatic',
+  icon: './assets/images/icon.png',
+  primaryColor: '#4E4456',
+  assetBundlePatterns: ['**/*'],
+
+  // The splash screen is configured entirely through the expo-splash-screen
+  // plugin below; the top-level `splash` key was removed in SDK 57.
+
+  ios: {
+    bundleIdentifier: 'com.muscatbay.operations',
+    supportsTablet: true,
+    // Read-only operations app: no camera, mic, location or contacts access.
+    infoPlist: {
+      NSFaceIDUsageDescription:
+        'Muscat Bay Operations uses Face ID to unlock the app so operational data stays protected if your phone is unattended.',
+      ITSAppUsesNonExemptEncryption: false,
+    },
+  },
+
+  android: {
+    package: 'com.muscatbay.operations',
+    adaptiveIcon: {
+      foregroundImage: './assets/images/adaptive-icon.png',
+      backgroundColor: '#4E4456',
+    },
+    // Edge-to-edge is the default and no longer configurable from SDK 56.
+    permissions: ['USE_BIOMETRIC', 'USE_FINGERPRINT', 'POST_NOTIFICATIONS'],
+  },
+
+  web: {
+    bundler: 'metro',
+    output: 'static',
+    favicon: './assets/images/favicon.png',
+  },
+
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission:
+          'Muscat Bay Operations uses Face ID to unlock the app so operational data stays protected if your phone is unattended.',
+      },
+    ],
+    [
+      'expo-notifications',
+      {
+        icon: './assets/images/notification-icon.png',
+        color: '#4E4456',
+      },
+    ],
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/images/splash-icon.png',
+        imageWidth: 160,
+        backgroundColor: '#4E4456',
+        dark: { backgroundColor: '#0A090C' },
+      },
+    ],
+    [
+      'expo-font',
+      {
+        // Geist is bundled from @expo-google-fonts and loaded at runtime in
+        // src/app/_layout.tsx; listing the plugin keeps native builds consistent.
+        fonts: [],
+      },
+    ],
+  ],
+
+  experiments: {
+    // Typed routes are deliberately OFF: they require a generated .expo/types
+    // pass, which would make a clean-checkout `tsc --noEmit` fail.
+    typedRoutes: false,
+
+    // REQUIRED for the shared web-app modules to resolve. SDK 57's on-demand
+    // filesystem is scoped to the project root and, during `expo export`, it
+    // also discards `metro.config.js`'s `watchFolders`. With it on, every
+    // `@/lib/*` and `@/functions/*` import fails as "none of these files exist";
+    // with it off, Metro does its classic crawl of the watch folders and the
+    // shared modules resolve. Cost is a slightly slower cold bundle.
+    onDemandFilesystem: false,
+  } as ExpoConfig['experiments'],
+
+  extra: {
+    router: {},
+    // Filled in by `eas init`. Push registration reads it and, when absent,
+    // reports "not configured" rather than guessing a project id.
+    eas: { projectId: process.env.EAS_PROJECT_ID ?? undefined },
+  },
+};
+
+export default config;

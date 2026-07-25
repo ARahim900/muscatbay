@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation";
 import { Search, ArrowRight, Sun, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useTheme } from "@/components/providers/app-providers";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canAccessModule, MODULE_ROUTE, type ModuleKey } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -44,10 +45,24 @@ interface CommandPaletteProps {
     onClose: () => void;
 }
 
+/**
+ * Event name the global palette root listens on, so any surface (topbar
+ * search button, mobile dock) can open the palette without threading state
+ * through the layout tree.
+ */
+const OPEN_EVENT = "muscatbay:open-command-palette";
+
+/** Open the global command palette from anywhere in the authenticated shell. */
+export function openCommandPalette(): void {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent(OPEN_EVENT));
+}
+
 export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { logout, isDevMode } = useAuth();
+    const { resolvedTheme, setTheme } = useTheme();
     const role = useUserRole();
     const [query, setQuery] = useState("");
     const [activeIdx, setActiveIdx] = useState(0);
@@ -63,15 +78,14 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
         handleClose();
     }, [router, handleClose]);
 
+    // Go through the theme provider — writing documentElement.classList and
+    // localStorage directly left the provider's React state (and therefore the
+    // topbar toggle, bottom-nav appearance switch and every resolvedTheme
+    // consumer) pointing at the OLD theme.
     const toggleTheme = useCallback(() => {
-        const root = document.documentElement;
-        const isDark = root.classList.contains("dark");
-        root.classList.toggle("dark", !isDark);
-        try {
-            localStorage.setItem("theme", isDark ? "light" : "dark");
-        } catch { /* private mode etc — ignore */ }
+        setTheme(resolvedTheme === "dark" ? "light" : "dark");
         onClose();
-    }, [onClose]);
+    }, [onClose, resolvedTheme, setTheme]);
 
     // Build the full command list, filtered by role
     const commands: CommandItem[] = useMemo(() => {
@@ -87,13 +101,13 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             }));
 
         const actions: CommandItem[] = [
-            { id: "theme-toggle", label: "Toggle light / dark theme", icon: Sun, run: toggleTheme },
+            { id: "theme-toggle", label: `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`, icon: Sun, run: toggleTheme },
             { id: "board-mode", label: "Open dashboard in Board mode", hint: "Adds ?present=1", icon: LayoutDashboard, run: () => navigate("/?present=1") },
             { id: "sign-out", label: "Sign out", icon: LogOut, run: () => { logout(); handleClose(); } },
         ];
 
         return [...navCommands, ...actions];
-    }, [role, isDevMode, navigate, toggleTheme, logout, handleClose]);
+    }, [role, isDevMode, navigate, toggleTheme, resolvedTheme, logout, handleClose]);
 
     // Filter by query (case-insensitive, fuzzy-ish)
     const filtered = useMemo(() => {
@@ -219,7 +233,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
 }
 
 /**
- * Mounts the palette globally and listens for ⌘K / Ctrl+K to open it.
+ * Mounts the palette globally and listens for ⌘K / Ctrl+K to open it, plus the
+ * {@link openCommandPalette} event so visible affordances (the topbar search
+ * button) can reach it — pointer and touch users have no keyboard shortcut.
  * Drop this once near the top of the authenticated layout.
  */
 export function CommandPaletteRoot() {
@@ -233,8 +249,13 @@ export function CommandPaletteRoot() {
                 setOpen((o) => !o);
             }
         };
+        const openHandler = () => setOpen(true);
         window.addEventListener("keydown", handler);
-        return () => window.removeEventListener("keydown", handler);
+        window.addEventListener(OPEN_EVENT, openHandler);
+        return () => {
+            window.removeEventListener("keydown", handler);
+            window.removeEventListener(OPEN_EVENT, openHandler);
+        };
     }, []);
 
     return <CommandPalette open={open} onClose={() => setOpen(false)} />;

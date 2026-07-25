@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
 
     if (verifying) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-muted dark:bg-muted">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-muted">
                 <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">Verifying reset link...</p>
             </div>
@@ -99,7 +99,7 @@ export default function ResetPasswordPage() {
                         </p>
                         <Button
                             onClick={() => router.push("/login")}
-                            className="bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                            className="bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                         >
                             Go to Login
                         </Button>
@@ -111,8 +111,8 @@ export default function ResetPasswordPage() {
 
     if (error && !loading && !password) { // Show error state if session check failed
         return (
-            <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-muted p-4">
-                <div className="max-w-md w-full bg-white dark:bg-muted p-8 rounded-xl shadow-lg border border-mb-danger/30">
+            <div className="min-h-screen flex items-center justify-center bg-muted p-4">
+                <div className="max-w-md w-full bg-card p-8 rounded-xl shadow-lg border border-mb-danger/30">
                     <h2 className="text-xl font-bold text-destructive mb-2">Reset Password Error</h2>
                     <p className="text-muted-foreground mb-6">{error}</p>
                     <Button
@@ -132,7 +132,7 @@ export default function ResetPasswordPage() {
                 {/* Logo */}
                 <div className="flex justify-center mb-8">
                     <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
+                        <div className="w-12 h-12 rounded-xl bg-mb-primary flex items-center justify-center shadow-lg">
                             <span className="text-primary-foreground font-bold text-xl">MB</span>
                         </div>
                         <div>
@@ -160,7 +160,7 @@ export default function ResetPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="password">New Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
@@ -168,7 +168,7 @@ export default function ResetPasswordPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         aria-describedby={password.length > 0 ? "password-requirements" : undefined}
-                                        className="pl-10 pr-10"
+                                        className="ps-10 pe-10"
                                         required
                                         autoComplete="new-password"
                                     />
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
                                         type="button"
                                         aria-label={showPassword ? "Hide password" : "Show password"}
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
+                                        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -199,7 +199,7 @@ export default function ResetPasswordPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="confirmPassword">Confirm Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="confirmPassword"
                                         type={showPassword ? "text" : "password"}
@@ -208,7 +208,7 @@ export default function ResetPasswordPage() {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         aria-invalid={error ? true : undefined}
                                         aria-describedby={error ? "reset-error" : undefined}
-                                        className="pl-10"
+                                        className="ps-10"
                                         required
                                         autoComplete="new-password"
                                     />
@@ -219,12 +219,12 @@ export default function ResetPasswordPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                                 disabled={loading || !allRequirementsMet}
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                         Updating...
                                     </>
                                 ) : (

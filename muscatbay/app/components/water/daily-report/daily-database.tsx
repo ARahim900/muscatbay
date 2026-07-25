@@ -50,7 +50,7 @@ function LedgerSelect({
     icon: typeof MapPin; value: string; onChange: (v: string) => void; options: string[]; ariaLabel: string;
 }) {
     return (
-        <div className="flex items-center gap-1.5 rounded-md border border-border bg-white/50 px-2.5 py-1.5 dark:bg-muted/50">
+        <div className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5">
             <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
             <select
                 aria-label={ariaLabel}
