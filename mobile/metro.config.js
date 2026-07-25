@@ -89,7 +89,9 @@ withCss.resolver.resolveRequest = (context, moduleName, platform) => {
   // 2. `@/…` → the web app root (mirrors the web app's own tsconfig alias, so
   //    shared modules resolve their internal imports unchanged).
   if (moduleName.startsWith('@/')) {
-    return next(context, path.join(webRoot, moduleName.slice(2)), platform);
+    const target = path.join(webRoot, moduleName.slice(2));
+    console.log('[DBG]', moduleName, '->', target, 'exists?', context.doesFileExist(target + '.ts'), 'origin', context.originModulePath);
+    return next(context, target, platform);
   }
 
   // 3. `~/…` → this mobile app's `src/`.

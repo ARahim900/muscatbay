@@ -176,7 +176,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
             <div className="absolute inset-x-0 h-2 rounded-full bg-border dark:bg-muted-foreground/30" />
             {/* Active range — brand teal is bright in both themes; pinned explicitly for dark. */}
             <div
-                className="absolute h-2 rounded-full bg-secondary dark:bg-secondary"
+                className="absolute h-2 rounded-full bg-secondary"
                 style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}
