@@ -107,6 +107,13 @@ function fmtOMR(n: number | null | undefined): string {
     return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' OMR';
 }
 
+/** Drop the server action's `error` field so only the payload is cached/stored. */
+function stripError<T extends object>(res: T & { error?: string }): T {
+    const clone = { ...res };
+    delete clone.error;
+    return clone;
+}
+
 const EMPTY_SUMMARY: AssetSummary = {
     total: 0, workingStatus: 0, toVerify: 0, highCriticality: 0,
     amcCovered: 0, endOfLifeSoon: 0, highCriticalityNoAmc: 0, boqCoverage: 0,
@@ -232,7 +239,7 @@ export default function AssetsPage() {
             const now = new Date();
             setLastUpdated(now);
             if (!summaryRes.error) {
-                const { error: _summaryError, ...summaryData } = summaryRes;
+                const summaryData = stripError(summaryRes);
                 setSummary(summaryData);
                 if (isDefaultView) {
                     setPageCache<AssetsPageCache>(ASSETS_CACHE_KEY, {
@@ -282,7 +289,7 @@ export default function AssetsPage() {
                     console.warn("Asset distributions unavailable:", res.error);
                     return;
                 }
-                const { error: _err, ...profile } = res;
+                const profile = stripError(res);
                 setDistributions(profile);
                 setPageCache<AssetDistributions>(ASSETS_PROFILE_CACHE_KEY, profile);
             })

@@ -18,8 +18,9 @@ import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
     type ReportData, type SortState,
-    CHART_COLORS, r2, n, DailyLossConnector,
+    CHART_COLORS, r2, n, DailyLossConnector, PALETTE,
     Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
+    HierarchyStatCard,
 } from "./inline-shared";
 
 export { DCAnalyticsPanel, DCDailyTable };
@@ -353,46 +354,30 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 </div>
             </CardHeader>
             <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
-                {/* DC summary KPI cards */}
+                {/* DC summary KPI cards — the shared HierarchyStatCard, so these
+                    match the other daily tiles. The hand-rolled markup they
+                    replace carried a hardcoded blue `rgba(6,81,237,…)` shadow
+                    that belonged to no palette in this app. */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    {/* Monthly Total */}
-                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0">
-                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Monthly DC Total (m³)</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{n(grandTotal)}</h3>
-                            </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-mb-secondary-light flex-shrink-0">
-                                <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-mb-secondary" />
-                            </div>
-                        </div>
-                    </div>
-                    {/* Total Meters */}
-                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0">
-                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">DC Meters</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-foreground tabular-nums tracking-tight">{dcMeters.length}</h3>
-                            </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-mb-primary-light/20 flex-shrink-0">
-                                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-mb-primary" />
-                            </div>
-                        </div>
-                    </div>
-                    {/* Active Meters (latest day) */}
-                    <div className="bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_30px_-4px_rgba(6,81,237,0.15)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.4)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out">
-                        <div className="flex justify-between items-start gap-2">
-                            <div className="min-w-0">
-                                <p className="text-muted-foreground dark:text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">Active (Day {latestDay})</p>
-                                <h3 className="text-lg sm:text-xl md:text-2xl font-medium text-mb-success-text tabular-nums tracking-tight">
-                                    {activeMeters}<span className="text-muted-foreground dark:text-muted-foreground text-base font-semibold"> / {dcMeters.length}</span>
-                                </h3>
-                            </div>
-                            <div className="p-2 sm:p-3 rounded-lg bg-mb-success-light flex-shrink-0">
-                                <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-mb-success" />
-                            </div>
-                        </div>
-                    </div>
+                    <HierarchyStatCard
+                        label="Monthly DC Total (m³)"
+                        value={n(grandTotal)}
+                        icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={PALETTE.blue}
+                    />
+                    <HierarchyStatCard
+                        label="DC Meters"
+                        value={String(dcMeters.length)}
+                        icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={PALETTE.primary}
+                    />
+                    <HierarchyStatCard
+                        label={`Active (Day ${latestDay})`}
+                        value={`${activeMeters} / ${dcMeters.length}`}
+                        icon={<Zap className="w-4 h-4 sm:w-5 sm:h-5" />}
+                        color={PALETTE.mint}
+                        valueColor="var(--mb-success-text)"
+                    />
                 </div>
 
                 <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />

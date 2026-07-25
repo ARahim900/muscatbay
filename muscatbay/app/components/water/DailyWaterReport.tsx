@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { TabNavigation } from "@/components/shared/tab-navigation";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import { getDynamicMonths, findLatestMonthWithData } from "@/lib/water-data";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import { getSupabaseClient } from "@/lib/supabase";
@@ -127,6 +128,16 @@ export function DailyWaterReport() {
     useEffect(() => {
         saveFilterPreferences('water-daily', { tab: activeTab, zone: activeZone });
     }, [activeTab, activeZone]);
+
+    // Days the selected month actually has — the slider and the chevrons are
+    // bounded by this, so e.g. day 30 is unreachable in February.
+    const maxDay = daysInMonth(selectedMonth);
+
+    // Guard against a stale selection surviving a month change (e.g. day 31 in
+    // Jan → Feb). Clamping here rather than at every setSelectedMonth callsite.
+    useEffect(() => {
+        setSelectedDay(d => (d > maxDay ? maxDay : d));
+    }, [maxDay]);
 
     // ── Cross-navigation: Zone Watch cards/heatmap → Zone Analysis drill-down ──
     const inspectZone = useCallback((zone: string, day?: number) => {
@@ -335,17 +346,17 @@ export function DailyWaterReport() {
                                 <span className={cn(
                                     "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
                                     isLive
-                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                        : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                                        ? "bg-mb-success-light text-mb-success-text"
+                                        : "bg-muted text-muted-foreground"
                                 )}>
-                                    <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} />
+                                    <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} aria-hidden="true" />
                                     {isLive ? "Live" : "Offline"}
                                 </span>
 
                                 {/* Loading indicator */}
                                 {status === 'loading' && (
-                                    <span className="flex items-center gap-1 text-xs text-teal-600 dark:text-teal-400">
-                                        <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+                                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                        <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Loading…
                                     </span>
                                 )}
 
@@ -388,8 +399,9 @@ export function DailyWaterReport() {
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </Button>
-                            <span className="text-base font-medium text-primary min-w-[56px] tabular-nums text-right">
+                            <span className="text-base font-medium text-primary min-w-[80px] tabular-nums text-right">
                                 Day {selectedDay}
+                                <span className="text-muted-foreground"> / {maxDay}</span>
                             </span>
                         </div>
                     </div>
@@ -413,6 +425,7 @@ export function DailyWaterReport() {
 
                     {/* ── Zone Watch — fleet view, heatmap, leak triage ───── */}
                     {activeTab === 'watch' && (
+                        <SectionBoundary title="Zone Watch">
                         <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                             <ZoneWatch
                                 briefing={briefing}
@@ -422,10 +435,12 @@ export function DailyWaterReport() {
                                 onInspectZone={inspectZone}
                             />
                         </div>
+                        </SectionBoundary>
                     )}
 
                     {/* ── Zone Analysis — per-zone drill-down ─────────────── */}
                     {activeTab === 'zones' && (
+                        <SectionBoundary title="Zone Analysis">
                         <div id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                             {/* Zone selector pills (DC now has its own tab) */}
                             <Card className="card-elevated">
@@ -483,10 +498,12 @@ export function DailyWaterReport() {
                                 buildingRows={reportData.buildingRows}
                             />
                         </div>
+                        </SectionBoundary>
                     )}
 
                     {/* ── Direct Connections ──────────────────────────────── */}
                     {activeTab === 'dc' && (
+                        <SectionBoundary title="Direct Connections">
                         <div id="panel-dc" role="tabpanel" aria-labelledby="tab-dc" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                             <DCAnalyticsPanel
                                 reportData={reportData}
@@ -496,10 +513,12 @@ export function DailyWaterReport() {
                             />
                             <DCDailyTable monthData={monthData} />
                         </div>
+                        </SectionBoundary>
                     )}
 
                     {/* ── Daily Database — meter × day ledger ─────────────── */}
                     {activeTab === 'database' && (
+                        <SectionBoundary title="Daily Database">
                         <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                             <DailyDatabase
                                 monthData={monthData}
@@ -507,10 +526,12 @@ export function DailyWaterReport() {
                                 month={selectedMonth}
                             />
                         </div>
+                        </SectionBoundary>
                     )}
 
                     {/* ── Exceptions & Actions — daily action queue ───────── */}
                     {activeTab === 'exceptions' && (
+                        <SectionBoundary title="Exceptions">
                         <div id="panel-exceptions" role="tabpanel" aria-labelledby="tab-exceptions" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                             <DailyExceptions
                                 monthData={monthData}
@@ -518,6 +539,7 @@ export function DailyWaterReport() {
                                 month={selectedMonth}
                             />
                         </div>
+                        </SectionBoundary>
                     )}
                 </>
             )}

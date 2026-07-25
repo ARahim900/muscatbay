@@ -86,7 +86,7 @@ export function ElectricityAnalysisView({
                 <CardHeader className="card-elevated-header">
                     <div className="flex items-center justify-between">
                         <CardTitle className="text-lg flex items-center gap-2">
-                            <LineChart className="w-5 h-5 text-amber-500" />
+                            <LineChart className="w-5 h-5 text-module-electricity" />
                             {selectedMeter !== "All"
                                 ? `Monthly Trend — ${analysisData.selectedMeterName}`
                                 : analysisType !== "All" && metersOfSelectedType.length <= 10
@@ -247,7 +247,7 @@ export function ElectricityAnalysisView({
                                                                     <div className="flex items-center gap-2 text-xs">
                                                                         <div className="w-2 h-2 rounded-full bg-mb-warning" />
                                                                         <span className="text-muted-foreground">vs Avg:</span>
-                                                                        <span className={`font-mono font-medium ${diff > 0 ? 'text-red-500' : 'text-emerald-500'}`}>{diff > 0 ? '+' : ''}{pct}%</span>
+                                                                        <span className={`font-mono font-medium ${diff > 0 ? 'text-mb-danger-text' : 'text-mb-success-text'}`}>{diff > 0 ? '+' : ''}{pct}%</span>
                                                                     </div>
                                                                 </div>
                                                             );

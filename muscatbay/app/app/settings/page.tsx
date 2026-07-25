@@ -248,7 +248,7 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-3">
                                             <Label
                                                 htmlFor="avatar-upload"
-                                                className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-primary-foreground hover:bg-sidebar/90 h-9 px-4 py-2"
+                                                className="cursor-pointer inline-flex min-h-11 items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-primary-foreground hover:bg-sidebar/90 px-4 py-2"
                                             >
                                                 <Upload className="me-2 h-4 w-4" />
                                                 Change Avatar

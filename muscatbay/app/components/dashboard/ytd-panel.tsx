@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, CalendarRange, Info } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Info } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { YtdMetric } from "@/hooks/useDashboardData";
@@ -31,7 +31,7 @@ export function YtdPanel({ metrics }: { metrics: YtdMetric[] }) {
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                 <CardTitle className="flex items-center gap-2">
-                    <CalendarRange className="h-5 w-5 text-secondary" aria-hidden="true" />
+                    <CalendarDays className="h-5 w-5 text-secondary" aria-hidden="true" />
                     Year to date &mdash; {year}
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">

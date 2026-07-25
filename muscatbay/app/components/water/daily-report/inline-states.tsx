@@ -35,9 +35,9 @@ export function LoadingState() {
 /** Genuine fetch/network/database failure — alarm styling is earned here. */
 export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
-        <div className="flex flex-col items-center justify-center py-16 text-center px-4">
-            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
-                <WifiOff className="h-10 w-10 text-red-500" />
+        <div role="alert" className="flex flex-col items-center justify-center py-16 text-center px-4">
+            <div className="p-4 rounded-full bg-mb-danger-light mb-4">
+                <WifiOff className="h-10 w-10 text-mb-danger-text" aria-hidden="true" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
                 Failed to Load Report

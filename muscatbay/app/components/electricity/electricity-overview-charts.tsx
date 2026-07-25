@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
     Tooltip, BarChart, Bar, Cell,
-    Legend,
+    Legend, ReferenceLine,
 } from "recharts";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
+import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
 import { CHART_COLORS } from "./electricity-shared";
 
 interface MonthlyPoint {
@@ -29,11 +30,25 @@ interface OverviewChartsProps {
 }
 
 export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByType }: OverviewChartsProps) {
+    // Management decision support: without a reference the trend is only an
+    // average of itself. The target is a CONFIGURED value (lib/config.ts) — when
+    // none has been agreed we say so instead of inventing one, and derive the
+    // kWh line from the budget only when a real budget exists.
+    const targetKWh = ELECTRICITY_TARGETS.MONTHLY_TARGET_KWH
+        ?? (ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR !== null
+            ? ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR / ELECTRICITY_RATES.RATE_PER_KWH
+            : null);
+
     return (
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5">
             <Card className="lg:col-span-3">
                 <CardHeader>
                     <CardTitle>Monthly Consumption Trend</CardTitle>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        {targetKWh !== null
+                            ? `Dashed line = the configured monthly target of ${Math.round(targetKWh).toLocaleString("en-US")} kWh (${(targetKWh * ELECTRICITY_RATES.RATE_PER_KWH).toLocaleString("en-US", { maximumFractionDigits: 0 })} OMR at ${ELECTRICITY_RATES.RATE_PER_KWH} OMR/kWh).`
+                            : `No monthly consumption target or budget has been configured, so this trend has no reference line — it can only be compared with its own history. ${ELECTRICITY_TARGETS.SOURCE_NOTE}.`}
+                    </p>
                 </CardHeader>
                 <CardContent>
                     <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] sm:h-[260px] md:h-[300px] min-h-[260px]">
@@ -49,6 +64,16 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                                 <YAxis className="text-xs" tickFormatter={(v) => `${v / 1000}k`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} label={{ value: 'kWh', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }} />
                                 <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                 <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
+                                {targetKWh !== null && (
+                                    <ReferenceLine
+                                        y={targetKWh}
+                                        stroke="var(--mb-success)"
+                                        strokeDasharray="6 4"
+                                        strokeWidth={2}
+                                        ifOverflow="extendDomain"
+                                        label={{ value: 'Target', position: 'right', fill: 'var(--chart-axis)', fontSize: 11, fontWeight: 600 }}
+                                    />
+                                )}
                                 <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
                             </AreaChart>
                         </ResponsiveContainer>

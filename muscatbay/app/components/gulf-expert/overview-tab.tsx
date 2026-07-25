@@ -142,16 +142,22 @@ export function OverviewTab({ data }: OverviewTabProps) {
   // contract type and its real status badge — never a hardcoded figure.
   const currentContracts = useMemo(() => {
     const active = contracts.filter((c) => c.status?.toLowerCase() === "active");
-    if (active.length > 0) {
-      return [...active].sort((a, b) => (a.contract_type || "").localeCompare(b.contract_type || ""));
-    }
-    const latestByType = new Map<string, GulfExpertContract>();
-    contracts.forEach((c) => {
-      const key = c.contract_type || "AMC";
-      const existing = latestByType.get(key);
-      if (!existing || (c.end_date ?? "") > (existing.end_date ?? "")) latestByType.set(key, c);
-    });
-    return [...latestByType.values()].sort((a, b) => (a.contract_type || "").localeCompare(b.contract_type || ""));
+    // Fallback: the newest agreement of each contract type (end_date, then id
+    // as the tiebreak) so the cards never go blank just because nothing is
+    // flagged ACTIVE — the real status badge tells the operator what it is.
+    const latestPerType = contracts.filter(
+      (c) =>
+        !contracts.some(
+          (o) =>
+            (o.contract_type || "") === (c.contract_type || "") &&
+            ((o.end_date ?? "") > (c.end_date ?? "") ||
+              ((o.end_date ?? "") === (c.end_date ?? "") && o.id > c.id)),
+        ),
+    );
+    const pool = active.length > 0 ? active : latestPerType;
+    return pool
+      .slice()
+      .sort((a, b) => (a.contract_type || "").localeCompare(b.contract_type || ""));
   }, [contracts]);
 
   // Open actions come from the correspondence log's own action_required /

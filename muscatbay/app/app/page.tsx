@@ -24,7 +24,7 @@ import {
     AlertTriangle,
     ArrowUpRight,
     Info,
-    Presentation,
+    LayoutDashboard,
     Recycle,
     TrendingUp,
     Wifi,
@@ -58,9 +58,9 @@ type ActivityType = RecentActivityItem["type"];
  * components/alerts/alerts-feed.tsx so the two surfaces agree.
  */
 const ACTIVITY_META: Record<ActivityType, { Icon: LucideIcon; label: string; tint: string; text: string }> = {
-    critical: { Icon: XCircle, label: "Critical", tint: "bg-mb-danger/20", text: "text-[var(--mb-danger-text)]" },
-    warning: { Icon: AlertTriangle, label: "Warning", tint: "bg-mb-warning/20", text: "text-[var(--mb-warning-text)]" },
-    info: { Icon: Info, label: "Info", tint: "bg-mb-info/20", text: "text-[var(--mb-info-text)]" },
+    critical: { Icon: XCircle, label: "Critical", tint: "bg-mb-danger/20", text: "text-mb-danger-text" },
+    warning: { Icon: AlertTriangle, label: "Warning", tint: "bg-mb-warning/20", text: "text-mb-warning-text" },
+    info: { Icon: Info, label: "Info", tint: "bg-mb-info/20", text: "text-mb-info-text" },
 };
 
 /** An activity row plus a key that is stable and unique across the feed. */
@@ -252,7 +252,7 @@ function DashboardContent() {
                             >
                                 {isPresentMode
                                     ? <X className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
-                                    : <Presentation className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
+                                    : <LayoutDashboard className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" />}
                                 <span className="hidden sm:inline">{isPresentMode ? "Exit board mode" : "Board mode"}</span>
                             </Link>
                             <button

@@ -34,7 +34,7 @@ import { Button } from "@/components/ui/button";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { DateRangePicker } from "@/components/water/date-range-picker";
-import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
 import type { WaterMeter } from "@/lib/water-data";
 import {
     buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT, LOSS_RATE_OMR, TYPECOL,
@@ -1265,11 +1265,11 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
 
 /** Persisted Monthly filter state — mirrors what Daily stores under `water-daily`. */
 const MONTHLY_PREFS_KEY = "water-monthly";
-interface MonthlyPrefs {
+type MonthlyPrefs = FilterPreferences & {
     tab?: string;
     startMonth?: string;
     endMonth?: string;
-}
+};
 const isSectionTab = (v: unknown): v is string => SECTION_TABS.some((t) => t.key === v);
 
 export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter[] }) {
@@ -1308,7 +1308,7 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
 
     useEffect(() => {
         if (!startMonth || !endMonth) return;
-        saveFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY, { tab, startMonth, endMonth });
+        saveFilterPreferences(MONTHLY_PREFS_KEY, { tab, startMonth, endMonth });
     }, [tab, startMonth, endMonth]);
 
     // Year is derived from the selected end month, with a safe fallback.

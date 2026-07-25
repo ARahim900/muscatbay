@@ -86,8 +86,6 @@ export {
     transformWaterLossDaily,
     // Fire Safety
     type FireSafetyEquipment,
-    type FireQuotation,
-    type FireQuotationItem,
 } from '@/entities';
 
 // API functions

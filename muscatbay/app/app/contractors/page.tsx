@@ -17,7 +17,7 @@ import {
 import type {
     AmcContractorDetails, AmcContractorExpiry, AmcContractorPricing,
 } from "@/entities/contractor";
-import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { StatsGridSkeleton, TableSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -380,6 +380,11 @@ export default function ContractorsPage() {
                     case 'service': aV = a["Service Provided"] || ''; bV = b["Service Provided"] || ''; break;
                     case 'status': aV = a.Status || ''; bV = b.Status || ''; break;
                     case 'annual': aV = a["Annual Value (OMR)"] || 0; bV = b["Annual Value (OMR)"] || 0; break;
+                    // Sort by real days-to-expiry; unreadable dates sink to the end.
+                    case 'expiry':
+                        aV = expiryStatus(a["End Date"]).days ?? Number.MAX_SAFE_INTEGER;
+                        bV = expiryStatus(b["End Date"]).days ?? Number.MAX_SAFE_INTEGER;
+                        break;
                 }
                 if (typeof aV === 'string') return trackerSortDir === 'asc' ? aV.localeCompare(bV as string) : (bV as string).localeCompare(aV);
                 return trackerSortDir === 'asc' ? (aV as number) - (bV as number) : (bV as number) - (aV as number);
@@ -565,6 +570,9 @@ export default function ContractorsPage() {
         },
     ];
 
+    // First load with nothing on screen yet — sections show in-place skeletons.
+    const firstLoad = loading && contracts.length === 0 && trackerData.length === 0;
+
     const hasContractFilters = search || (selectedFlows.length > 0 && selectedFlows.length < uniqueFlows.length);
     const hasTrackerFilters = trackerSearch ||
         (selectedStatuses.length > 0 && selectedStatuses.length < uniqueStatuses.length) ||
@@ -575,20 +583,37 @@ export default function ContractorsPage() {
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             {/* Header + Status */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* No primary action: the app has no contractor-creation flow, and
+                    a button wired to nothing is worse than no button. */}
                 <PageHeader
                     title="Contractor Management"
-                    description="Contracts, year-by-year costs, and AMC service tracking"
-                    action={{ label: "Add Contractor", icon: Plus }}
+                    description="Contracts, renewals, commercial terms and year-by-year costs"
                 />
+                {/* There is no demo dataset for contractors — say "no live data"
+                    rather than implying a local fallback that does not exist. */}
                 <PageStatusBar
                     isConnected={dataSource === 'supabase'}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
+                    error={error}
+                    loading={firstLoad}
+                    disconnectedLabel="No Live Data"
                 />
             </div>
 
+            {/* A failed load is reported as a failure — never as an empty database. */}
+            {error && !firstLoad && (
+                <div role="alert" className="flex items-start gap-2 rounded-[10.5px] border border-border bg-mb-danger-light p-4 text-mb-danger-text">
+                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <div>
+                        <p className="text-sm font-semibold">Contractor data could not be loaded</p>
+                        <p className="mt-0.5 text-xs">{error}</p>
+                    </div>
+                </div>
+            )}
+
             {/* Stats */}
-            <StatsGrid stats={stats} />
+            {firstLoad ? <StatsGridSkeleton count={6} /> : <StatsGrid stats={stats} />}
 
             {/* Tabs */}
             <TabNavigation
@@ -596,13 +621,35 @@ export default function ContractorsPage() {
                 onTabChange={setActiveTab}
                 tabs={[
                     { key: 'tracker', label: 'AMC Tracker', icon: List },
+                    { key: 'renewals', label: 'Renewals', icon: CalendarClock },
                     { key: 'contracts', label: 'Contracts', icon: FileText },
+                    { key: 'terms', label: 'Terms & SLA', icon: ScrollText },
                     { key: 'yearly', label: 'Yearly Costs', icon: BarChart3 },
                 ]}
             />
 
+            {/* ═══════════════════ TAB: RENEWALS ═══════════════════ */}
+            {activeTab === 'renewals' && (
+                <SectionBoundary title="Contract renewals">
+                    <RenewalsPanel expiry={expiry} tracker={trackerData} loading={firstLoad} />
+                </SectionBoundary>
+            )}
+
+            {/* ═══════════════════ TAB: TERMS & SLA ═══════════════════ */}
+            {activeTab === 'terms' && (
+                <SectionBoundary title="Commercial terms & SLA">
+                    <TermsPanel details={details} loading={firstLoad} />
+                </SectionBoundary>
+            )}
+
             {/* ═══════════════════ TAB 1: CONTRACTS ═══════════════════ */}
-            {activeTab === 'contracts' && (
+            {activeTab === 'contracts' && firstLoad && (
+                <div className="rounded-[10.5px] border border-border bg-card p-4 sm:p-6">
+                    <TableSkeleton columns={8} rows={8} />
+                </div>
+            )}
+            {activeTab === 'contracts' && !firstLoad && (
+                <SectionBoundary title="Contracts">
                 <div className="space-y-4">
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
@@ -778,10 +825,17 @@ export default function ContractorsPage() {
                             onPageChange={setCurrentPage} onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }} />
                     )}
                 </div>
+                </SectionBoundary>
             )}
 
             {/* ═══════════════════ TAB 2: YEARLY COSTS ═══════════════════ */}
-            {activeTab === 'yearly' && (
+            {activeTab === 'yearly' && firstLoad && (
+                <div className="rounded-[10.5px] border border-border bg-card p-4 sm:p-6">
+                    <TableSkeleton columns={8} rows={6} />
+                </div>
+            )}
+            {activeTab === 'yearly' && !firstLoad && (
+                <SectionBoundary title="Yearly costs">
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
@@ -794,6 +848,9 @@ export default function ContractorsPage() {
                             <span className="hidden sm:inline">Export CSV</span>
                         </button>
                     </div>
+
+                    {/* Chart first: the shape of the spend before the detail matrix. */}
+                    <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
 
                     {yearlyCosts.length === 0 ? (
                         <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
@@ -896,11 +953,25 @@ export default function ContractorsPage() {
                             )}
                         </>
                     )}
+
+                    {/* AMC pricing schedule — amc_contractor_pricing, previously unrendered */}
+                    <div className="pt-2">
+                        <h2 className="text-base font-semibold text-foreground dark:text-muted-foreground">AMC Pricing Schedule</h2>
+                        <p className="mb-3 mt-1 text-xs text-muted-foreground">Per-contract-year rates as recorded for each contractor.</p>
+                        <PricingPanel pricing={pricing} loading={false} />
+                    </div>
                 </div>
+                </SectionBoundary>
             )}
 
             {/* ═══════════════════ TAB 3: AMC TRACKER (legacy) ═══════════════════ */}
-            {activeTab === 'tracker' && (
+            {activeTab === 'tracker' && firstLoad && (
+                <div className="rounded-[10.5px] border border-border bg-card p-4 sm:p-6">
+                    <TableSkeleton columns={9} rows={8} />
+                </div>
+            )}
+            {activeTab === 'tracker' && !firstLoad && (
+                <SectionBoundary title="AMC tracker">
                 <div className="space-y-4">
                     <TableToolbar>
                         <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
@@ -963,6 +1034,7 @@ export default function ContractorsPage() {
                                         <div><span className="text-muted-foreground">Monthly:</span> <span className="font-mono text-foreground dark:text-muted-foreground/70">{c["Contract (OMR)/Month"] || '-'}</span></div>
                                         <div><span className="text-muted-foreground">Annual:</span> <span className="font-mono font-semibold text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</span></div>
                                     </div>
+                                    <ExpiryBadge raw={c["End Date"]} showDetail />
                                     {c["Renewal Plan"] && (
                                         <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><RefreshCw className="h-3 w-3" />{c["Renewal Plan"]}</span>
                                     )}
@@ -997,6 +1069,7 @@ export default function ContractorsPage() {
                                     <TableHead>Type</TableHead>
                                     <TableHead className="hidden lg:table-cell">Start</TableHead>
                                     <TableHead className="hidden lg:table-cell">End</TableHead>
+                                    <SortableTableHead field="expiry" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Expiry</SortableTableHead>
                                     <SortableTableHead field="annual" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort} align="right" className="text-right">Annual</SortableTableHead>
                                     <TableHead className="text-center w-16">Doc</TableHead>
                                     <TableHead className="hidden xl:table-cell">Renewal</TableHead>
@@ -1007,7 +1080,7 @@ export default function ContractorsPage() {
                                 {/* Spacer row — keeps virtualized rows at their true scroll offset */}
                                 {trackerVirtual.paddingTop > 0 && (
                                     <tr aria-hidden="true">
-                                        <td colSpan={10} style={{ height: trackerVirtual.paddingTop, padding: 0, border: 0 }} />
+                                        <td colSpan={11} style={{ height: trackerVirtual.paddingTop, padding: 0, border: 0 }} />
                                     </tr>
                                 )}
                                 {trackerVirtual.virtualItems.map(vi => {
@@ -1028,6 +1101,9 @@ export default function ContractorsPage() {
                                         <TableCell className="text-muted-foreground hidden lg:table-cell">
                                             {c["End Date"] ? <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{c["End Date"]}</span> : '-'}
                                         </TableCell>
+                                        {/* Parsed end date compared to today — a contract that has run
+                                            out now says so instead of printing an inert string. */}
+                                        <TableCell className="whitespace-nowrap"><ExpiryBadge raw={c["End Date"]} /></TableCell>
                                         <TableCell className="num text-primary">{c["Annual Value (OMR)"]?.toLocaleString('en-US', { maximumFractionDigits: 1 }) || '-'}</TableCell>
                                         <TableCell className="text-center px-3">
                                             <button
@@ -1052,12 +1128,12 @@ export default function ContractorsPage() {
                                 })}
                                 {trackerVirtual.paddingBottom > 0 && (
                                     <tr aria-hidden="true">
-                                        <td colSpan={10} style={{ height: trackerVirtual.paddingBottom, padding: 0, border: 0 }} />
+                                        <td colSpan={11} style={{ height: trackerVirtual.paddingBottom, padding: 0, border: 0 }} />
                                     </tr>
                                 )}
                                 {filteredTracker.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={10}>
+                                        <TableCell colSpan={11}>
                                             <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                                 title={hasTrackerFilters ? "No entries match" : "No tracker data"}
                                                 description="Adjust filters or add data." />
@@ -1074,6 +1150,7 @@ export default function ContractorsPage() {
                             onPageChange={setTrackerPage} onPageSizeChange={(s) => { setTrackerPageSize(s); setTrackerPage(1); }} />
                     )}
                 </div>
+                </SectionBoundary>
             )}
 
             {/* ═══════════════════ CONTRACT PDF MODAL ═══════════════════ */}
@@ -1106,6 +1183,12 @@ export default function ContractorsPage() {
                                 className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border bg-white dark:bg-muted text-foreground dark:text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
                             />
                             <p className="text-xs text-muted-foreground">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
+                            {pdfLinkError && (
+                                <p role="alert" className="flex items-start gap-2 rounded-[7px] bg-mb-danger-light p-2.5 text-xs text-mb-danger-text">
+                                    <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                    <span><span className="font-semibold">Not saved.</span> {pdfLinkError}</span>
+                                </p>
+                            )}
                             <div className="flex gap-2">
                                 <button
                                     onClick={savePdfLink}

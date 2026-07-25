@@ -21,11 +21,12 @@ export function ElectricityLoadingSkeleton() {
                 </div>
                 <Skeleton className="h-8 w-36 rounded-full" />
             </div>
-            {/* Tabs skeleton */}
+            {/* Tabs skeleton — exactly two pills, matching the page's two tabs
+                ("Load Watch" + "Meters & Data"). A third pill here caused a
+                visible layout shift the moment the real tabs rendered. */}
             <div className="flex gap-2">
-                <Skeleton className="h-10 w-28 rounded-lg" />
+                <Skeleton className="h-10 w-32 rounded-lg" />
                 <Skeleton className="h-10 w-36 rounded-lg" />
-                <Skeleton className="h-10 w-28 rounded-lg" />
             </div>
             {/* Date filter skeleton */}
             <div className="p-6 rounded-xl border border-border/60 bg-white dark:bg-muted/50">

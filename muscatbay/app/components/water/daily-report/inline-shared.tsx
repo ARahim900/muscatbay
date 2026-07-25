@@ -37,7 +37,23 @@ export const CHART_COLORS = {
  * vertical when the gauges stack on narrow screens.
  */
 export function DailyLossConnector({ loss, of }: { loss: number | null; of: number }) {
-    const v = loss ?? 0;
+    // `null` = the balance could not be computed (the bulk meter was not read).
+    // Showing that as "0 · balanced" claimed the zone reconciled perfectly.
+    if (loss === null) {
+        return (
+            <div className="flex shrink-0 flex-col items-center justify-center">
+                <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" aria-hidden="true" />
+                <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+                <div className="mt-2 flex flex-col items-center rounded-lg border border-dashed border-border px-3 py-1.5">
+                    <span className="whitespace-nowrap text-base font-bold text-muted-foreground sm:text-lg">—</span>
+                    <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[11px]">
+                        no reading
+                    </span>
+                </div>
+            </div>
+        );
+    }
+    const v = loss;
     const isLoss = v > 0;
     const tint = isLoss ? CHART_COLORS.loss : CHART_COLORS.success;
     const pct = of > 0 ? Math.abs(Math.round((v / of) * 1000) / 10) : 0;
@@ -332,13 +348,20 @@ export function TableSearch({ value, onChange, placeholder }: { value: string; o
     );
 }
 
+/**
+ * Status chip.
+ *
+ * Token-only: the `--mb-*` status pairs already flip correctly between light
+ * and dark, whereas the raw Tailwind `emerald/red/amber` palette this used to
+ * carry was a second, divergent status palette that ignored the app's theme.
+ */
 export function StatusChip({ label, color }: { label: string; color: 'success' | 'danger' | 'warning' | 'default' | 'primary' }) {
     const styles = {
-        success: 'bg-emerald-50 text-emerald-600 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400 dark:ring-emerald-500/20',
-        danger: 'bg-red-50 text-red-600 ring-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:ring-red-500/20',
-        warning: 'bg-amber-50 text-amber-600 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-500/20',
-        default: 'bg-muted text-muted-foreground ring-border/10 dark:bg-muted/10 dark:text-muted-foreground dark:ring-border/20',
-        primary: 'bg-secondary text-primary-foreground ring-secondary/60 dark:bg-secondary/90 dark:text-primary-foreground dark:ring-secondary/50',
+        success: 'bg-mb-success-light text-mb-success-text ring-mb-success/30',
+        danger: 'bg-mb-danger-light text-mb-danger-text ring-mb-danger/30',
+        warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/30',
+        default: 'bg-muted text-muted-foreground ring-border/20',
+        primary: 'bg-secondary text-primary-foreground ring-secondary/60',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
