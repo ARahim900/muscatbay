@@ -24,6 +24,12 @@
 | **Lint** | `cd muscatbay/app && npm run lint` |
 | **Test** | `cd muscatbay/app && npm run test` |
 | **Deploy** | Vercel (auto-deploy from main) |
+| **Mobile app** | `mobile/` — Expo SDK 57 + Expo Router + NativeWind |
+| **Mobile run** | `cd mobile && npm install && npx expo start` (scan QR with Expo Go) |
+| **Mobile check** | `cd mobile && npx tsc --noEmit` |
+
+> The web app is a PWA. **A PWA cannot be listed on the App Store** — that is
+> what `mobile/` exists for. Store distribution needs a native binary via EAS.
 
 ## Project Structure
 
@@ -103,7 +109,20 @@ muscatbay/app/
 - Brand colors: primary `#4E4456` (purple), accent `#A1D1D5` (soft teal)
 - **Authoritative brand spec**: `BRAND_DESIGN.md` (overrides any older tokens elsewhere)
 - Full design system also documented in `muscatbay/app/DESIGN_SYSTEM.md`
-- Fonts: **Geist** (UI/body, `--font-sans`) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, wired through `tailwind.config.ts` (`fontFamily.sans` / `fontFamily.mono`) so every `font-sans`/`font-mono` class resolves to them. Never re-declare `font-family` elsewhere. Geist is a **variable font (100–900)**, so every Tailwind weight is a genuine glyph: `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all render real weights — no faux synthesis.
+- Fonts: **Geist** (UI/body, `--font-sans`) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, resolved through the `@theme inline` block in `app/globals.css`. Never re-declare `font-family` elsewhere. Geist is a **variable font (100–900)**, so every Tailwind weight is a genuine glyph: `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all render real weights — no faux synthesis.
+
+> ⚠️ **`muscatbay/app/tailwind.config.ts` is DEAD CONFIGURATION.** Tailwind 4
+> only loads a JS config via an explicit `@config` directive, and `globals.css`
+> has none — so that file's `fontSize`, `borderRadius`, `boxShadow` and `colors`
+> blocks have **zero effect**. Everything real lives in the `@theme inline`
+> block in `app/globals.css`. Edit tokens there. (Consequence: `text-lg`/`text-xl`
+> are Tailwind's stock 18px/20px, not the 15px/15.75px `DESIGN_SYSTEM.md` claims.)
+
+> ⚠️ **Two known doc-vs-code conflicts where the CODE is correct.**
+> `BRAND_DESIGN.md` §3 names **Inter**; the app ships **Geist**.
+> `BRAND_DESIGN.md` §2.3/§8 give text-on-teal as `#FFFFFF` (~1.5:1), which
+> contradicts that same doc's own §10 accessibility table; `globals.css` uses
+> `--secondary-foreground: #1F2937` (~10:1) and that is what to follow.
 
 ### Components
 - **UI primitives**: shadcn/ui (base-vega style) in `components/ui/`
@@ -147,7 +166,11 @@ comment documenting the layering — read it before adding to it.
 ## Common Patterns
 
 ### Data fetching in pages
-Pages use server actions or client-side hooks. Water and STP pages use custom hooks (`useSTPData`, etc.) that call functions from `functions/api/`.
+Module pages are client components that fetch on mount through `functions/api/`,
+seeded from `lib/page-cache.ts` (session-scoped stale-while-revalidate) so a
+revisit paints instantly and refreshes in place. Live updates come from
+`hooks/useSupabaseRealtime.ts`. Read failures must surface an explicit error
+state — see the non-negotiables below.
 
 ### Shared components
 - `StatsGrid` — KPI cards with trend indicators
@@ -155,7 +178,15 @@ Pages use server actions or client-side hooks. Water and STP pages use custom ho
 - `TabNavigation` — Tab switching with icons
 - `Breadcrumbs` — Route-aware breadcrumbs
 - `PageHeader` — Consistent page headers
-- `components/shared/inspection.tsx` — the shared **inspection toolkit** (one severity model + `--mb-*` tokens, `HealthCard`, `MetricHeatmap`, `ExceptionsRegister`). This is how the Water "watch" pattern is ported to other modules — STP `Plant Watch` and Electricity `Load Watch` both render from it. Reuse it (feed a section's severity + rows) instead of rebuilding severity cards / anomaly registers per module.
+- `components/shared/inspection.tsx` — the shared **inspection toolkit** (one severity model, `HealthCard`, `MetricHeatmap`, `SeverityChip`, `Sparkline`). This is how the Water "watch" pattern is ported to other modules — STP `Plant Watch` and Electricity `Load Watch` both render from it. Reuse it instead of rebuilding severity cards per module.
+- `components/shared/findings-register.tsx` — the **identification-only** register (severity / item / value / remarks / suggested action). It deliberately has **no Owner and no Status column**; see the O&M scope boundary below. The old `ExceptionsRegister`, which hardcoded those two columns, was deleted 2026-07-25 — do not resurrect that shape.
+- `components/shared/section-boundary.tsx` — `<SectionBoundary title="…">` wraps every major page section so one render fault can't blank a whole route.
+- `lib/thresholds.ts` — the **single source of truth for severity thresholds** across Electricity and STP. Four divergent copies once meant the same meter read "Critical" on one tab and "High" on the tab below it. Add gates here, never inline.
+
+### Severity colour model (one model, app-wide)
+- **Saturated indicators** (dots, stripes, icons) → `--status-*`
+- **Tinted surfaces** (callout backgrounds) → `--mb-*-light`
+- **Text on a tint** → `--mb-*-text` (never `--mb-*`, which are background tints and fail contrast as text)
 
 ### Adding a new page
 1. Create the route in `app/<route>/page.tsx` — **nothing else goes in that folder**
@@ -179,12 +210,55 @@ Pages use server actions or client-side hooks. Water and STP pages use custom ho
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anonymous key
 - See `.env.example` for template
 
+## Non-negotiables
+
+Two rules override convenience, "helpfulness", and any instinct to fill a gap.
+Both were established on 2026-07-25 after a full front-end and O&M review.
+
+### 1. Never fabricate data. Ever.
+
+An operations dashboard that shows a plausible wrong number is worse than one
+that shows nothing. If data is missing or a fetch fails, say so — never
+substitute, estimate, default to zero, or hardcode a figure that looks real.
+
+Three live instances were found and removed; do not reintroduce this pattern:
+- the **login screen** rendered a "Live System Status" panel with invented
+  figures (2,847 m³ water, 148 kWh, 892 m³ TSE) on a page that cannot read data;
+- **`/water`** silently swapped in `MOCK_WATER_METERS` on a failed *or empty*
+  fetch and rendered it as an ordinary dashboard;
+- **`lib/water-data.ts`** held a 366-entry demo array behind `getWaterMeters()`
+  that would have returned fake readings to any future caller.
+
+Concretely: missing ≠ zero (keep `number | null` through the pipeline); never
+clamp a negative reading to 0 to make a chart look tidy; surface data-integrity
+anomalies rather than hiding them; if a value can't be computed, render an
+honest "—"/"no reading" with an explanation. Mock data may only appear when
+Supabase is *not configured at all*, and must be labelled as such.
+
+### 2. This app identifies issues. It does not track their resolution.
+
+Management confirmed on 2026-07-25 that findings are actioned on the floor and
+the app's job is to surface them. **Do not add** work orders, job cards, task
+assignment, owners, due dates, SLA timers, status transitions, close-out
+evidence, or any audit trail of resolution — and do not add fake affordances
+that imply them (hardcoded `Owner` strings, a literal `Status: "Open"` chip).
+Those were deliberately removed. Reporting a fact that already exists in the
+database (e.g. a contract's expiry date) is *reporting*, not task management,
+and is wanted.
+
+Add these only on an explicit, current instruction from the owner.
+
 ## Code Quality Rules
 - No `any` types — use proper TypeScript types
 - No `SELECT *` — always specify columns in Supabase queries
-- Error handling on all Supabase queries
+- Error handling on all Supabase queries — a failed read shows an error state,
+  never silently-degraded or substituted data
+- Status is never colour-only — always pair colour with an icon **and** a text label
 - Tailwind class ordering via prettier/eslint
 - Components must be properly structured (types → component → exports)
+- Before finishing: `npx tsc --noEmit`, `npx eslint .`, `npx vitest run`,
+  `npm run build` must all pass — and `cd mobile && npx tsc --noEmit` too if you
+  touched `entities/`, `lib/` or `functions/api/`
 
 ## Design Context
 
