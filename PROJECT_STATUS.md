@@ -38,6 +38,63 @@ in one Next.js app backed by Supabase.
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
 
+## 1a. Code layout (reorganised 2026-07-25)
+
+The tree was reorganised on **2026-07-25** along Base44's organisation
+principles, adapted to the App Router (Base44's literal `src/pages/` is
+incompatible with Next.js routing, so the *principles* were applied, not the
+folder names). Full detail: `muscatbay/app/FOLDER_STRUCTURE.md`.
+
+Two rules now hold, and new work must keep them:
+
+1. **`app/` holds routes only.** Thirteen component/helper files that had been
+   added next to their `page.tsx` (`app/contractors/renewals.tsx`,
+   `app/firefighting/equipment-register.tsx`, `app/assets/asset-charts.tsx` …)
+   moved to `components/<module>/`. `app/` is now nothing but Next.js file
+   conventions.
+2. **One predictable home per module**, named as the UI names it:
+   `components/{assets,contractors,dashboard,electricity,firefighting,hvac,stp,water}/`.
+   `components/gulf-expert/` was renamed **`components/hvac/`** — the module is
+   called HVAC everywhere in the UI. (`functions/api/gulf-expert.ts` keeps its
+   name: it maps the `gulf_expert_*` Supabase tables and `mobile/` imports that
+   exact path.)
+
+Supporting changes:
+
+- **Data layer barrels.** Three strictly ordered tiers, one barrel each, each
+  carrying a header comment that documents the layering: `entities/` (types) →
+  `functions/` + `functions/api/` (isomorphic readers) → `actions/`
+  (`'use server'` writers). `actions/index.ts` re-exports `'use server'`
+  modules **and nothing else** — merging the readers in would pull
+  `next/headers` into the client graph. `functions/api/index.ts` now also
+  exports the fire-safety and HVAC readers, which it had been missing.
+- **Naming standardised on kebab-case.** `components/water/DailyWaterReport.tsx`
+  → `daily-water-report.tsx`; `components/NotificationProvider.tsx` and
+  `components/providers.tsx` (the only two loose files at the components root)
+  → `components/providers/{notification-provider,app-providers}.tsx`.
+  `hooks/useThing.ts` deliberately keeps camelCase — the React convention,
+  applied consistently across all 8 hooks.
+- **`components/inspection/findings-register.tsx` → `components/shared/`**, so
+  the inspection toolkit is one folder rather than a folder that shadowed
+  `components/shared/inspection.tsx`.
+- **17 orphan files deleted** (~1,900 LOC): 7 app-authored components with zero
+  importers (`liquid-area-chart`, `data-quality-badge`, `filter-tabs`,
+  `loading-spinner`, `page-transition`, `status-indicator`, `welcome-card`),
+  8 unused shadcn primitives (`alert-dialog`, `calendar`, `combobox`,
+  `dropdown-menu`, `field`, `popover`, `scroll-area`, `sheet` — re-add any with
+  `npx shadcn@latest add <name>`), plus `components/ui/input-group.tsx` and
+  `lib/status-colors.ts`, both already dead. This follows the earlier ~5,400
+  LOC dead-code removal.
+- **`mobile/` untouched and still green.** `entities/`, `lib/` and
+  `functions/api/` were deliberately *not* moved, because the Expo app consumes
+  them via Metro `watchFolders` + a `@/*` alias. `npx tsc --noEmit` passes in
+  `mobile/` after the reorganisation. `lib/status-colors.ts` was safe to delete
+  — it is not in mobile's import set.
+
+The reorganisation was a pure move/rename/re-export refactor: no behaviour,
+logic, styling or copy changed. `tsc --noEmit`, `eslint`, 203/203 Vitest tests
+and `next build` were all green before and after.
+
 ## 2. Module status
 
 | Module | Route | State | Data source | Notes |
@@ -482,6 +539,7 @@ Do not hand-edit existing entries; curate meaning in the sections above.
 |---|---|---|
 | `CLAUDE.md` (root) | Build/run commands, conventions, structure — auto-loaded by AI sessions | maintained |
 | `BRAND_DESIGN.md` / `PRODUCT.md` / `muscatbay/app/DESIGN_SYSTEM.md` | Brand, tokens, design principles (BRAND_DESIGN wins conflicts) | stable |
-| `muscatbay/app/ARCHITECTURE.md`, `FOLDER_STRUCTURE.md`, `README.md` | Architecture & layout snapshots | 2026-05 snapshot |
+| `muscatbay/app/FOLDER_STRUCTURE.md` | Authoritative folder layout + the two placement rules | 2026-07-25 |
+| `muscatbay/app/ARCHITECTURE.md`, `README.md` | Architecture snapshots | 2026-05 snapshot |
 | `muscatbay/app/DATABASE_AUDIT.md`, `AUTHENTICATION_AUDIT_REPORT.md` | Point-in-time audits | 2026-06 / earlier |
 | `muscatbay/app/sql/migrations/` | Schema & data-load history (files are the DB change log) | append-only |
