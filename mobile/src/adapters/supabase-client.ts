@@ -54,18 +54,7 @@ export function getSupabaseClient(): SupabaseClient | null {
         flowType: 'pkce',
       },
       db: { schema: 'public' },
-      global: {
-        fetch: (url, options = {}) => {
-          // Same 30s ceiling the web client applies, and the same rule: never
-          // drop Supabase's own AbortSignal, or its internal auth cancellations
-          // surface as "signal is aborted without reason".
-          const timeoutSignal = AbortSignal.timeout(30_000);
-          const signal = options.signal
-            ? AbortSignal.any([options.signal, timeoutSignal])
-            : timeoutSignal;
-          return fetch(url, { ...options, signal });
-        },
-      },
+      global: { fetch: fetchWithTimeout },
       realtime: { params: { eventsPerSecond: 2 } },
     });
   }
