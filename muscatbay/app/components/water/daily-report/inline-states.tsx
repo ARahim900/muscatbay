@@ -1,6 +1,6 @@
 "use client";
 
-// ─── LoadingState + ErrorState — extracted verbatim from DailyWaterReport.tsx.
+// ─── LoadingState + ErrorState — extracted verbatim from daily-water-report.tsx.
 //     Pure relocation; no behavior changes.
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";

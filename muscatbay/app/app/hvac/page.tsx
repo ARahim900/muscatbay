@@ -10,10 +10,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import {
   LayoutGrid, ClipboardList, AlertTriangle,
 } from "lucide-react";
-import type { GulfExpertData } from "@/components/gulf-expert/types";
-import { OverviewTab } from "@/components/gulf-expert/overview-tab";
-import { FindingsTab } from "@/components/gulf-expert/findings-tab";
-import { RecurringTab } from "@/components/gulf-expert/recurring-tab";
+import type { GulfExpertData } from "@/components/hvac/types";
+import { OverviewTab } from "@/components/hvac/overview-tab";
+import { FindingsTab } from "@/components/hvac/findings-tab";
+import { RecurringTab } from "@/components/hvac/recurring-tab";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";

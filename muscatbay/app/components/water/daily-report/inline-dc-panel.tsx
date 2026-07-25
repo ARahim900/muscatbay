@@ -1,7 +1,7 @@
 "use client";
 
 // ─── DCAnalyticsPanel + DCDailyTable — extracted verbatim from
-//     DailyWaterReport.tsx. Pure relocation; no behavior changes.
+//     daily-water-report.tsx. Pure relocation; no behavior changes.
 
 import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

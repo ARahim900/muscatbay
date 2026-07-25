@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useAuth } from "@/components/auth/auth-provider"
 import { updateUserProfile, uploadAvatar } from "@/lib/auth"
-import { useAppNotifications } from "@/components/NotificationProvider"
+import { useAppNotifications } from "@/components/providers/notification-provider"
 import { getAlertPreferences, setAlertPreferences } from "@/lib/alert-preferences"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

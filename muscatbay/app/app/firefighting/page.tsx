@@ -39,18 +39,18 @@ import {
     CYCLES, CYCLE_BY_KEY, PPM_ACTIVITIES, SYSTEM_LEGEND, ZONES, ZONE_BY_KEY,
     PPM_PROGRAMME_AS_OF, PPM_PROGRAMME_SOURCE,
     type PpmActivity, type PpmStatus,
-} from "./ppm-programme";
+} from "@/components/firefighting/ppm-programme";
 import {
     AMC_CONTRACT_SUMMARY, AMC_SCOPE_COUNTS, INSURANCE_COVERAGE, REFERENCE_AS_OF,
     REFERENCE_NOTE, SLA_TIERS, TANKER_AGREEMENTS, TANKER_DISCHARGE_RATE,
-} from "./contract-reference";
+} from "@/components/firefighting/contract-reference";
 import {
     CARD_TITLE, CHART_TOOLTIP_STYLE, CycleBadge, EQUIP_STATUS_CHART_COLORS,
     PpmStatusBadge, ReferenceChip, SectionHeading, STATUS_CFG, SystemTag, ZoneBadge,
     equipZoneKey,
-} from "./ui";
-import { EquipmentRegister } from "./equipment-register";
-import { IssuesRegister } from "./issues-register";
+} from "@/components/firefighting/firefighting-ui";
+import { EquipmentRegister } from "@/components/firefighting/equipment-register";
+import { IssuesRegister } from "@/components/firefighting/issues-register";
 
 // Maintenance tracker filter option lists (dropdowns operate on display labels).
 const CYCLE_OPTIONS = CYCLES.map((c) => c.label);

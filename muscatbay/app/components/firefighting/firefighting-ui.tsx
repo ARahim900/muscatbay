@@ -7,7 +7,7 @@
  * the Equipment / Issues registers. Colour values are Tailwind token classes
  * only (`--mb-*` / `--status-*` / brand) — never raw hex.
  *
- * @module app/firefighting/ui
+ * @module components/firefighting/firefighting-ui
  */
 
 import { format } from "date-fns";

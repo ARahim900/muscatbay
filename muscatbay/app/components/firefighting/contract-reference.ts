@@ -25,7 +25,7 @@
  * make all of this editable without a deploy, and the tanker contacts could
  * then be access-controlled instead of omitted.
  *
- * @module app/firefighting/contract-reference
+ * @module components/firefighting/contract-reference
  */
 
 /** When these figures were last reconciled against the signed paperwork. */

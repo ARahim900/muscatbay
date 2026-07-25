@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bell } from "lucide-react";
-import { useAppNotifications } from "@/components/NotificationProvider";
+import { useAppNotifications } from "@/components/providers/notification-provider";
 import { AlertsFeed } from "@/components/alerts/alerts-feed";
 
 export function NotificationBell() {

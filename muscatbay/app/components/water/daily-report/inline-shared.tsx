@@ -1,7 +1,7 @@
 "use client";
 
 // ─── Shared helpers, primitives, types extracted verbatim from
-//     DailyWaterReport.tsx to keep the main file under ~1000 LOC.
+//     daily-water-report.tsx to keep the main file under ~1000 LOC.
 // ─── This module preserves the ORIGINAL inline palette + behavior exactly.
 //     The sibling files (report-types.ts, report-primitives.tsx, zone-panel.tsx,
 //     dc-panel.tsx, zone-analytics.tsx) contain an enhanced parallel

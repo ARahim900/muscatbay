@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sun, Moon, Settings, LogOut, ChevronDown, Search } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "@/components/providers/app-providers";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { openCommandPalette } from "@/components/shared/command-palette";
 

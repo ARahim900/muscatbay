@@ -10,7 +10,7 @@ import {
     type RecentActivityItem,
 } from "@/hooks/useDashboardData";
 import { useModuleCoverage } from "@/hooks/useModuleCoverage";
-import { useAppNotifications } from "@/components/NotificationProvider";
+import { useAppNotifications } from "@/components/providers/notification-provider";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CommandDeck, type DeckStat } from "@/components/dashboard/command-deck";
 import { ModuleCoverageSection } from "@/components/dashboard/module-coverage";

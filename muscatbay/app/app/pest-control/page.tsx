@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { PageHeader } from "@/components/shared/page-header";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { EmptyState } from "@/components/shared/empty-state";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "@/components/providers/app-providers";
 import { Bug, ExternalLink, Loader2, Database, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 

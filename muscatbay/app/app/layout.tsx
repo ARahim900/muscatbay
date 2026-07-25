@@ -1,8 +1,8 @@
 import "./globals.css";
 
 import type { Metadata } from "next";
-import { Providers } from "@/components/providers";
-import { NotificationProvider } from "@/components/NotificationProvider";
+import { Providers } from "@/components/providers/app-providers";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { Geist, Geist_Mono } from "next/font/google";

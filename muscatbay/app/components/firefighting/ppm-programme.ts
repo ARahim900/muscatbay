@@ -20,7 +20,7 @@
  * (cycle, area_group) would let operations update dates and outcomes without
  * a deploy. Until that table exists, this file is the single edit point.
  *
- * @module app/firefighting/ppm-programme
+ * @module components/firefighting/ppm-programme
  */
 
 /** When the contents below were last reconciled against BEC correspondence. */

@@ -1,6 +1,6 @@
 "use client";
 
-// ─── ZoneL3Table — extracted verbatim from DailyWaterReport.tsx ──────────────
+// ─── ZoneL3Table — extracted verbatim from daily-water-report.tsx ──────────────
 // Pure relocation; no behavior changes. Imports the inline palette / helpers
 // from inline-shared.tsx (NOT the enhanced versions in zone-panel.tsx).
 

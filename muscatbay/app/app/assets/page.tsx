@@ -32,9 +32,9 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
-import { sortAssets, type AssetSortField } from "./sort";
-import { AssetAttention, AssetRegisterProfile } from "./asset-charts";
-import { TruncatedText } from "./truncated-text";
+import { sortAssets, type AssetSortField } from "@/components/assets/sort";
+import { AssetAttention, AssetRegisterProfile } from "@/components/assets/asset-charts";
+import { TruncatedText } from "@/components/assets/truncated-text";
 
 type ActiveTab = 'overview' | 'lifecycle' | 'maintenance' | 'technical' | 'financial';
 

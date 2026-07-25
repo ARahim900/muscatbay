@@ -35,7 +35,7 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import { useAppNotifications } from "@/components/NotificationProvider";
+import { useAppNotifications } from "@/components/providers/notification-provider";
 import { useToast } from "@/components/ui/toast-provider";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";

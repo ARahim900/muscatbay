@@ -22,7 +22,7 @@ import type {
     RecurringIssue,
     GulfExpertContract,
     GulfExpertCommunication,
-} from '@/components/gulf-expert/types';
+} from '@/components/hvac/types';
 
 /** Rows requested per PostgREST round-trip (must be <= the server max_rows cap). */
 const PAGE_SIZE = 1000;

@@ -24,7 +24,7 @@ import { WaterMonthlyDashboard } from "@/components/water/monthly/water-monthly-
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import dynamic from "next/dynamic";
 const DailyWaterReport = dynamic(
-    () => import("@/components/water/DailyWaterReport").then((m) => ({ default: m.DailyWaterReport })),
+    () => import("@/components/water/daily-water-report").then((m) => ({ default: m.DailyWaterReport })),
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
 );
 

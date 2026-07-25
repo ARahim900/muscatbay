@@ -14,7 +14,7 @@
  *      · tinted surfaces (chips, heatmap cells, callouts)  → --mb-*-light
  *      · text sitting on a tint (WCAG-tuned)               → --mb-*-text
  *    That is the same split used by StatsGrid, alerts-feed, module-coverage,
- *    PageStatusBar, firefighting/ui.tsx and lib/status-colors.ts, so "danger"
+ *    PageStatusBar, firefighting/firefighting-ui.tsx and lib/status-colors.ts, so "danger"
  *    is the same red on every module page and flips correctly in both themes.
  *  - Status is never colour-only: every severity is paired with a text label and
  *    an icon (WCAG AA in the field, per design principle #5).
@@ -75,7 +75,7 @@ export const SEV_UI: Record<Severity, { base: string; text: string; bg: string; 
 
 // Token-only: --mb-*-light and --mb-*-text already flip in the .dark block, so
 // one class list is correct in both themes — no dark: variants, no raw palette.
-// This is the same chip tint recipe used by firefighting/ui.tsx, the Gulf Expert
+// This is the same chip tint recipe used by firefighting/firefighting-ui.tsx, the Gulf Expert
 // tabs, reading-cell and the water daily panels — one chip look app-wide.
 const CHIP_STYLES: Record<ChipColor, string> = {
     success: "bg-mb-success-light text-mb-success-text ring-mb-success/30",

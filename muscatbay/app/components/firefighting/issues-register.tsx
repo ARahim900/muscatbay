@@ -10,7 +10,7 @@
  * Identification only — the register displays what BEC and site staff logged;
  * it does not assign, schedule or close anything.
  *
- * @module app/firefighting/issues-register
+ * @module components/firefighting/issues-register
  */
 
 import { useMemo, useState } from "react";
@@ -23,7 +23,7 @@ import {
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import type { FireIssue } from "@/entities/fire-safety";
-import { fmtDate, issueStatusCls } from "./ui";
+import { fmtDate, issueStatusCls } from "./firefighting-ui";
 
 export const ISSUES_EXPORT_COLUMNS: ExportColumn<FireIssue>[] = [
     { key: "issue_description", header: "Issue" },

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation";
 import { Search, ArrowRight, Sun, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
-import { useTheme } from "@/components/providers";
+import { useTheme } from "@/components/providers/app-providers";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canAccessModule, MODULE_ROUTE, type ModuleKey } from "@/lib/rbac";
 import { cn } from "@/lib/utils";

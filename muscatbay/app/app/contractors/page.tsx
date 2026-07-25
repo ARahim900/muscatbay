@@ -42,11 +42,11 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
-import { ExpiryBadge, expiryStatus } from "./contract-dates";
-import { RenewalsPanel } from "./renewals";
-import { TermsPanel } from "./terms";
-import { PricingPanel } from "./pricing";
-import { YearlyCostChart } from "./yearly-chart";
+import { ExpiryBadge, expiryStatus } from "@/components/contractors/contract-dates";
+import { RenewalsPanel } from "@/components/contractors/renewals";
+import { TermsPanel } from "@/components/contractors/terms";
+import { PricingPanel } from "@/components/contractors/pricing";
+import { YearlyCostChart } from "@/components/contractors/yearly-chart";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {

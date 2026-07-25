@@ -10,7 +10,7 @@
  *
  * Display and identification only — no work orders, assignment or close-out.
  *
- * @module app/firefighting/equipment-register
+ * @module components/firefighting/equipment-register
  */
 
 import { useMemo, useState } from "react";
@@ -24,7 +24,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import type { FireSafetyEquipment } from "@/entities/fire-safety";
 import { ZONE_BY_KEY } from "./ppm-programme";
-import { EQUIP_STATUS_CLS, ZoneBadge, equipZoneKey, fmtDate } from "./ui";
+import { EQUIP_STATUS_CLS, ZoneBadge, equipZoneKey, fmtDate } from "./firefighting-ui";
 
 export const EQUIPMENT_EXPORT_COLUMNS: ExportColumn<FireSafetyEquipment>[] = [
     { key: "name", header: "Asset" },

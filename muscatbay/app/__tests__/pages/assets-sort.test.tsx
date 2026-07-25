@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortAssets } from '@/app/assets/sort';
+import { sortAssets } from '@/components/assets/sort';
 import type { Asset } from '@/entities/asset';
 
 const rows: Asset[] = [
