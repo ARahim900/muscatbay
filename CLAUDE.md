@@ -27,40 +27,68 @@
 
 ## Project Structure
 
+Two rules govern the layout, and they are not negotiable:
+
+1. **`app/` holds routes only.** Only Next.js file conventions live there —
+   `page.tsx`, `layout.tsx`, `loading.tsx`, `error.tsx`, `global-error.tsx`,
+   `not-found.tsx`, `route.ts`, `globals.css`, icons. A component, helper or
+   type file must never sit next to a `page.tsx`.
+2. **Every module has exactly one home** under `components/<module>/`, named
+   after the module as the UI names it (so HVAC is `components/hvac/`, not
+   `gulf-expert`).
+
 ```
 muscatbay/app/
-├── app/              # Next.js App Router (routes)
-│   ├── api/          # API routes
-│   ├── assets/       # Asset management
-│   ├── auth/         # Auth callback & password reset
-│   ├── contractors/  # Contractor management
-│   ├── electricity/  # Electricity monitoring
-│   ├── firefighting/ # Fire safety + quotes
-│   ├── hvac/         # HVAC system
-│   ├── pest-control/ # Pest control
-│   ├── settings/     # User settings
-│   ├── stp/          # STP plant monitoring
-│   ├── water/        # Water management
-│   └── page.tsx      # Dashboard (/)
-├── actions/          # Server actions
+├── app/                    # ROUTES ONLY — Next.js App Router file conventions
+│   ├── page.tsx            #   / (dashboard command deck)
+│   ├── layout.tsx  loading.tsx  error.tsx  global-error.tsx  not-found.tsx
+│   ├── globals.css         #   Tailwind 4 + all design tokens
+│   ├── assets/  contractors/  electricity/  firefighting/  hvac/
+│   ├── pest-control/  settings/  stp/  water/
+│   ├── auth/callback/  auth/reset-password/
+│   ├── login/  signup/  signup/professional/  forgot-password/
+│   └── privacy/  terms/
+│
 ├── components/
-│   ├── auth/         # Auth components
-│   ├── charts/       # Recharts visualizations
-│   ├── gulf-expert/  # Gulf Expert HVAC feature
-│   ├── layout/       # Sidebar, topbar, navbar, bottom-nav
-│   ├── pwa/          # PWA service worker
-│   ├── shared/       # Reusable: stats-grid, data-table, breadcrumbs, tab-navigation
-│   ├── ui/           # shadcn/ui base components
-│   └── water/        # Water-specific components
-├── entities/         # TypeScript entity types
-├── functions/api/    # API utility functions (data fetching)
-├── hooks/            # Custom hooks: useDashboardData, useSTPData, useScrollAnimation, useSupabaseRealtime
-├── lib/              # Core utilities: auth, supabase, utils (cn), validation, config, water-data, export-utils, filter-preferences
-├── proxy.ts          # Supabase auth session refresh (Next.js 16 proxy convention)
-├── scripts/          # Seed data & utility scripts
-├── sql/              # Database schemas, migrations, fixes
-└── public/           # Static assets, PWA icons, manifest
+│   │                       # ── Feature folders: one per module ──
+│   ├── assets/             #   asset-charts, truncated-text, sort
+│   ├── contractors/        #   renewals, terms, pricing, yearly-chart, contract-dates
+│   ├── dashboard/          #   command-deck, module-coverage, ytd-panel
+│   ├── electricity/        #   analysis-view, load-watch, analytics, reading-cell
+│   ├── firefighting/       #   equipment-register, issues-register, firefighting-ui,
+│   │                       #   ppm-programme, contract-reference
+│   ├── hvac/               #   overview/findings/recurring tabs + types (was gulf-expert)
+│   ├── stp/                #   plant-watch, stp-analytics, stp-trend-charts
+│   ├── water/              #   daily-water-report, date-range-picker,
+│   │                       #   daily-report/*, monthly/*
+│   │                       # ── Cross-cutting ──
+│   ├── shared/             #   stats-grid, data-table/, page-header, breadcrumbs,
+│   │                       #   tab-navigation, inspection, findings-register, skeleton…
+│   ├── ui/                 #   shadcn/ui primitives (base-vega)
+│   ├── charts/             #   Recharts wrappers (liquid-*, chart-container)
+│   ├── layout/             #   sidebar, topbar, bottom-nav, client-layout
+│   ├── providers/          #   app-providers (theme), notification-provider
+│   ├── auth/  alerts/  brand/  motion/  pwa/  three/
+│
+│   # ── Data layer (three strictly ordered tiers, one barrel each) ──
+├── entities/               # 1. TYPES. Row shapes only, zero runtime. `@/entities`
+├── functions/              # 2. READERS. Isomorphic Supabase queries. `@/functions`
+│   ├── api/                #    per-module readers + `@/functions/api` barrel
+│   └── supabase-client.ts  #    browser client (Metro swaps this one for mobile)
+├── actions/                # 3. WRITERS. `'use server'` only. `@/actions`
+│
+├── hooks/                  # useDashboardData, useSupabaseRealtime, useUserRole…
+├── lib/                    # auth, supabase, utils (cn), validation, config,
+│                           # water-data, export-utils, tokens, thresholds…
+├── proxy.ts                # Supabase session refresh (Next 16 renamed middleware→proxy)
+├── __tests__/              # Vitest suites, mirroring the source tree
+├── scripts/  sql/  public/
 ```
+
+> `entities/`, `lib/` and `functions/api/` are **also consumed by the Expo app
+> in `mobile/`** through Metro `watchFolders` + a `@/*` alias. Moving or
+> renaming a file in those three folders silently breaks the mobile app —
+> update `mobile/` in the same change, or don't move it.
 
 ## Key Conventions
 
@@ -84,12 +112,26 @@ muscatbay/app/
 - **Animations**: GSAP for scroll animations
 
 ### Data Layer
-- **Supabase** for database, auth, and realtime
-- `@supabase/ssr` v0.9 for server-side auth (getAll/setAll cookie API)
+Three tiers, strictly ordered, **one barrel per concern**. Each barrel carries a
+comment documenting the layering — read it before adding to it.
+
+| Tier | Folder | Barrel | Contains | Importable from |
+|---|---|---|---|---|
+| 1. Types | `entities/` | `@/entities` | Row shapes. Zero runtime. | anywhere |
+| 2. Readers | `functions/` | `@/functions`, `@/functions/api` | Isomorphic Supabase queries returning tier-1 types | anywhere (incl. `mobile/`) |
+| 3. Writers | `actions/` | `@/actions` | `'use server'` Server Actions built on tier 2 | client or server components |
+
+- **Never merge tiers 2 and 3 into one barrel.** `actions/*` pulls
+  `lib/supabase-server` → `next/headers`; re-exporting it alongside the
+  isomorphic readers would drag server-only code into the client graph and
+  break the build. `actions/index.ts` re-exports `'use server'` modules and
+  nothing else.
+- Tier 2 must stay isomorphic — no `next/*`, no `window`/`document` — because
+  `mobile/` bundles those exact files.
+- **Supabase** for database, auth, and realtime; `@supabase/ssr` v0.9 for
+  server-side auth (getAll/setAll cookie API)
 - `createBrowserClient` in `functions/supabase-client.ts` (client-side)
 - `createServerClient` in `proxy.ts` (server-side session refresh; Next.js 16 renamed `middleware` → `proxy`)
-- Server actions in `actions/` directory
-- API functions in `functions/api/`
 
 ### Auth Flow
 - Supabase Auth with email/password
@@ -116,11 +158,21 @@ Pages use server actions or client-side hooks. Water and STP pages use custom ho
 - `components/shared/inspection.tsx` — the shared **inspection toolkit** (one severity model + `--mb-*` tokens, `HealthCard`, `MetricHeatmap`, `ExceptionsRegister`). This is how the Water "watch" pattern is ported to other modules — STP `Plant Watch` and Electricity `Load Watch` both render from it. Reuse it (feed a section's severity + rows) instead of rebuilding severity cards / anomaly registers per module.
 
 ### Adding a new page
-1. Create route in `app/<route>/page.tsx`
-2. Add entity types in `entities/`
-3. Add API functions in `functions/api/`
-4. Add server actions in `actions/` if needed
-5. Add sidebar nav item in `components/layout/sidebar.tsx`
+1. Create the route in `app/<route>/page.tsx` — **nothing else goes in that folder**
+2. Add entity types in `entities/` (+ `entities/index.ts`)
+3. Add API readers in `functions/api/` (+ `functions/api/index.ts`)
+4. Add server actions in `actions/` if the page needs the server session (+ `actions/index.ts`)
+5. Put every component, helper and constant the page needs in `components/<module>/`
+6. Add the sidebar nav item in `components/layout/sidebar.tsx`
+
+### File naming
+- **kebab-case** for all component/helper files: `daily-water-report.tsx`,
+  `equipment-register.tsx`. No `PascalCase.tsx`.
+- Exception: `hooks/` uses `useThing.ts` — the React convention, applied
+  consistently across all 8 hooks.
+- A feature's non-JSX helpers live beside its components as plain `.ts`
+  (`components/stp/stp-analytics.ts`, `components/assets/sort.ts`). Only
+  genuinely cross-module logic goes in `lib/`.
 
 ## Environment Variables
 - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL

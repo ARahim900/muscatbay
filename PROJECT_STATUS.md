@@ -405,9 +405,9 @@ tables that no screen reads.
   membership; iOS push notifications require a development build and degrade
   honestly in Expo Go. Still outstanding: Apple Developer Program membership
   ($99, not yet purchased), EAS credentials, store assets.
-- Remaining from this wave: Base44-style file reorganisation, a final
-  colour/design-consistency pass, and test coverage for the six modules that
-  still have no test file.
+- **Base44-style file reorganisation — DONE (2026-07-25).** See §1a. Remaining
+  from this wave: a final colour/design-consistency pass, and test coverage for
+  the six modules that still have no test file.
 
 - **Security & data-integrity hardening (Phase 1) — MERGED (#43) + APPLIED
   2026-07-18.** Code merged to `main`; both SQL migrations applied to the live DB
