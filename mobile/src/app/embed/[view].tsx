@@ -3,7 +3,7 @@
  *
  * INTERIM, AND FRAMED AS SUCH. These are the dense cross-tab pages — the water
  * monthly balance, the electricity meter table, the STP operations log — that
- * have no honest phone-native form yet. They render the real muscatbay.live page
+ * have no honest phone-native form yet. They render the real muscatbay.work page
  * inside a WebView until each one is rebuilt natively.
  *
  * Authentication reuses the web app's OWN existing handoff: `/auth/callback`
@@ -103,7 +103,7 @@ export default function EmbeddedViewScreen() {
 
     timer.current = setTimeout(() => {
       setFailure(
-        `The page did not finish loading within ${LOAD_TIMEOUT_MS / 1000} seconds. It may be a slow connection, or muscatbay.live may be unreachable.`,
+        `The page did not finish loading within ${LOAD_TIMEOUT_MS / 1000} seconds. It may be a slow connection, or muscatbay.work may be unreachable.`,
       );
       setPhase('failed');
     }, LOAD_TIMEOUT_MS);
@@ -137,7 +137,7 @@ export default function EmbeddedViewScreen() {
         {/* Honest framing, always visible — this is the website, not a native screen. */}
         <View className="border-b border-border bg-card px-4 py-2.5">
           <Text variant="caption">
-            {entry.module.title} · web view. This page is still the muscatbay.live interface,
+            {entry.module.title} · web view. This page is still the muscatbay.work interface,
             embedded here until it is rebuilt natively.
           </Text>
         </View>

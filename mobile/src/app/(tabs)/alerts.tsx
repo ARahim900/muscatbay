@@ -3,7 +3,7 @@
  *
  * Renders `@/lib/operational-alerts` — the web app's rules engine — natively.
  * That module is pure and takes `now` injected, so it runs here byte-for-byte:
- * the topbar bell on muscatbay.live and this screen cannot disagree about
+ * the topbar bell on muscatbay.work and this screen cannot disagree about
  * whether anything is wrong.
  *
  * The app IDENTIFIES and DISPLAYS conditions. There is deliberately no

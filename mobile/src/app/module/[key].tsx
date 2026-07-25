@@ -101,7 +101,7 @@ function EmbeddedLinks({ module }: { module: ModuleDefinition }) {
       <View className="gap-0.5">
         <Text variant="heading">Full analysis</Text>
         <Text variant="caption">
-          These open the muscatbay.live page inside the app, signed in as you. They are the web view
+          These open the muscatbay.work page inside the app, signed in as you. They are the web view
           for now — a native version is planned.
         </Text>
       </View>

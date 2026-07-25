@@ -56,5 +56,5 @@ export function supabaseConfigError(): string | null {
 
 /** Origin of the web app, used by the embedded analytical views. */
 export const WEB_APP_ORIGIN = (
-  process.env.EXPO_PUBLIC_WEB_APP_ORIGIN ?? 'https://muscatbay.live'
+  process.env.EXPO_PUBLIC_WEB_APP_ORIGIN ?? 'https://muscatbay.work'
 ).replace(/\/$/, '');

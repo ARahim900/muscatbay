@@ -117,7 +117,7 @@ export default function SignInScreen() {
 
           <Text variant="caption" className="text-center">
             Read-only operations view. Data comes from the same Supabase project as
-            muscatbay.live.
+            muscatbay.work.
           </Text>
         </View>
       </ScrollView>

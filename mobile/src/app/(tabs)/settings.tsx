@@ -65,7 +65,7 @@ export default function SettingsScreen() {
           {user?.fullName ?? user?.email ?? 'Unknown user'}
         </Text>
         <Text variant="caption">
-          Role: {role} · module visibility follows the same rules as muscatbay.live
+          Role: {role} · module visibility follows the same rules as muscatbay.work
         </Text>
       </Card>
 
