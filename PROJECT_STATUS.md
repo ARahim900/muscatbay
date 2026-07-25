@@ -348,6 +348,29 @@ stops at last month" problem is structurally closed:
   cleanliness the record should still be corrected in the AITable source
   (datasheet `dsteHeHSeZ59QTougo`). The in-progress current month (Jul-26) is
   legitimate live daily data and is kept as-is.
+- **Design-system debt found in the 2026-07-25 consistency pass (reported, not
+  fixed — none of it is user-visible today):**
+  - `muscatbay/app/tailwind.config.ts` is **dead configuration**. Tailwind 4 only
+    loads a JS config via an explicit `@config` directive, and `globals.css` has
+    none — so the `fontSize` / `borderRadius` / `boxShadow` / `colors` blocks in
+    that file have no effect. Fonts and tokens actually come from the
+    `@theme inline` block in `app/globals.css`. `DESIGN_SYSTEM.md` §3 and
+    `CLAUDE.md` both describe the config as wired; either delete the file or add
+    `@config "../tailwind.config.ts";` — do not "fix" the docs to match.
+  - `ExceptionsRegister` in `components/shared/inspection.tsx` is now unused
+    (every module renders `components/inspection/findings-register.tsx`), but it
+    still hardcodes the retired `Owner` / `Status: "Open"` columns. It is a live
+    export, so it can be re-imported by accident — delete it in a follow-up.
+  - `lib/config.ts` `CHART_COLORS` and the `color` fields in `lib/mock-data.ts`
+    still hold raw hexes. Neither is read by any rendered chart today.
+  - `BRAND_DESIGN.md` §3 and `DESIGN_SYSTEM.md` §3 still name **Inter** as the
+    font family; `app/layout.tsx` (and `CLAUDE.md`) ship **Geist**. Separately,
+    `BRAND_DESIGN.md` §2.3/§8 give text-on-brand-teal as `#FFFFFF`, which is
+    ~1.5:1 on `--secondary` `#A1D1D5` and contradicts that doc's own §10
+    accessibility table; `globals.css` and `DESIGN_SYSTEM.md` §2.1 use
+    `--secondary-foreground` `#1F2937` (~10:1) and the 2026-07-25 pass
+    standardised every teal surface on that. Both are doc edits an owner should
+    make — the code is already correct.
 
 ## 4b. O&M scope — what this app deliberately is not
 

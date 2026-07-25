@@ -23,10 +23,9 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
-    AlertTriangle, CheckCircle2, ClipboardList, Download, HelpCircle, TrendingUp, XCircle,
+    AlertTriangle, CheckCircle2, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { exportToCSV } from "@/lib/export-utils";
 
 // ─── Severity model ───────────────────────────────────────────────────────────
 
@@ -387,142 +386,6 @@ export function MetricHeatmap({
                             {SEVERITY_LABEL[sev]}
                         </span>
                     ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Exceptions & Actions register — the auto-generated work queue ────────────
-
-export interface ExceptionRow {
-    /** Optional — present when the register spans multiple periods (dates). */
-    Date?: string;
-    Category: string;
-    Item: string;
-    Severity: "Critical" | "Watch";
-    Value: string;
-    Owner?: string;
-    Status: string;
-    Action: string;
-}
-
-const thBase = "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
-const tdBase = "px-4 py-3.5 align-middle text-[13px] font-medium text-card-foreground";
-
-function SummaryStat({ label, value, icon, color, valueColor }: { label: string; value: string; icon: React.ReactNode; color: string; valueColor?: string }) {
-    return (
-        <div className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-card-standard">
-            <div className="absolute top-0 left-0 right-0 h-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
-            <div className="flex justify-between items-start gap-2">
-                <div className="min-w-0">
-                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
-                    <h3 className="text-lg sm:text-xl md:text-2xl font-semibold tabular-nums tracking-tight text-foreground" style={valueColor ? { color: valueColor } : undefined}>{value}</h3>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}>{icon}</div>
-            </div>
-        </div>
-    );
-}
-
-export function ExceptionsRegister({
-    rows, title, subtitle, filename, emptyHint, showDate = true, showOwner = true,
-}: {
-    rows: ExceptionRow[];
-    title: string;
-    subtitle: string;
-    filename: string;
-    emptyHint?: string;
-    showDate?: boolean;
-    showOwner?: boolean;
-}) {
-    const critical = rows.filter((r) => r.Severity === "Critical").length;
-    const watch = rows.length - critical;
-
-    const handleExport = () => {
-        const data = rows.map((r) => ({
-            ...(showDate ? { Date: r.Date ?? "" } : {}),
-            Category: r.Category,
-            Item: r.Item,
-            Severity: r.Severity,
-            Value: r.Value,
-            ...(showOwner ? { Owner: r.Owner ?? "" } : {}),
-            Status: r.Status,
-            "Suggested Action": r.Action,
-        }));
-        exportToCSV(data, filename);
-    };
-
-    return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <SummaryStat label="Open Exceptions" value={String(rows.length)} icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--primary)" />
-                <SummaryStat label="Critical" value={String(critical)} icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-danger)" valueColor={critical > 0 ? "var(--mb-danger-text)" : undefined} />
-                <SummaryStat label="Watch" value={String(watch)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-warning)" />
-            </div>
-
-            <div className="card-elevated rounded-[10.5px] border border-border bg-card">
-                <div className="p-4 sm:p-5 md:p-6 pb-2">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <h3 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                                <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
-                                {title}
-                            </h3>
-                            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleExport}
-                            disabled={rows.length === 0}
-                            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Download className="h-4 w-4" aria-hidden="true" />
-                            Export Actions
-                        </button>
-                    </div>
-                </div>
-                <div className="p-4 sm:p-5 md:p-6 pt-2">
-                    {rows.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 py-10 text-center">
-                            <CheckCircle2 className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
-                            <p className="text-sm font-semibold text-foreground">No open exceptions</p>
-                            {emptyHint && <p className="max-w-md text-xs text-muted-foreground">{emptyHint}</p>}
-                        </div>
-                    ) : (
-                        <div className="overflow-hidden rounded-[10.5px] border border-border">
-                            <div className="overflow-auto" style={{ maxHeight: 560 }}>
-                                <table className="w-full border-collapse text-[12px]" style={{ minWidth: 880 }}>
-                                    <thead>
-                                        <tr>
-                                            {showDate && <th scope="col" className={thBase}>Date</th>}
-                                            <th scope="col" className={thBase}>Category</th>
-                                            <th scope="col" className={thBase}>Item</th>
-                                            <th scope="col" className={thBase}>Severity</th>
-                                            <th scope="col" className={cn(thBase, "text-right")}>Value</th>
-                                            {showOwner && <th scope="col" className={thBase}>Owner</th>}
-                                            <th scope="col" className={thBase}>Status</th>
-                                            <th scope="col" className={thBase}>Suggested Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rows.map((r, i) => (
-                                            <tr key={`${r.Category}-${r.Item}-${r.Date ?? ""}-${i}`} className={cn("border-b border-border/60", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
-                                                {showDate && <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.Date ?? "—"}</td>}
-                                                <td className={cn(tdBase, "whitespace-nowrap font-semibold text-foreground")}>{r.Category}</td>
-                                                <td className={cn(tdBase, "text-foreground")}>{r.Item}</td>
-                                                <td className={tdBase}><SeverityChip severity={r.Severity === "Critical" ? "critical" : "watch"} label={r.Severity} /></td>
-                                                <td className={cn(tdBase, "whitespace-nowrap text-right tabular-nums text-foreground")}>{r.Value}</td>
-                                                {showOwner && <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.Owner ?? "—"}</td>}
-                                                <td className={tdBase}><span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40">{r.Status}</span></td>
-                                                <td className={cn(tdBase, "min-w-[240px] text-muted-foreground")}>{r.Action}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         </div>
