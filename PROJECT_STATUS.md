@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-23
+**Last curated review:** 2026-07-25
 
 ---
 
@@ -164,6 +164,88 @@ table has no rows. Pre-existing exports (water database tables,
 electricity, STP daily log, assets, exceptions registers) are unchanged;
 unit tests cover the CSV builder and the shared button (203 tests green).
 
+**2026-07-25 — front-end & O&M evaluation + remediation wave** (cross-module,
+PR #49). A full senior-management review of every route and subsection was run
+against the codebase; the findings and the fixes below are the result.
+
+*Scope decision from management:* the app **identifies** issues; it does not
+track their resolution. Work orders, task assignment, owners, due dates,
+status transitions and close-out evidence are **explicitly out of scope** —
+issues are actioned on the floor. Accordingly the fake `Owner` /
+`Status: "Open"` columns were **removed** from every exceptions register
+(they implied a workflow that does not and will not exist). The registers are
+now identification-only: severity, item, value, remarks, suggested action.
+
+- **Fabricated data removed (P0).** `app/login/page.tsx` rendered a "Live
+  System Status" panel with hardcoded figures (2,847 m³ water, 148 kWh,
+  892 m³ TSE) and pulsing Normal/Nominal/Active pills, above a comment
+  claiming it showed real system data — on a pre-auth page that cannot read
+  any data. Replaced with a capability list carrying no figures.
+- **Silent mock data removed (P0).** `/water` swapped in `MOCK_WATER_METERS`
+  on a failed *or empty* fetch and rendered it as an ordinary dashboard.
+  Nothing is substituted for live data now — `WaterErrorState` /
+  `WaterEmptyState` say what happened and offer a retry.
+- **Error boundaries were shipped but never mounted (P0).** Two
+  implementations (`components/shared/error-boundary.tsx`,
+  `components/ui/error-boundary.tsx`, ~212 LOC) had zero consumers, so any
+  render fault blanked the whole route. Consolidated into
+  `components/shared/section-boundary.tsx` and wrapped around every major
+  section app-wide.
+- **Wrong numbers corrected.** Assets "WITH AMC CONTRACTOR" was rendering a
+  count of `is_asset_active`, and "HIGH CRITICALITY" a 3-way OR
+  (`erl_years≤2 OR criticality=High OR status=TO VERIFY`); both now query what
+  they claim. Warranty Expiry sort had no entry in `SORT_FIELD_MAP` and
+  silently sorted by name. The row-count footer claimed "1–3061 of 3061"
+  while fetching 500.
+- **HVAC was showing an expired contract as current** — OMR 8,557.5 hardcoded
+  in `overview-tab.tsx`, which `gulf_expert_contracts` marks EXPIRED; the live
+  2026-27 contract is **OMR 7,234.000**. Now data-driven. HVAC also queried
+  with no `.range()` and hit PostgREST's 1,000-row default silently; reads are
+  paged and truncation is now surfaced.
+- **Thresholds unified.** New `lib/thresholds.ts` is the single source for
+  Electricity and STP. Previously four competing sets meant one meter could
+  read Critical on Load Watch and merely High in the table below it. Active
+  gate values are printed in the UI instead of hardcoded prose.
+- **Data honesty.** Missing / zero / negative readings are three distinct
+  states everywhere (electricity table + CSV preserve NULL-vs-0); negative TSE
+  raises its own data-integrity finding instead of being masked as "reuse
+  stopped"; STP silently-dropped future-dated rows are now reported; the three
+  hand-rolled STP SVG charts became Recharts with tooltips and real axes, and
+  the silent every-Nth sampling that could hide a one-day spike was removed.
+- **Personal data removed.** `app/firefighting/page.tsx` contained two private
+  Gmail addresses and named individuals for tanker agreements, committed in
+  source. Removed. The PPM plan, contract, SLA and insurance blocks were moved
+  out of component source into `ppm-programme.ts` / `contract-reference.ts`,
+  each stamped "Contract reference · as of <date>" so static paperwork cannot
+  read as a live reading.
+- **Dormant functionality wired up.** `getContractorExpiry` /
+  `getContractorDetails` / `getContractorPricing` were built, exported and
+  called by no page. Contractors now has Renewals and Terms & SLA tabs; end
+  dates are parsed (13 real-world formats) and given severity instead of being
+  printed verbatim, so an expiring contract can finally be seen.
+- **Dead code deleted (~4,300 LOC).** Nine unreferenced Water components plus
+  an entire parallel daily implementation (`zone-panel`, `dc-panel`,
+  `report-primitives`, `report-types`, `zone-analytics`), the duplicate error
+  boundary, and the unused `hooks/useSTPData.ts`.
+- **Accessibility & consistency.** `TableHead` defaults `scope="col"` (fixes 12
+  consumers); status is never colour-only; 44px minimum touch targets on coarse
+  pointers; remaining hex literals replaced with tokens; Fire/HVAC registers
+  rebuilt on the shared table primitives; `RouteRoleGuard` finally wires
+  `RequireRole`, which had been written but never imported (route gating was
+  dead code — only nav links were hidden).
+- **Dashboard for management.** Acknowledged alerts no longer persist; each
+  severity has a distinct icon + text label; KPI period labels are always
+  visible (they were suppressed whenever a trend existed, i.e. always) and the
+  differing "latest month" rules are disclosed; targets, YTD and a labelled
+  straight-line projection added; the five modules with no executive visibility
+  (Assets, Contractors, HVAC, Fire, Pest) now appear via `useModuleCoverage`.
+- **PWA / App Store groundwork.** Complete manifest, generated icon set,
+  offline shell, service worker v7. Note a PWA **cannot** be listed on the App
+  Store — see the `mobile/` Expo app below.
+
+**Verified:** `tsc --noEmit` 0 errors · ESLint clean · 203/203 tests ·
+`next build` succeeds (21 routes).
+
 ## 3. Water monthly data — how it works now (important)
 
 Rebuilt 2026-07-03 (PRs #29/#30) so that **any monthly value present in the
@@ -267,7 +349,42 @@ stops at last month" problem is structurally closed:
   (datasheet `dsteHeHSeZ59QTougo`). The in-progress current month (Jul-26) is
   legitimate live daily data and is kept as-is.
 
+## 4b. O&M scope — what this app deliberately is not
+
+A capability assessment against a normal CMMS was run on 2026-07-25. The app
+is a **monitoring, analysis and identification** platform. It has 9 live write
+paths, only 3 of which record business data (a contract PDF link, the public
+contractor application, and a user's own profile). Absent by decision, not by
+oversight: work orders, PPM scheduling engines, task assignment, due dates,
+SLA timers, close-out evidence, spares/procurement, permit-to-work, incident
+registers, and any audit trail of resolution.
+
+**Do not add these without an explicit instruction from the owner** —
+management confirmed on 2026-07-25 that issues are actioned on the floor and
+that the app's job is to surface them, not to track them. Fake affordances
+that imply tracking (hardcoded owners, `Status: "Open"` chips) were removed
+for exactly this reason and should not be reintroduced.
+
+Genuinely useful data that exists but is unsurfaced, if ever wanted:
+`fire_quotations` (4 rows) + `fire_quotation_items` (7 rows) are real, modelled
+tables that no screen reads.
+
 ## 5. In-flight work (open PRs)
+
+- **#49 Front-end & O&M review remediation + Expo mobile foundation** — draft,
+  active. Contents described in §2 (2026-07-25). Also introduces `mobile/`, an
+  **Expo Router native app**: the web app is a PWA and a PWA cannot be listed
+  on the App Store, so store distribution requires a native binary. Reuses the
+  pure-TypeScript domain layer (`entities/`, `lib/`, `functions/api/`) via
+  Metro `watchFolders` rather than duplicating it. Target is **internal-only
+  distribution** (Apple Business Manager custom app), not the public store.
+  Immediate priority is running in **Expo Go**, which needs no paid Apple
+  membership; iOS push notifications require a development build and degrade
+  honestly in Expo Go. Still outstanding: Apple Developer Program membership
+  ($99, not yet purchased), EAS credentials, store assets.
+- Remaining from this wave: Base44-style file reorganisation, a final
+  colour/design-consistency pass, and test coverage for the six modules that
+  still have no test file.
 
 - **Security & data-integrity hardening (Phase 1) — MERGED (#43) + APPLIED
   2026-07-18.** Code merged to `main`; both SQL migrations applied to the live DB

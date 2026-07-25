@@ -541,7 +541,21 @@ export function clearWaterMetersData(): void {
 }
 
 /**
- * Get current water meters (Supabase data or static fallback)
+ * Get current water meters (Supabase data or static fallback).
+ *
+ * ⚠️ DO NOT WIRE THIS INTO THE UI.
+ *
+ * `setWaterMetersData` is never called anywhere in the app, so
+ * `dynamicWaterMeters` is permanently `null` and this returns the hardcoded
+ * {@link WATER_METERS} demo array — real-looking supply and loss figures that
+ * are not from the database. Every calculation helper below it
+ * (`getMetersByLevel`, `calculateZoneAnalysis`, `calculateMonthlyAnalysis`, …)
+ * inherits that, and none of them is currently imported by any route.
+ *
+ * The Water module reads live data through `fetchWaterMeters()`
+ * (`functions/api/water.ts`) and renders an explicit error state when it fails.
+ * Use that. This block is a candidate for deletion once it is confirmed that
+ * nothing outside `lib/water-data.ts` needs it.
  */
 export function getWaterMeters(): WaterMeter[] {
   return dynamicWaterMeters || WATER_METERS;
