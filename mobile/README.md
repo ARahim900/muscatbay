@@ -61,6 +61,29 @@ Sign in with your normal Muscat Bay account. Your role is read from the same
 
 ---
 
+
+### Running from a remote machine (different network)
+
+`npx expo start` binds Metro to the machine's LAN IP, and the QR code encodes
+that address — so Expo Go can only reach it from the *same* network. When the
+dev machine is remote (e.g. a Mac mini accessed over screen sharing) the phone
+has no route to that IP and the app will never load.
+
+Use tunnel mode instead, which routes through a public URL:
+
+```bash
+npm run start:tunnel     # or: npx expo start --tunnel
+```
+
+The first run installs `@expo/ngrok` when prompted. Tunnel mode prints a URL
+like `exp://<id>.anonymous.8081.exp.direct` — in Expo Go choose **Enter URL
+manually** and paste it. That is more reliable than scanning a QR code rendered
+inside a remote-desktop session, which is usually too blurry to read.
+
+Expect a slower first load than LAN mode: every bundle request crosses the
+tunnel. Hot reload still works.
+
+
 ## What works in Expo Go, and what does not
 
 | Capability                                            | Expo Go | Notes                                                                       |
