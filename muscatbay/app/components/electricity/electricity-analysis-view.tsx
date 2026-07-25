@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import { LineChart } from "lucide-react";
 import { CHART_COLORS, meterColors } from "./electricity-shared";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 // Cap the number of meter bars drawn so the ranking chart stays readable; the
 // full per-meter list lives in the unified table below it.
@@ -76,6 +77,7 @@ export function ElectricityAnalysisView({
     selectedMeter,
     metersOfSelectedType,
 }: AnalysisViewProps) {
+    const chartMotion = useChartMotion();
     return (
         <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
             {/* Filtered Stats Grid */}
@@ -141,7 +143,7 @@ export function ElectricityAnalysisView({
                                             strokeWidth={2.5}
                                             dot={{ r: 3, strokeWidth: 1, fill: 'var(--card)' }}
                                             activeDot={{ r: 5, stroke: 'var(--card)', strokeWidth: 2 }}
-                                            animationDuration={600}
+                                            {...chartMotion}
                                         />
                                     ))}
                                 </RechartsLineChart>
@@ -159,7 +161,7 @@ export function ElectricityAnalysisView({
                                     <YAxis tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : `${v}`} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                     <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
                                     <Legend iconType="circle" wrapperStyle={{ paddingTop: 10 }} />
-                                    <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
+                                    <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} {...chartMotion}/>
                                 </AreaChart>
                             )}
                         </ResponsiveContainer>
@@ -256,7 +258,7 @@ export function ElectricityAnalysisView({
                                                     }}
                                                     cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }}
                                                 />
-                                                <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={22} animationDuration={600}>
+                                                <Bar dataKey="consumption" radius={[0, 8, 8, 0]} barSize={22} {...chartMotion}>
                                                     {shown.map((entry) => (
                                                         <Cell
                                                             key={entry.id}

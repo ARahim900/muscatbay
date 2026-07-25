@@ -17,6 +17,7 @@ import {
 import { format } from "date-fns";
 import type { GulfExpertContract, GulfExpertData } from "./types";
 import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 interface OverviewTabProps {
   data: GulfExpertData;
@@ -57,6 +58,7 @@ function contractTypeLabel(contract: GulfExpertContract): string {
 }
 
 export function OverviewTab({ data }: OverviewTabProps) {
+    const chartMotion = useChartMotion();
   const { findings, recurringIssues, contracts, communications } = data;
 
   const stats = useMemo(() => {
@@ -200,7 +202,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                         fontSize: "12px",
                       }}
                     />
-                    <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Open Findings" />
+                    <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Open Findings" {...chartMotion}/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -230,6 +232,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       nameKey="status"
                       label={(props) => `${props.name}: ${props.value}`}
                       labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
+                      {...chartMotion}
                     >
                       {findingsByStatus.map((entry, index) => (
                         <Cell

@@ -16,6 +16,7 @@ import {
     type ReportData,
     CHART_COLORS, r2, DailyLossConnector,
 } from "./inline-shared";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export { ZoneAnalyticsPanel };
 
@@ -30,6 +31,7 @@ interface ZoneAnalyticsPanelProps {
 }
 
 function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZoneName }: ZoneAnalyticsPanelProps) {
+    const chartMotion = useChartMotion();
 
     // O(1) lookup map keyed by account_number
     const accountMap = useMemo(() => {
@@ -196,19 +198,19 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                                         type="monotone" name="ΣL3 Total" dataKey="ΣL3"
                                         stroke={CHART_COLORS.brand} fill="url(#gradDailyL3)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Loss" dataKey="Loss"
                                         stroke={CHART_COLORS.loss} strokeWidth={2}
                                         dot={false} strokeDasharray="5 5"
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                     <Area
                                         type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
                                         stroke={CHART_COLORS.teal} fill="url(#gradDailyBulk)" strokeWidth={3}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                 </AreaChart>
                             </ResponsiveContainer>

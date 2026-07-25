@@ -51,6 +51,7 @@ import {
 } from "@/components/firefighting/firefighting-ui";
 import { EquipmentRegister } from "@/components/firefighting/equipment-register";
 import { IssuesRegister } from "@/components/firefighting/issues-register";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 // Maintenance tracker filter option lists (dropdowns operate on display labels).
 const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
@@ -88,6 +89,7 @@ interface FirefightingPageCache {
 }
 
 export default function FirefightingPage() {
+    const chartMotion = useChartMotion();
     const [activeTab, setActiveTab] = useState<TabKey>("overview");
     // Seed from the session cache so revisits render instantly (silent refresh below)
     const [cached] = useState(() => getPageCache<FirefightingPageCache>(FIREFIGHTING_CACHE_KEY));
@@ -318,7 +320,7 @@ export default function FirefightingPage() {
                                                     <XAxis dataKey="zone" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
                                                     <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
                                                     <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                                                    <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Equipment" />
+                                                    <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Equipment" {...chartMotion}/>
                                                 </BarChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -344,6 +346,7 @@ export default function FirefightingPage() {
                                                         nameKey="status"
                                                         label={(props) => `${props.name}: ${props.value}`}
                                                         labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
+                                                        {...chartMotion}
                                                     >
                                                         {equipByStatusChart.map((entry, index) => (
                                                             <Cell key={`cell-${index}`} fill={EQUIP_STATUS_CHART_COLORS[entry.status] || CHART_PALETTE[index % CHART_PALETTE.length]} />

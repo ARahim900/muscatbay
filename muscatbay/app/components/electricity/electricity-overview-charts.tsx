@@ -12,6 +12,7 @@ import {
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
 import { CHART_COLORS } from "./electricity-shared";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 interface MonthlyPoint {
     month: string;
@@ -30,6 +31,7 @@ interface OverviewChartsProps {
 }
 
 export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByType }: OverviewChartsProps) {
+    const chartMotion = useChartMotion();
     // Management decision support: without a reference the trend is only an
     // average of itself. The target is a CONFIGURED value (lib/config.ts) — when
     // none has been agreed we say so instead of inventing one, and derive the
@@ -74,7 +76,7 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                                         label={{ value: 'Target', position: 'right', fill: 'var(--chart-axis)', fontSize: 11, fontWeight: 600 }}
                                     />
                                 )}
-                                <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} animationDuration={600} />
+                                <Area type="natural" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.primary} fill="url(#elecGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} {...chartMotion}/>
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -92,7 +94,7 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                                 <XAxis type="number" hide />
                                 <YAxis type="category" dataKey="type" width={80} className="text-xs" axisLine={false} tickLine={false} tick={{ fill: "var(--chart-axis)" }} />
                                 <Tooltip content={<LiquidTooltip />} cursor={{ fill: 'var(--chart-cursor-fill)', radius: 6 }} />
-                                <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} animationDuration={600}>
+                                <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={24} {...chartMotion}>
                                     {consumptionByType.map((entry, index) => (
                                         <Cell key={`c-${index}`} fill={entry.color} />
                                     ))}

@@ -22,6 +22,7 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export type ChartView = "daily" | "monthly";
 
@@ -99,6 +100,7 @@ function PointCount({ count, view }: { count: number; view: ChartView }) {
 }
 
 export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartMotion = useChartMotion();
     return (
         <div className="w-full min-w-0">
             <div
@@ -128,8 +130,8 @@ export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { dat
                             formatter={(v: TipValue, name) => [fmt(Number(v), "m³"), name]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
-                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#stp-inlet-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} animationDuration={500} />
-                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#stp-tse-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} animationDuration={500} />
+                        <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#stp-inlet-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
+                        <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#stp-tse-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
@@ -139,6 +141,7 @@ export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { dat
 });
 
 export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartMotion = useChartMotion();
     return (
         <div className="w-full min-w-0">
             <div
@@ -158,8 +161,8 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
                             formatter={(v: TipValue, name) => [fmt(Number(v), "OMR"), name]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
-                        <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[3, 3, 0, 0]} maxBarSize={18} animationDuration={500} />
-                        <Bar dataKey="savings" name="Savings" fill={CHART_COLORS.inlet} radius={[3, 3, 0, 0]} maxBarSize={18} animationDuration={500} />
+                        <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
+                        <Bar dataKey="savings" name="Savings" fill={CHART_COLORS.inlet} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
                     </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -169,6 +172,7 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
 });
 
 export const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
+    const chartMotion = useChartMotion();
     return (
         <div className="w-full min-w-0">
             <div
@@ -196,7 +200,7 @@ export const STPTankerChart = memo(function STPTankerChart({ data, view }: { dat
                             strokeWidth={view === "daily" ? 2 : 3}
                             dot={data.length <= 60 ? { r: 3, strokeWidth: 1, fill: "var(--card)" } : false}
                             activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }}
-                            animationDuration={500}
+                            {...chartMotion}
                         />
                     </LineChart>
                 </ResponsiveContainer>

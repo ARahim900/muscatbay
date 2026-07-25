@@ -29,6 +29,7 @@ import {
     buildSTPModel, buildHealthMetrics, buildHeatmap, buildSTPFindings, effSeverity, STP_GATE_NOTE,
     type STPDay,
 } from "./stp-analytics";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 const TIP_STYLE = {
     fontSize: 12, borderRadius: 8,
@@ -46,6 +47,7 @@ export function PlantWatch({
     /** Drill-through from a heatmap cell to that day in the daily operations log. */
     onInspectDay?: (day: { iso: string; ym: string; dayLabel: string; date: Date }) => void;
 }) {
+    const chartMotion = useChartMotion();
     const model = useMemo(() => buildSTPModel(operations), [operations]);
     const metrics = useMemo(() => worstFirst(buildHealthMetrics(model)), [model]);
     const heat = useMemo(
@@ -148,8 +150,8 @@ export function PlantWatch({
                                 />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--foreground)" }} />
                                 <ReferenceLine yAxisId="right" y={STP_THRESHOLDS.RECOVERY_GOOD} stroke="var(--mb-success)" strokeDasharray="4 4" ifOverflow="extendDomain" />
-                                <Bar yAxisId="left" dataKey="inlet" name="Inlet load" fill="var(--chart-brand)" radius={[3, 3, 0, 0]} maxBarSize={22} />
-                                <Line yAxisId="right" dataKey="eff" name="Efficiency" stroke="var(--chart-stp-primary)" strokeWidth={2} dot={false} connectNulls />
+                                <Bar yAxisId="left" dataKey="inlet" name="Inlet load" fill="var(--chart-brand)" radius={[3, 3, 0, 0]} maxBarSize={22} {...chartMotion}/>
+                                <Line yAxisId="right" dataKey="eff" name="Efficiency" stroke="var(--chart-stp-primary)" strokeWidth={2} dot={false} connectNulls {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
                     </CardContent>

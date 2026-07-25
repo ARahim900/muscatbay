@@ -13,6 +13,7 @@ import {
     LabelList,
     Legend,
 } from "recharts";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 interface LiquidBarChartProps {
     data: Record<string, string | number | null | undefined>[];
@@ -72,7 +73,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
     showLegend = true,
     yAxisLabel,
 }: LiquidBarChartProps) {
-    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const chartMotion = useChartMotion();
 
     const formatLabel = (value: string | number | boolean | null | undefined): string => {
         if (value === undefined || value === null) return '';
@@ -121,7 +122,7 @@ export const LiquidBarChart = memo(function LiquidBarChart({
                             dataKey={cat}
                             fill={colors[i % colors.length]}
                             radius={barRadius}
-                            animationDuration={prefersReducedMotion ? 0 : 600}
+                            {...chartMotion}
                         >
                             {showLabels && (
                                 <LabelList

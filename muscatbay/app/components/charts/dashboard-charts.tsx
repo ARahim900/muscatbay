@@ -15,6 +15,7 @@ import {
     STP_RECOVERY_TARGET_PCT,
     type ChartData,
 } from "@/hooks/useDashboardData";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 const CHART_COLORS = { teal: 'var(--chart-teal)', brand: 'var(--chart-brand)' } as const;
 
@@ -86,6 +87,7 @@ const INSIGHT_STATUS_COLOR = {
 } as const;
 
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
+    const chartMotion = useChartMotion();
     const stpLegend = useChartLegendToggle();
     // Average over months that HAVE a reading — gap months must not dilute it.
     const waterAvg = useMemo(() => {
@@ -148,7 +150,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <YAxis className="text-xs" tick={AXIS_TICK} axisLine={false} tickLine={false} label={Y_AXIS_LABEL} />
                                 <Tooltip content={<LiquidTooltip />} cursor={AREA_CURSOR} />
                                 <Legend iconType="circle" wrapperStyle={LEGEND_STYLE} />
-                                <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={WATER_ACTIVE_DOT} animationDuration={200} />
+                                <Area type="monotone" dataKey="water" stroke={CHART_COLORS.teal} fill="url(#colorWater)" name="Water (k m³)" strokeWidth={3} activeDot={WATER_ACTIVE_DOT} {...chartMotion}/>
                                 {waterAvg > 0 && (
                                     <ReferenceLine y={waterAvg} stroke="var(--status-warning)" strokeDasharray="5 3" strokeWidth={1.5} label={{ ...REFERENCE_LINE_LABEL, value: `Avg ${waterAvg.toFixed(1)}k` }} />
                                 )}
@@ -202,8 +204,8 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                                 <YAxis className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} />
                                 <Tooltip content={<LiquidTooltip />} cursor={BAR_CURSOR} />
                                 <Legend content={<ToggleableLegendContent isHidden={stpLegend.isHidden} onToggle={stpLegend.toggle} />} />
-                                <Bar dataKey="inlet" name="Inlet" hide={stpLegend.isHidden("inlet")} fill="var(--chart-inlet)" radius={BAR_RADIUS} animationDuration={200} />
-                                <Bar dataKey="tse" name="TSE Output" hide={stpLegend.isHidden("tse")} fill={CHART_COLORS.teal} radius={BAR_RADIUS} animationDuration={200} />
+                                <Bar dataKey="inlet" name="Inlet" hide={stpLegend.isHidden("inlet")} fill="var(--chart-inlet)" radius={BAR_RADIUS} {...chartMotion}/>
+                                <Bar dataKey="tse" name="TSE Output" hide={stpLegend.isHidden("tse")} fill={CHART_COLORS.teal} radius={BAR_RADIUS} {...chartMotion}/>
                             </BarChart>
                         </ChartContainer>
                     </div>

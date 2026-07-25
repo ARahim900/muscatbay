@@ -17,6 +17,8 @@ import {
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CoverageState, ModuleCoverage } from "@/hooks/useModuleCoverage";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { MOTION } from "@/lib/motion";
 
 /**
  * Compact coverage strip for the five modules that had no dashboard presence.
@@ -67,6 +69,82 @@ interface ModuleCoverageSectionProps {
     loading: boolean;
 }
 
+/**
+ * The module grid, split out purely so the scroll reveal works.
+ *
+ * `useScrollAnimation` sets up its GSAP timeline once, on mount. Attaching it
+ * to a list that only appears after the fetch resolves would run the effect
+ * against a `null` ref and never retry. Keeping the grid in its own component
+ * means it mounts fresh when the skeleton gives way, and the reveal fires then.
+ *
+ * The cards carry live counts, so this is a reveal on real data — never a
+ * placeholder animating in ahead of the figures it claims to show.
+ */
+function ModuleGrid({ modules }: { modules: ModuleCoverage[] }) {
+    const gridRef = useScrollAnimation<HTMLUListElement>({
+        // Shorter lift and tighter stagger than the default: these are small
+        // cards in a dense operations view, not a hero section.
+        y: 16,
+        duration: MOTION.dur.sm,
+        stagger: MOTION.stagger.tight,
+        childSelector: ":scope > li",
+    });
+
+    return (
+        <ul ref={gridRef} className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+            {modules.map((mod) => {
+                const Icon = MODULE_ICON[mod.key];
+                const meta = STATE_META[mod.state];
+                const StateIcon = meta.Icon;
+                return (
+                    <li key={mod.key}>
+                        <Link
+                            href={mod.href}
+                            className="group/mod flex h-full flex-col gap-2 rounded-lg border border-border bg-muted/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <div className="flex items-center gap-2 min-w-0">
+                                <Icon
+                                    className="h-4 w-4 flex-shrink-0"
+                                    style={{ color: MODULE_ACCENT[mod.key] }}
+                                    aria-hidden="true"
+                                />
+                                <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                                    {mod.label}
+                                </span>
+                                <ArrowUpRight
+                                    className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground opacity-40 transition-opacity group-hover/mod:opacity-100"
+                                    aria-hidden="true"
+                                />
+                            </div>
+
+                            <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+                                {mod.metrics.map((metric) => (
+                                    <div key={metric.label} className="flex items-baseline gap-1.5">
+                                        <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                                            {metric.label}
+                                        </dt>
+                                        <dd className="text-sm font-semibold">
+                                            <MetricValue value={metric.value} />
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+
+                            <p
+                                className="mt-auto flex items-start gap-1.5 text-[11px] leading-snug"
+                                style={{ color: meta.color }}
+                            >
+                                <StateIcon className="mt-px h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
+                                <span className="min-w-0">{mod.note ?? meta.label}</span>
+                            </p>
+                        </Link>
+                    </li>
+                );
+            })}
+        </ul>
+    );
+}
+
 export function ModuleCoverageSection({ modules, loading }: ModuleCoverageSectionProps) {
     return (
         <Card className="card-elevated">
@@ -88,57 +166,7 @@ export function ModuleCoverageSection({ modules, loading }: ModuleCoverageSectio
                         ))}
                     </div>
                 ) : (
-                    <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-                        {modules.map((mod) => {
-                            const Icon = MODULE_ICON[mod.key];
-                            const meta = STATE_META[mod.state];
-                            const StateIcon = meta.Icon;
-                            return (
-                                <li key={mod.key}>
-                                    <Link
-                                        href={mod.href}
-                                        className="group/mod flex h-full flex-col gap-2 rounded-lg border border-border bg-muted/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                    >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <Icon
-                                                className="h-4 w-4 flex-shrink-0"
-                                                style={{ color: MODULE_ACCENT[mod.key] }}
-                                                aria-hidden="true"
-                                            />
-                                            <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-                                                {mod.label}
-                                            </span>
-                                            <ArrowUpRight
-                                                className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground opacity-40 transition-opacity group-hover/mod:opacity-100"
-                                                aria-hidden="true"
-                                            />
-                                        </div>
-
-                                        <dl className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-                                            {mod.metrics.map((metric) => (
-                                                <div key={metric.label} className="flex items-baseline gap-1.5">
-                                                    <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                                        {metric.label}
-                                                    </dt>
-                                                    <dd className="text-sm font-semibold">
-                                                        <MetricValue value={metric.value} />
-                                                    </dd>
-                                                </div>
-                                            ))}
-                                        </dl>
-
-                                        <p
-                                            className="mt-auto flex items-start gap-1.5 text-[11px] leading-snug"
-                                            style={{ color: meta.color }}
-                                        >
-                                            <StateIcon className="mt-px h-3.5 w-3.5 flex-shrink-0" aria-hidden="true" />
-                                            <span className="min-w-0">{mod.note ?? meta.label}</span>
-                                        </p>
-                                    </Link>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                    <ModuleGrid modules={modules} />
                 )}
             </CardContent>
         </Card>

@@ -22,6 +22,7 @@ import {
     Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
     HierarchyStatCard,
 } from "./inline-shared";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export { DCAnalyticsPanel, DCDailyTable };
 // ─── DC Analytics Panel (mirrors ZoneAnalyticsPanel) ─────────────────────────
@@ -34,6 +35,7 @@ interface DCAnalyticsPanelProps {
 }
 
 function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
+    const chartMotion = useChartMotion();
     // O(1) lookup map keyed by account_number
     const accountMap = useMemo(() => {
         const map = new Map<string, SupabaseDailyWaterConsumption>();
@@ -218,20 +220,20 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                         type="monotone" name="DC Total" dataKey="DC Total"
                                         stroke={CHART_COLORS.gray} fill="url(#gradDailyDC)" strokeWidth={2}
                                         activeDot={{ r: 5, stroke: 'var(--card)', strokeWidth: 2 }}
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Zone Bulks + DC" dataKey="Zone Bulks + DC"
                                         stroke={CHART_COLORS.teal} strokeWidth={2.5} dot={{ r: 2 }}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Main Bulk" dataKey="Main Bulk"
                                         stroke={CHART_COLORS.brand} strokeWidth={2.5} dot={{ r: 2 }}
                                         connectNulls={false}
                                         activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
-                                        animationDuration={600}
+                                        {...chartMotion}
                                     />
                                 </ComposedChart>
                             </ResponsiveContainer>
