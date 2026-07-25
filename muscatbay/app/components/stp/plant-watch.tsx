@@ -24,7 +24,7 @@ import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
     HealthCard, MetricHeatmap, InspectionTicker, worstFirst, type TickerStat,
 } from "@/components/shared/inspection";
-import { FindingsRegister } from "@/components/inspection/findings-register";
+import { FindingsRegister } from "@/components/shared/findings-register";
 import {
     buildSTPModel, buildHealthMetrics, buildHeatmap, buildSTPFindings, effSeverity, STP_GATE_NOTE,
     type STPDay,

@@ -18,7 +18,7 @@ import {
     ELECTRICITY_THRESHOLDS, ELECTRICITY_GATE_LABELS, classifyLoadRatio,
 } from "@/lib/thresholds";
 import type { HealthMetric, HeatColumn, HeatRow, Severity } from "@/components/shared/inspection";
-import type { Finding } from "@/components/inspection/findings-register";
+import type { Finding } from "@/components/shared/findings-register";
 
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
 const { SPIKE_CRITICAL, SPIKE_HIGH, DIP, MIN_BASELINE_KWH } = ELECTRICITY_THRESHOLDS;

@@ -16,7 +16,7 @@ import {
     STP_THRESHOLDS, classifyRecovery, classifyHydraulicLoad, classifyTankerTrips, describeSTPGates,
 } from "@/lib/thresholds";
 import type { HealthMetric, HeatRow, HeatColumn, Severity } from "@/components/shared/inspection";
-import { collapseConsecutive, type Finding } from "@/components/inspection/findings-register";
+import { collapseConsecutive, type Finding } from "@/components/shared/findings-register";
 
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 const {
