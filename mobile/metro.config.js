@@ -13,6 +13,9 @@ const srcRoot = path.resolve(projectRoot, 'src');
  */
 const webRoot = path.resolve(projectRoot, '../muscatbay/app');
 
+/** The git repo root — `mobile/` and `muscatbay/app/` are siblings inside it. */
+const repoRoot = path.resolve(projectRoot, '..');
+
 /**
  * The single adapter that makes the shared data layer run on React Native.
  *
@@ -36,6 +39,17 @@ const config = getDefaultConfig(projectRoot);
 // Watching only the subfolders makes every shared module resolve as
 // "none of these files exist". The heavy subtrees are blocked below instead.
 config.watchFolders = [...(config.watchFolders ?? []), webRoot];
+
+// Treat the REPO root as the server root, not `mobile/`.
+//
+// This is load-bearing, not cosmetic. Expo SDK 57 serves files through an
+// on-demand filesystem that is deliberately scoped to `server.unstable_serverRoot`
+// (falling back to the project root), and it also collapses `watchFolders` down
+// to the project root during `expo export`. With the default scope, every shared
+// module resolves as "none of these files exist" even though watchFolders lists
+// it — the exact failure this line fixes. Pointing the server root at the repo
+// puts `mobile/` and `muscatbay/app/` inside one scope, which is what they are.
+config.server = { ...config.server, unstable_serverRoot: repoRoot };
 
 // Never crawl the web app's dependencies or build output — only its plain
 // TypeScript sources are shared; everything else there is Next.js-specific.
@@ -89,9 +103,7 @@ withCss.resolver.resolveRequest = (context, moduleName, platform) => {
   // 2. `@/…` → the web app root (mirrors the web app's own tsconfig alias, so
   //    shared modules resolve their internal imports unchanged).
   if (moduleName.startsWith('@/')) {
-    const target = path.join(webRoot, moduleName.slice(2));
-    console.log('[DBG]', moduleName, 'web?', context.doesFileExist(target + '.ts'), 'mobile?', context.doesFileExist(path.join(srcRoot, 'lib/cn.ts')), 'webRootPkg?', context.doesFileExist(path.join(webRoot, 'package.json')));
-    return next(context, target, platform);
+    return next(context, path.join(webRoot, moduleName.slice(2)), platform);
   }
 
   // 3. `~/…` → this mobile app's `src/`.

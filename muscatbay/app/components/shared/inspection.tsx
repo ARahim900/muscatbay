@@ -9,12 +9,13 @@
  * register with a suggested action on every row.
  *
  * Design contract:
- *  - Tokens only, and ONE severity colour model for the whole app: the
- *    indicator hue always comes from the --status-* family (the same tokens
- *    StatsGrid, alerts-feed, module-coverage, PageStatusBar and
- *    lib/status-colors.ts use), and the text sitting on a tint comes from the
- *    WCAG-tuned --mb-*-text family. Both flip correctly in light and dark, so
- *    "danger" is the same red on every module page.
+ *  - Tokens only, and ONE severity colour model for the whole app:
+ *      · saturated indicators (dots, card stripes, icons)  → --status-*
+ *      · tinted surfaces (chips, heatmap cells, callouts)  → --mb-*-light
+ *      · text sitting on a tint (WCAG-tuned)               → --mb-*-text
+ *    That is the same split used by StatsGrid, alerts-feed, module-coverage,
+ *    PageStatusBar, firefighting/ui.tsx and lib/status-colors.ts, so "danger"
+ *    is the same red on every module page and flips correctly in both themes.
  *  - Status is never colour-only: every severity is paired with a text label and
  *    an icon (WCAG AA in the field, per design principle #5).
  *  - Domain-agnostic: sections compute Severity + rows; these primitives render.
@@ -53,34 +54,34 @@ type ChipColor = "success" | "danger" | "warning" | "default";
 export const SEV_UI: Record<Severity, { base: string; text: string; bg: string; chip: ChipColor }> = {
     nodata: {
         base: "var(--status-stale)", text: "var(--mb-stale-text)",
-        bg: "color-mix(in srgb, var(--status-stale) 12%, transparent)", chip: "default",
+        bg: "color-mix(in srgb, var(--mb-stale) 12%, transparent)", chip: "default",
     },
     good: {
         base: "var(--status-normal)", text: "var(--mb-success-text)",
-        bg: "color-mix(in srgb, var(--status-normal) 12%, transparent)", chip: "success",
+        bg: "color-mix(in srgb, var(--mb-success) 12%, transparent)", chip: "success",
     },
     watch: {
         base: "var(--status-warning)", text: "var(--mb-warning-text)",
-        bg: "color-mix(in srgb, var(--status-warning) 18%, transparent)", chip: "warning",
+        bg: "color-mix(in srgb, var(--mb-warning) 18%, transparent)", chip: "warning",
     },
     high: {
         base: "var(--status-danger)", text: "var(--mb-danger-text)",
-        bg: "color-mix(in srgb, var(--status-danger) 15%, transparent)", chip: "danger",
+        bg: "color-mix(in srgb, var(--mb-danger) 15%, transparent)", chip: "danger",
     },
     critical: {
         base: "var(--status-danger)", text: "var(--mb-danger-text)",
-        bg: "color-mix(in srgb, var(--status-danger) 30%, transparent)", chip: "danger",
+        bg: "color-mix(in srgb, var(--mb-danger) 30%, transparent)", chip: "danger",
     },
 };
 
-// Token-only: --status-*-bg is a 10% tint of the same indicator hue used for the
-// card stripe and the heatmap cell, and --mb-*-text already flips in the .dark
-// block — so one class list is correct in both themes, with no dark: variants
-// and no raw palette.
+// Token-only: --mb-*-light and --mb-*-text already flip in the .dark block, so
+// one class list is correct in both themes — no dark: variants, no raw palette.
+// This is the same chip tint recipe used by firefighting/ui.tsx, the Gulf Expert
+// tabs, reading-cell and the water daily panels — one chip look app-wide.
 const CHIP_STYLES: Record<ChipColor, string> = {
-    success: "bg-[var(--status-normal-bg)] text-mb-success-text ring-[var(--status-normal)]/30",
-    danger: "bg-[var(--status-danger-bg)] text-mb-danger-text ring-[var(--status-danger)]/30",
-    warning: "bg-[var(--status-warning-bg)] text-mb-warning-text ring-[var(--status-warning)]/30",
+    success: "bg-mb-success-light text-mb-success-text ring-mb-success/30",
+    danger: "bg-mb-danger-light text-mb-danger-text ring-mb-danger/30",
+    warning: "bg-mb-warning-light text-mb-warning-text ring-mb-warning/30",
     default: "bg-muted text-muted-foreground ring-border/20",
 };
 
@@ -193,8 +194,8 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
                             <span className={cn(
                                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 metric.signal.tone === "danger"
-                                    ? "bg-[var(--status-danger-bg)] text-mb-danger-text"
-                                    : "bg-[var(--status-warning-bg)] text-mb-warning-text",
+                                    ? "bg-mb-danger-light text-mb-danger-text"
+                                    : "bg-mb-warning-light text-mb-warning-text",
                             )}>
                                 <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
                                 {metric.signal.label}
