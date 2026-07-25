@@ -697,7 +697,6 @@ export default function ContractorsPage() {
                             ...(selectedFlows.length > 0 && selectedFlows.length < uniqueFlows.length ? [{
                                 key: 'flow',
                                 label: selectedFlows.join(', '),
-                                colorClass: selectedFlows[0] === 'Revenue' ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
                                 onRemove: () => { setSelectedFlows([...uniqueFlows]); setCurrentPage(1); }
                             }] : []),
                         ]} />
@@ -941,12 +940,12 @@ export default function ContractorsPage() {
 
                             {/* Revenue note */}
                             {revenueContracts.length > 0 && (
-                                <div className="rounded-lg border border-emerald-200/60 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-900/10 p-4">
-                                    <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
-                                        <TrendingUp className="w-4 h-4" />
+                                <div className="rounded-lg border border-[var(--status-normal)]/40 bg-mb-success-light p-4">
+                                    <p className="text-sm font-medium text-mb-success-text flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4" aria-hidden="true" />
                                         Revenue Contracts
                                     </p>
-                                    <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-1">
+                                    <p className="text-xs text-mb-success-text/90 mt-1">
                                         {revenueContracts.map(c => c.contractor).join(' & ')} — Sewage tanker discharge at OMR 5.000 per load (Dec 2025 → Nov 2026). Revenue depends on number of loads delivered, tracked monthly.
                                     </p>
                                 </div>
@@ -1003,12 +1002,10 @@ export default function ContractorsPage() {
                             ...(trackerSearch ? [{ key: 'search', label: `"${trackerSearch}"`, onRemove: () => { setTrackerSearch(''); setTrackerPage(1); } }] : []),
                             ...(selectedStatuses.length > 0 && selectedStatuses.length < uniqueStatuses.length ? [{
                                 key: 'status', label: `${selectedStatuses.length} status${selectedStatuses.length !== 1 ? 'es' : ''}`,
-                                colorClass: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
                                 onRemove: () => { setSelectedStatuses([...uniqueStatuses]); setTrackerPage(1); }
                             }] : []),
                             ...(selectedTypes.length > 0 && selectedTypes.length < uniqueContractTypes.length ? [{
                                 key: 'type', label: `${selectedTypes.length} type${selectedTypes.length !== 1 ? 's' : ''}`,
-                                colorClass: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
                                 onRemove: () => { setSelectedTypes([...uniqueContractTypes]); setTrackerPage(1); }
                             }] : []),
                         ]} />

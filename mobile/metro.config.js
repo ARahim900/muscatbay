@@ -25,14 +25,41 @@ const webRoot = path.resolve(projectRoot, '../muscatbay/app');
  */
 const supabaseClientAdapter = path.resolve(srcRoot, 'adapters/supabase-client.ts');
 
-/** Only these subtrees of the web app are shared — never its `app/` or `components/`. */
-const sharedWebFolders = ['entities', 'lib', 'functions'].map((d) => path.join(webRoot, d));
-
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(projectRoot);
 
 // Metro may only read files under the project root or an explicit watch folder.
-config.watchFolders = [...(config.watchFolders ?? []), ...sharedWebFolders];
+//
+// The WHOLE web-app root is watched rather than just `lib/`, `entities/` and
+// `functions/`: Metro resolves a module's owning package by walking up from the
+// file to the nearest package.json, and that file sits at the web-app root.
+// Watching only the subfolders makes every shared module resolve as
+// "none of these files exist". The heavy subtrees are blocked below instead.
+config.watchFolders = [...(config.watchFolders ?? []), webRoot];
+
+// Never crawl the web app's dependencies or build output — only its plain
+// TypeScript sources are shared; everything else there is Next.js-specific.
+const escaped = webRoot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const blockedWebSubtrees = [
+  'node_modules',
+  '.next',
+  'dist',
+  'public',
+  'sql',
+  'scripts',
+  'testsprite_tests',
+  '__tests__',
+].map((dir) => new RegExp(`^${escaped}/${dir}/.*`));
+
+const existingBlockList = config.resolver.blockList;
+config.resolver.blockList = [
+  ...(Array.isArray(existingBlockList)
+    ? existingBlockList
+    : existingBlockList
+      ? [existingBlockList]
+      : []),
+  ...blockedWebSubtrees,
+];
 
 // The web app has its own node_modules (Next.js, React 19 for web, Recharts...).
 // Pin every resolution to the mobile app's node_modules so a shared module can

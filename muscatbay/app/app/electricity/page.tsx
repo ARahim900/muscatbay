@@ -1022,7 +1022,6 @@ export default function ElectricityPage() {
                             ...(dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length ? [{
                                 key: 'types',
                                 label: `${dbSelectedTypes.length} type${dbSelectedTypes.length !== 1 ? 's' : ''}`,
-                                colorClass: 'bg-primary/10 text-primary dark:bg-primary/25 dark:text-foreground',
                                 onRemove: () => { setDbSelectedTypes([...allMeterTypes]); setDbCurrentPage(1); }
                             }] : []),
                         ]} />

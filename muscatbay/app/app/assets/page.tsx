@@ -578,8 +578,8 @@ export default function AssetsPage() {
 
                 <ActiveFilterPills pills={[
                     ...(search ? [{ key: 'search', label: `"${search}"`, onRemove: () => { setSearch(''); setCurrentPage(1); } }] : []),
-                    ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{ key: 'status', label: `${selectedStatuses.length} statuses`, colorClass: 'bg-secondary/20 text-foreground dark:bg-secondary/10 dark:text-secondary', onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); } }] : []),
-                    ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{ key: 'disc', label: `${selectedDisciplines.length} disciplines`, colorClass: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/70', onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); } }] : []),
+                    ...(selectedStatuses.length < STATUS_OPTIONS.length ? [{ key: 'status', label: `${selectedStatuses.length} statuses`, onRemove: () => { setSelectedStatuses([...STATUS_OPTIONS]); setCurrentPage(1); } }] : []),
+                    ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{ key: 'disc', label: `${selectedDisciplines.length} disciplines`, onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); } }] : []),
                 ]} />
 
                 {/* ── TAB: OVERVIEW ─────────────────────────────────────────────── */}
