@@ -58,9 +58,9 @@ type ActivityType = RecentActivityItem["type"];
  * components/alerts/alerts-feed.tsx so the two surfaces agree.
  */
 const ACTIVITY_META: Record<ActivityType, { Icon: LucideIcon; label: string; tint: string; text: string }> = {
-    critical: { Icon: XCircle, label: "Critical", tint: "bg-mb-danger/20", text: "text-mb-danger-text" },
-    warning: { Icon: AlertTriangle, label: "Warning", tint: "bg-mb-warning/20", text: "text-mb-warning-text" },
-    info: { Icon: Info, label: "Info", tint: "bg-mb-info/20", text: "text-mb-info-text" },
+    critical: { Icon: XCircle, label: "Critical", tint: "bg-mb-danger-light", text: "text-mb-danger-text" },
+    warning: { Icon: AlertTriangle, label: "Warning", tint: "bg-mb-warning-light", text: "text-mb-warning-text" },
+    info: { Icon: Info, label: "Info", tint: "bg-mb-info-light", text: "text-mb-info-text" },
 };
 
 /** An activity row plus a key that is stable and unique across the feed. */
@@ -264,7 +264,7 @@ function DashboardContent() {
                                 <Printer className="h-4 w-4 sm:h-3.5 sm:w-3.5" aria-hidden="true" />
                                 <span className="hidden sm:inline">Print</span>
                             </button>
-                            <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-primary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
+                            <Badge variant={isLiveData ? "default" : "secondary"} className={`flex items-center gap-1.5 ${isLiveData ? "bg-mb-success text-secondary-foreground" : "bg-mb-secondary text-mb-secondary-foreground"}`}>
                                 {isLiveData ? <Wifi className="h-3 w-3" aria-hidden="true" /> : <WifiOff className="h-3 w-3" aria-hidden="true" />}
                                 <span className="sm:inline hidden">{isLiveData ? "Live Data" : "Demo Mode"}</span>
                                 <span className="sm:hidden">{isLiveData ? "Live" : "Demo"}</span>
@@ -303,11 +303,12 @@ function DashboardContent() {
                                             key={filter}
                                             onClick={() => handleFilterClick(filter)}
                                             aria-pressed={activityFilter === filter}
+                                            /* Selected state matches the severity filter in
+                                               FindingsRegister and the active tab in
+                                               TabNavigation — one "selected chip" look app-wide
+                                               (and white-on-amber/sage never met AA). */
                                             className={`px-3 py-2.5 min-h-[44px] text-xs font-medium rounded-md transition-colors capitalize focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${activityFilter === filter
-                                                ? filter === 'critical' ? 'bg-destructive text-primary-foreground'
-                                                    : filter === 'warning' ? 'bg-mb-warning text-primary-foreground'
-                                                        : filter === 'info' ? 'bg-mb-info text-primary-foreground'
-                                                            : 'bg-primary text-primary-foreground'
+                                                ? 'bg-primary text-primary-foreground'
                                                 : 'text-muted-foreground hover:bg-card hover:text-foreground'
                                                 }`}
                                         >

@@ -13,6 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TabNavigation } from "@/components/shared/tab-navigation"
+import { PageHeader } from "@/components/shared/page-header"
 import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves, type LucideIcon } from "lucide-react"
 
 type SettingsTab = 'profile' | 'account' | 'notifications'
@@ -157,18 +158,16 @@ export default function SettingsPage() {
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight">Settings</h1>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Manage your account settings and profile.</p>
-                </div>
+            {/* Header — the shared PageHeader, so Settings gets the same title
+                scale, breadcrumbs and module accent rule as every module page
+                (it previously rolled its own smaller <h1>). */}
+            <PageHeader title="Settings" description="Manage your account settings and profile.">
                 {isAuthenticated && (
                     <Badge variant="secondary" className="w-fit px-4 py-1.5 text-sm bg-mb-success-light text-mb-success-text border-mb-success/20">
                         Authenticated
                     </Badge>
                 )}
-            </div>
+            </PageHeader>
 
             {/* Profile Completion Indicator */}
             {!isProfileComplete && (
@@ -217,7 +216,7 @@ export default function SettingsPage() {
                         </div>
                     )}
                     {error && (
-                        <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger/10 rounded-lg border border-mb-danger/20">
+                        <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
                             {error}
                         </div>
                     )}
@@ -240,7 +239,7 @@ export default function SettingsPage() {
                                 <div className="flex items-center gap-6">
                                     <Avatar className="h-24 w-24 border-4 border-white dark:border-border shadow-lg">
                                         <AvatarImage src={avatarPreview || formData.avatar_url} />
-                                        <AvatarFallback className="bg-mb-secondary text-primary-foreground text-2xl font-bold">
+                                        <AvatarFallback className="bg-mb-secondary text-mb-secondary-foreground text-2xl font-bold">
                                             {initials}
                                         </AvatarFallback>
                                     </Avatar>

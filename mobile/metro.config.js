@@ -68,11 +68,16 @@ config.resolver.blockList = [
   ...blockedWebSubtrees,
 ];
 
-// The web app has its own node_modules (Next.js, React 19 for web, Recharts...).
-// Pin every resolution to the mobile app's node_modules so a shared module can
-// never pull a second, web-flavoured copy of React or supabase-js into the bundle.
-config.resolver.nodeModulesPaths = [path.resolve(projectRoot, 'node_modules')];
-config.resolver.disableHierarchicalLookup = true;
+// The web app has its own node_modules (Next.js, a web build of React, Recharts).
+// Those are blocked above, so a shared module walking up from
+// `muscatbay/app/lib/…` never finds them; this line then gives it the mobile
+// app's node_modules instead. Net effect: exactly one copy of React and of
+// supabase-js in the bundle, without disabling Metro's standard hierarchical
+// lookup (which expo-doctor flags, and which expo-router relies on).
+config.resolver.nodeModulesPaths = [
+  ...(config.resolver.nodeModulesPaths ?? []),
+  path.resolve(projectRoot, 'node_modules'),
+];
 
 const withCss = withNativeWind(config, {
   input: './src/global.css',
