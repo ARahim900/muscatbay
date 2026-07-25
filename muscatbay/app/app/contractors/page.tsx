@@ -660,7 +660,7 @@ export default function ContractorsPage() {
                                 placeholder="Search contracts..."
                                 value={search}
                                 onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow"
                             />
                         </div>
 
@@ -706,7 +706,7 @@ export default function ContractorsPage() {
                     {/* Mobile Cards */}
                     <div className="md:hidden space-y-3">
                         {paginatedContracts.map(c => (
-                            <div key={c.id} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
+                            <div key={c.id} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
                                 <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0">
                                         {/* Wrap instead of truncate — touch devices have no hover tooltip */}
@@ -731,7 +731,7 @@ export default function ContractorsPage() {
                             </div>
                         ))}
                         {filteredContracts.length === 0 && (
-                            <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+                            <div className="bg-card rounded-xl border border-border dark:border-border">
                                 <EmptyState variant={hasContractFilters ? "filter-empty" : "no-data"}
                                     title={hasContractFilters ? "No contracts match your filters" : "No contracts yet"}
                                     description={hasContractFilters ? "Try adjusting your search or filters." : "Contracts will appear once added to the system."} />
@@ -853,7 +853,7 @@ export default function ContractorsPage() {
                     <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
 
                     {yearlyCosts.length === 0 ? (
-                        <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+                        <div className="bg-card rounded-xl border border-border dark:border-border">
                             <EmptyState variant="no-data" title="No yearly cost data" description="Run the contractor-contracts-data.sql script in Supabase to populate yearly costs." />
                         </div>
                     ) : (
@@ -861,7 +861,7 @@ export default function ContractorsPage() {
                             {/* Mobile: stacked cards per year */}
                             <div className="md:hidden space-y-4">
                                 {matrix.rows.map(row => (
-                                    <div key={row.year} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
+                                    <div key={row.year} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">Year {row.year}</p>
@@ -978,7 +978,7 @@ export default function ContractorsPage() {
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input type="text" aria-label="Search tracker" placeholder="Search tracker..." value={trackerSearch}
                                 onChange={(e) => { setTrackerSearch(e.target.value); setTrackerPage(1); }}
-                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
+                                className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 shadow-sm transition-shadow" />
                         </div>
                         <MultiSelectDropdown label="Status" options={uniqueStatuses} selected={selectedStatuses}
                             onChange={(s) => { setSelectedStatuses(s); setTrackerPage(1); }}
@@ -1019,7 +1019,7 @@ export default function ContractorsPage() {
                         {paginatedTracker.map(c => {
                             const rowKey = `${c.Contractor ?? 'unknown'}--${c["Service Provided"] ?? ''}`;
                             return (
-                                <div key={`m-${rowKey}`} className="rounded-xl border border-border dark:border-border bg-white dark:bg-muted p-4 space-y-3">
+                                <div key={`m-${rowKey}`} className="rounded-xl border border-border dark:border-border bg-card p-4 space-y-3">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="min-w-0">
                                             {/* Wrap instead of truncate — touch devices have no hover tooltip */}
@@ -1050,7 +1050,7 @@ export default function ContractorsPage() {
                             );
                         })}
                         {filteredTracker.length === 0 && (
-                            <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border">
+                            <div className="bg-card rounded-xl border border-border dark:border-border">
                                 <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                     title={hasTrackerFilters ? "No entries match" : "No tracker data"}
                                     description="Adjust filters or add data to the Contractor_Tracker table." />
@@ -1180,7 +1180,7 @@ export default function ContractorsPage() {
                                 value={pdfLinkInput}
                                 onChange={(e) => setPdfLinkInput(e.target.value)}
                                 placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                                className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border bg-white dark:bg-muted text-foreground dark:text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
+                                className="w-full px-3 py-2 text-sm rounded-lg border border-border dark:border-border bg-card text-foreground dark:text-muted-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary"
                             />
                             <p className="text-xs text-muted-foreground">Right-click PDF in Drive &rarr; Share &rarr; Copy link (set to &quot;Anyone with the link&quot;)</p>
                             {pdfLinkError && (

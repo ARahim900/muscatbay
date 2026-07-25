@@ -308,7 +308,7 @@ export function DailyWaterReport() {
                                         setSelectedDay(getDefaultDay(next));
                                     }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {[...getAvailableYears()].reverse().map(yr => (
                                         <option key={yr} value={yr}>20{yr}</option>
@@ -319,7 +319,7 @@ export function DailyWaterReport() {
                                     value={selectedMonth}
                                     onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
                                     disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-white/50 dark:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+                                    className="px-2 py-1.5 text-sm rounded-md border border-border dark:border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
                                 >
                                     {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
                                         <option key={m} value={m}>{m.split('-')[0]}</option>
@@ -464,8 +464,8 @@ export function DailyWaterReport() {
                                                         className={cn(
                                                             "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
                                                             isActive
-                                                                ? "bg-primary text-primary-foreground border-primary shadow-sm dark:bg-secondary dark:text-primary-foreground dark:border-secondary"
-                                                                : "bg-white text-muted-foreground border-border dark:bg-muted dark:text-muted-foreground/70 dark:border-border hover:bg-muted dark:hover:bg-muted"
+                                                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                                : "bg-card text-muted-foreground border-border hover:bg-muted"
                                                         )}
                                                     >
                                                         {z.zoneName}

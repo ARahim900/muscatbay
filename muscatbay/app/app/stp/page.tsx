@@ -718,7 +718,7 @@ export default function STPPage() {
                     <Skeleton className="h-9 w-28 rounded-lg" />
                 </div>
                 {/* Filter skeleton */}
-                <div className="p-6 rounded-xl border border-border/60 bg-white dark:bg-muted/50">
+                <div className="p-6 rounded-xl border border-border/60 bg-card/50">
                     <div className="flex justify-between items-center mb-4">
                         <Skeleton className="h-6 w-48" />
                         <Skeleton className="h-8 w-24" />
@@ -939,7 +939,7 @@ export default function STPPage() {
                                     placeholder="Search operations..."
                                     value={logSearchTerm}
                                     onChange={(e) => { setLogSearchTerm(e.target.value); setLogCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 
@@ -979,7 +979,7 @@ export default function STPPage() {
                                 const efficiencyBadgeColor: BadgeColor = efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
 
                                 return (
-                                    <div key={op.id} className="rounded-xl border border-border/80 dark:border-border/80 bg-white dark:bg-muted p-4 shadow-sm space-y-3">
+                                    <div key={op.id} className="rounded-xl border border-border/80 dark:border-border/80 bg-card p-4 shadow-sm space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-foreground">{format(new Date(op.date), "dd/MM/yyyy")}</span>
                                             <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />

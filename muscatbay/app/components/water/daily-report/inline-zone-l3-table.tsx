@@ -411,7 +411,7 @@ function ZoneL3Table({
                                         !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
                                     )}
                                 >
-                                    <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                    <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-card")}>
                                         <span className="inline-flex items-center gap-2">
                                             {detail ? (
                                                 <button

@@ -18,7 +18,7 @@ export default function TermsPage() {
                     Back to sign in
                 </Link>
 
-                <div className="bg-white dark:bg-muted rounded-2xl shadow-sm border border-border dark:border-border p-8 sm:p-10">
+                <div className="bg-card rounded-2xl shadow-sm border border-border dark:border-border p-8 sm:p-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-secondary/10 flex items-center justify-center">
                             <FileText className="h-5 w-5 text-primary dark:text-secondary" />

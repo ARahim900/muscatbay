@@ -112,7 +112,7 @@ export default function ResetPasswordPage() {
     if (error && !loading && !password) { // Show error state if session check failed
         return (
             <div className="min-h-screen flex items-center justify-center bg-muted dark:bg-muted p-4">
-                <div className="max-w-md w-full bg-white dark:bg-muted p-8 rounded-xl shadow-lg border border-mb-danger/30">
+                <div className="max-w-md w-full bg-card p-8 rounded-xl shadow-lg border border-mb-danger/30">
                     <h2 className="text-xl font-bold text-destructive mb-2">Reset Password Error</h2>
                     <p className="text-muted-foreground mb-6">{error}</p>
                     <Button

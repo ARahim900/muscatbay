@@ -247,7 +247,7 @@ export function HierarchyStatCard({
 }) {
     return (
         <div
-            className="relative overflow-hidden bg-white dark:bg-muted p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
+            className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border dark:border-border shadow-[0_2px_10px_-3px_rgba(15,23,42,0.08)] dark:shadow-[0_2px_10px_-3px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_30px_-4px_rgba(15,23,42,0.12)] dark:hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.5)] motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
         >
             <div
                 className="absolute top-0 left-0 right-0 h-[3px]"

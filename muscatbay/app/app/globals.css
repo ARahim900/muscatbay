@@ -105,9 +105,17 @@
   --color-mb-stale-light: var(--mb-stale-light);
   --color-mb-stale-text: var(--mb-stale-text);
 
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  /* Radius scale — the authoritative brand values (BRAND_DESIGN.md §5).
+   * `@theme inline` means these are the literal values Tailwind bakes into
+   * `rounded-sm` / `rounded-md` / `rounded-lg` / `rounded-xl`, so chips, inputs
+   * and cards land on 5 / 7 / 10.5px everywhere. `rounded-xl` is pinned to the
+   * card radius as well because the shared `Card` primitive uses it — without
+   * this, cards written as `rounded-xl` (12px) and `rounded-[10.5px]` sat at
+   * two different radii on the same page. */
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10.5px;
+  --radius-xl: 10.5px;
 
   /* Module domain accent colors */
   --color-module-water:       var(--module-water);

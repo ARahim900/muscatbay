@@ -29,7 +29,7 @@ export function ElectricityLoadingSkeleton() {
                 <Skeleton className="h-10 w-36 rounded-lg" />
             </div>
             {/* Date filter skeleton */}
-            <div className="p-6 rounded-xl border border-border/60 bg-white dark:bg-muted/50">
+            <div className="p-6 rounded-xl border border-border/60 bg-card/50">
                 <div className="flex flex-wrap gap-4">
                     <Skeleton className="h-10 w-48" />
                     <Skeleton className="h-10 w-48" />

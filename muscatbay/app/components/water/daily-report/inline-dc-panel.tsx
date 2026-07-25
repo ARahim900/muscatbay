@@ -421,7 +421,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                                 key={meter.account}
                                 className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
                             >
-                                <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
+                                <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-card")}>
                                     <span className="inline-flex items-center gap-2">
                                         {/* Icon distinguishes irrigation from potable; colour is a
                                             reinforcement only, so it comes from chart tokens. */}

@@ -448,7 +448,7 @@ export default function SettingsPage() {
                                             aria-hidden="true"
                                             className={`block h-6 w-11 rounded-full relative transition-colors duration-200 ${pushEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
                                         >
-                                            <span className={`absolute top-1 start-1 block h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${pushEnabled ? 'rtl:-translate-x-5 translate-x-5' : 'translate-x-0'}`} />
+                                            <span className={`absolute top-1 start-1 block h-4 w-4 rounded-full bg-card shadow-sm transition-transform duration-200 ${pushEnabled ? 'rtl:-translate-x-5 translate-x-5' : 'translate-x-0'}`} />
                                         </span>
                                     </button>
                                 </div>

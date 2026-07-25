@@ -843,7 +843,7 @@ export default function ElectricityPage() {
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
                                                 aria-label="Filter by meter type"
-                                                className="px-2.5 py-1.5 rounded-lg border border-border dark:border-border bg-white/50 dark:bg-muted/50 text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                className="px-2.5 py-1.5 rounded-lg border border-border dark:border-border bg-card text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -861,7 +861,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-white dark:bg-muted text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground dark:text-muted-foreground/70 focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (
@@ -969,7 +969,7 @@ export default function ElectricityPage() {
                                     placeholder="Search meters..."
                                     value={dbSearchTerm}
                                     onChange={(e) => { setDbSearchTerm(e.target.value); setDbCurrentPage(1); }}
-                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-white dark:bg-muted text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 dark:border-border/80 bg-card text-foreground dark:text-muted-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 />
                             </div>
 

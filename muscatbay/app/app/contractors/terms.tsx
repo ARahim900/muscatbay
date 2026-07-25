@@ -137,7 +137,7 @@ export function TermsPanel({ details, loading }: { details: AmcContractorDetails
                         placeholder="Search contractor, ref or scope…"
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full rounded-lg border border-border/80 bg-white py-2 pl-10 pr-4 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30 dark:bg-muted dark:text-muted-foreground"
+                        className="w-full rounded-lg border border-border/80 bg-card py-2 pl-10 pr-4 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                 </div>
                 <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
