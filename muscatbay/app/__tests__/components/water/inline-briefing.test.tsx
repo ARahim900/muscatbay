@@ -5,45 +5,91 @@ import type { BriefingMetrics } from '@/components/water/daily-report/briefing-m
 
 const base: BriefingMetrics = {
     totalSupply: 1200, l2Total: 1000, l3Total: 850, lossM3: 150, lossPct: 15,
-    alarmCount: 0, alarmZones: [], vsYesterdayPct: 10, status: 'normal',
+    alarmCount: 0, alarmZones: [], zoneCount: 6, vsYesterdayPct: 10, status: 'normal',
 };
 
 // The ticker renders the stat run twice (the duplicate makes the loop
 // seamless), so stat queries use getAllByText; the caption appears once.
+//
+// These assertions pin the *wording*, not just the numbers. The labels were
+// rewritten because the originals ("ΣL2 → ΣL3", a bare "+10.0%") were
+// unreadable to anyone who is not a water engineer, so the plain-English
+// phrasing is the feature and a regression to jargon should fail here.
 
 describe('DailyBriefing', () => {
     it('renders the caption once and every stat label in the ticker', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
         expect(screen.getByText(/Briefing · Mar-26 · Day 15/)).toBeInTheDocument();
-        for (const label of ['Distribution total', 'ΣL2 → ΣL3', 'Loss', 'Zones in alarm', 'vs. yesterday']) {
+        for (const label of [
+            'Water supplied today',
+            'Recorded at meters',
+            'Unaccounted water',
+            'Zones needing attention',
+            'Compared with yesterday',
+        ]) {
             expect(screen.getAllByText(label).length).toBeGreaterThan(0);
+        }
+    });
+
+    it('uses no engineering shorthand in any visible label', () => {
+        render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
+        for (const jargon of ['ΣL2', 'ΣL3', 'L2 →', 'Distribution total']) {
+            expect(screen.queryAllByText(new RegExp(jargon))).toHaveLength(0);
         }
     });
 
     it('duplicates the stat run exactly once for the seamless loop', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getAllByText('Distribution total')).toHaveLength(2);
+        expect(screen.getAllByText('Water supplied today')).toHaveLength(2);
     });
 
-    it('shows the loss in m³ and percent', () => {
+    it('states the loss in m³ and as a share of supply', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getAllByText(/150\.00 m³ · 15\.0%/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/150\.00 m³ lost · 15\.0% of supply/).length).toBeGreaterThan(0);
     });
 
-    it('shows the all-clear verdict when status is normal', () => {
+    it('omits the percentage when it cannot be computed, rather than showing 0%', () => {
+        const m: BriefingMetrics = { ...base, lossPct: null };
+        render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
+        expect(screen.getAllByText(/150\.00 m³ lost$/).length).toBeGreaterThan(0);
+        expect(screen.queryAllByText(/of supply/)).toHaveLength(0);
+    });
+
+    it('gives the all-clear with the zone count, not a bare zero', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getAllByText(/within tolerance/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByText('None — all 6 zones normal').length).toBeGreaterThan(0);
     });
 
-    it('names the alarm zones (shortened) when status is warning', () => {
+    it('distinguishes "no zone data" from "all zones healthy"', () => {
+        const m: BriefingMetrics = { ...base, zoneCount: 0 };
+        render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
+        expect(screen.getAllByText('No zone data today').length).toBeGreaterThan(0);
+        expect(screen.queryAllByText(/zones normal/)).toHaveLength(0);
+    });
+
+    it('names the alarm zones (shortened) with the total for context', () => {
         const m: BriefingMetrics = { ...base, alarmCount: 2, alarmZones: ['Zone 3A', 'Village Square'], status: 'warning' };
         render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
-        expect(screen.getAllByText(/2 · 3A, Village Square/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/2 of 6 · 3A, Village Square/).length).toBeGreaterThan(0);
     });
 
-    it('renders an em dash for a null vs-yesterday value', () => {
+    it('spells out the direction of the day-over-day change', () => {
+        render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
+        expect(screen.getAllByText('10.0% more used').length).toBeGreaterThan(0);
+
+        render(<DailyBriefing metrics={{ ...base, vsYesterdayPct: -4.2 }} month="Mar-26" day={15} />);
+        expect(screen.getAllByText('4.2% less used').length).toBeGreaterThan(0);
+    });
+
+    it('says there is no comparison rather than rendering a bare dash', () => {
         const m: BriefingMetrics = { ...base, vsYesterdayPct: null };
         render(<DailyBriefing metrics={m} month="Mar-26" day={1} />);
-        expect(screen.getAllByText('—').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('No reading yesterday').length).toBeGreaterThan(0);
+    });
+
+    it('reports an unchanged day as unchanged, not as a rounded zero movement', () => {
+        const m: BriefingMetrics = { ...base, vsYesterdayPct: 0 };
+        render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
+        expect(screen.getAllByText('Same as yesterday').length).toBeGreaterThan(0);
     });
 });

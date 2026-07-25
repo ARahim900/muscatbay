@@ -13,6 +13,7 @@ import { useModuleCoverage } from "@/hooks/useModuleCoverage";
 import { useAppNotifications } from "@/components/providers/notification-provider";
 import { useAuth } from "@/components/auth/auth-provider";
 import { CommandDeck, type DeckStat } from "@/components/dashboard/command-deck";
+import { DashboardTicker } from "@/components/dashboard/dashboard-ticker";
 import { ModuleCoverageSection } from "@/components/dashboard/module-coverage";
 import { YtdPanel } from "@/components/dashboard/ytd-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -271,6 +272,21 @@ function DashboardContent() {
                             </Badge>
                         </div>
                     }
+                />
+            </SectionBoundary>
+
+            {/* Estate briefing — the same ticker pattern as Water Daily, so the
+                headline state of the estate is readable without scrolling the
+                deck. Fed from the same `stats` and alerts the surfaces below
+                render, so it cannot disagree with them. */}
+            <SectionBoundary title="Estate briefing">
+                <DashboardTicker
+                    stats={stats}
+                    alerts={operationalAlerts}
+                    loading={loading}
+                    error={error}
+                    isLiveData={isLiveData}
+                    periodNote={PERIOD_BASIS_NOTE}
                 />
             </SectionBoundary>
 
