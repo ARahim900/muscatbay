@@ -252,6 +252,10 @@ export function useModuleCoverage() {
     }, []);
 
     useEffect(() => {
+        // load() sets state synchronously only on the "Supabase not configured"
+        // branch, which must render an honest unavailable state rather than an
+        // empty grid; every other path sets state after an await.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         load();
     }, [load]);
 

@@ -140,11 +140,17 @@ export default function WaterPage() {
     // Fetch on mount + restore the saved view. When the session cache seeded
     // the state, fetch silently — the page is already rendering last data and
     // this call only freshens it in place (stale-while-revalidate).
+    // Mount-only: `fetchWaterData` is a stable useCallback and `cached` is read
+    // once from the session cache, so re-running this would only refetch.
     useEffect(() => {
         fetchWaterData(Boolean(cached));
         const savedPrefs = loadFilterPreferences<{ dashboardView?: DashboardView }>("water");
+        // localStorage is client-only, so restoring the saved view must happen after
+        // hydration; a lazy useState initialiser would render a different value on the
+        // server than on the client.
         if (savedPrefs?.dashboardView) setDashboardView(savedPrefs.dashboardView);
-    }, [fetchWaterData, cached]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only; deps are stable by construction
+    }, []);
 
     // Persist the selected view
     useEffect(() => {

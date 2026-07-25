@@ -17,7 +17,7 @@
  * @module components/water/monthly/water-monthly-dashboard
  */
 
-import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
     ResponsiveContainer, ComposedChart, BarChart, Bar, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
@@ -1292,19 +1292,28 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
 
     // ── Restore / persist the section tab and the selected range ──────────────
     // Daily already persists its tab + zone; Monthly silently reset to Overview
-    // and the latest year on every visit. Client-only (localStorage) and each
-    // saved month is re-validated against the data actually loaded.
+    // and the latest year on every visit. Restored once on mount (client-only —
+    // localStorage is unavailable during SSR, so this cannot be a lazy state
+    // initialiser without a hydration mismatch), and each saved month is
+    // re-validated against the months actually loaded before it is applied.
+    // Captured at mount, which is exactly when the restore below reads it.
+    const availableMonthsRef = useRef(data.meta.availableMonths);
+
     useEffect(() => {
         const prefs = loadFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY);
         if (!prefs) return;
+        // localStorage is client-only, so restoring the saved section/range must
+        // happen after hydration; a lazy useState initialiser would render a
+        // different value on the server than on the client.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (isSectionTab(prefs.tab)) setTab(prefs.tab);
-        const months = data.meta.availableMonths;
+        const months = availableMonthsRef.current;
         if (prefs.startMonth && prefs.endMonth
             && months.includes(prefs.startMonth) && months.includes(prefs.endMonth)) {
             setStartMonth(prefs.startMonth);
             setEndMonth(prefs.endMonth);
         }
-    }, [data]);
+    }, []);
 
     useEffect(() => {
         if (!startMonth || !endMonth) return;

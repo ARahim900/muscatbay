@@ -36,7 +36,7 @@ BRAND_PURPLE = (78, 68, 86, 255)   # --primary #4E4456
 os.makedirs(OUT, exist_ok=True)
 
 mark = Image.open(os.path.join(WEB, 'mb-logo.png')).convert('RGBA')
-maskable = Image.open(os.path.join(WEB, 'icons', 'icon-512x512-maskable.png')).convert('RGBA')
+
 
 def on_bg(img, size, bg, scale=1.0):
     """Composite img centred on a solid square canvas."""

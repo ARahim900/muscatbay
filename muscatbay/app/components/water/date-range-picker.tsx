@@ -476,7 +476,7 @@ export function DateRangePicker({
                             setActivePreset(null);
                             onReset();
                         }}
-                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-red-50 hover:text-red-500 sm:min-h-0 sm:px-2 sm:py-1 dark:text-muted-foreground dark:hover:bg-red-500/10 dark:hover:text-red-400"
+                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-mb-danger-light hover:text-mb-danger-text sm:min-h-0 sm:px-2 sm:py-1"
                     >
                         <RotateCcw className="w-3 h-3" />
                         Reset

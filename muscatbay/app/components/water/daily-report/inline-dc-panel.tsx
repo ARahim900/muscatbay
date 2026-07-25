@@ -423,10 +423,12 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                             >
                                 <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-white dark:bg-muted")}>
                                     <span className="inline-flex items-center gap-2">
+                                        {/* Icon distinguishes irrigation from potable; colour is a
+                                            reinforcement only, so it comes from chart tokens. */}
                                         {meter.isIrr ? (
-                                            <Droplets className="h-3.5 w-3.5 text-teal-500 shrink-0" />
+                                            <Droplets className="h-3.5 w-3.5 shrink-0" style={{ color: CHART_COLORS.teal }} aria-hidden="true" />
                                         ) : (
-                                            <Zap className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                            <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: CHART_COLORS.amber }} aria-hidden="true" />
                                         )}
                                         {meter.label}
                                     </span>
