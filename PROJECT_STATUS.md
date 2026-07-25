@@ -77,7 +77,7 @@ Supporting changes:
 - **`components/inspection/findings-register.tsx` → `components/shared/`**, so
   the inspection toolkit is one folder rather than a folder that shadowed
   `components/shared/inspection.tsx`.
-- **17 orphan files deleted** (~1,900 LOC): 7 app-authored components with zero
+- **17 orphan files deleted** (2,113 LOC): 7 app-authored components with zero
   importers (`liquid-area-chart`, `data-quality-badge`, `filter-tabs`,
   `loading-spinner`, `page-transition`, `status-indicator`, `welcome-card`),
   8 unused shadcn primitives (`alert-dialog`, `calendar`, `combobox`,
