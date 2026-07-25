@@ -798,7 +798,7 @@ export default function STPPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border dark:border-border"}`}
                                             >
                                                 {year}
                                             </Button>

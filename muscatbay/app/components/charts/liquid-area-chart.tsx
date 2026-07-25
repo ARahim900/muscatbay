@@ -134,7 +134,7 @@ export const LiquidAreaChart = memo(function LiquidAreaChart({
                             strokeWidth={3}
                             fill={`url(#${elementId}-gradient-${i})`}
                             animationDuration={prefersReducedMotion ? 0 : 600}
-                            dot={{ r: 4, strokeWidth: 2, fill: "#fff", stroke: colors[i % colors.length] }}
+                            dot={{ r: 4, strokeWidth: 2, fill: "var(--card)", stroke: colors[i % colors.length] }}
                             activeDot={{ r: 6, strokeWidth: 0 }}
                         >
                             {showLabels && (

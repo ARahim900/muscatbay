@@ -361,7 +361,7 @@ export function StatusChip({ label, color }: { label: string; color: 'success' |
         danger: 'bg-mb-danger-light text-mb-danger-text ring-mb-danger/30',
         warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/30',
         default: 'bg-muted text-muted-foreground ring-border/20',
-        primary: 'bg-secondary text-primary-foreground ring-secondary/60',
+        primary: 'bg-secondary text-secondary-foreground ring-secondary/60',
     }[color];
     return (
         <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
@@ -396,7 +396,7 @@ export function TablePagination({
                         className={cn(
                             "flex min-h-11 min-w-11 items-center justify-center rounded-full text-[12px] font-medium transition-design sm:min-h-8 sm:min-w-8",
                             p === page
-                                ? "bg-primary text-primary-foreground shadow-sm dark:bg-secondary dark:text-primary-foreground"
+                                ? "bg-primary text-primary-foreground shadow-sm"
                                 : "text-muted-foreground hover:bg-muted dark:hover:bg-muted",
                         )}
                     >

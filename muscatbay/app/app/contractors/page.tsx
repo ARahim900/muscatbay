@@ -1033,7 +1033,7 @@ export default function ContractorsPage() {
                                     </div>
                                     <ExpiryBadge raw={c["End Date"]} showDetail />
                                     {c["Renewal Plan"] && (
-                                        <span className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"><RefreshCw className="h-3 w-3" />{c["Renewal Plan"]}</span>
+                                        <span className="flex items-center gap-1 text-xs text-muted-foreground"><RefreshCw className="h-3 w-3 text-[var(--status-info)]" aria-hidden="true" />{c["Renewal Plan"]}</span>
                                     )}
                                     {c.contract_pdf_url && (
                                         <button
@@ -1117,7 +1117,7 @@ export default function ContractorsPage() {
                                             </button>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground dark:text-muted-foreground hidden xl:table-cell">
-                                            {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-blue-500" />{c["Renewal Plan"]}</span> : '-'}
+                                            {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-[var(--status-info)]" aria-hidden="true" />{c["Renewal Plan"]}</span> : '-'}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
                                     </TableRow>
@@ -1190,7 +1190,7 @@ export default function ContractorsPage() {
                                 <button
                                     onClick={savePdfLink}
                                     disabled={pdfLinkSaving || !pdfLinkInput.trim()}
-                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors disabled:opacity-50"
+                                    className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors disabled:opacity-50"
                                 >
                                     {pdfLinkSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                                     {pdfLinkSaving ? 'Saving...' : 'Save Link'}
@@ -1244,7 +1244,7 @@ export default function ContractorsPage() {
                                 href={pdfModal.pdfUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-primary-foreground hover:bg-secondary/90 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
                             >
                                 <ExternalLink className="w-4 h-4" />
                                 Open in Drive

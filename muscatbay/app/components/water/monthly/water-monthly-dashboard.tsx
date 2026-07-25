@@ -367,7 +367,7 @@ function PeriodFilter({ data, year, nMonths, startMonth, endMonth, onRangeChange
                                             aria-label={`Filter by year ${y}`}
                                             aria-pressed={active}
                                             onClick={() => onYear(y)}
-                                            className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${active ? "bg-secondary text-primary-foreground" : "border-border dark:border-border"}`}
+                                            className={`rounded-full px-4 min-h-[44px] lg:min-h-0 ${active ? "bg-secondary text-secondary-foreground" : "border-border dark:border-border"}`}
                                         >
                                             {y}
                                         </Button>
