@@ -262,7 +262,7 @@ Add these only on an explicit, current instruction from the owner.
 
 ## Design Context
 
-> Full spec: [`.impeccable.md`](./.impeccable.md) · [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins.
+> Full spec: [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins — **except** for the two documented cases above (Geist vs Inter, and text-on-teal contrast) where the code is correct and the doc is not.
 
 ### Users
 Operations staff and facility/asset managers at Muscat Bay (water, electricity, STP, assets, contractors, HVAC, pest, fire). Secondary: executives on the dashboard. Field: tablet users in control rooms and on-site, sometimes gloved or in night-shift lighting. Live Supabase data — never assume demo mode.
