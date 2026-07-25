@@ -28,7 +28,7 @@ const toastConfig: Record<ToastType, { icon: React.ComponentType<{ className?: s
         icon: CheckCircle,
         bgClass: "bg-mb-success-light",
         borderClass: "border-s-mb-success",
-        iconClass: "text-mb-success",
+        iconClass: "text-[var(--status-normal)]",
     },
     error: {
         icon: AlertCircle,
@@ -40,13 +40,13 @@ const toastConfig: Record<ToastType, { icon: React.ComponentType<{ className?: s
         icon: AlertTriangle,
         bgClass: "bg-mb-warning-light",
         borderClass: "border-s-mb-warning",
-        iconClass: "text-mb-warning",
+        iconClass: "text-[var(--status-warning)]",
     },
     info: {
         icon: Info,
         bgClass: "bg-mb-info-light",
         borderClass: "border-s-mb-info",
-        iconClass: "text-mb-info",
+        iconClass: "text-[var(--status-info)]",
     },
 };
 

@@ -92,7 +92,15 @@ const config: ExpoConfig = {
     // Typed routes are deliberately OFF: they require a generated .expo/types
     // pass, which would make a clean-checkout `tsc --noEmit` fail.
     typedRoutes: false,
-  },
+
+    // REQUIRED for the shared web-app modules to resolve. SDK 57's on-demand
+    // filesystem is scoped to the project root and, during `expo export`, it
+    // also discards `metro.config.js`'s `watchFolders`. With it on, every
+    // `@/lib/*` and `@/functions/*` import fails as "none of these files exist";
+    // with it off, Metro does its classic crawl of the watch folders and the
+    // shared modules resolve. Cost is a slightly slower cold bundle.
+    onDemandFilesystem: false,
+  } as ExpoConfig['experiments'],
 
   extra: {
     router: {},

@@ -164,7 +164,7 @@ export default function SettingsPage() {
                     <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">Manage your account settings and profile.</p>
                 </div>
                 {isAuthenticated && (
-                    <Badge variant="secondary" className="w-fit px-4 py-1.5 text-sm bg-mb-success/10 text-mb-success border-mb-success/20">
+                    <Badge variant="secondary" className="w-fit px-4 py-1.5 text-sm bg-mb-success-light text-mb-success-text border-mb-success/20">
                         Authenticated
                     </Badge>
                 )}
@@ -211,7 +211,7 @@ export default function SettingsPage() {
                 <div className="flex-1 space-y-6">
                     {/* Success/Error Messages */}
                     {success && (
-                        <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 text-sm text-mb-success bg-mb-success/10 rounded-lg border border-mb-success/20">
+                        <div role="status" aria-live="polite" className="flex items-center gap-2 p-3 text-sm text-mb-success-text bg-mb-success-light rounded-lg border border-mb-success/20">
                             <CheckCircle2 className="h-4 w-4" />
                             Profile updated successfully!
                         </div>
@@ -373,7 +373,7 @@ export default function SettingsPage() {
                                                 <p className="text-xs text-muted-foreground">Active now</p>
                                             </div>
                                         </div>
-                                        <Badge variant="outline" className="text-mb-success bg-mb-success/10 border-mb-success/20">Current</Badge>
+                                        <Badge variant="outline" className="text-mb-success-text bg-mb-success-light border-mb-success/20">Current</Badge>
                                     </div>
                                 </div>
                             </CardContent>
@@ -473,7 +473,7 @@ export default function SettingsPage() {
                                         </Button>
                                     )}
                                     {permission === 'granted' && (
-                                        <Badge variant="outline" className="text-mb-success bg-mb-success/10 border-mb-success/20 flex-shrink-0">Active</Badge>
+                                        <Badge variant="outline" className="text-mb-success-text bg-mb-success-light border-mb-success/20 flex-shrink-0">Active</Badge>
                                     )}
                                 </div>
                             </CardContent>

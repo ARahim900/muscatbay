@@ -216,7 +216,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                 {f.status}
               </span>
               <span className="text-[10px] text-muted-foreground">{f.fiscal_year} · {f.ppm_visit}</span>
-              {f.quotation_ref && <span className="text-[10px] text-mb-info">{f.quotation_ref}</span>}
+              {f.quotation_ref && <span className="text-[10px] text-mb-info-text">{f.quotation_ref}</span>}
             </div>
           </div>
         ))}
@@ -281,7 +281,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                 <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>{f.status}</span>
                 </TableCell>
-                <TableCell className="font-semibold text-sm text-mb-info">{f.quotation_ref || "—"}</TableCell>
+                <TableCell className="font-semibold text-sm text-mb-info-text">{f.quotation_ref || "—"}</TableCell>
               </TableRow>
             ))}
             {filtered.length === 0 && (

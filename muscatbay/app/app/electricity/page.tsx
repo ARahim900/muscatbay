@@ -1126,7 +1126,7 @@ export default function ElectricityPage() {
                                                 );
                                             })}
                                             <TableCell className="num">{rangeTotal.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                            <TableCell className="num text-mb-success dark:text-mb-success-hover">{(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
+                                            <TableCell className="num text-mb-success-text">{(rangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                         </TableRow>
                                     );
                                 })}
@@ -1151,7 +1151,7 @@ export default function ElectricityPage() {
                                             );
                                         })}
                                         <TableCell className="num">{grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })}</TableCell>
-                                        <TableCell className="num text-mb-success dark:text-mb-success-hover">{(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
+                                        <TableCell className="num text-mb-success-text">{(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</TableCell>
                                     </TableRow>
                                 )}
                             </TableBody>

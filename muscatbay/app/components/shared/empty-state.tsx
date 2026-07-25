@@ -25,17 +25,17 @@ const variantDefaults: Record<EmptyVariant, { icon: LucideIcon; iconClass: strin
     },
     "no-results": {
         icon: SearchX,
-        iconClass: "text-mb-warning",
+        iconClass: "text-[var(--status-warning)]",
         bgClass: "bg-mb-warning-light",
     },
     "filter-empty": {
         icon: FilterX,
-        iconClass: "text-mb-info",
+        iconClass: "text-[var(--status-info)]",
         bgClass: "bg-mb-info-light",
     },
     "error": {
         icon: DatabaseZap,
-        iconClass: "text-mb-danger",
+        iconClass: "text-[var(--status-danger)]",
         bgClass: "bg-mb-danger-light",
     },
 };
