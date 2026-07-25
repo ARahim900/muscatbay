@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthBrandLockup } from "@/components/auth/brand-lockup";
 import { Loader2, Mail, Lock, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
 
 type SignUpStatus =
@@ -137,14 +138,14 @@ export default function SignUpPage() {
                         </p>
                         <div className="space-y-3">
                             <Link href="/login" className="block">
-                                <Button className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground">
+                                <Button className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground">
                                     Go to Login
                                 </Button>
                             </Link>
                             <button
                                 type="button"
                                 onClick={() => setStatus({ kind: "form" })}
-                                className="text-sm text-muted-foreground/70 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                                className="text-sm text-muted-foreground/70 hover:text-mb-primary dark:hover:text-secondary transition-colors"
                             >
                                 Use a different email
                             </button>
@@ -158,17 +159,9 @@ export default function SignUpPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
             <div className="w-full max-w-md">
-                {/* Logo */}
+                {/* Logo — shared lockup (see components/auth/brand-lockup) */}
                 <div className="flex justify-center mb-8">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                            <span className="text-primary-foreground font-bold text-xl">MB</span>
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
-                            <p className="text-sm text-muted-foreground">Operations Dashboard</p>
-                        </div>
-                    </div>
+                    <AuthBrandLockup />
                 </div>
 
                 <Card className="card-elevated">
@@ -189,7 +182,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="fullName">Full Name <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <User className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="fullName"
                                         type="text"
@@ -198,7 +191,7 @@ export default function SignUpPage() {
                                         onChange={(e) => handleNameChange(e.target.value)}
                                         aria-describedby={nameError ? "name-error" : undefined}
                                         aria-invalid={nameError ? true : undefined}
-                                        className={`pl-10 ${nameError ? 'border-red-500' : ''}`}
+                                        className={`ps-10 ${nameError ? 'border-destructive' : ''}`}
                                         required
                                         autoComplete="name"
                                         maxLength={100}
@@ -212,7 +205,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="email"
                                         type="email"
@@ -221,7 +214,7 @@ export default function SignUpPage() {
                                         onChange={(e) => handleEmailChange(e.target.value)}
                                         aria-describedby={emailError ? "email-error" : undefined}
                                         aria-invalid={emailError ? true : undefined}
-                                        className={`pl-10 ${emailError ? 'border-red-500' : ''}`}
+                                        className={`ps-10 ${emailError ? 'border-destructive' : ''}`}
                                         required
                                         autoComplete="email"
                                     />
@@ -234,7 +227,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="password">Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="password"
                                         type={showPassword ? "text" : "password"}
@@ -242,7 +235,7 @@ export default function SignUpPage() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         aria-describedby={password.length > 0 ? "password-requirements" : undefined}
-                                        className="pl-10 pr-10"
+                                        className="ps-10 pe-10"
                                         required
                                         autoComplete="new-password"
                                     />
@@ -250,7 +243,7 @@ export default function SignUpPage() {
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
+                                        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
                                     >
                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                     </button>
@@ -273,7 +266,7 @@ export default function SignUpPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="confirmPassword">Confirm Password <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="confirmPassword"
                                         type={showPassword ? "text" : "password"}
@@ -282,7 +275,7 @@ export default function SignUpPage() {
                                         onChange={(e) => setConfirmPassword(e.target.value)}
                                         aria-describedby={confirmPassword.length > 0 && password !== confirmPassword ? "confirm-password-error" : undefined}
                                         aria-invalid={confirmPassword.length > 0 && password !== confirmPassword ? true : undefined}
-                                        className="pl-10"
+                                        className="ps-10"
                                         required
                                         autoComplete="new-password"
                                     />
@@ -296,12 +289,12 @@ export default function SignUpPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                                 disabled={loading || !allRequirementsMet}
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                         Creating account...
                                     </>
                                 ) : (
@@ -311,7 +304,7 @@ export default function SignUpPage() {
 
                             <p className="text-sm text-center text-muted-foreground">
                                 Already have an account?{" "}
-                                <Link href="/login" className="text-[var(--mb-primary)] hover:underline font-medium">
+                                <Link href="/login" className="text-mb-primary hover:underline font-medium">
                                     Sign in
                                 </Link>
                             </p>
@@ -331,7 +324,7 @@ export default function SignUpPage() {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="w-full border-[var(--mb-primary)]/30 text-[var(--mb-primary)] hover:bg-[var(--mb-primary)]/5"
+                                    className="w-full border-mb-primary/30 text-mb-primary hover:bg-mb-primary/5"
                                 >
                                     Apply as a Professional / Contractor
                                 </Button>

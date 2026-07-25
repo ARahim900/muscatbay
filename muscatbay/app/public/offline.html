@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Offline · Muscat Bay Operations</title>
+<meta name="theme-color" content="#4E4456" />
+<link rel="icon" href="/icons/icon-192x192.png" />
+<style>
+  /* Standalone shell: no Tailwind, no app bundle — this file must render with
+     zero network. Colours are the literal values of the brand tokens
+     (--primary #4E4456, --background #0A090C / #F7F8F9, --secondary #A1D1D5),
+     duplicated here because globals.css is not guaranteed to be cached. */
+  :root {
+    color-scheme: light dark;
+    --bg: #F7F8F9;
+    --card: #FFFFFF;
+    --fg: #0A0A0A;
+    --muted: #5D6976;
+    --border: #E5E7EB;
+    --primary: #4E4456;
+    --accent: #A1D1D5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0A090C;
+      --card: #16141B;
+      --fg: #F1F5F9;
+      --muted: #9AA3AF;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(24px + env(safe-area-inset-top, 0px)) 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg);
+    color: var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+  }
+  .card {
+    max-width: 420px;
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10.5px;
+    padding: 32px 24px;
+  }
+  img { width: 64px; height: 64px; border-radius: 14px; }
+  h1 { font-size: 17px; font-weight: 600; margin: 16px 0 8px; }
+  p { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0 0 20px; }
+  button {
+    min-height: 44px;
+    min-width: 132px;
+    padding: 0 20px;
+    border: 0;
+    border-radius: 5px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .note { font-size: 12px; margin: 18px 0 0; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <img src="/icons/icon-192x192.png" alt="" />
+    <h1>You're offline</h1>
+    <p>
+      Muscat Bay Operations shows live readings from the plant database, so it
+      needs a connection to bring you current data. Pages you have already
+      opened stay available from the cache.
+    </p>
+    <button type="button" onclick="location.reload()">Try again</button>
+    <p class="note">This screen closes itself as soon as the connection returns.</p>
+  </main>
+  <script>
+    // Auto-recover the moment connectivity is back.
+    addEventListener("online", function () { location.reload(); });
+  </script>
+</body>
+</html>

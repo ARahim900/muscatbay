@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getSupabaseClient, isSupabaseConfigured } from "@/functions/supabase-client";
+import { isSupabaseConfigured } from "@/functions/supabase-client";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageSkeleton } from "@/components/shared/skeleton";
+import { SectionBoundary } from "@/components/shared/section-boundary";
+import { EmptyState } from "@/components/shared/empty-state";
 import {
   LayoutGrid, ClipboardList, AlertTriangle,
 } from "lucide-react";
@@ -14,6 +16,14 @@ import { FindingsTab } from "@/components/gulf-expert/findings-tab";
 import { RecurringTab } from "@/components/gulf-expert/recurring-tab";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
+import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import {
+  getPpmFindings,
+  getRecurringIssues,
+  getGulfExpertContracts,
+  getGulfExpertCommunications,
+  GULF_EXPERT_REALTIME_TABLES,
+} from "@/functions/api/gulf-expert";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },
@@ -21,17 +31,21 @@ const tabs = [
   { key: "recurring", label: "Recurring Issues", icon: AlertTriangle },
 ];
 
+const EMPTY_DATA: GulfExpertData = {
+  findings: [],
+  recurringIssues: [],
+  contracts: [],
+  communications: [],
+};
+
 // Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
 const HVAC_CACHE_KEY = "hvac:page";
 interface HvacPageCache {
   data: GulfExpertData;
   lastUpdated: Date;
+  /** Names of datasets that hit the paging ceiling on the cached run. */
+  truncated: string[];
 }
-
-const GULF_EXPERT_SELECT = {
-  findings: "id, finding_code, equipment_id, building, system_type, equipment_label, fiscal_year, ppm_visit, description, quantity, priority, status, quotation_ref, action_required, contractor_notes, is_recurring, first_identified_ppm",
-  recurring: "id, equipment_id, building, equipment_label, issue_type, first_ppm, last_ppm, occurrence_count, still_open, resolved_ppm, notes",
-} as const;
 
 export default function GulfExpertPage() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -39,12 +53,12 @@ export default function GulfExpertPage() {
   const [cached] = useState(() => getPageCache<HvacPageCache>(HVAC_CACHE_KEY));
   const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<GulfExpertData>(cached?.data ?? {
-    findings: [],
-    recurringIssues: [],
-  });
+  const [data, setData] = useState<GulfExpertData>(cached?.data ?? EMPTY_DATA);
   const [dataSource, setDataSource] = useState<"supabase" | "none">(cached ? "supabase" : "none");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
+  // Datasets whose row count exceeded the paging ceiling. Never silently drop
+  // rows — if the register is bigger than we fetched, the page says so.
+  const [truncated, setTruncated] = useState<string[]>(cached?.truncated ?? []);
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -57,39 +71,38 @@ export default function GulfExpertPage() {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-      setError("Unable to initialize the data connection. Please refresh the page.");
-      if (!silent) setLoading(false);
-      return;
-    }
-
     try {
-      const [
-        findingsRes,
-        recurringRes,
-      ] = await Promise.all([
-        supabase.from("ge_ppm_findings").select(GULF_EXPERT_SELECT.findings),
-        supabase.from("ge_recurring_issues").select(GULF_EXPERT_SELECT.recurring),
+      const [findingsRes, recurringRes, contractsRes, communicationsRes] = await Promise.all([
+        getPpmFindings(),
+        getRecurringIssues(),
+        getGulfExpertContracts(),
+        getGulfExpertCommunications(),
       ]);
 
-      const errors = [findingsRes, recurringRes]
-        .map((r) => r.error?.message)
-        .filter(Boolean);
-
-      if (errors.length > 0) {
-        throw new Error(`Failed to load data: ${errors.join(", ")}`);
-      }
-
       const next: GulfExpertData = {
-        findings: findingsRes.data || [],
-        recurringIssues: recurringRes.data || [],
+        findings: findingsRes.rows,
+        recurringIssues: recurringRes.rows,
+        contracts: contractsRes.rows,
+        communications: communicationsRes.rows,
       };
+
+      const nextTruncated = [
+        findingsRes.truncated ? "PPM findings" : null,
+        recurringRes.truncated ? "Recurring issues" : null,
+        contractsRes.truncated ? "Contracts" : null,
+        communicationsRes.truncated ? "Correspondence" : null,
+      ].filter((v): v is string => v !== null);
+
       setData(next);
+      setTruncated(nextTruncated);
       setDataSource("supabase");
       const now = new Date();
       setLastUpdated(now);
-      setPageCache<HvacPageCache>(HVAC_CACHE_KEY, { data: next, lastUpdated: now });
+      setPageCache<HvacPageCache>(HVAC_CACHE_KEY, {
+        data: next,
+        lastUpdated: now,
+        truncated: nextTruncated,
+      });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : "Unknown error";
       console.error("Gulf Expert data load error:", message);
@@ -108,6 +121,16 @@ export default function GulfExpertPage() {
     loadData(Boolean(cached));
   }, [loadData, cached]);
 
+  // Realtime: the connection chip reflects an actual subscription rather than
+  // a value that was true once at mount and never checked again.
+  const { isLive } = useSupabaseRealtime({
+    table: [...GULF_EXPERT_REALTIME_TABLES],
+    channelName: "gulf-expert-rt",
+    // Incoming rows must not blank the page — refresh silently.
+    onChanged: () => loadData(true),
+    enabled: dataSource === "supabase",
+  });
+
   if (loading) {
     return <PageSkeleton />;
   }
@@ -119,18 +142,13 @@ export default function GulfExpertPage() {
           title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems"
         />
-        <div role="alert" className="bg-card rounded-xl border border-[var(--status-danger)]/30 p-8 text-center">
-          <AlertTriangle className="h-12 w-12 text-[var(--status-danger)] mx-auto mb-4" aria-hidden="true" />
-          <h2 className="text-lg font-semibold text-foreground mb-2">
-            Failed to Load Data
-          </h2>
-          <p className="text-sm text-muted-foreground mb-4">{error}</p>
-          <button
-            onClick={() => loadData()}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/80 transition-colors text-sm"
-          >
-            Retry
-          </button>
+        <div role="alert" className="ops-table-shell">
+          <EmptyState
+            variant="error"
+            title="Failed to load HVAC data"
+            description={error}
+            action={{ label: "Retry", onClick: () => loadData() }}
+          />
         </div>
       </div>
     );
@@ -145,17 +163,45 @@ export default function GulfExpertPage() {
         />
         <PageStatusBar
           isConnected={dataSource === "supabase"}
+          isLive={isLive}
           lastUpdated={lastUpdated}
           connectedLabel="Connected"
           disconnectedLabel="No Connection"
         />
       </div>
 
+      {truncated.length > 0 && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-[var(--radius)] border border-[var(--status-warning)]/40 bg-mb-warning-light p-3"
+        >
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-mb-warning-text" aria-hidden="true" />
+          <p className="text-xs text-mb-warning-text">
+            <span className="font-semibold">Partial data shown.</span>{" "}
+            {truncated.join(", ")} exceeded the maximum number of rows this page will fetch, so
+            counts and charts below cover only the rows retrieved. Export the register from the
+            database for the complete set.
+          </p>
+        </div>
+      )}
+
       <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "overview" && <OverviewTab data={data} />}
-      {activeTab === "findings" && <FindingsTab findings={data.findings} />}
-      {activeTab === "recurring" && <RecurringTab issues={data.recurringIssues} />}
+      {activeTab === "overview" && (
+        <SectionBoundary title="HVAC Overview">
+          <OverviewTab data={data} />
+        </SectionBoundary>
+      )}
+      {activeTab === "findings" && (
+        <SectionBoundary title="PPM Findings">
+          <FindingsTab findings={data.findings} />
+        </SectionBoundary>
+      )}
+      {activeTab === "recurring" && (
+        <SectionBoundary title="Recurring Issues">
+          <RecurringTab issues={data.recurringIssues} />
+        </SectionBoundary>
+      )}
     </div>
   );
 }

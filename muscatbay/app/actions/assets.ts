@@ -1,6 +1,12 @@
 'use server'
 
-import { getAssetsFromSupabase, getAssetSummaryFromSupabase } from '@/functions/api/assets';
+import {
+    getAssetsFromSupabase,
+    getAssetSummaryFromSupabase,
+    getAssetDistributionsFromSupabase,
+    type AssetSummary,
+    type AssetDistributions,
+} from '@/functions/api/assets';
 import { getSupabaseServerClient } from '@/lib/supabase-server';
 import type { Asset } from '@/entities/asset';
 
@@ -34,31 +40,44 @@ export async function fetchAssetsAction(
     }
 }
 
-export async function fetchAssetSummaryAction(): Promise<{
-    total: number;
-    activeFlagged: number;
-    workingStatus: number;
-    toVerify: number;
-    criticalLifecycle: number;
-    disciplines: number;
-    boqCoverage: number;
-    error?: string;
-}> {
+export async function fetchAssetSummaryAction(): Promise<AssetSummary & { error?: string }> {
     try {
         const supabase = await getSupabaseServerClient();
-        const summary = await getAssetSummaryFromSupabase(supabase);
-        return summary;
+        return await getAssetSummaryFromSupabase(supabase);
     } catch (err) {
         console.error('Asset Summary Action Error:', err);
         return {
             total: 0,
-            activeFlagged: 0,
             workingStatus: 0,
             toVerify: 0,
-            criticalLifecycle: 0,
-            disciplines: 0,
+            highCriticality: 0,
+            amcCovered: 0,
+            endOfLifeSoon: 0,
+            highCriticalityNoAmc: 0,
             boqCoverage: 0,
             error: err instanceof Error ? err.message : 'Server-side summary fetch failed',
+        };
+    }
+}
+
+/**
+ * Register-wide distributions for the Overview charts. Separate from the
+ * summary because it pages the whole table — it is fetched once per visit,
+ * not on every sort/page change.
+ */
+export async function fetchAssetDistributionsAction(): Promise<AssetDistributions & { error?: string }> {
+    try {
+        const supabase = await getSupabaseServerClient();
+        return await getAssetDistributionsFromSupabase(supabase);
+    } catch (err) {
+        console.error('Asset Distributions Action Error:', err);
+        return {
+            criticality: [],
+            condition: [],
+            lifecycle: [],
+            disciplines: 0,
+            rowsScanned: 0,
+            error: err instanceof Error ? err.message : 'Server-side distribution fetch failed',
         };
     }
 }

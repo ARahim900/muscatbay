@@ -6,20 +6,22 @@
  * spikes, dips, zero-consumption, negative reads and missing reads. A category
  * is only as healthy as its worst meter — that is what turns a flat 57-meter
  * list into a "which system needs inspection today" answer.
+ *
+ * Every gate used here comes from `lib/thresholds.ts`. Nothing in this module
+ * (or in the Meters table on the Data tab) may define its own multiplier — that
+ * is exactly how the surfaces drifted apart before.
  */
 
 import type { MeterReading } from "@/lib/mock-data";
 import { ELECTRICITY_RATES } from "@/lib/config";
-import type { HealthMetric, HeatColumn, HeatRow, ExceptionRow, Severity } from "@/components/shared/inspection";
+import {
+    ELECTRICITY_THRESHOLDS, ELECTRICITY_GATE_LABELS, classifyLoadRatio,
+} from "@/lib/thresholds";
+import type { HealthMetric, HeatColumn, HeatRow, Severity } from "@/components/shared/inspection";
+import type { Finding } from "@/components/inspection/findings-register";
 
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
-
-// Anomaly gates, expressed against each meter's own baseline (mean of its
-// positive reads in range). Named so they read as policy, not magic numbers.
-const SPIKE_CRIT = 3;    // ≥3× baseline = critical spike
-const SPIKE_HIGH = 2;    // ≥2× baseline = high spike
-const DIP = 0.3;         // ≤30% of baseline (but non-zero) = dip
-const MIN_BASE_KWH = 5;  // ignore anomalies on trivially small meters (noise)
+const { SPIKE_CRITICAL, SPIKE_HIGH, DIP, MIN_BASELINE_KWH } = ELECTRICITY_THRESHOLDS;
 
 export type FlagKind = "negative" | "zero" | "spike-crit" | "spike-high" | "missing" | "dip" | null;
 
@@ -84,14 +86,20 @@ function flagToSeverity(flag: FlagKind): Severity {
     }
 }
 
-function meterFlag(current: number | null, baseline: number): FlagKind {
+/**
+ * The single per-meter anomaly gate. `classifyLoadRatio` decides the ratio
+ * bands, so this and the category heatmap can never disagree; the special cases
+ * (missing / negative / zero) are kinds of fault the ratio cannot express.
+ */
+export function meterFlag(current: number | null, baseline: number): FlagKind {
     if (current === null) return "missing";
     if (current < 0) return "negative";
-    if (baseline >= MIN_BASE_KWH) {
+    if (baseline >= MIN_BASELINE_KWH) {
         if (current === 0) return "zero";
-        if (current >= baseline * SPIKE_CRIT) return "spike-crit";
-        if (current >= baseline * SPIKE_HIGH) return "spike-high";
-        if (current <= baseline * DIP) return "dip";
+        const sev = classifyLoadRatio(current / baseline);
+        if (sev === "critical") return "spike-crit";
+        if (sev === "high") return "spike-high";
+        if (sev === "watch") return "dip";
     }
     return null;
 }
@@ -199,17 +207,10 @@ export function buildCategoryMetrics(model: ElectricityModel): HealthMetric[] {
 
 // ─── Category × month heatmap (category-level spike detection) ─────────────────
 
-function catMonthSeverity(total: number, baseline: number): Severity {
-    if (total <= 0) return "nodata";
-    if (baseline <= 0) return "good";
-    const r = total / baseline;
-    if (r >= 2) return "critical";
-    if (r >= 1.5) return "high";
-    if (r <= 0.5) return "watch";
-    return "good";
-}
-
-export function buildCategoryHeatmap(model: ElectricityModel): { columns: HeatColumn[]; rows: HeatRow[] } {
+export function buildCategoryHeatmap(
+    model: ElectricityModel,
+    onCell?: (type: string, month: string) => void,
+): { columns: HeatColumn[]; rows: HeatRow[] } {
     const window = 12;
     const start = Math.max(0, model.rangeMonths.length - window);
     const months = model.rangeMonths.slice(start);
@@ -228,50 +229,93 @@ export function buildCategoryHeatmap(model: ElectricityModel): { columns: HeatCo
         return {
             key: c.type,
             label: c.label,
-            cells: windowTotals.map((total, i) => ({
-                severity: catMonthSeverity(total, baseline),
-                label: total > 0 ? String(Math.round(total / 1000)) : "0",
-                title: `${c.label} · ${months[i]}: ${num(total)} kWh`,
-            })),
+            cells: windowTotals.map((total, i) => {
+                const ratio = baseline > 0 ? total / baseline : NaN;
+                const severity: Severity = total <= 0
+                    ? "nodata"
+                    : baseline <= 0
+                        ? "good"
+                        : classifyLoadRatio(ratio);
+                const ratioNote = Number.isFinite(ratio) ? ` · ${ratio.toFixed(2)}× the category baseline (${num(baseline)} kWh)` : "";
+                return {
+                    severity,
+                    label: total > 0 ? String(Math.round(total / 1000)) : "0",
+                    title: `${c.label} · ${months[i]}: ${num(total)} kWh${ratioNote}${onCell ? " — open this month's meters" : ""}`,
+                    onClick: onCell ? () => onCell(c.type, months[i]) : undefined,
+                };
+            }),
         };
     });
 
     return { columns, rows };
 }
 
-// ─── Exceptions & Actions (current month work queue) ──────────────────────────
+/** The live gate sentence for the heatmap note — never hardcode these numbers in JSX. */
+export const CATEGORY_HEATMAP_NOTE =
+    `Each cell is one month's total draw for that category (in MWh), judged against that category's own average month. `
+    + `${ELECTRICITY_GATE_LABELS.spikeCritical} = Critical, ${ELECTRICITY_GATE_LABELS.spikeHigh} = High, ${ELECTRICITY_GATE_LABELS.dip} = Watch. `
+    + `Select a cell to open that month's meters for the category.`;
 
-const OWNER = "Electrical / Facilities";
+// ─── Findings register (current month, identification only) ───────────────────
 
-const FLAG_META: Record<Exclude<FlagKind, null>, { item: string; action: string; severity: "Critical" | "Watch" }> = {
-    negative: { item: "Negative reading", severity: "Critical", action: "Negative kWh — meter fault or reset; verify CT wiring and recalibrate/replace the meter." },
-    "spike-crit": { item: "Consumption spike", severity: "Critical", action: "kWh is 3×+ the meter's baseline — inspect the load for faults and rule out a metering error." },
-    zero: { item: "Zero consumption", severity: "Watch", action: "Meter read 0 kWh but normally consumes — check the breaker/supply and confirm the reading." },
-    "spike-high": { item: "Consumption spike", severity: "Watch", action: "kWh is 2×+ the meter's baseline — review the load profile and confirm the reading is genuine." },
-    dip: { item: "Consumption dip", severity: "Watch", action: "kWh well below baseline — check for a partial outage or a mis-read." },
-    missing: { item: "Missing reading", severity: "Watch", action: "No reading captured this month — schedule a manual read for this meter." },
+const FLAG_META: Record<Exclude<FlagKind, null>, { item: string; action: string; severity: "Critical" | "Watch"; gate: string }> = {
+    negative: {
+        item: "Negative reading", severity: "Critical",
+        gate: "any reading below 0 kWh",
+        action: "Negative kWh — meter fault or reset; verify CT wiring and recalibrate/replace the meter.",
+    },
+    "spike-crit": {
+        item: "Consumption spike", severity: "Critical",
+        gate: ELECTRICITY_GATE_LABELS.spikeCritical,
+        action: `kWh is ${SPIKE_CRITICAL}×+ the meter's baseline — inspect the load for faults and rule out a metering error.`,
+    },
+    zero: {
+        item: "Zero consumption", severity: "Watch",
+        gate: `0 kWh where ${ELECTRICITY_GATE_LABELS.minBaseline}`,
+        action: "Meter read 0 kWh but normally consumes — check the breaker/supply and confirm the reading.",
+    },
+    "spike-high": {
+        item: "Consumption spike", severity: "Watch",
+        gate: ELECTRICITY_GATE_LABELS.spikeHigh,
+        action: `kWh is ${SPIKE_HIGH}×+ the meter's baseline — review the load profile and confirm the reading is genuine.`,
+    },
+    dip: {
+        item: "Consumption dip", severity: "Watch",
+        gate: ELECTRICITY_GATE_LABELS.dip,
+        action: `kWh at or below ${DIP}× the meter's baseline — check for a partial outage or a mis-read.`,
+    },
+    missing: {
+        item: "Missing reading", severity: "Watch",
+        gate: "no reading captured for the month",
+        action: "No reading captured this month — schedule a manual read for this meter.",
+    },
 };
 
-export function buildElectricityExceptions(model: ElectricityModel): ExceptionRow[] {
-    const rows: ExceptionRow[] = [];
+export function buildElectricityFindings(model: ElectricityModel): Finding[] {
+    const rows: Finding[] = [];
     for (const c of model.categories) {
         for (const m of c.meters) {
             if (!m.flag) continue;
             const meta = FLAG_META[m.flag];
             const value = m.current === null
                 ? "no read"
-                : `${num(m.current)} kWh${m.baseline > 0 ? ` (base ${num(m.baseline)})` : ""}`;
+                : `${num(m.current, 1)} kWh`;
+            const ratio = m.current !== null && m.baseline > 0 ? m.current / m.baseline : null;
             rows.push({
-                Category: c.label,
-                Item: `${m.name}${m.account ? ` · ${m.account}` : ""} — ${meta.item}`,
-                Severity: meta.severity,
-                Value: value,
-                Owner: OWNER,
-                Status: "Open",
-                Action: meta.action,
+                id: `${m.id}-${m.flag}`,
+                category: c.label,
+                item: `${m.name}${m.account ? ` · ${m.account}` : ""} — ${meta.item}`,
+                severity: meta.severity,
+                value,
+                remarks: [
+                    m.baseline > 0 ? `baseline ${num(m.baseline)} kWh` : "no baseline in range",
+                    ratio !== null ? `${ratio.toFixed(2)}× baseline` : null,
+                    `gate: ${meta.gate}`,
+                ].filter(Boolean).join(" · "),
+                action: meta.action,
             });
         }
     }
     const rank = { Critical: 1, Watch: 0 } as const;
-    return rows.sort((a, b) => rank[b.Severity] - rank[a.Severity]);
+    return rows.sort((a, b) => rank[b.severity] - rank[a.severity]);
 }

@@ -1,23 +1,30 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { getAssets } from "@/lib/mock-data";
 import type { Asset } from "@/entities/asset";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { fetchAssetsAction, fetchAssetSummaryAction } from "@/actions/assets";
+import {
+    fetchAssetsAction, fetchAssetSummaryAction, fetchAssetDistributionsAction,
+} from "@/actions/assets";
+import type { AssetDistributions, AssetSummary } from "@/functions/api/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TableBodySkeleton, Skeleton, StatsGridSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    Boxes, MapPin, Wrench, Search, Plus, Download, X, Layers,
+    Boxes, MapPin, Wrench, Search, Download, X, Layers,
     ClipboardCheck, ShieldAlert, LayoutDashboard,
     Calendar, Clock, FileText, Settings, DollarSign, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
-    MultiSelectDropdown, SortIcon, TablePagination,
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import {
+    MultiSelectDropdown, SortableTableHead, TablePagination,
     ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption,
 } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
@@ -26,6 +33,8 @@ import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { sortAssets, type AssetSortField } from "./sort";
+import { AssetAttention, AssetRegisterProfile } from "./asset-charts";
+import { TruncatedText } from "./truncated-text";
 
 type ActiveTab = 'overview' | 'lifecycle' | 'maintenance' | 'technical' | 'financial';
 
@@ -51,6 +60,9 @@ const SORT_FIELD_MAP: Record<string, string> = {
     erlYears:     'erl_years',
     pctLife:      'pct_life_used',
     condition:    'condition',
+    // Was missing: the Lifecycle tab renders field="warranty" and drew a sort
+    // arrow while the query silently fell back to asset_name.
+    warranty:     'warranty_expiry_date',
     ppmFreq:      'ppm_frequency',
     amcContractor:'amc_contractor',
     lastPpm:      'last_ppm_date',
@@ -70,6 +82,14 @@ const DISCIPLINE_OPTIONS = [
     'Civil', 'Painting', 'Village Square Assets', 'Lifts & Transport', 'Hotel Assets (JMB)',
 ];
 
+/**
+ * Largest page the register fetch will actually return. The page-size selector
+ * offers no "All" option because the query is ranged — offering "All" while
+ * fetching 500 made the footer claim "1–3061 of 3061" with 500 rows rendered.
+ */
+const MAX_PAGE_ROWS = 500;
+const PAGE_SIZE_OPTIONS: PageSizeOption[] = [25, 50, 100, 250, MAX_PAGE_ROWS];
+
 function fmt(val: string | null | undefined): string {
     if (!val) return '-';
     const d = new Date(val);
@@ -87,17 +107,22 @@ function fmtOMR(n: number | null | undefined): string {
     return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' OMR';
 }
 
-// Session cache for the default landing view — see lib/page-cache.ts
-const ASSETS_CACHE_KEY = "assets:default-view";
+const EMPTY_SUMMARY: AssetSummary = {
+    total: 0, workingStatus: 0, toVerify: 0, highCriticality: 0,
+    amcCovered: 0, endOfLifeSoon: 0, highCriticalityNoAmc: 0, boqCoverage: 0,
+};
+
+// Session cache for the default landing view — see lib/page-cache.ts.
+// Key is versioned: the cached `summary` shape changed when the KPI queries
+// were corrected, and a stale entry must not be read back into the new shape.
+const ASSETS_CACHE_KEY = "assets:default-view:v2";
 interface AssetsPageCache {
     assets: Asset[];
     totalCount: number;
-    summary: {
-        total: number; activeFlagged: number; workingStatus: number; toVerify: number;
-        criticalLifecycle: number; disciplines: number; boqCoverage: number;
-    };
+    summary: AssetSummary;
     lastUpdated: Date;
 }
+const ASSETS_PROFILE_CACHE_KEY = "assets:distributions:v1";
 
 function CritBadge({ level }: { level?: string }) {
     if (!level) return <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>;
@@ -115,7 +140,9 @@ function CritBadge({ level }: { level?: string }) {
 
 function PctBar({ pct }: { pct?: number | null }) {
     if (pct === null || pct === undefined) return <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>;
-    const color = pct >= 80 ? 'bg-red-500' : pct >= 60 ? 'bg-amber-400' : 'bg-secondary';
+    const color = pct >= 80
+        ? 'bg-[var(--status-danger)]'
+        : pct >= 60 ? 'bg-[var(--status-warning)]' : 'bg-secondary';
     return (
         <div className="flex items-center gap-2">
             <div className="w-16 bg-border dark:bg-muted rounded-full h-1.5">
@@ -131,11 +158,12 @@ export default function AssetsPage() {
     // Seed the DEFAULT view (page 1, name asc, no filters) from the session
     // cache so revisits render instantly; the mount fetch refreshes silently.
     const [cached] = useState(() => getPageCache<AssetsPageCache>(ASSETS_CACHE_KEY));
-    const [summary, setSummary] = useState(cached?.summary ?? {
-        total: 0, activeFlagged: 0, workingStatus: 0, toVerify: 0,
-        criticalLifecycle: 0, disciplines: 0, boqCoverage: 0,
-    });
+    const [summary, setSummary] = useState<AssetSummary>(cached?.summary ?? EMPTY_SUMMARY);
     const [assets, setAssets] = useState<Asset[]>(cached?.assets ?? []);
+    const [distributions, setDistributions] = useState<AssetDistributions | null>(
+        () => getPageCache<AssetDistributions>(ASSETS_PROFILE_CACHE_KEY) ?? null
+    );
+    const [distributionsLoading, setDistributionsLoading] = useState(false);
     const [loading, setLoading] = useState(!cached);
     const [search, setSearch] = useState("");
     const [selectedStatuses, setSelectedStatuses] = useState<string[]>([...STATUS_OPTIONS]);
@@ -165,9 +193,11 @@ export default function AssetsPage() {
         setCurrentPage(1);
     }, []);
 
+    const effectivePageSize = pageSize === 'All' ? MAX_PAGE_ROWS : pageSize;
+
     const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
-        const effectivePageSize = pageSize === 'All' ? 500 : pageSize;
+        const requestedRows = pageSize === 'All' ? MAX_PAGE_ROWS : pageSize;
         const supabaseSort = SORT_FIELD_MAP[sortField] || 'asset_name';
         const statusFilter = selectedStatuses.length < STATUS_OPTIONS.length ? selectedStatuses : undefined;
         const disciplineFilter = selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? selectedDisciplines : undefined;
@@ -189,7 +219,7 @@ export default function AssetsPage() {
             }
 
             const [{ data, count, error: fetchError }, summaryRes] = await Promise.all([
-                fetchAssetsAction(currentPage, effectivePageSize, debouncedSearch, supabaseSort, sortDirection, statusFilter, disciplineFilter),
+                fetchAssetsAction(currentPage, requestedRows, debouncedSearch, supabaseSort, sortDirection, statusFilter, disciplineFilter),
                 fetchAssetSummaryAction(),
             ]);
 
@@ -198,16 +228,20 @@ export default function AssetsPage() {
             setAssets(data ?? []);
             setTotalCount(count ?? 0);
             setDataSource('supabase');
+            setError(null);
             const now = new Date();
             setLastUpdated(now);
-            if (!summaryRes.error) setSummary(summaryRes);
-            if (isDefaultView && !summaryRes.error) {
-                setPageCache<AssetsPageCache>(ASSETS_CACHE_KEY, {
-                    assets: data ?? [],
-                    totalCount: count ?? 0,
-                    summary: summaryRes,
-                    lastUpdated: now,
-                });
+            if (!summaryRes.error) {
+                const { error: _summaryError, ...summaryData } = summaryRes;
+                setSummary(summaryData);
+                if (isDefaultView) {
+                    setPageCache<AssetsPageCache>(ASSETS_CACHE_KEY, {
+                        assets: data ?? [],
+                        totalCount: count ?? 0,
+                        summary: summaryData,
+                        lastUpdated: now,
+                    });
+                }
             }
         } catch (e) {
             if (silent) {
@@ -233,6 +267,29 @@ export default function AssetsPage() {
         loadData(seededRef.current);
         seededRef.current = false;
     }, [loadData]);
+
+    // Register-wide distributions power the Overview charts. They describe the
+    // whole table (not the current page), so they're fetched once per visit.
+    useEffect(() => {
+        if (!isSupabaseConfigured()) return;
+        if (getPageCache<AssetDistributions>(ASSETS_PROFILE_CACHE_KEY)) return;
+        let cancelled = false;
+        setDistributionsLoading(true);
+        fetchAssetDistributionsAction()
+            .then(res => {
+                if (cancelled) return;
+                if (res.error) {
+                    console.warn("Asset distributions unavailable:", res.error);
+                    return;
+                }
+                const { error: _err, ...profile } = res;
+                setDistributions(profile);
+                setPageCache<AssetDistributions>(ASSETS_PROFILE_CACHE_KEY, profile);
+            })
+            .catch(e => console.warn("Asset distributions failed:", e))
+            .finally(() => { if (!cancelled) setDistributionsLoading(false); });
+        return () => { cancelled = true; };
+    }, []);
 
     const { isLive } = useSupabaseRealtime({
         table: 'master_assets_register',
@@ -260,18 +317,21 @@ export default function AssetsPage() {
         return result;
     }, [assets, search, selectedStatuses, selectedDisciplines, dataSource]);
 
-    const effectivePageSize = pageSize === 'All' ? totalCount : (pageSize as number);
     const totalPages = Math.ceil(totalCount / (effectivePageSize || 1));
     const startIndex = (currentPage - 1) * effectivePageSize;
 
+    // Toggling direction must not happen inside a state updater — with
+    // reactStrictMode the updater double-invokes in dev and the direction
+    // flipped twice, cancelling itself out.
     const handleSort = useCallback((field: string) => {
-        setSortField(prev => {
-            if (prev === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-            else setSortDirection('asc');
-            return prev === field ? prev : field as AssetSortField;
-        });
+        if (sortField === field) {
+            setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortField(field as AssetSortField);
+            setSortDirection('asc');
+        }
         setCurrentPage(1);
-    }, []);
+    }, [sortField]);
 
     const hasActiveFilters = !!(search || selectedStatuses.length < STATUS_OPTIONS.length || selectedDisciplines.length < DISCIPLINE_OPTIONS.length);
 
@@ -342,15 +402,18 @@ export default function AssetsPage() {
         exportToCSV(rows, `assets-${activeTab}-${getDateForFilename()}`);
     };
 
+    // Every KPI below is ONE query against ONE condition (see
+    // functions/api/assets.ts) — the label and the predicate say the same thing.
     const stats = useMemo(() => {
-        const totalItems = dataSource === 'supabase' ? (summary.total || totalCount) : totalCount;
+        const live = dataSource === 'supabase';
+        const totalItems = live ? (summary.total || totalCount) : totalCount;
         return [
-            { label: "TOTAL ASSETS",            value: totalItems.toString(),                     subtitle: "Across all disciplines",       icon: Boxes,       variant: "water"   as const },
-            { label: "ACTIVE / WORKING",         value: (dataSource === 'supabase' ? summary.workingStatus : assets.filter(a => ['Active','Working'].includes(a.status)).length).toString(), subtitle: "Status = Working / Active", icon: ClipboardCheck, variant: "success" as const },
-            { label: "HIGH CRITICALITY",         value: (dataSource === 'supabase' ? summary.criticalLifecycle : assets.filter(a => a.criticalityLevel === 'High').length).toString(), subtitle: "Requires priority attention", icon: AlertTriangle, variant: "danger"  as const },
-            { label: "WITH AMC CONTRACTOR",      value: (dataSource === 'supabase' ? summary.activeFlagged  : assets.filter(a => a.amcContractor).length).toString(),   subtitle: "Contracted maintenance",       icon: Wrench,       variant: "water"   as const },
-            { label: "RESERVE FUND LINKED",      value: (dataSource === 'supabase' ? summary.boqCoverage    : assets.filter(a => a.boqProjectRef).length).toString(),   subtitle: "Assets with BOQ reference",    icon: FileText,     variant: "success" as const },
-            { label: "NEEDS VERIFICATION",       value: (dataSource === 'supabase' ? summary.toVerify       : assets.filter(a => a.status === 'TO VERIFY').length).toString(), subtitle: "TO VERIFY status", icon: ShieldAlert, variant: "warning" as const },
+            { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "water" as const },
+            { label: "ACTIVE / WORKING",   value: (live ? summary.workingStatus : assets.filter(a => ['Active', 'Working'].includes(a.status)).length).toString(), subtitle: "Status = Working / Active", icon: ClipboardCheck, variant: "success" as const },
+            { label: "HIGH CRITICALITY",   value: (live ? summary.highCriticality : assets.filter(a => a.criticalityLevel === 'High').length).toString(), subtitle: "Criticality = High", icon: AlertTriangle, variant: "danger" as const },
+            { label: "WITH AMC CONTRACTOR", value: (live ? summary.amcCovered : assets.filter(a => a.amcContractor).length).toString(), subtitle: "AMC contractor recorded", icon: Wrench, variant: "water" as const },
+            { label: "RESERVE FUND LINKED", value: (live ? summary.boqCoverage : assets.filter(a => a.boqProjectRef).length).toString(), subtitle: "Assets with BOQ reference", icon: FileText, variant: "success" as const },
+            { label: "NEEDS VERIFICATION",  value: (live ? summary.toVerify : assets.filter(a => a.status === 'TO VERIFY').length).toString(), subtitle: "Status = TO VERIFY", icon: ShieldAlert, variant: "warning" as const },
         ];
     }, [assets, totalCount, dataSource, summary]);
 
@@ -366,45 +429,18 @@ export default function AssetsPage() {
 
     const erlColor = (n: number | null | undefined) =>
         n === null || n === undefined ? 'text-muted-foreground' :
-        n <= 2  ? 'text-red-600 dark:text-red-400' :
-        n <= 5  ? 'text-amber-500 dark:text-amber-400' :
+        n <= 2  ? 'text-[var(--mb-danger-text)] dark:text-[var(--status-danger)]' :
+        n <= 5  ? 'text-[var(--mb-warning-text)] dark:text-[var(--status-warning)]' :
                   'text-secondary';
 
-    // ── Shared column header helper ────────────────────────────────────────────
-    const Th = ({ label, field, right }: { label: string; field?: string; right?: boolean }) => (
-        <th
-            scope="col"
-            className={`py-3 px-4 font-semibold text-xs whitespace-nowrap ${field ? 'hover:bg-white/10' : ''} ${right ? 'text-right' : 'text-left'}`}
-            aria-sort={field ? (sortField === field ? (sortDirection === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
-        >
-            {field ? (
-                <button
-                    type="button"
-                    onClick={() => handleSort(field)}
-                    className={`inline-flex min-h-11 w-full items-center gap-1.5 rounded-md text-inherit transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${right ? 'justify-end' : ''}`}
-                >
-                    {label}
-                    <SortIcon field={field} currentSortField={sortField} currentSortDirection={sortDirection} />
-                </button>
-            ) : (
-                <span className={`flex items-center gap-1.5 ${right ? 'justify-end' : ''}`}>{label}</span>
-            )}
-        </th>
-    );
-
-    const loadingRows = (cols: number) => loading ? <TableBodySkeleton columns={cols} rows={10} /> : null;
-    const emptyRow = (cols: number) => (
-        <tr><td colSpan={cols}><EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." /></td></tr>
-    );
     // Apply client-side sort for mock/demo data (Supabase handles it server-side)
-    const sortedAssets = dataSource === 'mock'
+    const rows = dataSource === 'mock'
         ? sortAssets(filteredAssets, sortField, sortDirection)
         : filteredAssets;
-    const rows = sortedAssets;
 
-    // Window-scroll row virtualization (spacer-row technique) — kicks in when
-    // the 'All' page size pulls more than 100 rows. Only one tab's table is
-    // mounted at a time, so a single hook instance serves every tab.
+    // Window-scroll row virtualization (spacer-row technique) — kicks in when a
+    // large page size pulls more than 100 rows. Only one tab's table is mounted
+    // at a time, so a single hook instance serves every tab.
     const { bodyRef, virtualItems, paddingTop, paddingBottom } = useVirtualTableRows({
         count: rows.length,
         enabled: rows.length > 100,
@@ -415,7 +451,49 @@ export default function AssetsPage() {
     // Zebra striping derives from the row's index in the full list (not DOM
     // position) so it stays stable when spacer rows shift nth-child parity
     const rowCls = (i: number) =>
-        `border-b border-border/80 dark:border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors ${i % 2 === 1 ? 'bg-muted/40 dark:bg-muted/20' : ''}`;
+        `hover:bg-secondary/5 dark:hover:bg-muted/40 ${i % 2 === 1 ? 'bg-muted/40 dark:bg-muted/20' : ''}`;
+
+    /** One body renderer for all five tables — skeleton / empty / virtual rows. */
+    const tableBody = (cols: number, renderRow: (a: Asset, index: number) => ReactNode) => (
+        <TableBody aria-busy={loading} ref={bodyRef}>
+            {loading ? (
+                <TableBodySkeleton columns={cols} rows={10} />
+            ) : rows.length === 0 ? (
+                <TableRow>
+                    <TableCell colSpan={cols}>
+                        <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets found" description="Try adjusting your filters." />
+                    </TableCell>
+                </TableRow>
+            ) : (
+                <>
+                    {spacerRow(paddingTop, cols)}
+                    {virtualItems.map(vi => renderRow(rows[vi.index], vi.index))}
+                    {spacerRow(paddingBottom, cols)}
+                </>
+            )}
+        </TableBody>
+    );
+
+    /** One mobile card list for all five tabs — only the card body differs. */
+    const mobileList = (renderCard: (a: Asset) => ReactNode) => (
+        <div className="md:hidden ops-table-shell divide-y divide-border dark:divide-border">
+            {loading ? (
+                <div className="p-4 space-y-3">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}</div>
+            ) : rows.length === 0 ? (
+                <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets" description="Try adjusting filters." />
+            ) : rows.map(a => (
+                <div key={a.id} className="p-4 space-y-2">{renderCard(a)}</div>
+            ))}
+        </div>
+    );
+
+    const panelProps = (tab: ActiveTab) => ({
+        id: `panel-${tab}`,
+        role: "tabpanel" as const,
+        "aria-labelledby": `tab-${tab}`,
+        tabIndex: 0,
+        className: "space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    });
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
@@ -423,8 +501,7 @@ export default function AssetsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
                     title="Assets Register"
-                    description="Master asset register — 3,061 assets across all disciplines with lifecycle, maintenance, and financial data"
-                    action={{ label: "Register Asset", icon: Plus }}
+                    description="Master asset register — lifecycle, maintenance and financial data across all disciplines"
                 />
                 <PageStatusBar
                     isConnected={dataSource === 'supabase'}
@@ -439,11 +516,31 @@ export default function AssetsPage() {
             <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
 
             <div className="space-y-4">
-                {/* KPI cards — moved above the toolbar so they sit at the top of the section.
-                    Skeleton until the first fetch resolves so we never flash all-zero KPIs. */}
-                {activeTab === 'overview' && (firstLoad ? <StatsGridSkeleton count={6} /> : <StatsGrid stats={stats} />)}
+                {/* KPI cards — skeleton until the first fetch resolves so we never
+                    flash all-zero KPIs. */}
+                {activeTab === 'overview' && (
+                    <SectionBoundary title="Register KPIs">
+                        {firstLoad ? <StatsGridSkeleton count={6} /> : <StatsGrid stats={stats} />}
+                    </SectionBoundary>
+                )}
 
-                {/* Toolbar — search filter now sits directly above the table */}
+                {activeTab === 'overview' && dataSource === 'supabase' && !firstLoad && (
+                    <SectionBoundary title="Needs attention">
+                        <AssetAttention summary={summary} />
+                    </SectionBoundary>
+                )}
+
+                {activeTab === 'overview' && dataSource === 'supabase' && (
+                    <SectionBoundary title="Register profile">
+                        <AssetRegisterProfile
+                            distributions={distributions}
+                            loading={distributionsLoading && !distributions}
+                            total={summary.total}
+                        />
+                    </SectionBoundary>
+                )}
+
+                {/* Toolbar — search filter sits directly above the table */}
                 <TableToolbar>
                     <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -478,18 +575,12 @@ export default function AssetsPage() {
                     ...(selectedDisciplines.length < DISCIPLINE_OPTIONS.length ? [{ key: 'disc', label: `${selectedDisciplines.length} disciplines`, colorClass: 'bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/70', onRemove: () => { setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1); } }] : []),
                 ]} />
 
-                {/* ── TAB: OVERVIEW ─────────────────────────────────────────────────────── */}
+                {/* ── TAB: OVERVIEW ─────────────────────────────────────────────── */}
                 {activeTab === 'overview' && (
-                    <div id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" tabIndex={0} className="space-y-4">
-                    <div className="ops-table-shell">
-                        {/* Mobile cards */}
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {loading ? (
-                                <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
-                            ) : rows.length === 0 ? (
-                                <EmptyState variant={hasActiveFilters ? "filter-empty" : "no-data"} title="No assets" description="Try adjusting filters." />
-                            ) : rows.map(a => (
-                                <div key={a.id} className="p-4 space-y-2">
+                    <div {...panelProps('overview')}>
+                        <SectionBoundary title="Asset register">
+                            {mobileList(a => (
+                                <>
                                     <div className="flex items-start justify-between gap-2">
                                         <div>
                                             <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
@@ -501,292 +592,281 @@ export default function AssetsPage() {
                                         <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{a.buildingArea || a.zone || a.location}</span>
                                         <StatusBadge label={a.status} color={getStatusColor(a.status)} />
                                     </div>
-                                </div>
+                                </>
                             ))}
-                        </div>
-                        {/* Desktop table */}
-                        <table className="ops-table hidden md:table">
-                            <thead>
-                                <tr>
-                                    <Th label="Asset Name"  field="name" />
-                                    <Th label="Asset Tag"   field="tag" />
-                                    <Th label="Discipline"  field="discipline" />
-                                    <Th label="Category"    field="category" />
-                                    <Th label="Zone"        field="zone" />
-                                    <Th label="Building"    field="building" />
-                                    <Th label="Status"      field="status" />
-                                    <Th label="Criticality" field="criticality" />
-                                </tr>
-                            </thead>
-                            <tbody aria-busy={loading} ref={bodyRef}>
-                                {loading ? loadingRows(8) : rows.length === 0 ? emptyRow(8) : <>
-                                    {spacerRow(paddingTop, 8)}
-                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
-                                    <tr key={a.id} className={rowCls(vi.index)}>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[220px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag || '-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.type || '-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground">{a.zone || '-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground max-w-[160px]"><span className="truncate block">{a.buildingArea || '-'}</span></td>
-                                        <td className="py-3.5 px-4"><StatusBadge label={a.status} color={getStatusColor(a.status)} /></td>
-                                        <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel} /></td>
-                                    </tr>
-                                    ); })}
-                                    {spacerRow(paddingBottom, 8)}
-                                </>}
-                            </tbody>
-                        </table>
-                    </div>
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Name</SortableTableHead>
+                                            <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Asset Tag</SortableTableHead>
+                                            <SortableTableHead field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Discipline</SortableTableHead>
+                                            <SortableTableHead field="category" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Category</SortableTableHead>
+                                            <SortableTableHead field="zone" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Zone</SortableTableHead>
+                                            <SortableTableHead field="building" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Building</SortableTableHead>
+                                            <SortableTableHead field="status" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Status</SortableTableHead>
+                                            <SortableTableHead field="criticality" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Criticality</SortableTableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    {tableBody(8, (a, i) => (
+                                        <TableRow key={a.id} className={rowCls(i)}>
+                                            <TableCell className="col-sticky max-w-[220px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.type || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.zone || '-'}</TableCell>
+                                            <TableCell className="max-w-[180px] text-muted-foreground dark:text-muted-foreground">
+                                                <TruncatedText text={a.buildingArea} label={`Building — ${a.name}`} lines={1} />
+                                            </TableCell>
+                                            <TableCell><StatusBadge label={a.status} color={getStatusColor(a.status)} /></TableCell>
+                                            <TableCell><CritBadge level={a.criticalityLevel} /></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </SectionBoundary>
                     </div>
                 )}
 
-                {/* ── TAB: LIFECYCLE ────────────────────────────────────────────────────── */}
+                {/* ── TAB: LIFECYCLE ────────────────────────────────────────────── */}
                 {activeTab === 'lifecycle' && (
-                    <div id="panel-lifecycle" role="tabpanel" aria-labelledby="tab-lifecycle" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
-                            : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
-                            : rows.map(a => (
-                                <div key={a.id} className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span><CritBadge level={a.criticalityLevel}/></div>
+                    <div {...panelProps('lifecycle')}>
+                        <SectionBoundary title="Lifecycle">
+                            {mobileList(a => (
+                                <>
+                                    <div className="flex items-center justify-between"><span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span><CritBadge level={a.criticalityLevel} /></div>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-muted-foreground">
-                                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/>Inst: {a.installYear??'-'}</span>
-                                        <span className="flex items-center gap-1"><Clock className="w-3 h-3"/>ERL: {fmtYrs(a.erlYears)}</span>
+                                        <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Inst: {a.installYear ?? '-'}</span>
+                                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />ERL: {fmtYrs(a.erlYears)}</span>
                                         <span>Life: {fmtYrs(a.lifeExpectancyYears)}</span>
                                     </div>
-                                    <PctBar pct={a.pctLifeUsed}/>
+                                    <PctBar pct={a.pctLifeUsed} />
                                     {a.warrantyExpiryDate && <div className="text-xs text-muted-foreground">Warranty: {fmt(a.warrantyExpiryDate)}</div>}
-                                </div>
+                                </>
                             ))}
-                        </div>
-                        <table className="ops-table hidden md:table">
-                            <thead>
-                                <tr>
-                                    <Th label="Asset Tag"      field="tag" />
-                                    <Th label="Asset Name"     field="name" />
-                                    <Th label="Discipline"     field="discipline" />
-                                    <Th label="Install Yr"     field="installYear" />
-                                    <Th label="Age (yrs)"      />
-                                    <Th label="Exp. Life"      field="lifeExpect" />
-                                    <Th label="ERL"            field="erlYears" />
-                                    <Th label="% Life Used"    field="pctLife" />
-                                    <Th label="Warranty Expiry" field="warranty" />
-                                    <Th label="Condition"      field="condition" />
-                                    <Th label="Criticality"    field="criticality" />
-                                </tr>
-                            </thead>
-                            <tbody aria-busy={loading} ref={bodyRef}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
-                                    {spacerRow(paddingTop, 11)}
-                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
-                                    <tr key={a.id} className={rowCls(vi.index)}>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.installYear??'-'}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{fmtYrs(a.currentAgeYears)}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{fmtYrs(a.lifeExpectancyYears)}</td>
-                                        <td className={`py-3.5 px-4 text-center font-mono text-sm font-semibold ${erlColor(a.erlYears)}`}>{fmtYrs(a.erlYears)}</td>
-                                        <td className="py-3.5 px-4"><PctBar pct={a.pctLifeUsed}/></td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.warrantyExpiryDate)}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.condition||'-'}</td>
-                                        <td className="py-3.5 px-4"><CritBadge level={a.criticalityLevel}/></td>
-                                    </tr>
-                                    ); })}
-                                    {spacerRow(paddingBottom, 11)}
-                                </>}
-                            </tbody>
-                        </table>
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
+                                            <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Asset Name</SortableTableHead>
+                                            <SortableTableHead field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Discipline</SortableTableHead>
+                                            <SortableTableHead field="installYear" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="center" className="text-center">Install Yr</SortableTableHead>
+                                            <TableHead scope="col" className="text-center">Age (yrs)</TableHead>
+                                            <SortableTableHead field="lifeExpect" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="center" className="text-center">Exp. Life</SortableTableHead>
+                                            <SortableTableHead field="erlYears" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="center" className="text-center">ERL</SortableTableHead>
+                                            <SortableTableHead field="pctLife" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>% Life Used</SortableTableHead>
+                                            <SortableTableHead field="warranty" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Warranty Expiry</SortableTableHead>
+                                            <SortableTableHead field="condition" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Condition</SortableTableHead>
+                                            <SortableTableHead field="criticality" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Criticality</SortableTableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    {tableBody(11, (a, i) => (
+                                        <TableRow key={a.id} className={rowCls(i)}>
+                                            <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="num text-center">{a.installYear ?? '-'}</TableCell>
+                                            <TableCell className="num text-center">{fmtYrs(a.currentAgeYears)}</TableCell>
+                                            <TableCell className="num text-center">{fmtYrs(a.lifeExpectancyYears)}</TableCell>
+                                            <TableCell className={`num text-center font-semibold ${erlColor(a.erlYears)}`}>{fmtYrs(a.erlYears)}</TableCell>
+                                            <TableCell><PctBar pct={a.pctLifeUsed} /></TableCell>
+                                            <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.warrantyExpiryDate)}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.condition || '-'}</TableCell>
+                                            <TableCell><CritBadge level={a.criticalityLevel} /></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </SectionBoundary>
                     </div>
                 )}
 
-                {/* ── TAB: MAINTENANCE ─────────────────────────────────────────────────── */}
+                {/* ── TAB: MAINTENANCE ──────────────────────────────────────────── */}
                 {activeTab === 'maintenance' && (
-                    <div id="panel-maintenance" role="tabpanel" aria-labelledby="tab-maintenance" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
-                            : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
-                            : rows.map(a => (
-                                <div key={a.id} className="p-4 space-y-2">
-                                    <div className="flex items-center justify-between"><span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>{a.ppmFrequency && <span className="text-xs font-medium text-primary">{a.ppmFrequency}</span>}</div>
+                    <div {...panelProps('maintenance')}>
+                        <SectionBoundary title="Maintenance">
+                            {mobileList(a => (
+                                <>
+                                    <div className="flex items-center justify-between"><span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>{a.ppmFrequency && <span className="text-xs font-medium text-primary">{a.ppmFrequency}</span>}</div>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
-                                    {a.amcContractor && <div className="text-xs text-muted-foreground"><Wrench className="w-3 h-3 inline mr-1"/>{a.amcContractor}</div>}
+                                    {a.amcContractor && <div className="text-xs text-muted-foreground"><Wrench className="w-3 h-3 inline mr-1" />{a.amcContractor}</div>}
                                     <div className="flex gap-4 text-xs text-muted-foreground">
                                         {a.lastPpmDate && <span>Last: {fmt(a.lastPpmDate)}</span>}
                                         {a.nextPpmDate && <span>Next: {fmt(a.nextPpmDate)}</span>}
                                     </div>
-                                </div>
+                                    {a.amcNotes && <p className="text-xs text-muted-foreground break-words">{a.amcNotes}</p>}
+                                    {a.maintenanceRequirements && <p className="text-xs text-muted-foreground break-words">{a.maintenanceRequirements}</p>}
+                                </>
                             ))}
-                        </div>
-                        <table className="ops-table hidden md:table">
-                            <thead>
-                                <tr>
-                                    <Th label="Asset Tag"          field="tag" />
-                                    <Th label="Asset Name"         field="name" />
-                                    <Th label="Discipline"         field="discipline" />
-                                    <Th label="Zone / Building"    />
-                                    <Th label="PPM Frequency"      field="ppmFreq" />
-                                    <Th label="Interval (mo)"      />
-                                    <Th label="AMC Contractor"     field="amcContractor" />
-                                    <Th label="Last PPM"           field="lastPpm" />
-                                    <Th label="Next PPM"           field="nextPpm" />
-                                    <Th label="AMC Notes"          />
-                                    <Th label="Maintenance Notes"  />
-                                </tr>
-                            </thead>
-                            <tbody aria-busy={loading} ref={bodyRef}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
-                                    {spacerRow(paddingTop, 11)}
-                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
-                                    <tr key={a.id} className={rowCls(vi.index)}>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.buildingArea||a.zone||'-'}</td>
-                                        <td className="py-3.5 px-4 text-sm font-medium text-primary">{a.ppmFrequency||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.ppmIntervalMonths??'-'}</td>
-                                        <td className="py-3.5 px-4 text-foreground dark:text-muted-foreground/70 text-sm">{a.amcContractor||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.lastPpmDate)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground whitespace-nowrap">{fmt(a.nextPpmDate)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[180px]"><span className="line-clamp-2">{a.amcNotes||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.maintenanceRequirements||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
-                                    </tr>
-                                    ); })}
-                                    {spacerRow(paddingBottom, 11)}
-                                </>}
-                            </tbody>
-                        </table>
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
+                                            <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Asset Name</SortableTableHead>
+                                            <SortableTableHead field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Discipline</SortableTableHead>
+                                            <TableHead scope="col">Zone / Building</TableHead>
+                                            <SortableTableHead field="ppmFreq" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>PPM Frequency</SortableTableHead>
+                                            <TableHead scope="col" className="text-center">Interval (mo)</TableHead>
+                                            <SortableTableHead field="amcContractor" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>AMC Contractor</SortableTableHead>
+                                            <SortableTableHead field="lastPpm" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Last PPM</SortableTableHead>
+                                            <SortableTableHead field="nextPpm" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Next PPM</SortableTableHead>
+                                            <TableHead scope="col">AMC Notes</TableHead>
+                                            <TableHead scope="col">Maintenance Notes</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    {tableBody(11, (a, i) => (
+                                        <TableRow key={a.id} className={rowCls(i)}>
+                                            <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
+                                            <TableCell className="font-medium text-primary">{a.ppmFrequency || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="num text-center">{a.ppmIntervalMonths ?? '-'}</TableCell>
+                                            <TableCell className="text-foreground dark:text-muted-foreground/70">{a.amcContractor || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.lastPpmDate)}</TableCell>
+                                            <TableCell className="whitespace-nowrap text-muted-foreground">{fmt(a.nextPpmDate)}</TableCell>
+                                            <TableCell className="max-w-[200px] text-muted-foreground">
+                                                <TruncatedText text={a.amcNotes} label={`AMC notes — ${a.name}`} />
+                                            </TableCell>
+                                            <TableCell className="max-w-[220px] text-muted-foreground">
+                                                <TruncatedText text={a.maintenanceRequirements} label={`Maintenance notes — ${a.name}`} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </SectionBoundary>
                     </div>
                 )}
 
-                {/* ── TAB: TECHNICAL ───────────────────────────────────────────────────── */}
+                {/* ── TAB: TECHNICAL ────────────────────────────────────────────── */}
                 {activeTab === 'technical' && (
-                    <div id="panel-technical" role="tabpanel" aria-labelledby="tab-technical" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
-                            : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
-                            : rows.map(a => (
-                                <div key={a.id} className="p-4 space-y-2">
-                                    <span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>
+                    <div {...panelProps('technical')}>
+                        <SectionBoundary title="Technical">
+                            {mobileList(a => (
+                                <>
+                                    <span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-muted-foreground">
                                         {a.manufacturer && <span>Brand: <span className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer}</span></span>}
                                         {a.model && <span>Model: {a.model}</span>}
                                         {a.countryOfOrigin && <span>Origin: {a.countryOfOrigin}</span>}
-                                        {a.powerCapacity && <span>Cap: {a.powerCapacity}</span>}
+                                        {a.powerCapacity && <span className="break-words">Cap: {a.powerCapacity}</span>}
                                     </div>
-                                </div>
+                                </>
                             ))}
-                        </div>
-                        <table className="ops-table hidden md:table">
-                            <thead>
-                                <tr>
-                                    <Th label="Asset Tag"      field="tag" />
-                                    <Th label="Asset Name"     field="name" />
-                                    <Th label="Discipline"     field="discipline" />
-                                    <Th label="Sub-category"   />
-                                    <Th label="Manufacturer"   field="manufacturer" />
-                                    <Th label="Model"          field="model" />
-                                    <Th label="Country"        field="country" />
-                                    <Th label="Power / Capacity" />
-                                    <Th label="Serial No."     />
-                                    <Th label="Reg. Authority" />
-                                    <Th label="Data Source"    />
-                                </tr>
-                            </thead>
-                            <tbody aria-busy={loading} ref={bodyRef}>
-                                {loading ? loadingRows(11) : rows.length === 0 ? emptyRow(11) : <>
-                                    {spacerRow(paddingTop, 11)}
-                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
-                                    <tr key={a.id} className={rowCls(vi.index)}>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.subcategory||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.model||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-sm">{a.countryOfOrigin||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs max-w-[140px]"><span className="truncate block">{a.powerCapacity||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground">{a.serialNo||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[150px]"><span className="truncate block">{a.registrationAuthority||<span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</span></td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.dataSource||'-'}</td>
-                                    </tr>
-                                    ); })}
-                                    {spacerRow(paddingBottom, 11)}
-                                </>}
-                            </tbody>
-                        </table>
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
+                                            <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Asset Name</SortableTableHead>
+                                            <SortableTableHead field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Discipline</SortableTableHead>
+                                            <TableHead scope="col">Sub-category</TableHead>
+                                            <SortableTableHead field="manufacturer" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Manufacturer</SortableTableHead>
+                                            <SortableTableHead field="model" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Model</SortableTableHead>
+                                            <SortableTableHead field="country" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Country</SortableTableHead>
+                                            <TableHead scope="col">Power / Capacity</TableHead>
+                                            <TableHead scope="col">Serial No.</TableHead>
+                                            <TableHead scope="col">Reg. Authority</TableHead>
+                                            <TableHead scope="col">Data Source</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    {tableBody(11, (a, i) => (
+                                        <TableRow key={a.id} className={rowCls(i)}>
+                                            <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.subcategory || '-'}</TableCell>
+                                            <TableCell className="font-medium text-foreground dark:text-muted-foreground/70">{a.manufacturer || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.model || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.countryOfOrigin || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="max-w-[160px] text-muted-foreground">
+                                                <TruncatedText text={a.powerCapacity} label={`Power / capacity — ${a.name}`} lines={1} />
+                                            </TableCell>
+                                            <TableCell className="meter text-muted-foreground">{a.serialNo || <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</TableCell>
+                                            <TableCell className="max-w-[170px] text-muted-foreground">
+                                                <TruncatedText text={a.registrationAuthority} label={`Registration authority — ${a.name}`} lines={1} />
+                                            </TableCell>
+                                            <TableCell className="text-muted-foreground">{a.dataSource || '-'}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </SectionBoundary>
                     </div>
                 )}
 
-                {/* ── TAB: FINANCIAL ───────────────────────────────────────────────────── */}
+                {/* ── TAB: FINANCIAL ────────────────────────────────────────────── */}
                 {activeTab === 'financial' && (
-                    <div id="panel-financial" role="tabpanel" aria-labelledby="tab-financial" tabIndex={0} className="ops-table-shell focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                        <div className="md:hidden divide-y divide-border dark:divide-border">
-                            {loading ? <div className="p-4 space-y-3">{Array.from({length:6}).map((_,i)=><Skeleton key={i} className="h-20 w-full"/>)}</div>
-                            : rows.length === 0 ? <EmptyState variant={hasActiveFilters?"filter-empty":"no-data"} title="No assets" description="Adjust filters." />
-                            : rows.map(a => (
-                                <div key={a.id} className="p-4 space-y-2">
-                                    <span className="font-mono text-xs text-muted-foreground">{a.assetTag||'-'}</span>
+                    <div {...panelProps('financial')}>
+                        <SectionBoundary title="Financial">
+                            {mobileList(a => (
+                                <>
+                                    <span className="meter text-xs text-muted-foreground">{a.assetTag || '-'}</span>
                                     <p className="font-semibold text-sm text-foreground dark:text-muted-foreground">{a.name}</p>
                                     <div className="flex justify-between text-xs">
                                         <span className="text-muted-foreground">Original: <span className="font-mono font-semibold text-foreground dark:text-muted-foreground/70">{fmtOMR(a.boqUnitCost)}</span></span>
                                         <span className="text-muted-foreground">Replace: <span className="font-mono font-semibold text-primary">{fmtOMR(a.replacementCost)}</span></span>
                                     </div>
-                                    {a.boqProjectRef && <div className="text-xs text-muted-foreground flex items-center gap-1"><FileText className="w-3 h-3"/>{a.boqProjectRef}</div>}
-                                </div>
+                                    {a.boqProjectRef && <div className="text-xs text-muted-foreground flex items-center gap-1 break-words"><FileText className="w-3 h-3 shrink-0" />{a.boqProjectRef}</div>}
+                                    {a.notes && <p className="text-xs text-muted-foreground break-words">{a.notes}</p>}
+                                </>
                             ))}
-                        </div>
-                        <table className="ops-table hidden md:table">
-                            <thead>
-                                <tr>
-                                    <Th label="Asset Tag"           field="tag" />
-                                    <Th label="Asset Name"          field="name" />
-                                    <Th label="Discipline"          field="discipline" />
-                                    <Th label="Zone / Building"     />
-                                    <Th label="Original Cost (OMR)" field="origCost" right />
-                                    <Th label="Replace Cost (OMR)"  field="replCost" right />
-                                    <Th label="BOQ Reference"       field="boqRef" />
-                                    <Th label="BOQ Design Life"     field="boqLife" />
-                                    <Th label="Supplier"            />
-                                    <Th label="Notes"               />
-                                </tr>
-                            </thead>
-                            <tbody aria-busy={loading} ref={bodyRef}>
-                                {loading ? loadingRows(10) : rows.length === 0 ? emptyRow(10) : <>
-                                    {spacerRow(paddingTop, 10)}
-                                    {virtualItems.map(vi => { const a = rows[vi.index]; return (
-                                    <tr key={a.id} className={rowCls(vi.index)}>
-                                        <td className="py-3.5 px-4 font-mono text-xs text-muted-foreground whitespace-nowrap">{a.assetTag||'-'}</td>
-                                        <td className="py-3.5 px-4 font-medium text-foreground dark:text-muted-foreground max-w-[200px]"><span className="line-clamp-2">{a.name}</span></td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.discipline||'-'}</td>
-                                        <td className="py-3.5 px-4 text-muted-foreground dark:text-muted-foreground text-xs">{a.buildingArea||a.zone||'-'}</td>
-                                        <td className="py-3.5 px-4 text-right font-mono text-sm text-foreground dark:text-muted-foreground/70 whitespace-nowrap">{fmtOMR(a.boqUnitCost)}</td>
-                                        <td className="py-3.5 px-4 text-right font-mono text-sm font-semibold text-primary whitespace-nowrap">{fmtOMR(a.replacementCost)}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[180px]">{a.boqProjectRef ? <span className="truncate block" title={a.boqProjectRef}>{a.boqProjectRef}</span> : <span className="text-muted-foreground/70 dark:text-muted-foreground">-</span>}</td>
-                                        <td className="py-3.5 px-4 text-center font-mono text-sm text-muted-foreground dark:text-muted-foreground">{a.boqDesignLife ? `${a.boqDesignLife}y` : '-'}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground">{a.responsibilityOwner||'-'}</td>
-                                        <td className="py-3.5 px-4 text-xs text-muted-foreground max-w-[160px]"><span className="truncate block">{a.notes||'-'}</span></td>
-                                    </tr>
-                                    ); })}
-                                    {spacerRow(paddingBottom, 10)}
-                                </>}
-                            </tbody>
-                        </table>
+                            <div className="hidden md:block">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
+                                            <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Asset Name</SortableTableHead>
+                                            <SortableTableHead field="discipline" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Discipline</SortableTableHead>
+                                            <TableHead scope="col">Zone / Building</TableHead>
+                                            <SortableTableHead field="origCost" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Original Cost (OMR)</SortableTableHead>
+                                            <SortableTableHead field="replCost" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Replace Cost (OMR)</SortableTableHead>
+                                            <SortableTableHead field="boqRef" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>BOQ Reference</SortableTableHead>
+                                            <SortableTableHead field="boqLife" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="center" className="text-center">BOQ Design Life</SortableTableHead>
+                                            <TableHead scope="col">Supplier</TableHead>
+                                            <TableHead scope="col">Notes</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    {tableBody(10, (a, i) => (
+                                        <TableRow key={a.id} className={rowCls(i)}>
+                                            <TableCell className="col-sticky meter whitespace-nowrap text-muted-foreground">{a.assetTag || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] font-semibold text-foreground dark:text-muted-foreground"><span className="line-clamp-2">{a.name}</span></TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.discipline || '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground dark:text-muted-foreground">{a.buildingArea || a.zone || '-'}</TableCell>
+                                            <TableCell className="num whitespace-nowrap">{fmtOMR(a.boqUnitCost)}</TableCell>
+                                            <TableCell className="num whitespace-nowrap font-semibold text-primary">{fmtOMR(a.replacementCost)}</TableCell>
+                                            <TableCell className="max-w-[200px] text-muted-foreground">
+                                                <TruncatedText text={a.boqProjectRef} label={`BOQ reference — ${a.name}`} lines={1} />
+                                            </TableCell>
+                                            <TableCell className="num text-center">{a.boqDesignLife ? `${a.boqDesignLife}y` : '-'}</TableCell>
+                                            <TableCell className="text-muted-foreground">{a.responsibilityOwner || '-'}</TableCell>
+                                            <TableCell className="max-w-[200px] text-muted-foreground">
+                                                <TruncatedText text={a.notes} label={`Notes — ${a.name}`} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </Table>
+                            </div>
+                        </SectionBoundary>
                     </div>
                 )}
 
-                {/* Pagination */}
+                {/* Pagination — endIndex counts the rows actually rendered, so the
+                    footer can never claim more than the fetch returned. */}
                 {totalCount > 0 && (
                     <TablePagination
                         currentPage={currentPage}
                         totalPages={totalPages}
                         totalItems={totalCount}
                         pageSize={pageSize}
+                        pageSizeOptions={PAGE_SIZE_OPTIONS}
                         startIndex={startIndex}
-                        endIndex={Math.min(startIndex + effectivePageSize, totalCount)}
+                        endIndex={Math.min(startIndex + rows.length, totalCount)}
                         onPageChange={setCurrentPage}
                         onPageSizeChange={size => { setPageSize(size); setCurrentPage(1); }}
                     />

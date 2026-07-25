@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getSTPOperations, STPOperation } from "@/lib/mock-data";
 import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { STP_RATES } from "@/lib/config";
@@ -25,13 +25,13 @@ import {
     Search,
     Download,
     ChevronDown,
+    AlertTriangle,
 } from "lucide-react";
 import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { format } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
-import { MODULE_COLORS } from "@/lib/tokens";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -39,8 +39,13 @@ import { useAppNotifications } from "@/components/NotificationProvider";
 import { useToast } from "@/components/ui/toast-provider";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";
-import { cn } from "@/lib/utils";
+import { STP_THRESHOLDS } from "@/lib/thresholds";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import { PlantWatch } from "@/components/stp/plant-watch";
+import {
+    ChartViewToggle, STPVolumeChart, STPEconomicChart, STPTankerChart,
+    type ChartView, type STPChartDataPoint,
+} from "@/components/stp/stp-trend-charts";
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
@@ -56,258 +61,32 @@ const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 //      2027" empty-dropdown bug. A 2-day grace absorbs timezone skew so a
 //      legitimately-today reading is never dropped; in-progress current-month
 //      data (dated ≤ today) is always kept.
+//   3. REPORT what was dropped. Silently discarding rows is how the sync's
+//      bad records stayed invisible for months; the count is surfaced in the
+//      page header so an operator knows the view is not the whole table.
 const FUTURE_GRACE_MS = 2 * 24 * 60 * 60 * 1000;
-const withValidDates = (ops: STPOperation[]): STPOperation[] => {
+
+interface SanitizedOps {
+    rows: STPOperation[];
+    /** Rows dropped because they are dated in the future beyond the grace window. */
+    futureExcluded: number;
+    /** Rows dropped because the date was null or unparseable. */
+    invalidExcluded: number;
+}
+
+const withValidDates = (ops: STPOperation[]): SanitizedOps => {
     const cutoff = Date.now() + FUTURE_GRACE_MS;
-    return ops.filter((op) => {
-        if (op?.date == null) return false;
+    let futureExcluded = 0;
+    let invalidExcluded = 0;
+    const rows = ops.filter((op) => {
+        if (op?.date == null) { invalidExcluded++; return false; }
         const t = new Date(op.date).getTime();
-        return !Number.isNaN(t) && t <= cutoff;
+        if (Number.isNaN(t)) { invalidExcluded++; return false; }
+        if (t > cutoff) { futureExcluded++; return false; }
+        return true;
     });
+    return { rows, futureExcluded, invalidExcluded };
 };
-
-const CHART_COLORS = {
-    primary: 'var(--chart-stp-primary)',
-    secondary: 'var(--chart-stp-secondary)',
-    accent: 'var(--chart-stp-accent)',
-    success: 'var(--chart-success)',
-    loss: 'var(--chart-loss)',
-    brand: 'var(--chart-brand)',
-    amber: 'var(--chart-amber)',
-    gray: 'var(--chart-gray)',
-} as const;
-
-type ChartView = 'daily' | 'monthly';
-
-interface STPChartDataPoint {
-    month: string;
-    sortKey: string;
-    inlet: number;
-    tse: number;
-    income: number;
-    savings: number;
-    trips: number;
-}
-
-const SVG_WIDTH = 720;
-const SVG_HEIGHT = 260;
-const CHART_LEFT = 56;
-const CHART_RIGHT = 18;
-const CHART_TOP = 18;
-const CHART_BOTTOM = 214;
-const CHART_PLOT_WIDTH = SVG_WIDTH - CHART_LEFT - CHART_RIGHT;
-const CHART_PLOT_HEIGHT = CHART_BOTTOM - CHART_TOP;
-const AXIS_TICKS = [0, 0.5, 1];
-
-function ChartViewToggle({ value, onChange }: { value: 'daily' | 'monthly'; onChange: (v: 'daily' | 'monthly') => void }) {
-    return (
-        <div className="flex items-center gap-0.5 rounded-lg bg-muted dark:bg-muted p-0.5">
-            <button
-                onClick={() => onChange('daily')}
-                className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-design",
-                    value === 'daily'
-                        ? "bg-white dark:bg-muted text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground/70"
-                )}
-            >
-                Daily
-            </button>
-            <button
-                onClick={() => onChange('monthly')}
-                className={cn(
-                    "px-3 py-1 text-xs font-medium rounded-md transition-design",
-                    value === 'monthly'
-                        ? "bg-white dark:bg-muted text-foreground shadow-sm"
-                        : "text-muted-foreground hover:text-foreground dark:hover:text-muted-foreground/70"
-                )}
-            >
-                Monthly
-            </button>
-        </div>
-    );
-}
-
-function sampleChartData(data: STPChartDataPoint[], view: ChartView): STPChartDataPoint[] {
-    const maxPoints = view === 'daily' ? 120 : 72;
-    if (data.length <= maxPoints) return data;
-
-    const step = Math.ceil(data.length / maxPoints);
-    return data.filter((_, index) => index % step === 0 || index === data.length - 1);
-}
-
-function getX(index: number, count: number): number {
-    if (count <= 1) return CHART_LEFT + CHART_PLOT_WIDTH / 2;
-    return CHART_LEFT + (index / (count - 1)) * CHART_PLOT_WIDTH;
-}
-
-function getY(value: number, maxValue: number): number {
-    const safeMax = Math.max(maxValue, 1);
-    return CHART_BOTTOM - (value / safeMax) * CHART_PLOT_HEIGHT;
-}
-
-function buildLinePath(data: STPChartDataPoint[], accessor: (point: STPChartDataPoint) => number, maxValue: number): string {
-    if (data.length === 0) return "";
-    return data
-        .map((point, index) => `${index === 0 ? "M" : "L"} ${getX(index, data.length).toFixed(2)} ${getY(accessor(point), maxValue).toFixed(2)}`)
-        .join(" ");
-}
-
-function buildAreaPath(data: STPChartDataPoint[], accessor: (point: STPChartDataPoint) => number, maxValue: number): string {
-    const linePath = buildLinePath(data, accessor, maxValue);
-    if (!linePath || data.length === 0) return "";
-    return `${linePath} L ${getX(data.length - 1, data.length).toFixed(2)} ${CHART_BOTTOM} L ${getX(0, data.length).toFixed(2)} ${CHART_BOTTOM} Z`;
-}
-
-function formatShortValue(value: number): string {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}m`;
-    if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
-    if (value % 1 !== 0) return value.toFixed(1);
-    return String(value);
-}
-
-function shouldShowXLabel(index: number, count: number): boolean {
-    if (count <= 8) return true;
-    return index === 0 || index === count - 1 || index % Math.ceil(count / 6) === 0;
-}
-
-function ChartGrid({ maxValue, unit }: { maxValue: number; unit: string }) {
-    return (
-        <g>
-            {AXIS_TICKS.map((tick) => {
-                const y = CHART_BOTTOM - tick * CHART_PLOT_HEIGHT;
-                const value = maxValue * tick;
-                return (
-                    <g key={tick}>
-                        <line x1={CHART_LEFT} x2={SVG_WIDTH - CHART_RIGHT} y1={y} y2={y} stroke="var(--chart-grid)" strokeDasharray="4 4" />
-                        <text x={CHART_LEFT - 10} y={y + 4} textAnchor="end" className="fill-muted-foreground text-[11px]">
-                            {formatShortValue(value)}
-                        </text>
-                    </g>
-                );
-            })}
-            <line x1={CHART_LEFT} x2={SVG_WIDTH - CHART_RIGHT} y1={CHART_BOTTOM} y2={CHART_BOTTOM} stroke="var(--border)" />
-            <text x={16} y={CHART_TOP + 10} className="fill-muted-foreground text-[11px]">
-                {unit}
-            </text>
-        </g>
-    );
-}
-
-function XAxisLabels({ data }: { data: STPChartDataPoint[] }) {
-    return (
-        <g>
-            {data.map((point, index) => (
-                shouldShowXLabel(index, data.length) && (
-                    <text key={`${point.sortKey}-${index}`} x={getX(index, data.length)} y={CHART_BOTTOM + 24} textAnchor="middle" className="fill-muted-foreground text-[10px]">
-                        {point.month}
-                    </text>
-                )
-            ))}
-        </g>
-    );
-}
-
-function ChartLegend({ items }: { items: { label: string; color: string }[] }) {
-    return (
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
-            {items.map((item) => (
-                <span key={item.label} className="inline-flex items-center gap-1.5">
-                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    {item.label}
-                </span>
-            ))}
-        </div>
-    );
-}
-
-const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
-    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
-    const maxValue = useMemo(() => Math.max(1, ...chartData.flatMap(point => [point.inlet, point.tse])), [chartData]);
-    const inletPath = buildLinePath(chartData, point => point.inlet, maxValue);
-    const tsePath = buildLinePath(chartData, point => point.tse, maxValue);
-    const inletArea = buildAreaPath(chartData, point => point.inlet, maxValue);
-    const tseArea = buildAreaPath(chartData, point => point.tse, maxValue);
-
-    return (
-        <div role="img" aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period" className="h-[350px] min-h-[260px] w-full min-w-0">
-            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
-                <defs>
-                    <linearGradient id="stp-inlet-area" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={CHART_COLORS.brand} stopOpacity={0.28} />
-                        <stop offset="100%" stopColor={CHART_COLORS.brand} stopOpacity={0.04} />
-                    </linearGradient>
-                    <linearGradient id="stp-tse-area" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.24} />
-                        <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.04} />
-                    </linearGradient>
-                </defs>
-                <ChartGrid maxValue={maxValue} unit="m³" />
-                <path d={inletArea} fill="url(#stp-inlet-area)" />
-                <path d={tseArea} fill="url(#stp-tse-area)" />
-                <path d={inletPath} fill="none" stroke={CHART_COLORS.brand} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
-                <path d={tsePath} fill="none" stroke={CHART_COLORS.primary} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
-                <XAxisLabels data={chartData} />
-            </svg>
-            <ChartLegend items={[
-                { label: "Sewage Inlet", color: CHART_COLORS.brand },
-                { label: "TSE Output", color: CHART_COLORS.primary },
-            ]} />
-        </div>
-    );
-});
-
-const STPEconomicChart = memo(function STPEconomicChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
-    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
-    const maxValue = useMemo(() => Math.max(1, ...chartData.flatMap(point => [point.income, point.savings])), [chartData]);
-
-    return (
-        <div role="img" aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period" className="h-[280px] min-h-[260px] w-full min-w-0">
-            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
-                <ChartGrid maxValue={maxValue} unit="OMR" />
-                {chartData.map((point, index) => {
-                    const centerX = getX(index, chartData.length);
-                    const groupWidth = Math.max(6, CHART_PLOT_WIDTH / Math.max(chartData.length, 1));
-                    const barWidth = Math.max(2, Math.min(14, groupWidth * 0.28));
-                    const incomeY = getY(point.income, maxValue);
-                    const savingsY = getY(point.savings, maxValue);
-
-                    return (
-                        <g key={`${point.sortKey}-${index}`}>
-                            <rect x={centerX - barWidth - 1} y={incomeY} width={barWidth} height={CHART_BOTTOM - incomeY} rx="3" fill={CHART_COLORS.success} />
-                            <rect x={centerX + 1} y={savingsY} width={barWidth} height={CHART_BOTTOM - savingsY} rx="3" fill="var(--chart-inlet)" />
-                        </g>
-                    );
-                })}
-                <XAxisLabels data={chartData} />
-            </svg>
-            <ChartLegend items={[
-                { label: "Income", color: CHART_COLORS.success },
-                { label: "Savings", color: "var(--chart-inlet)" },
-            ]} />
-        </div>
-    );
-});
-
-const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
-    const chartData = useMemo(() => sampleChartData(data, view), [data, view]);
-    const maxValue = useMemo(() => Math.max(1, ...chartData.map(point => point.trips)), [chartData]);
-    const tripsPath = buildLinePath(chartData, point => point.trips, maxValue);
-
-    return (
-        <div role="img" aria-label="Tanker operations line chart showing number of tanker trips over the selected period" className="h-[280px] min-h-[260px] w-full min-w-0">
-            <svg className="h-full w-full overflow-visible" viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`} aria-hidden="true">
-                <ChartGrid maxValue={maxValue} unit="trips" />
-                <path d={tripsPath} fill="none" stroke={CHART_COLORS.amber} strokeWidth={view === 'daily' ? 2 : 3} strokeLinecap="round" strokeLinejoin="round" />
-                {chartData.length <= 60 && chartData.map((point, index) => (
-                    <circle key={`${point.sortKey}-${index}`} cx={getX(index, chartData.length)} cy={getY(point.trips, maxValue)} r="4" fill={CHART_COLORS.amber} stroke="var(--card)" strokeWidth="2" />
-                ))}
-                <XAxisLabels data={chartData} />
-            </svg>
-            <ChartLegend items={[{ label: "Tanker Trips", color: CHART_COLORS.amber }]} />
-        </div>
-    );
-});
 
 // Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
 const STP_CACHE_KEY = "stp:page";
@@ -325,6 +104,11 @@ export default function STPPage() {
     const [isLiveData, setIsLiveData] = useState(Boolean(cached));
     const [selectedMonth, setSelectedMonth] = useState<string>("");
     const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
+    // A Supabase failure used to fall through to mock data with nothing but a
+    // "Demo Data" pill — an honest error beats a silent fiction.
+    const [loadError, setLoadError] = useState<string | null>(null);
+    // Rows the sanitizer dropped, surfaced instead of silently discarded.
+    const [excluded, setExcluded] = useState<{ future: number; invalid: number }>({ future: 0, invalid: 0 });
 
     // Date range filter state
     const [startMonth, setStartMonth] = useState<string>('');
@@ -339,38 +123,62 @@ export default function STPPage() {
     const [logSearchTerm, setLogSearchTerm] = useState('');
 
     // Chart view mode state (Daily/Monthly toggle per chart)
-    const [volumeChartView, setVolumeChartView] = useState<'daily' | 'monthly'>('monthly');
-    const [economicChartView, setEconomicChartView] = useState<'daily' | 'monthly'>('monthly');
-    const [tankerChartView, setTankerChartView] = useState<'daily' | 'monthly'>('monthly');
+    const [volumeChartView, setVolumeChartView] = useState<ChartView>('monthly');
+    const [economicChartView, setEconomicChartView] = useState<ChartView>('monthly');
+    const [tankerChartView, setTankerChartView] = useState<ChartView>('monthly');
 
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
+        const configured = isSupabaseConfigured();
         try {
-            if (isSupabaseConfigured()) {
+            if (configured) {
                 const supabaseData = await getSTPOperationsFromSupabase();
                 if (supabaseData.length > 0) {
-                    const operations = withValidDates(supabaseData);
-                    setAllOperations(operations);
+                    const sanitized = withValidDates(supabaseData);
+                    setAllOperations(sanitized.rows);
+                    setExcluded({ future: sanitized.futureExcluded, invalid: sanitized.invalidExcluded });
                     setIsLiveData(true);
+                    setLoadError(null);
                     const now = new Date();
                     setLastUpdated(now);
-                    setPageCache<StpPageCache>(STP_CACHE_KEY, { operations, lastUpdated: now });
+                    setPageCache<StpPageCache>(STP_CACHE_KEY, { operations: sanitized.rows, lastUpdated: now });
                     if (!silent) setLoading(false);
                     return;
                 }
+                // Configured but empty: that is a real problem with the live
+                // table, not a cue to quietly swap in demo numbers.
+                if (!silent) {
+                    setLoadError("Supabase returned no STP operations. Showing no data rather than demo figures — check the stp_operations table and the AITable sync.");
+                    setIsLiveData(false);
+                    setAllOperations([]);
+                    setExcluded({ future: 0, invalid: 0 });
+                }
+                return;
             }
+            // Supabase is not configured at all → demo data is the honest answer,
+            // and the "Demo Data" pill already says so.
             if (!silent) {
-                const result = await getSTPOperations();
-                setAllOperations(withValidDates(result));
+                const result = withValidDates(await getSTPOperations());
+                setAllOperations(result.rows);
+                setExcluded({ future: result.futureExcluded, invalid: result.invalidExcluded });
                 setIsLiveData(false);
+                setLoadError(null);
             }
-        } catch {
+        } catch (e: unknown) {
             if (!silent) {
-                // Silent fallback to mock data
-                const result = await getSTPOperations();
-                setAllOperations(withValidDates(result));
-                setIsLiveData(false);
+                const message = e instanceof Error ? e.message : "Unknown error";
+                if (configured) {
+                    setLoadError(`Could not load STP operations from Supabase: ${message}`);
+                    setIsLiveData(false);
+                    setAllOperations([]);
+                    setExcluded({ future: 0, invalid: 0 });
+                } else {
+                    const result = withValidDates(await getSTPOperations());
+                    setAllOperations(result.rows);
+                    setExcluded({ future: result.futureExcluded, invalid: result.invalidExcluded });
+                    setIsLiveData(false);
+                }
             }
         } finally {
             if (!silent) setLoading(false);
@@ -410,15 +218,17 @@ export default function STPPage() {
         if (alertedRef.current === alertKey) return;
         alertedRef.current = alertKey;
 
-        // Alert if inlet sewage exceeds 4800 m³ (high end of normal range)
-        if (latest.inlet_sewage > 4800) {
-            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³ — exceeds 4,800 m³ threshold`;
+        // Gates come from lib/thresholds.ts — the same file Plant Watch, the
+        // heatmap and the findings register read, so a toast can never claim a
+        // different story from the surface below it.
+        if (latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
+            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³ — exceeds the ${STP_THRESHOLDS.INLET_TOAST_M3.toLocaleString('en-US')} m³ threshold`;
             toastRef.current.warning("STP Alert: High Inlet", msg);
             pushRef.current.warning("STP Alert: High Inlet", msg);
         }
 
-        // Alert if tanker trips are unusually high (> 3 in a day)
-        if (latest.tanker_trips > 3) {
+        // Alert if tanker trips are unusually high for a single day
+        if (latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
             const msg = `${latest.tanker_trips} tanker trips recorded today`;
             toastRef.current.info("STP: High Tanker Activity", msg);
             pushRef.current.info("STP: High Tanker Activity", msg);
@@ -866,6 +676,26 @@ export default function STPPage() {
         }
     };
 
+    // The newest reading actually in the data — NOT the browser fetch time.
+    // "Last sync 14:32" says nothing about whether the log is three days stale.
+    const latestDataDate = useMemo(() => {
+        let newest: number | null = null;
+        for (const op of allOperations) {
+            const t = new Date(op.date).getTime();
+            if (!Number.isNaN(t) && (newest === null || t > newest)) newest = t;
+        }
+        return newest === null ? null : new Date(newest);
+    }, [allOperations]);
+
+    // Heatmap drill-through: a cell in Plant Watch opens that exact day in the
+    // Daily Operations Log (right tab, right month, row pre-filtered).
+    const handleInspectDay = useCallback((day: { iso: string; ym: string; dayLabel: string; date: Date }) => {
+        setActiveTab('dashboard');
+        setSelectedMonth(day.ym);
+        setLogSearchTerm(format(day.date, 'dd/MM/yyyy'));
+        setLogCurrentPage(1);
+    }, []);
+
     if (loading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
@@ -919,10 +749,28 @@ export default function STPPage() {
                     isConnected={isLiveData}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
+                    latestDataDate={latestDataDate}
+                    error={loadError}
                 >
-
+                    <span className="text-[10px] text-muted-foreground">{allOperations.length} daily records</span>
                 </PageStatusBar>
             </div>
+
+            {/* Rows the sanitizer removed. Dropping them is correct (a reading
+                cannot come from the future); doing it silently is not. */}
+            {(excluded.future > 0 || excluded.invalid > 0) && (
+                <div role="status" className="flex flex-wrap items-start gap-2 rounded-[10.5px] border border-border bg-mb-warning-light/60 px-4 py-3 text-xs text-mb-warning-text dark:bg-mb-warning-light">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                    <span>
+                        <strong className="font-semibold">
+                            {excluded.future + excluded.invalid} row{excluded.future + excluded.invalid === 1 ? "" : "s"} excluded from this view.
+                        </strong>{" "}
+                        {excluded.future > 0 && `${excluded.future} dated in the future (beyond a 2-day timezone grace) — a reading cannot come from the future, so these are sync errors in stp_operations. `}
+                        {excluded.invalid > 0 && `${excluded.invalid} had a missing or unparseable date. `}
+                        Every figure below is computed without them.
+                    </span>
+                </div>
+            )}
 
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}
@@ -989,16 +837,19 @@ export default function STPPage() {
             {/* Plant Watch — process-health cards, day heatmap, exceptions & actions */}
             {activeTab === "watch" && (
                 <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
-                    <PlantWatch operations={operations} />
+                    <PlantWatch operations={operations} onInspectDay={handleInspectDay} />
                 </div>
             )}
 
             {activeTab === "dashboard" && (
                 <div id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Unified Stats Grid */}
-                    <StatsGrid stats={stats} />
+                    <SectionBoundary title="Operations KPIs">
+                        <StatsGrid stats={stats} />
+                    </SectionBoundary>
 
                     {/* Water Treatment Volumes Chart */}
+                    <SectionBoundary title="Water treatment volumes">
                     <Card className="card-elevated">
                         <CardHeader className="card-elevated-header">
                             <div className="flex items-center justify-between gap-4 flex-wrap">
@@ -1017,8 +868,10 @@ export default function STPPage() {
                             <STPVolumeChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} view={volumeChartView} />
                         </CardContent>
                     </Card>
+                    </SectionBoundary>
 
                     {/* Two Charts Side by Side */}
+                    <SectionBoundary title="Economic impact & tanker operations">
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                         {/* Economic Impact */}
                         <Card className="card-elevated h-full">
@@ -1066,8 +919,10 @@ export default function STPPage() {
                             </CardContent>
                         </Card>
                     </div>
+                    </SectionBoundary>
 
                     {/* Daily Operations Log */}
+                    <SectionBoundary title="Daily operations log">
                     <div className="space-y-4">
                         {/* Toolbar */}
                         <TableToolbar className="flex-wrap">
@@ -1136,7 +991,7 @@ export default function STPPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">TSE Output</span>
-                                                <p className="font-mono font-medium text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
+                                                <p className="font-mono font-medium text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Tanker Trips</span>
@@ -1217,16 +1072,16 @@ export default function STPPage() {
                                             <TableRow key={op.id}>
                                                 <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
                                                 <TableCell className="num text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                                <TableCell className="num text-blue-600 dark:text-blue-400">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end">
                                                         <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="num text-amber-600 dark:text-amber-400">{op.tanker_trips}</TableCell>
-                                                <TableCell className="num text-emerald-600 dark:text-emerald-400">{income.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-mb-warning-text">{op.tanker_trips}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{income.toFixed(1)}</TableCell>
                                                 <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-emerald-600 dark:text-emerald-400">{totalImpact.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{totalImpact.toFixed(1)}</TableCell>
                                             </TableRow>
                                         );
                                     })}

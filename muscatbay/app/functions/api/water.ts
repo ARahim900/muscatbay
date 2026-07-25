@@ -32,7 +32,7 @@ const PERIOD_FLOOR = '2024-01';
 const CONSUMPTION_PAGE_SIZE = 1000;
 
 // Mirror the legacy-name translations baked into the "Water System" SQL view
-// so downstream code (lib/water-data.ts, water-database-table, etc.) keeps
+// so downstream code (lib/water-data.ts, the monthly adapter, etc.) keeps
 // seeing the same strings it does today. Drop these once that code migrates
 // to the clean codes from water_meters.
 const ZONE_TO_LEGACY: Record<string, string> = {
@@ -90,19 +90,52 @@ interface MonthlyConsumptionRow {
     consumption: number | string | null;
 }
 
+/** A monthly reading the source data reported as negative (physically impossible). */
+export interface NegativeReading {
+    /** Meter display label. */
+    label: string;
+    /** Meter account number. */
+    account: string;
+    /** Consumption key, e.g. `"Mar-26"`. */
+    month: string;
+    /** The value exactly as stored — never rewritten. */
+    value: number;
+}
+
 /**
- * Fetch water meters from Supabase.
+ * Outcome of a water-meter fetch.
+ *
+ * `error` is non-null when the read genuinely failed, so callers can show an
+ * honest error state instead of silently rendering an empty (or fabricated)
+ * dashboard. `negatives` lists source rows whose consumption is negative — the
+ * values are passed through untouched so the UI can flag them, rather than
+ * being rewritten to 0 behind the operator's back.
+ */
+export interface WaterMetersResult {
+    meters: WaterMeter[];
+    error: string | null;
+    negatives: NegativeReading[];
+}
+
+/**
+ * Fetch water meters from Supabase, reporting failures and data-quality
+ * problems instead of swallowing them.
  *
  * Reads the long-format `water_monthly_consumption` + `water_meters` tables
  * directly (not the legacy `"Water System"` wide view) so the response
  * payload is bounded by an explicit column list per row. New months appear
  * as new rows, not new columns, so dynamic months are still supported
  * automatically without any schema-shaped payload growth per row.
+ *
+ * Data honesty: a missing reading stays `null` and a negative reading keeps its
+ * negative value. Neither is coerced to `0` — downstream flagging depends on
+ * being able to tell "no reading", "genuinely zero" and "impossible reading"
+ * apart.
  */
-export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
+export async function fetchWaterMeters(): Promise<WaterMetersResult> {
     const client = getSupabaseClient();
     if (!client) {
-        return [];
+        return { meters: [], error: 'Supabase is not configured.', negatives: [] };
     }
 
     try {
@@ -115,12 +148,12 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
 
         if (metersResult.error) {
             console.error('Error fetching water meters:', metersResult.error.message);
-            return [];
+            return { meters: [], error: `Could not read water meters: ${metersResult.error.message}`, negatives: [] };
         }
 
         const meters = metersResult.data ?? [];
         if (meters.length === 0) {
-            return [];
+            return { meters: [], error: null, negatives: [] };
         }
 
         const consumptionRows: MonthlyConsumptionRow[] = [];
@@ -135,7 +168,7 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
                 .returns<MonthlyConsumptionRow[]>();
             if (error) {
                 console.error('Error fetching water monthly consumption:', error.message);
-                return [];
+                return { meters: [], error: `Could not read monthly consumption: ${error.message}`, negatives: [] };
             }
             if (!data || data.length === 0) break;
             consumptionRows.push(...data);
@@ -149,7 +182,7 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
             else byAccount.set(row.account_number, [row]);
         }
 
-        const negativeMeters: { label: string; account: string; month: string; value: number }[] = [];
+        const negatives: NegativeReading[] = [];
 
         const result: WaterMeter[] = meters.map((m) => {
             const displayLabel = (m.meter_name_original ?? m.meter_name) || 'Unknown Meter';
@@ -167,11 +200,13 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
                     continue;
                 }
                 if (value !== null && value < 0) {
-                    negativeMeters.push({ label: displayLabel, account: m.account_number, month: key, value });
-                    consumption[key] = 0;
-                } else {
-                    consumption[key] = value;
+                    // Record it for the caller, but keep the value as reported.
+                    // Rewriting it to 0 here used to hide an impossible reading
+                    // behind a plausible-looking one and quietly deflated the
+                    // A1/A2/A3 balance.
+                    negatives.push({ label: displayLabel, account: m.account_number, month: key, value });
                 }
+                consumption[key] = value;
             }
 
             return {
@@ -186,16 +221,26 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
             };
         });
 
-        if (negativeMeters.length > 0) {
-            console.warn(`[Water Data] Found ${negativeMeters.length} negative consumption values in Supabase:`);
-            console.table(negativeMeters);
-        }
-
-        return result;
+        return { meters: result, error: null, negatives };
     } catch (err) {
-        console.error('Error in getWaterMetersFromSupabase:', err);
-        return [];
+        console.error('Error in fetchWaterMeters:', err);
+        return {
+            meters: [],
+            error: err instanceof Error ? err.message : String(err),
+            negatives: [],
+        };
     }
+}
+
+/**
+ * Backwards-compatible wrapper returning just the meters.
+ *
+ * Prefer {@link fetchWaterMeters} in new code — it surfaces the failure reason
+ * and the negative-reading register, both of which this signature discards.
+ */
+export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
+    const { meters } = await fetchWaterMeters();
+    return meters;
 }
 
 /**

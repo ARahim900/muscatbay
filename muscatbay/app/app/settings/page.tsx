@@ -12,7 +12,16 @@ import { Separator } from "@/components/ui/separator"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { TabNavigation } from "@/components/shared/tab-navigation"
 import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves } from "lucide-react"
+
+type SettingsTab = 'profile' | 'account' | 'notifications'
+
+const SETTINGS_TABS = [
+    { key: 'profile', label: 'Profile', icon: User },
+    { key: 'account', label: 'Account', icon: Shield },
+    { key: 'notifications', label: 'Notifications', icon: Bell },
+] as const
 
 export default function SettingsPage() {
     const { user, profile, isAuthenticated, refreshProfile } = useAuth()
@@ -27,7 +36,7 @@ export default function SettingsPage() {
     })
     const [avatarFile, setAvatarFile] = useState<File | null>(null)
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
-    const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'notifications'>('profile')
+    const [activeTab, setActiveTab] = useState<SettingsTab>('profile')
     const { permission, requestPermission } = useAppNotifications()
     // Persisted alert preference — read after mount (SSR-safe), applied immediately on toggle.
     const [pushEnabled, setPushEnabled] = useState(true)
@@ -185,28 +194,18 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            <div className="flex flex-col lg:flex-row gap-8">
-                {/* Sidebar Navigation */}
-                <aside className="lg:w-64 space-y-1">
-                    {([
-                        { id: 'profile', label: 'Profile', icon: User },
-                        { id: 'account', label: 'Account', icon: Shield },
-                        { id: 'notifications', label: 'Notifications', icon: Bell },
-                    ] as const).map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => setActiveTab(item.id)}
-                            aria-current={activeTab === item.id ? "page" : undefined}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors ${activeTab === item.id
-                                ? "bg-sidebar text-primary-foreground shadow-md"
-                                : "text-muted-foreground hover:bg-sidebar/10 hover:text-sidebar"
-                                }`}
-                        >
-                            <item.icon className="w-4 h-4" />
-                            {item.label}
-                        </button>
-                    ))}
-                </aside>
+            <div className="flex flex-col gap-6">
+                {/* Section switcher — the shared TabNavigation, so these behave
+                    (and are announced) as real ARIA tabs. They previously used
+                    plain buttons with aria-current="page", which tells assistive
+                    tech they are page-level navigation links, and sat at ~38px,
+                    under the 44px field-touch target. */}
+                <TabNavigation
+                    tabs={SETTINGS_TABS}
+                    activeTab={activeTab}
+                    onTabChange={(key) => setActiveTab(key as SettingsTab)}
+                    ariaLabel="Settings sections"
+                />
 
                 {/* Main Content Area */}
                 <div className="flex-1 space-y-6">
@@ -218,13 +217,19 @@ export default function SettingsPage() {
                         </div>
                     )}
                     {error && (
-                        <div role="alert" className="p-3 text-sm text-[var(--mb-danger-text)] bg-mb-danger/10 rounded-lg border border-mb-danger/20">
+                        <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger/10 rounded-lg border border-mb-danger/20">
                             {error}
                         </div>
                     )}
 
                     {activeTab === 'profile' && (
-                        <Card className="card-elevated">
+                        <Card
+                            id="panel-profile"
+                            role="tabpanel"
+                            aria-labelledby="tab-profile"
+                            tabIndex={0}
+                            className="card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                             <CardHeader className="card-elevated-header">
                                 <CardTitle>Profile</CardTitle>
                                 <CardDescription>
@@ -245,14 +250,14 @@ export default function SettingsPage() {
                                                 htmlFor="avatar-upload"
                                                 className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-sidebar text-primary-foreground hover:bg-sidebar/90 h-9 px-4 py-2"
                                             >
-                                                <Upload className="mr-2 h-4 w-4" />
+                                                <Upload className="me-2 h-4 w-4" />
                                                 Change Avatar
                                             </Label>
                                             {avatarPreview && (
                                                 <Button variant="ghost" size="sm" onClick={() => {
                                                     setAvatarPreview(null)
                                                     setAvatarFile(null)
-                                                }} className="text-[var(--mb-danger-text)] hover:bg-mb-danger/10">
+                                                }} className="text-mb-danger-text hover:bg-mb-danger/10">
                                                     Remove
                                                 </Button>
                                             )}
@@ -317,7 +322,7 @@ export default function SettingsPage() {
                                     disabled={updating}
                                     className="bg-sidebar hover:bg-sidebar/90 text-primary-foreground"
                                 >
-                                    {updating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                    {updating ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : <Save className="me-2 h-4 w-4" />}
                                     Save Changes
                                 </Button>
                             </CardFooter>
@@ -325,7 +330,13 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'account' && (
-                        <Card className="card-elevated">
+                        <Card
+                            id="panel-account"
+                            role="tabpanel"
+                            aria-labelledby="tab-account"
+                            tabIndex={0}
+                            className="card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                             <CardHeader className="card-elevated-header">
                                 <CardTitle>Account Security</CardTitle>
                                 <CardDescription>
@@ -375,7 +386,13 @@ export default function SettingsPage() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <Card className="card-elevated">
+                        <Card
+                            id="panel-notifications"
+                            role="tabpanel"
+                            aria-labelledby="tab-notifications"
+                            tabIndex={0}
+                            className="card-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
                             <CardHeader className="card-elevated-header">
                                 <CardTitle>Notifications</CardTitle>
                                 <CardDescription>
@@ -385,7 +402,10 @@ export default function SettingsPage() {
                             <CardContent className="space-y-4">
                                 {/* What is monitored — honest, data-driven trigger list */}
                                 <div className="space-y-2">
-                                    <Label className="text-base">Monitored conditions</Label>
+                                    {/* Not a <Label>: there is no form control to
+                                        label — a label with no `for` is a dangling
+                                        label to assistive tech. */}
+                                    <h2 className="text-base font-medium leading-none">Monitored conditions</h2>
                                     <p className="text-sm text-muted-foreground">
                                         These triggers are always on and feed the alert bell and dashboard.
                                     </p>
@@ -408,20 +428,28 @@ export default function SettingsPage() {
                                 {/* Browser push — the real delivery channel, persisted preference */}
                                 <div className="flex items-center justify-between space-x-2">
                                     <div className="space-y-0.5">
-                                        <Label className="text-base">Browser push notifications</Label>
-                                        <p className="text-sm text-muted-foreground">
+                                        <p id="push-toggle-label" className="text-base font-medium leading-none">Browser push notifications</p>
+                                        <p id="push-toggle-description" className="text-sm text-muted-foreground">
                                             Push new warning and critical alerts to this device, even in the background.
                                         </p>
                                     </div>
+                                    {/* 44px hit area around the 24px switch track —
+                                        field users are often gloved. */}
                                     <button
+                                        type="button"
                                         role="switch"
-                                        tabIndex={0}
                                         aria-checked={pushEnabled}
-                                        aria-label="Browser push notifications"
+                                        aria-labelledby="push-toggle-label"
+                                        aria-describedby="push-toggle-description"
                                         onClick={togglePush}
-                                        className={`h-6 w-11 rounded-full relative cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 ${pushEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
+                                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 hover:bg-muted/60 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                                     >
-                                        <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${pushEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                        <span
+                                            aria-hidden="true"
+                                            className={`block h-6 w-11 rounded-full relative transition-colors duration-200 ${pushEnabled ? 'bg-sidebar' : 'bg-muted dark:bg-muted'}`}
+                                        >
+                                            <span className={`absolute top-1 start-1 block h-4 w-4 rounded-full bg-white dark:bg-muted shadow-sm transition-transform duration-200 ${pushEnabled ? 'rtl:-translate-x-5 translate-x-5' : 'translate-x-0'}`} />
+                                        </span>
                                     </button>
                                 </div>
                                 {/* Browser permission state — push cannot work without it */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, X, AlertCircle } from "lucide-react";
+import { Search, X } from "lucide-react";
 import {
   MultiSelectDropdown,
   TablePagination,
@@ -12,6 +12,7 @@ import {
   type ExportColumn,
 } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { EmptyState } from "@/components/shared/empty-state";
 import type { PpmFinding } from "./types";
 
 interface FindingsTabProps {
@@ -196,7 +197,12 @@ export function FindingsTab({ findings }: FindingsTabProps) {
               <div className="min-w-0">
                 <p className="font-semibold text-sm text-foreground dark:text-muted-foreground flex items-center gap-1">
                   {f.finding_code}
-                  {f.is_recurring && <span className="text-mb-warning" title="Recurring">↻</span>}
+                  {f.is_recurring && (
+                    <span className="text-mb-warning-text">
+                      <span aria-hidden="true">↻</span>
+                      <span className="sr-only">Recurring issue</span>
+                    </span>
+                  )}
                 </p>
                 <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.building} — {f.equipment_label}</p>
               </div>
@@ -204,7 +210,7 @@ export function FindingsTab({ findings }: FindingsTabProps) {
                 {f.priority}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground line-clamp-2">{f.description}</p>
+            <p className="text-xs text-muted-foreground dark:text-muted-foreground">{f.description}</p>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(f.status)}`}>
                 {f.status}
@@ -215,9 +221,17 @@ export function FindingsTab({ findings }: FindingsTabProps) {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground dark:text-muted-foreground bg-card rounded-xl border border-border dark:border-border">
-            <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-            <p>No findings match your filters.</p>
+          <div className="ops-table-shell">
+            <EmptyState
+              variant={findings.length === 0 ? "no-data" : "filter-empty"}
+              title={findings.length === 0 ? "No findings recorded" : "No findings match"}
+              description={
+                findings.length === 0
+                  ? "The PPM findings register is empty or unavailable."
+                  : "Try adjusting the search or filters."
+              }
+              action={findings.length === 0 ? undefined : { label: "Clear filters", onClick: clearFilters }}
+            />
           </div>
         )}
       </div>
@@ -246,13 +260,20 @@ export function FindingsTab({ findings }: FindingsTabProps) {
               <TableRow key={f.id || i}>
                 <TableCell className="font-semibold text-foreground dark:text-muted-foreground whitespace-nowrap">
                   {f.finding_code}
-                  {f.is_recurring && <span className="ml-1 text-mb-warning" title="Recurring issue">↻</span>}
+                  {f.is_recurring && (
+                    <span className="ml-1 text-mb-warning-text">
+                      <span aria-hidden="true">↻</span>
+                      <span className="sr-only">Recurring issue</span>
+                    </span>
+                  )}
                 </TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.building}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] truncate" title={f.equipment_label}>{f.equipment_label}</TableCell>
+                {/* Long values wrap rather than truncate — a `title` tooltip is
+                    unreachable on touch devices, so the text stays fully on screen. */}
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[150px] whitespace-normal break-words">{f.equipment_label}</TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.fiscal_year}</TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm">{f.ppm_visit}</TableCell>
-                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[200px] truncate" title={f.description}>{f.description}</TableCell>
+                <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm max-w-[280px] whitespace-normal break-words">{f.description}</TableCell>
                 <TableCell className="text-muted-foreground dark:text-muted-foreground text-sm text-center">{f.quantity}</TableCell>
                 <TableCell>
                   <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${getPriorityColor(f.priority)}`}>{f.priority}</span>
@@ -265,9 +286,17 @@ export function FindingsTab({ findings }: FindingsTabProps) {
             ))}
             {filtered.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10} className="py-12 text-center text-muted-foreground dark:text-muted-foreground">
-                  <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                  <p>No findings match your filters.</p>
+                <TableCell colSpan={columns.length}>
+                  <EmptyState
+                    variant={findings.length === 0 ? "no-data" : "filter-empty"}
+                    title={findings.length === 0 ? "No findings recorded" : "No findings match"}
+                    description={
+                      findings.length === 0
+                        ? "The PPM findings register is empty or unavailable."
+                        : "Try adjusting the search or filters."
+                    }
+                    action={findings.length === 0 ? undefined : { label: "Clear filters", onClick: clearFilters }}
+                  />
                 </TableCell>
               </TableRow>
             )}

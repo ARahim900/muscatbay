@@ -21,6 +21,18 @@ import {
 } from '@/entities/contractor';
 import type { Contractor } from '@/lib/mock-data';
 
+/**
+ * Read failures throw instead of resolving to `[]`.
+ *
+ * An empty array is a legitimate answer ("no contracts recorded yet") and the
+ * UI says so; swallowing a query error into the same shape made a broken load
+ * indistinguishable from an empty database. Callers that must not fail hard
+ * (e.g. the dashboard alert hook) already use `Promise.allSettled`.
+ */
+function failed(context: string, message: string): never {
+    throw new Error(`${context}: ${message}`);
+}
+
 // =============================================================================
 // CONTRACTOR CONTRACTS API (contractor_contracts + contractor_yearly_costs)
 // =============================================================================
@@ -38,10 +50,7 @@ export async function getContractorContracts(): Promise<ContractorContract[]> {
         .order('flow')
         .order('contractor');
 
-    if (error) {
-        console.error('Error fetching contractor_contracts:', error.message);
-        return [];
-    }
+    if (error) failed('Unable to load contracts', error.message);
     return (data as ContractorContract[]) || [];
 }
 
@@ -58,19 +67,24 @@ export async function getContractorYearlyCosts(): Promise<ContractorYearlyCost[]
         .order('contract_year')
         .order('contractor');
 
-    if (error) {
-        console.error('Error fetching contractor_yearly_costs:', error.message);
-        return [];
-    }
+    if (error) failed('Unable to load yearly costs', error.message);
     return (data as ContractorYearlyCost[]) || [];
 }
 
+/** Result of a contract-document write — carries the reason so the UI can show it. */
+export interface ContractPdfUpdateResult {
+    ok: boolean;
+    error?: string;
+}
+
 /**
- * Update the contract_pdf_url for a contractor contract
+ * Update the contract_pdf_url for a contractor contract.
+ * Returns the failure reason rather than only logging it, so the dialog can
+ * never look like it saved when it did not.
  */
-export async function updateContractPdfUrl(id: number, pdfUrl: string | null): Promise<boolean> {
+export async function updateContractPdfUrl(id: number, pdfUrl: string | null): Promise<ContractPdfUpdateResult> {
     const client = getSupabaseClient();
-    if (!client) return false;
+    if (!client) return { ok: false, error: 'Not connected to the database.' };
 
     const { error } = await client
         .from('contractor_contracts')
@@ -79,9 +93,9 @@ export async function updateContractPdfUrl(id: number, pdfUrl: string | null): P
 
     if (error) {
         console.error('Error updating contract_pdf_url:', error.message);
-        return false;
+        return { ok: false, error: error.message };
     }
-    return true;
+    return { ok: true };
 }
 
 // =============================================================================
@@ -102,10 +116,7 @@ export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
         .select('"Contractor", "Service Provided", "Status", "Contract Type", "Start Date", "End Date", "Contract (OMR)/Month", "Contract Total (OMR)/Year", "Annual Value (OMR)", "Renewal Plan", "Note", contract_pdf_url')
         .order('Contractor');
 
-    if (error) {
-        console.error('Error fetching Contractor_Tracker:', error.message);
-        return [];
-    }
+    if (error) failed('Unable to load the AMC tracker', error.message);
 
     if (!data) return [];
 
@@ -174,10 +185,7 @@ export async function getContractorDetails(): Promise<AmcContractorDetails[]> {
         .select('id, contractor, contract_ref, scope_of_work, ppm_frequency, response_time_emergency, response_time_normal, liquidated_damages, performance_bond, payment_terms, warranty_period, key_exclusions, contact_person')
         .order('contractor');
 
-    if (error) {
-        console.error('Error fetching contractor details:', error);
-        return [];
-    }
+    if (error) failed('Unable to load contract terms', error.message);
     return data || [];
 }
 
@@ -190,10 +198,7 @@ export async function getContractorExpiry(): Promise<AmcContractorExpiry[]> {
         .select('id, contractor, end_date, days_remaining, renewal_action_required_by, priority, renewal_status')
         .order('days_remaining');
 
-    if (error) {
-        console.error('Error fetching contractor expiry:', error);
-        return [];
-    }
+    if (error) failed('Unable to load contract expiry', error.message);
     return data || [];
 }
 
@@ -206,10 +211,7 @@ export async function getContractorPricing(): Promise<AmcContractorPricing[]> {
         .select('id, contractor, year_1_omr, year_2_omr, year_3_omr, year_4_omr, year_5_omr, total_omr, notes')
         .order('contractor');
 
-    if (error) {
-        console.error('Error fetching amc_contractor_pricing:', error.message);
-        return [];
-    }
+    if (error) failed('Unable to load contract pricing', error.message);
     return data || [];
 }
 

@@ -17,27 +17,29 @@
  * @module components/water/monthly/water-monthly-dashboard
  */
 
-import { useCallback, useMemo, useState, type MouseEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent, type ReactNode } from "react";
 import {
-    ResponsiveContainer, ComposedChart, BarChart, Bar, Line, Area, AreaChart,
+    ResponsiveContainer, ComposedChart, BarChart, Bar, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
 } from "recharts";
 import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
-    BarChart3, Database, List, type LucideIcon,
+    BarChart3, Database, List, ChevronRight, type LucideIcon,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TabNavigation } from "@/components/shared/tab-navigation";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import { DateRangePicker } from "@/components/water/date-range-picker";
+import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import type { WaterMeter } from "@/lib/water-data";
 import {
     buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT, LOSS_RATE_OMR, TYPECOL,
     fmt, fmt1, pct, isRangeSel, periodValue, monthInSelection, sev, statusFromLoss,
-    actionFromLoss, lastReadingLabel, downloadRows, meterFlags,
+    actionFromLoss, lastReadingLabel, downloadRows, meterFlags, meanReading,
     type WaterData, type PeriodResult, type Sel, type ZoneRow,
 } from "@/lib/water-monthly-data";
 
@@ -65,14 +67,36 @@ const TIP = {
     background: "var(--wm-card)", color: "var(--wm-ink)", border: "1px solid var(--wm-border)",
 } as const;
 
+/* ---------- level colours (token-only) ----------
+ * The hierarchy-level chip in the meter database used to hardcode a five-hex
+ * palette that never flipped in dark mode. The tint carries the level while the
+ * label text stays on `--foreground`, so it is legible in both themes. */
+const LEVEL_TOKEN: Record<string, string> = {
+    L1: "var(--module-water)",
+    L2: "var(--chart-1)",
+    L3: "var(--chart-brand)",
+    L4: "var(--chart-gray)",
+    DC: "var(--chart-elec-secondary)",
+};
+const levelToken = (level: string): string => LEVEL_TOKEN[level] ?? "var(--chart-axis)";
+
+/* ---------- percentage series names (kept in one place so the tooltip formatter
+ * and the <Line> elements can never drift apart) ---------- */
+const LOSS_PCT_SERIES = "Loss %";
+const TARGET_SERIES = `Target ${TARGET_LOSS_PCT}%`;
+
 /* ---------- stable Recharts formatters (module-level: identity-stable across renders) ----------
  * Param types mirror Recharts' Formatter signature (value may be a number/string/array or undefined,
  * name is string | number) so these are assignable to <Tooltip formatter={...}> without casts. */
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
-const fmtSupplyConsLoss = (v: TipValue, n: number | string | undefined): [string, string] => [fmt(Number(v)) + (n === "target" ? "%" : " m³"), String(n)];
+/** Balance chart: volume series in m³, the loss-% and target series in %. */
+const fmtBalance = (v: TipValue, n: number | string | undefined): [string, string] => {
+    const name = String(n);
+    const isPct = name === LOSS_PCT_SERIES || name === TARGET_SERIES;
+    return [isPct ? `${Number(v).toFixed(1)}%` : `${fmt(Number(v))} m³`, name];
+};
 const fmtM3 = (v: TipValue, n: number | string | undefined): [string, string] => [fmt(Number(v)) + " m³", String(n)];
 const fmtConsumptionM3 = (v: TipValue): [string, string] => [fmt(Number(v)) + " m³", "Consumption"];
-const fmtLossPctPlain = (v: TipValue): [string, string] => [String(v) + "%", "Loss"];
 
 /* ---------- UI atoms ---------- */
 interface KpiProps {
@@ -121,13 +145,40 @@ interface PanelProps {
     className?: string;
     /** Extra classes on the panel body (e.g. `flex-1 flex flex-col` so a chart fills the height). */
     bodyClassName?: string;
+    /**
+     * Render as a native `<details>` so the operator can fold the section away.
+     * Used for the long, secondary sections of the Zone Analysis view — keyboard
+     * operable and screen-reader announced with no extra state.
+     */
+    collapsible?: boolean;
+    /** Only meaningful with `collapsible`. */
+    defaultOpen?: boolean;
 }
-function Panel({ title, icon: Icon, right, children, note, className, bodyClassName }: PanelProps) {
+function Panel({ title, icon: Icon, right, children, note, className, bodyClassName, collapsible, defaultOpen = false }: PanelProps) {
+    const shell = { background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW } as const;
+
+    if (collapsible) {
+        return (
+            <details open={defaultOpen} className={`group ${className ?? ""}`} style={shell}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                    <span className="flex items-center gap-2">
+                        <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden="true" style={{ color: C.heading }} />
+                        {Icon && <Icon className="w-4 h-4" aria-hidden="true" style={{ color: C.heading }} />}
+                        <span className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>{title}</span>
+                    </span>
+                </summary>
+                {note && <p className="px-4 text-[11px] mb-1" style={{ color: C.muted }}>{note}</p>}
+                {right && <div className="flex items-center justify-end px-4 pb-2">{right}</div>}
+                <div className={`px-4 pb-4 ${bodyClassName ?? ""}`}>{children}</div>
+            </details>
+        );
+    }
+
     return (
-        <div className={className} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }}>
+        <div className={className} style={shell}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
-                    {Icon && <Icon className="w-4 h-4" style={{ color: C.heading }} />}
+                    {Icon && <Icon className="w-4 h-4" aria-hidden="true" style={{ color: C.heading }} />}
                     <h3 className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>{title}</h3>
                 </div>{right}
             </div>
@@ -139,17 +190,50 @@ function Panel({ title, icon: Icon, right, children, note, className, bodyClassN
 
 interface SelectProps {
     icon: LucideIcon;
+    /** Accessible name for the control — required: the icon alone names nothing. */
+    label: string;
     value: string;
     setValue: (v: string) => void;
     options: string[];
 }
-function Select({ icon: Icon, value, setValue, options }: SelectProps) {
+function Select({ icon: Icon, label, value, setValue, options }: SelectProps) {
     return (
         <div className="flex items-center gap-1.5 px-2.5 py-2" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.md }}>
-            <Icon className="w-4 h-4" style={{ color: C.muted }} />
-            <select value={value} onChange={(e) => setValue(e.target.value)} className="text-sm outline-none" style={{ color: C.ink, background: C.card }}>
+            <Icon className="w-4 h-4" aria-hidden="true" style={{ color: C.muted }} />
+            <select aria-label={label} value={value} onChange={(e) => setValue(e.target.value)} className="text-sm outline-none" style={{ color: C.ink, background: C.card }}>
                 {options.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
+        </div>
+    );
+}
+
+/**
+ * Severity legend for the loss colour scale.
+ *
+ * Colour alone must never carry meaning (design principle 5), so anywhere the
+ * `sev()` palette tints a cell we render this key alongside it. Mirrors the
+ * Daily section's `zone-watch` legend.
+ */
+const SEV_LEGEND: { pctExample: number; label: string; range: string }[] = [
+    { pctExample: 5, label: "Good", range: "< 10%" },
+    { pctExample: 15, label: "Moderate", range: "10–25%" },
+    { pctExample: 35, label: "High", range: "25–50%" },
+    { pctExample: 60, label: "Critical", range: "≥ 50%" },
+    { pctExample: -1, label: "Check", range: "negative" },
+];
+function SeverityLegend({ caption }: { caption?: string }) {
+    return (
+        <div className="mt-3 flex flex-wrap items-center gap-2 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+            {caption && <span className="text-[11px] font-semibold" style={{ color: C.muted }}>{caption}</span>}
+            {SEV_LEGEND.map((s) => {
+                const v = sev(s.pctExample);
+                return (
+                    <span key={s.label} className="inline-flex items-center gap-1.5 text-[11px]" style={{ color: C.muted }}>
+                        <span className="h-3 w-3 rounded-sm" aria-hidden="true" style={{ background: v.bg, border: `1px solid ${v.chart}` }} />
+                        {s.label} <span className="opacity-70">({s.range})</span>
+                    </span>
+                );
+            })}
         </div>
     );
 }
@@ -171,7 +255,7 @@ function RowsPicker({ value, setValue, total }: { value: string; setValue: (v: s
     return (
         <div className="flex items-center gap-1.5">
             <span className="text-[11px] font-medium" style={{ color: C.muted }}>Rows</span>
-            <Select icon={List} value={value} setValue={setValue} options={ROW_OPTIONS} />
+            <Select icon={List} label="Rows to show" value={value} setValue={setValue} options={ROW_OPTIONS} />
             <span className="text-[11px] whitespace-nowrap" style={{ color: C.muted }}>of {total}</span>
         </div>
     );
@@ -204,9 +288,11 @@ function RingGauge({ frac, color, big, small, label, caption }: RingGaugeProps) 
     const pctv = Math.round(f * 100);
     const bl = String(big).length;
     const fs = bl <= 4 ? 28 : bl <= 6 ? 23 : 19;
+    const titleId = `ring-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
     return (
         <div className="flex flex-col items-center">
-            <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: 160 }}>
+            <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: 160 }} role="img" aria-labelledby={titleId}>
+                <title id={titleId}>{`${label}: ${big} ${small}, ${pctv}% of supply — ${caption}`}</title>
                 <circle cx={cc} cy={cc} r={r} fill="none" stroke="var(--wm-track)" strokeWidth={sw} />
                 {f > 0.002 && (
                     <circle cx={cc} cy={cc} r={r} fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round"
@@ -322,6 +408,8 @@ interface OverviewProps {
 function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewProps) {
     const a2f = pct(t.A2, t.A1) / 100, a3f = pct(t.A3, t.A1) / 100;
     const typePie = t.types.map((x) => ({ name: x.type.replace("Residential ", "").replace("(", "").replace(")", ""), value: x.total, pct: x.pct }));
+    // `target` is a real management target, so it is drawn as its own series
+    // (see the balance chart below) rather than sitting unused in the data.
     const trend = monthly.map((p, i) => ({ m: MONTHS[i], A1: p.A1, A3: p.A3, loss: p.loss, lossPct: p.lossPct, target: TARGET_LOSS_PCT }));
     const selM = isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]}` : sel != null ? MONTHS[sel] : null;
     const selectedLineMonths = isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : [];
@@ -331,13 +419,25 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
     return (
         <div className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                <Kpi icon={Droplet} label="Total Supply (A1)" value={fmt(t.A1)} unit="m³" bg="var(--chart-bg-blue)" ic="#3B7ED2" sub={periodLabel} />
-                <Kpi icon={Droplet} label="Distribution (A2)" value={fmt(t.A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="#6B9AC4" sub="Zone bulk + direct" />
+                <Kpi icon={Droplet} label="Total Supply (A1)" value={fmt(t.A1)} unit="m³" bg="var(--chart-bg-blue)" ic="var(--module-water)" sub={periodLabel} />
+                <Kpi icon={Droplet} label="Distribution (A2)" value={fmt(t.A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="var(--chart-1)" sub="Zone bulk + direct" />
                 <Kpi icon={CheckCircle2} label="Consumption (A3)" value={fmt(t.A3)} unit="m³" bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub="Billed at end-user" />
                 <Kpi icon={Gauge} label="Efficiency" value={`${efficiency}%`} bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
                 <Kpi icon={AlertTriangle} label="Total Loss" value={fmt(t.loss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub={`${t.lossPct}% of supply`} delta={lossDelta} />
-                <Kpi icon={FileSpreadsheet} label="Loss Cost Estimate" value={fmt(lossCost)} unit="OMR" bg="var(--chart-bg-orange)" ic="#B5703A" sub={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
+                <Kpi icon={FileSpreadsheet} label="Loss Cost Estimate" value={fmt(lossCost)} unit="OMR" bg="var(--chart-bg-orange)" ic="var(--mb-warning-text)" sub={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
             </div>
+
+            {(t.missingMeters > 0 || t.negativeMeters > 0) && (
+                <p className="flex items-start gap-2 px-3 py-2 text-[11px] rounded-lg" style={{ background: "var(--mb-warning-light)", color: "var(--mb-warning-text)" }}>
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden="true" />
+                    <span>
+                        Balance completeness: {t.missingMeters > 0 && <><b>{t.missingMeters}</b> meter{t.missingMeters === 1 ? " has" : "s have"} no reading for this period</>}
+                        {t.missingMeters > 0 && t.negativeMeters > 0 && "; "}
+                        {t.negativeMeters > 0 && <><b>{t.negativeMeters}</b> reported a negative reading</>}
+                        . Unread meters contribute nothing to A1/A2/A3, so the loss shown may be overstated. See <b>Exceptions &amp; Actions</b> for the list.
+                    </span>
+                </p>
+            )}
 
             <Panel title="System Water Balance" icon={Gauge}
                 note={`Supply → distribution → consumption, with the loss at each stage — ${periodLabel}. Management target: loss ≤ ${TARGET_LOSS_PCT}%.`}>
@@ -360,19 +460,26 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
             </Panel>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Monthly Supply vs Consumption vs Loss" icon={Activity} note={selM ? `Highlighted: ${selM}.` : "Full year series."}>
+                {/* Supply/consumption volumes and the loss trend, merged into one
+                    chart: the standalone "Monthly Loss %" area panel restated the
+                    same months, so loss % now rides a right-hand axis here
+                    against the management target. */}
+                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Monthly Supply, Consumption &amp; Loss" icon={Activity}
+                    note={`Bars are volumes (m³, left axis); lines are loss as a share of supply against the ${TARGET_LOSS_PCT}% target (%, right axis).${selM ? ` Highlighted: ${selM}.` : ""}`}>
                     <div className="flex-1 min-h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <ComposedChart data={trend} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
+                            <ComposedChart data={trend} margin={{ top: 6, right: 4, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
-                                <YAxis tick={{ fontSize: 11, fill: C.muted }} />
-                                <Tooltip formatter={fmtSupplyConsLoss} contentStyle={TIP} />
+                                <YAxis yAxisId="vol" tick={{ fontSize: 11, fill: C.muted }} />
+                                <YAxis yAxisId="pct" orientation="right" unit="%" width={44} tick={{ fontSize: 11, fill: C.muted }} />
+                                <Tooltip formatter={fmtBalance} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
-                                {selectedLineMonths.map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                                <Bar dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Bar dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
+                                {selectedLineMonths.map((i) => <ReferenceLine key={i} yAxisId="vol" x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
+                                <Bar yAxisId="vol" dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
+                                <Bar yAxisId="vol" dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
+                                <Line yAxisId="pct" dataKey="lossPct" name={LOSS_PCT_SERIES} stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Line yAxisId="pct" dataKey="target" name={TARGET_SERIES} stroke="var(--status-danger)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -397,20 +504,6 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                 </Panel>
             </div>
 
-            <Panel title="Monthly Loss %" icon={TrendingDown} note={`Loss as a share of supply, month by month. Red line = ${TARGET_LOSS_PCT}% management target.`}>
-                <ResponsiveContainer width="100%" height={190}>
-                    <AreaChart data={trend} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
-                        <defs><linearGradient id="wm-lg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.loss} stopOpacity={0.5} /><stop offset="100%" stopColor={C.loss} stopOpacity={0.05} /></linearGradient></defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
-                        <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
-                        <YAxis tick={{ fontSize: 11, fill: C.muted }} unit="%" />
-                        <Tooltip formatter={fmtLossPctPlain} contentStyle={TIP} />
-                        {selectedLineMonths.map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                        <ReferenceLine y={TARGET_LOSS_PCT} stroke="#D12E2E" strokeDasharray="5 5" label={{ value: "15% target", position: "insideTopRight", fill: "#D12E2E", fontSize: 11 }} />
-                        <Area dataKey="lossPct" stroke={C.loss} strokeWidth={2} fill="url(#wm-lg)" />
-                    </AreaChart>
-                </ResponsiveContainer>
-            </Panel>
         </div>
     );
 }
@@ -449,8 +542,8 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
         <div className="flex flex-wrap items-center gap-2 mb-1">
             <span className="text-sm font-semibold tracking-tight" style={{ color: C.heading }}>Zone</span>
             <div className="flex items-center gap-1.5 px-2.5 py-2" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.md }}>
-                <MapPin className="w-4 h-4" style={{ color: C.muted }} />
-                <select value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className="text-sm font-medium outline-none cursor-pointer" style={{ color: C.ink, background: C.card }}>
+                <MapPin className="w-4 h-4" aria-hidden="true" style={{ color: C.muted }} />
+                <select aria-label="Select zone to analyse" value={zoneSel} onChange={(e) => setZoneSel(e.target.value)} className="text-sm font-medium outline-none cursor-pointer" style={{ color: C.ink, background: C.card }}>
                     <option value="all">All zones (overview)</option>
                     <option value={TRUNK_KEY}>Primary network (A1 → A2)</option>
                     {real.map((z) => <option key={z.zone} value={z.zone}>{z.name}</option>)}
@@ -480,8 +573,8 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             <div className="space-y-5">
                 {picker}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                    <Kpi icon={Droplet} label="Main Bulk Supply (A1)" value={fmt(A1)} unit="m³" bg="var(--chart-bg-blue)" ic="#3B7ED2" sub="NAMA L1 — total entering" />
-                    <Kpi icon={Plug} label="Reached Distribution (A2)" value={fmt(A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="#6B9AC4" sub="Σ zone bulk + direct" />
+                    <Kpi icon={Droplet} label="Main Bulk Supply (A1)" value={fmt(A1)} unit="m³" bg="var(--chart-bg-blue)" ic="var(--module-water)" sub="NAMA L1 — total entering" />
+                    <Kpi icon={Plug} label="Reached Distribution (A2)" value={fmt(A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="var(--chart-1)" sub="Σ zone bulk + direct" />
                     <Kpi icon={AlertTriangle} label="Trunk Loss" value={fmt(trunkLoss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="A1 − A2 · before any zone" />
                     <Kpi icon={Gauge} label="Trunk Loss %" value={`${trunkPct}%`} bg={ts.bg} ic={ts.c} sub={ts.label} />
                 </div>
@@ -514,7 +607,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="a1" name="Main bulk (A1)" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
                                 <Bar dataKey="a2" name="Reached zones (A2)" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Trunk loss" stroke="#D12E2E" strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Line dataKey="loss" name="Trunk loss" stroke="var(--status-danger)" strokeWidth={2.5} dot={{ r: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -531,7 +624,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </Panel>
                 </div>
 
-                <Panel title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
+                <Panel collapsible defaultOpen title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
                     right={<div className="flex items-center gap-2">
                         <PanelExport onClick={() => downloadRows(comp.map((c, i) => ({ "#": i + 1, Meter: c.name, Kind: c.kind, "Volume (m3)": c.val.toFixed(1), "% of A1": pctOfA1(c.val) })), `water-a1-reconciliation-${year}.csv`)} />
                         <RowsPicker value={rowsShown} setValue={setRowsShown} total={comp.length} />
@@ -539,20 +632,23 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     note="Main bulk (A1) = Σ zone bulk + Σ direct connections + trunk loss. Use it to spot which downstream bulk meters are missing or under-reading before blaming leakage.">
                     <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">
+                            <caption className="sr-only">
+                                A1 reconciliation for {year}: every zone-bulk and direct-connection meter, its volume in cubic metres and its share of main bulk supply, with the reached-distribution total and trunk loss summarised at the end.
+                            </caption>
                             <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                                 <tr>
-                                    <th className="text-left px-3 py-2">#</th>
-                                    <th className="text-left px-2 py-2">Meter</th>
-                                    <th className="text-left px-2 py-2">Kind</th>
-                                    <th className="text-right px-2 py-2">Volume (m³)</th>
-                                    <th className="text-right px-3 py-2">% of A1</th>
+                                    <th scope="col" className="text-left px-3 py-2">#</th>
+                                    <th scope="col" className="text-left px-2 py-2">Meter</th>
+                                    <th scope="col" className="text-left px-2 py-2">Kind</th>
+                                    <th scope="col" className="text-right px-2 py-2">Volume (m³)</th>
+                                    <th scope="col" className="text-right px-3 py-2">% of A1</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {limitRows(comp, rowsShown).map((c, i) => (
                                     <tr key={c.name + i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                         <td className="px-3 py-1.5" style={{ color: C.muted }}>{i + 1}</td>
-                                        <td className="px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color: C.ink }}>{c.name}</td>
+                                        <th scope="row" className="px-2 py-1.5 text-left font-semibold whitespace-nowrap" style={{ color: C.ink }}>{c.name}</th>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{c.kind}</td>
                                         <td className="px-2 py-1.5 text-right" style={{ color: C.ink }}>{fmt1(c.val)}</td>
                                         <td className="px-3 py-1.5 text-right" style={{ color: C.muted }}>{pctOfA1(c.val)}%</td>
@@ -580,10 +676,8 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </div>
                 </Panel>
 
-                <div className="flex items-start gap-3 px-4 py-3" style={{ background: C.component, border: `1px solid ${C.border}`, borderRadius: RADIUS.md }}>
-                    <Target className="w-4 h-4 shrink-0 mt-0.5" style={{ color: C.heading }} />
+                <Panel collapsible title="How to identify &amp; manage this gap" icon={Target}>
                     <div className="text-[12px] leading-relaxed">
-                        <p className="font-semibold" style={{ color: C.heading }}>How to identify &amp; manage this gap</p>
                         <p className="mt-0.5" style={{ color: C.muted }}>
                             A high A1→A2 gap is loss on the primary / trunk mains <b>before</b> water reaches any zone, so no zone card will ever show it.
                             Work it in order: <b>(1)</b> confirm every zone-bulk &amp; direct-connection meter above reported for the period — a missing or
@@ -593,14 +687,15 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             (and occasionally go negative when A2 &gt; A1).
                         </p>
                     </div>
-                </div>
+                </Panel>
             </div>
         );
     }
 
     /* ---------- single-zone drill-down ---------- */
     if (zoneSel !== "all") {
-        const z: ZoneRow = real.find((x) => x.zone === zoneSel) || { zone: zoneSel, bulk: 0, end: 0, loss: 0, lossPct: 0, name: zoneSel, meters: 0 };
+        const z: ZoneRow = real.find((x) => x.zone === zoneSel)
+            || { zone: zoneSel, bulk: 0, end: 0, loss: 0, lossPct: 0, name: zoneSel, meters: 0, missing: 0, bulkMissing: false };
         const s = sev(z.lossPct);
         const supply = z.bulk, cons = z.end, loss = z.loss;
         const consPct = supply ? Math.min(100, (cons / supply) * 100) : 0;
@@ -609,12 +704,16 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             const m = p.zones.find((x) => x.zone === zoneSel);
             return { m: MONTHS[i], Supply: m ? m.bulk : 0, Consumption: m ? m.end : 0, loss: m ? m.loss : 0 };
         });
+        // `val` is `null` when the meter has no reading at all in the period —
+        // rendered as "no reading", never as a confident 0.
         const meters = data.meters
             .filter((m) => { const c = m.y[year]; return c && (c.label === "L3" || c.label === "L4") && c.typ !== "D_Building_Bulk" && c.zone === zoneSel; })
             .map((m) => { const c = m.y[year]; const v = periodValue(c, sel); return { name: m.name, typ: (c.typ || "").replace("Residential ", ""), val: v }; })
-            .sort((a, b) => b.val - a.val);
+            .sort((a, b) => (b.val ?? -Infinity) - (a.val ?? -Infinity));
+        const unread = meters.filter((m) => m.val == null).length;
         const blds = period.buildings.filter((b) => b.zone === z.name);
-        const pctOf = (v: number) => (supply ? ((v / supply) * 100).toFixed(1) : "0.0");
+        const worstBld = blds.reduce<typeof blds[number] | null>((w, b) => (!w || b.lossPct > w.lossPct ? b : w), null);
+        const pctOf = (v: number | null) => (supply && v != null ? ((v / supply) * 100).toFixed(1) : "–");
 
         return (
             <div className="space-y-5">
@@ -651,13 +750,13 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
                                 <Bar dataKey="Supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
                                 <Bar dataKey="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Loss" stroke="#D12E2E" strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Line dataKey="loss" name="Loss" stroke="var(--status-danger)" strokeWidth={2.5} dot={{ r: 2 }} />
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
-                    <Panel title="Top Individual Consumers" icon={Layers} note="Largest end-user meters in this zone for the period.">
+                    <Panel title="Top Individual Consumers" icon={Layers} note="Largest end-user meters in this zone for the period. Meters with no reading are excluded rather than plotted as zero.">
                         <ResponsiveContainer width="100%" height={260}>
-                            <BarChart data={meters.slice(0, 10).map((m) => ({ name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name, val: m.val }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
+                            <BarChart data={meters.filter((m) => m.val != null).slice(0, 10).map((m) => ({ name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name, val: m.val as number }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
@@ -668,31 +767,36 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </Panel>
                 </div>
 
-                <Panel title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers}
+                <Panel collapsible defaultOpen title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers}
                     right={<div className="flex items-center gap-2">
-                        <PanelExport onClick={() => downloadRows(meters.map((m, i) => ({ "#": i + 1, Meter: m.name, Type: m.typ, "Consumption (m3)": m.val.toFixed(1), "% of supply": pctOf(m.val) })), `water-zone-${String(z.zone).replace(/\s+/g, "-").toLowerCase()}-meters-${year}.csv`)} />
+                        <PanelExport onClick={() => downloadRows(meters.map((m, i) => ({ "#": i + 1, Meter: m.name, Type: m.typ, "Consumption (m3)": m.val == null ? "no reading" : m.val.toFixed(1), "% of supply": pctOf(m.val) })), `water-zone-${String(z.zone).replace(/\s+/g, "-").toLowerCase()}-meters-${year}.csv`)} />
                         <RowsPicker value={rowsShown} setValue={setRowsShown} total={meters.length} />
                     </div>}
-                    note="Zone supply = Σ individual consumption + loss.">
+                    note={`Zone supply = Σ individual consumption + loss.${unread > 0 ? ` ${unread} meter${unread === 1 ? " has" : "s have"} no reading this period, so Σ individual consumption is incomplete and the loss below may be overstated.` : ""}`}>
                     <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                         <table className="w-full text-[12px]">
+                            <caption className="sr-only">
+                                Individual end-user meters in {z.name} for {year}, with each meter&apos;s consumption in cubic metres and its share of zone supply. Meters with no reading are labelled &ldquo;no reading&rdquo;.
+                            </caption>
                             <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                                 <tr>
-                                    <th className="text-left px-3 py-2">#</th>
-                                    <th className="text-left px-2 py-2">Meter</th>
-                                    <th className="text-left px-2 py-2">Type</th>
-                                    <th className="text-right px-2 py-2">Consumption (m³)</th>
-                                    <th className="text-right px-3 py-2">% of supply</th>
+                                    <th scope="col" className="text-left px-3 py-2">#</th>
+                                    <th scope="col" className="text-left px-2 py-2">Meter</th>
+                                    <th scope="col" className="text-left px-2 py-2">Type</th>
+                                    <th scope="col" className="text-right px-2 py-2">Consumption (m³)</th>
+                                    <th scope="col" className="text-right px-3 py-2">% of supply</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {limitRows(meters, rowsShown).map((m, i) => (
                                     <tr key={m.name + i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                         <td className="px-3 py-1.5" style={{ color: C.muted }}>{i + 1}</td>
-                                        <td className="px-2 py-1.5 font-semibold whitespace-nowrap" style={{ color: C.ink }}>{m.name}</td>
+                                        <th scope="row" className="px-2 py-1.5 text-left font-semibold whitespace-nowrap" style={{ color: C.ink }}>{m.name}</th>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{m.typ}</td>
-                                        <td className="px-2 py-1.5 text-right" style={{ color: C.ink }}>{fmt1(m.val)}</td>
-                                        <td className="px-3 py-1.5 text-right" style={{ color: C.muted }}>{pctOf(m.val)}%</td>
+                                        <td className="px-2 py-1.5 text-right" style={{ color: m.val == null ? C.muted : C.ink }}>
+                                            {m.val == null ? <span className="italic">no reading</span> : fmt1(m.val)}
+                                        </td>
+                                        <td className="px-3 py-1.5 text-right" style={{ color: C.muted }}>{pctOf(m.val)}{m.val == null ? "" : "%"}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -717,26 +821,24 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </div>
                 </Panel>
 
-                {blds.length > 0 && (
-                    <Panel title={`Building Losses in ${z.name}`} icon={Building2} note="Where a building bulk meter exceeds the sum of its apartments — likely in-building leaks or meter issues.">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-[12px]">
-                                <thead><tr style={{ color: C.muted }} className="text-left border-b">
-                                    <th className="py-2 pr-2">Building</th><th className="text-right pr-2">Bulk</th><th className="text-right pr-2">Apts</th><th className="text-right pr-2">Loss</th><th className="text-right">%</th>
-                                </tr></thead>
-                                <tbody>
-                                    {blds.map((b) => { const bs = sev(b.lossPct); return (
-                                        <tr key={b.name} className="border-b" style={{ borderColor: "var(--wm-border)" }}>
-                                            <td className="py-1.5 pr-2 font-semibold" style={{ color: C.ink }}>{b.name.replace(" Building Bulk Meter", "")}</td>
-                                            <td className="text-right pr-2" style={{ color: C.ink }}>{fmt(b.bulk)}</td>
-                                            <td className="text-right pr-2" style={{ color: C.ink }}>{fmt(b.sub)}</td>
-                                            <td className="text-right pr-2 font-medium" style={{ color: C.ink }}>{fmt(b.loss)}</td>
-                                            <td className="text-right font-bold" style={{ color: bs.c }}>{b.lossPct}%</td>
-                                        </tr>); })}
-                                </tbody>
-                            </table>
+                {/* The full building bulk-vs-apartment table lives on the
+                    Assets & Connections tab (same rows, same columns, plus a
+                    Zone column) — repeating it here was pure duplication. What
+                    is genuinely zone-specific is the headline, so that stays. */}
+                {blds.length > 0 && worstBld && (
+                    <div className="flex items-start gap-3 px-4 py-3" style={{ background: C.component, border: `1px solid ${C.border}`, borderRadius: RADIUS.md }}>
+                        <Building2 className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" style={{ color: C.heading }} />
+                        <div className="text-[12px] leading-relaxed">
+                            <p className="font-semibold" style={{ color: C.heading }}>Building losses in {z.name}</p>
+                            <p className="mt-0.5" style={{ color: C.muted }}>
+                                {blds.length} building bulk meter{blds.length === 1 ? "" : "s"} in this zone.
+                                Worst gap: <b style={{ color: C.ink }}>{worstBld.name.replace(" Building Bulk Meter", "")}</b> —
+                                bulk {fmt(worstBld.bulk)} m³ vs apartments {fmt(worstBld.sub)} m³
+                                (<b style={{ color: sev(worstBld.lossPct).c }}>{worstBld.lossPct}% · {sev(worstBld.lossPct).label}</b>).
+                                Full building-by-building table on the <b>Assets &amp; Connections</b> tab.
+                            </p>
                         </div>
-                    </Panel>
+                    </div>
                 )}
             </div>
         );
@@ -830,35 +932,45 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 })}
             </div>
 
-            <Panel title="Zone Loss % — Monthly Heatmap" icon={Gauge} note="Each cell is one month's loss for that zone. Redder = worse. Selected month is ringed.">
+            <Panel collapsible defaultOpen title="Zone Loss % — Monthly Heatmap" icon={Gauge} note="Each cell is one month's loss for that zone, as a percentage of zone supply. Selected month is ringed. Colour repeats the severity band named in the key below — it never carries meaning on its own.">
                 <div className="overflow-x-auto">
                     <table className="w-full text-[11px] border-collapse">
+                        <caption className="sr-only">
+                            Monthly loss percentage by zone for {heat.length} zones over {nMonths} months, plus a year column. Each value is followed by its severity band.
+                        </caption>
                         <thead>
                             <tr>
-                                <th className="text-left px-2 py-1.5 sticky left-0" style={{ color: C.muted, background: C.card }}>Zone</th>
+                                <th scope="col" className="text-left px-2 py-1.5 sticky left-0" style={{ color: C.muted, background: C.card }}>Zone</th>
                                 {MONTHS.slice(0, nMonths).map((m, i) => (
-                                    <th key={m} className="px-1.5 py-1.5 text-center font-semibold" style={{ color: monthInSelection(sel, i) ? C.primary : C.muted, textDecoration: monthInSelection(sel, i) ? "underline" : "none" }}>{m}</th>
+                                    <th scope="col" key={m} className="px-1.5 py-1.5 text-center font-semibold" style={{ color: monthInSelection(sel, i) ? C.primary : C.muted, textDecoration: monthInSelection(sel, i) ? "underline" : "none" }}>{m}</th>
                                 ))}
-                                <th className="px-2 py-1.5 text-center" style={{ color: C.muted }}>Yr</th>
+                                <th scope="col" className="px-2 py-1.5 text-center" style={{ color: C.muted }}>Yr</th>
                             </tr>
                         </thead>
                         <tbody>
                             {heat.map((z) => (
                                 <tr key={z.zone}>
-                                    <td className="px-2 py-1 font-semibold sticky left-0 whitespace-nowrap" style={{ color: C.ink, background: C.card }}>{z.name}</td>
+                                    <th scope="row" className="px-2 py-1 text-left font-semibold sticky left-0 whitespace-nowrap" style={{ color: C.ink, background: C.card }}>{z.name}</th>
                                     {z.months.map((lp, i) => {
                                         const s = sev(lp);
                                         return (
-                                            <td key={i} className="text-center px-1.5 py-1 font-medium" title={`${MONTHS[i]}: ${fmt(z.lossM[i])} m³`}
-                                                style={{ background: s.bg, color: s.c, borderRadius: 4, outline: monthInSelection(sel, i) ? `2px solid ${C.primary}` : "none", outlineOffset: -1 }}>{lp}</td>
+                                            <td key={i} className="text-center px-1.5 py-1 font-medium" title={`${z.name} · ${MONTHS[i]}: ${lp}% loss (${s.label}) · ${fmt(z.lossM[i])} m³`}
+                                                style={{ background: s.bg, color: s.c, borderRadius: 4, outline: monthInSelection(sel, i) ? `2px solid ${C.primary}` : "none", outlineOffset: -1 }}>
+                                                {lp}
+                                                <span className="sr-only"> percent loss, {s.label}</span>
+                                            </td>
                                         );
                                     })}
-                                    <td className="text-center px-2 py-1 font-bold" style={{ color: sev(z.yr).c }}>{z.yr}</td>
+                                    <td className="text-center px-2 py-1 font-bold" style={{ color: sev(z.yr).c }}>
+                                        {z.yr}
+                                        <span className="sr-only"> percent loss for the year, {sev(z.yr).label}</span>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
                 </div>
+                <SeverityLegend caption="Loss band:" />
             </Panel>
         </div>
     );
@@ -866,28 +978,43 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 
 /* ================= BUILDINGS / DIRECT / COMMON ================= */
 function AssetsView({ period }: { period: PeriodResult }) {
-    const topB = period.buildings.slice(0, 12);
+    // This is now the single home for the building bulk-vs-apartment table (the
+    // zone drill-down used to repeat it), so it shows every building rather than
+    // an arbitrary top-12 slice.
+    const [rowsShown, setRowsShown] = useState("20");
+    const blds = period.buildings;
     const dcs = period.dcs;
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-            <Panel title="Buildings, Direct & Common Connections — Building Losses" icon={Building2} note="Building bulk meter minus the sum of its apartment meters.">
-                <div className="overflow-x-auto">
+            <Panel title="Buildings — Bulk vs Apartment Meters" icon={Building2}
+                right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />}
+                note="Building bulk meter minus the sum of its apartment meters. A positive gap points at in-building leakage or a meter problem.">
+                <div className="overflow-x-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                     <table className="w-full text-[12px]">
+                        <caption className="sr-only">
+                            Building bulk meters compared with the sum of their apartment meters: bulk volume, apartment total, the gap in cubic metres, and the gap as a percentage with its severity band.
+                        </caption>
                         <thead><tr style={{ color: C.muted }} className="text-left border-b">
-                            <th className="py-2 pr-2">Building</th><th className="pr-2">Zone</th><th className="text-right pr-2">Bulk</th><th className="text-right pr-2">Apts</th><th className="text-right pr-2">Loss</th><th className="text-right">%</th>
+                            <th scope="col" className="py-2 pr-2">Building</th><th scope="col" className="pr-2">Zone</th><th scope="col" className="text-right pr-2">Bulk</th><th scope="col" className="text-right pr-2">Apts</th><th scope="col" className="text-right pr-2">Loss</th><th scope="col" className="text-right">Loss % · band</th>
                         </tr></thead>
                         <tbody>
-                            {topB.length === 0 && <tr><td colSpan={6} className="py-3 text-center" style={{ color: C.muted }}>No building data for this period.</td></tr>}
-                            {topB.map((b) => { const s = sev(b.lossPct); return (
+                            {blds.length === 0 && <tr><td colSpan={6} className="py-3 text-center" style={{ color: C.muted }}>No building data for this period.</td></tr>}
+                            {limitRows(blds, rowsShown).map((b) => { const s = sev(b.lossPct); return (
                                 <tr key={b.name} className="border-b" style={{ borderColor: "var(--wm-border)" }}>
-                                    <td className="py-1.5 pr-2 font-semibold" style={{ color: C.ink }}>{b.name.replace(" Building Bulk Meter", "")}</td>
+                                    <th scope="row" className="py-1.5 pr-2 text-left font-semibold" style={{ color: C.ink }}>{b.name.replace(" Building Bulk Meter", "")}</th>
                                     <td className="pr-2" style={{ color: C.muted }}>{b.zone}</td>
                                     <td className="text-right pr-2" style={{ color: C.ink }}>{fmt(b.bulk)}</td><td className="text-right pr-2" style={{ color: C.ink }}>{fmt(b.sub)}</td>
-                                    <td className="text-right pr-2 font-medium" style={{ color: C.ink }}>{fmt(b.loss)}</td><td className="text-right font-bold" style={{ color: s.c }}>{b.lossPct}%</td>
+                                    <td className="text-right pr-2 font-medium" style={{ color: C.ink }}>{fmt(b.loss)}</td>
+                                    <td className="text-right whitespace-nowrap">
+                                        {/* Percentage + named band: the colour is a reinforcement, never the only signal. */}
+                                        <span className="font-bold" style={{ color: s.c }}>{b.lossPct}%</span>
+                                        <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ background: s.bg, color: s.c }}>{s.label}</span>
+                                    </td>
                                 </tr>); })}
                         </tbody>
                     </table>
                 </div>
+                <SeverityLegend caption="Loss band:" />
             </Panel>
             <Panel title="Direct Connections" icon={Plug} note="Meters fed straight from the main inlet, bypassing the zones.">
                 <ResponsiveContainer width="100%" height={300}>
@@ -917,7 +1044,9 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
     const yearMeters = useMemo(() => data.meters.filter((m) => m.y[year]).map((m) => {
         const c = m.y[year];
         const shown = periodValue(c, sel);
-        const avg = c.vals?.length ? c.vals.reduce((a, b) => a + (Number(b) || 0), 0) / c.vals.length : 0;
+        // Mean over the months that were actually read — averaging unread months
+        // in as zeros used to drag the baseline down and mask real spikes.
+        const avg = meanReading(c.vals);
         const flags = meterFlags(c, shown, avg);
         return { name: m.name, acct: m.acct, label: c.label, zoneName: c.zoneName, typ: c.typ, vals: c.vals, total: c.total, shown, flags: flags.join(" | "), lastUpdated: lastReadingLabel(year, nMonths, c.vals, sel) };
     }), [data, year, sel, nMonths]);
@@ -931,7 +1060,7 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
         .filter((m) => level === "All" || m.label === level)
         .filter((m) => typ === "All" || m.typ === typ)
         .filter((m) => !q || m.name.toLowerCase().includes(q.toLowerCase()) || (m.acct || "").includes(q))
-        .sort((a, b) => b.shown - a.shown), [yearMeters, zone, level, typ, q]);
+        .sort((a, b) => (b.shown ?? -Infinity) - (a.shown ?? -Infinity)), [yearMeters, zone, level, typ, q]);
 
     const exportData = rows.map((m) => ({
         Meter: m.name,
@@ -940,22 +1069,24 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
         Level: m.label,
         Type: m.typ,
         Total_m3: fmt1(m.total),
-        Selected_m3: fmt1(m.shown),
+        // "no reading" and "0" are exported as different things, matching the UI.
+        Selected_m3: m.shown == null ? "no reading" : fmt1(m.shown),
         Flags: m.flags,
         Last_Updated: m.lastUpdated,
-        ...Object.fromEntries(MONTHS.slice(0, nMonths).map((mo, i) => [mo, m.vals[i] ?? ""])),
+        ...Object.fromEntries(MONTHS.slice(0, nMonths).map((mo, i) => [mo, m.vals[i] ?? "no reading"])),
     }));
 
     return (
         <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
                 <div className="flex items-center gap-2 px-3 py-2" style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 7 }}>
-                    <Search className="w-4 h-4" style={{ color: C.muted }} />
-                    <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search meter name or account number…" className="text-sm outline-none w-64" style={{ background: "transparent", color: C.ink }} />
+                    <Search className="w-4 h-4" aria-hidden="true" style={{ color: C.muted }} />
+                    <label htmlFor="wm-meter-search" className="sr-only">Search meters by name or account number</label>
+                    <input id="wm-meter-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search meter name or account number…" className="text-sm outline-none w-64" style={{ background: "transparent", color: C.ink }} />
                 </div>
-                <Select icon={MapPin} value={zone} setValue={setZone} options={zoneOpts} />
-                <Select icon={Filter} value={level} setValue={setLevel} options={levelOpts} />
-                <Select icon={Layers} value={typ} setValue={setTyp} options={typeOpts} />
+                <Select icon={MapPin} label="Filter by zone" value={zone} setValue={setZone} options={zoneOpts} />
+                <Select icon={Filter} label="Filter by hierarchy level" value={level} setValue={setLevel} options={levelOpts} />
+                <Select icon={Layers} label="Filter by meter type" value={typ} setValue={setTyp} options={typeOpts} />
                 <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export CSV</button>
                 <button onClick={() => downloadRows(exportData, `water-meter-explorer-${year}-excel.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.accent, color: C.primary, borderRadius: RADIUS.md }}><FileSpreadsheet className="w-4 h-4" />Excel-ready</button>
                 <RowsPicker value={rowsShown} setValue={setRowsShown} total={rows.length} />
@@ -966,31 +1097,44 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
             <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="overflow-hidden">
                 <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 600 : undefined }}>
                     <table className="text-[11px] border-collapse w-full">
+                        <caption className="sr-only">
+                            Water meter database for {year}: {rows.length} meters with account number, zone, hierarchy level, type, the volume for the selected period, data-quality flag, last reading and every month&apos;s reading. A dot means no reading was recorded.
+                        </caption>
                         <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
                             <tr>
-                                <th className="text-left px-3 py-2 sticky left-0" style={{ background: C.primary }}>Meter</th>
-                                <th className="px-2 py-2 text-left">Account</th>
-                                <th className="px-2 py-2 text-left">Zone</th><th className="px-2 py-2">Lvl</th><th className="px-2 py-2 text-left">Type</th>
-                                <th className="px-2 py-2 text-right">Selected</th><th className="px-2 py-2 text-left">Flag</th><th className="px-2 py-2 text-left">Last update</th>
-                                {MONTHS.slice(0, nMonths).map((m, i) => (<th key={m} className="px-2 py-2 text-right" style={{ background: monthInSelection(sel, i) ? C.accent : C.primary, color: monthInSelection(sel, i) ? C.primary : "var(--primary-foreground)" }}>{m}</th>))}
+                                <th scope="col" className="text-left px-3 py-2 sticky left-0" style={{ background: C.primary }}>Meter</th>
+                                <th scope="col" className="px-2 py-2 text-left">Account</th>
+                                <th scope="col" className="px-2 py-2 text-left">Zone</th><th scope="col" className="px-2 py-2">Lvl</th><th scope="col" className="px-2 py-2 text-left">Type</th>
+                                <th scope="col" className="px-2 py-2 text-right">Selected</th><th scope="col" className="px-2 py-2 text-left">Flag</th><th scope="col" className="px-2 py-2 text-left">Last update</th>
+                                {MONTHS.slice(0, nMonths).map((m, i) => (<th scope="col" key={m} className="px-2 py-2 text-right" style={{ background: monthInSelection(sel, i) ? C.accent : C.primary, color: monthInSelection(sel, i) ? C.primary : "var(--primary-foreground)" }}>{m}</th>))}
                             </tr>
                         </thead>
                         <tbody>
                             {limitRows(rows, rowsShown).map((m, i) => {
-                                const lvlc = ({ L1: "#3B7ED2", L2: "#6B9AC4", L3: "#4D445D", L4: "#9B86A8", DC: "#DF9A5B" } as Record<string, string>)[m.label] || "#6B7280";
+                                const lvlc = levelToken(m.label);
                                 const isAlert = m.flags !== "Normal";
                                 const bgr = i % 2 ? "var(--wm-zebra)" : "var(--wm-card)";
                                 return (
                                     <tr key={m.acct + i} style={{ background: bgr }}>
-                                        <td className="px-3 py-1.5 font-semibold whitespace-nowrap sticky left-0" style={{ color: C.ink, background: bgr }}>{m.name}</td>
+                                        <th scope="row" className="px-3 py-1.5 text-left font-semibold whitespace-nowrap sticky left-0" style={{ color: C.ink, background: bgr }}>{m.name}</th>
                                         <td className="px-2 py-1.5 whitespace-nowrap font-mono" style={{ color: C.muted }}>{m.acct}</td>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{m.zoneName}</td>
-                                        <td className="px-2 py-1.5 text-center"><span className="px-1.5 py-0.5 rounded text-[10px] font-bold text-white" style={{ background: lvlc }}>{m.label}</span></td>
+                                        <td className="px-2 py-1.5 text-center">
+                                            {/* Tinted chip: the level token carries the colour, the label
+                                                stays on --foreground so it is legible in both themes. */}
+                                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold" style={{ background: `color-mix(in srgb, ${lvlc} 22%, transparent)`, color: C.ink, boxShadow: `inset 0 0 0 1px ${lvlc}` }}>{m.label}</span>
+                                        </td>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{(m.typ || "").replace("Residential ", "")}</td>
-                                        <td className="px-2 py-1.5 text-right font-bold" style={{ color: C.ink }}>{fmt1(m.shown)}</td>
+                                        <td className="px-2 py-1.5 text-right font-bold" style={{ color: m.shown == null ? C.muted : C.ink }}>{m.shown == null ? "—" : fmt1(m.shown)}</td>
                                         <td className="px-2 py-1.5 whitespace-nowrap"><span className={`px-2 py-0.5 rounded-full font-semibold ${isAlert ? "bg-mb-danger-light text-mb-danger-text" : "bg-mb-success-light text-mb-success-text"}`}>{m.flags}</span></td>
                                         <td className="px-2 py-1.5 whitespace-nowrap" style={{ color: C.muted }}>{m.lastUpdated}</td>
-                                        {m.vals.map((v, j) => (<td key={j} className="px-2 py-1.5 text-right" style={{ color: v ? C.ink : C.muted, background: monthInSelection(sel, j) ? "var(--row-hover)" : "transparent", fontWeight: monthInSelection(sel, j) ? 700 : 400 }}>{v ? fmt1(v) : "·"}</td>))}
+                                        {/* `·` = no reading recorded; `0.0` = the meter reported zero. */}
+                                        {m.vals.map((v, j) => (
+                                            <td key={j} className="px-2 py-1.5 text-right" title={v == null ? `${MONTHS[j]}: no reading recorded` : `${MONTHS[j]}: ${fmt1(v)} m³`}
+                                                style={{ color: v == null ? C.muted : C.ink, background: monthInSelection(sel, j) ? "var(--row-hover)" : "transparent", fontWeight: monthInSelection(sel, j) ? 700 : 400 }}>
+                                                {v == null ? "·" : fmt1(v)}
+                                            </td>
+                                        ))}
                                     </tr>
                                 );
                             })}

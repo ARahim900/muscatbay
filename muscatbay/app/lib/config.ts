@@ -29,6 +29,29 @@ export const ELECTRICITY_RATES = {
 } as const;
 
 /**
+ * Electricity targets / budget — CONFIGURABLE, NOT MEASURED.
+ *
+ * The Electricity module previously had no reference point at all: every chart
+ * compared the estate to an average of itself, so "are we over budget?" was
+ * unanswerable. These are the single place a real, management-agreed target is
+ * entered. They intentionally default to `null` — no target has been supplied
+ * yet, and the UI must show "no target configured" rather than invent one.
+ * Set a number here (and only here) once Facilities agrees a figure.
+ */
+export const ELECTRICITY_TARGETS: {
+    /** Estate-wide monthly consumption target in kWh. `null` = none agreed. */
+    MONTHLY_TARGET_KWH: number | null;
+    /** Estate-wide monthly cost budget in OMR. `null` = none agreed. */
+    MONTHLY_BUDGET_OMR: number | null;
+    /** Free-text provenance shown in the UI beside any target line. */
+    SOURCE_NOTE: string;
+} = {
+    MONTHLY_TARGET_KWH: null,
+    MONTHLY_BUDGET_OMR: null,
+    SOURCE_NOTE: 'Set in lib/config.ts → ELECTRICITY_TARGETS',
+};
+
+/**
  * Water Rates (for future use)
  */
 export const WATER_RATES = {

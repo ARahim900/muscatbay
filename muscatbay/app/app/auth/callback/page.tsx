@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AuthBrandLockup } from '@/components/auth/brand-lockup';
 import { Loader2, AlertCircle, ArrowLeft, HelpCircle, Info } from 'lucide-react';
 
 // ── Friendly error mapping ──────────────────────────────────────────────
@@ -84,19 +85,11 @@ const FLOW_CONFIG: Record<AuthFlow, FlowConfig> = {
     },
 };
 
-// ── Shared brand logo ───────────────────────────────────────────────────
+// ── Shared brand logo — one lockup across the whole auth flow ───────────
 function BrandLogo() {
     return (
         <div className="flex justify-center mb-8">
-            <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg">
-                    <span className="text-primary-foreground font-bold text-xl">MB</span>
-                </div>
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground dark:text-primary-foreground">Muscat Bay</h1>
-                    <p className="text-sm text-muted-foreground">Operations Dashboard</p>
-                </div>
-            </div>
+            <AuthBrandLockup />
         </div>
     );
 }
@@ -114,14 +107,14 @@ function LoadingSpinner({ message }: { message: string }) {
                             aria-live="polite"
                             className="flex flex-col items-center gap-4"
                         >
-                            <Loader2 className="h-10 w-10 animate-spin text-[var(--mb-primary)]" />
+                            <Loader2 className="h-10 w-10 animate-spin text-mb-primary" />
                             <p className="text-sm text-muted-foreground">{message}</p>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-center">
                         <Link
                             href="/login"
-                            className="flex items-center justify-center gap-2 text-sm text-muted-foreground/70 hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                            className="flex items-center justify-center gap-2 text-sm text-muted-foreground/70 hover:text-mb-primary dark:hover:text-secondary transition-colors"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Login
@@ -332,14 +325,14 @@ function AuthCallbackContent() {
                                 <Button
                                     ref={primaryButtonRef}
                                     onClick={() => router.push('/login')}
-                                    className="w-full h-12 bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200"
+                                    className="w-full h-12 bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground font-semibold rounded-xl shadow-lg shadow-primary/25 transition-all duration-200"
                                 >
                                     Go to Login
                                 </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => router.push(config.secondaryHref)}
-                                    className="w-full h-12 border-[var(--mb-primary)]/30 text-[var(--mb-primary)] dark:text-secondary dark:border-secondary/30 hover:bg-[var(--mb-primary)]/5 dark:hover:bg-secondary/5 font-semibold rounded-xl transition-all duration-200"
+                                    className="w-full h-12 border-mb-primary/30 text-mb-primary dark:text-secondary dark:border-secondary/30 hover:bg-mb-primary/5 dark:hover:bg-secondary/5 font-semibold rounded-xl transition-all duration-200"
                                 >
                                     {config.secondaryLabel}
                                 </Button>
@@ -349,7 +342,7 @@ function AuthCallbackContent() {
                         <CardFooter className="flex flex-col gap-4">
                             <Link
                                 href="/login"
-                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                                className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-mb-primary dark:hover:text-secondary transition-colors"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                                 Back to Login
@@ -360,7 +353,7 @@ function AuthCallbackContent() {
                                 <span>Still having trouble?</span>
                                 <a
                                     href="mailto:support@muscatbay.com"
-                                    className="underline hover:text-[var(--mb-primary)] dark:hover:text-secondary transition-colors"
+                                    className="underline hover:text-mb-primary dark:hover:text-secondary transition-colors"
                                 >
                                     Contact support
                                 </a>

@@ -58,10 +58,14 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   )
 }
 
-function TableHead({ className, ...props }: React.ComponentProps<"th">) {
+function TableHead({ className, scope = "col", ...props }: React.ComponentProps<"th">) {
   return (
+    // `scope="col"` by default: every <TableHead> is a column header unless a
+    // consumer explicitly passes scope="row"/"rowgroup". Without it screen
+    // readers cannot announce which header a cell belongs to (WCAG 1.3.1).
     <th
       data-slot="table-head"
+      scope={scope}
       className={cn(
         "text-start align-middle whitespace-nowrap transition-colors",
         "[&:has([role=checkbox])]:pr-0",

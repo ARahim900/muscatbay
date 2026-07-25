@@ -37,12 +37,38 @@ export const metadata: Metadata = {
   metadataBase: resolveMetadataBase(),
   title: "Muscat Bay Operations",
   description: "Operations Dashboard for Muscat Bay",
+  applicationName: "Muscat Bay Operations",
+  // Installable PWA: the manifest link is emitted by Next from here, so it
+  // stays in sync with metadataBase instead of being a hand-written <link>.
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "Muscat Bay",
+    // "default" (not black-translucent): the app ships a light *and* a dark
+    // theme, and a translucent bar would paint white status-bar glyphs over
+    // the white light-mode topbar. iOS insets the web view below the status
+    // bar instead, which is legible in both themes.
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    // Meter IDs and account numbers are digit strings — stop iOS turning them
+    // into phone links inside tables.
+    telephone: false,
+  },
+  other: {
+    // Chromium's non-vendor-prefixed equivalent of apple-mobile-web-app-capable.
+    "mobile-web-app-capable": "yes",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/icon-192x192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-512x512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    // iOS renders alpha as black, so the touch icon is the flattened,
+    // full-bleed variant rather than the rounded-corner app icon.
+    apple: { url: "/icons/apple-touch-icon-180x180.png", sizes: "180x180", type: "image/png" },
     shortcut: "/favicon.ico",
   },
   openGraph: {
@@ -85,7 +111,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
+        {/* rel="manifest" is emitted from `metadata.manifest` above. */}
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>

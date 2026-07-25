@@ -3,7 +3,7 @@
 import { ReactNode, useRef } from "react";
 import gsap from "gsap";
 import Link from "next/link";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
 import { CountUp } from "@/components/motion/count-up";
@@ -11,15 +11,47 @@ import { DeckBrandMark } from "@/components/dashboard/deck-brand-mark";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import type { StatItem, StatVariant } from "@/components/shared/stats-grid";
 
+/** Target / threshold verdict for a KPI. `unknown` = not computable from the data we have. */
+export type DeckTargetStatus = "normal" | "warning" | "danger" | "unknown";
+
+export interface DeckStat extends StatItem {
+    /**
+     * Target or threshold context for this KPI, e.g. "Recovery 92% · target ≥ 90%".
+     * Rendered as a labelled chip so "are we on target?" is answerable at a glance.
+     * Omit when the metric genuinely has no agreed target — never invent one.
+     */
+    target?: { label: string; status: DeckTargetStatus };
+}
+
 interface CommandDeckProps {
     title: string;
     description?: string;
     /** Right-aligned slot for live badges / actions — content preserved verbatim */
     actions?: ReactNode;
     /** Aggregate KPIs — same items the StatsGrid renders on module pages */
-    stats: StatItem[];
+    stats: DeckStat[];
+    /**
+     * Explains WHY the per-KPI period labels can differ (each module resolves
+     * "latest month" by its own rule). Rendered under the lattice.
+     */
+    periodNote?: string;
     className?: string;
 }
+
+/**
+ * Muted foreground on the brand-purple deck surface. Derived from the
+ * --primary-foreground token rather than a hardcoded rgba(255,255,255,…),
+ * so it follows the brand if that token ever moves.
+ */
+const DECK_MUTED = "color-mix(in srgb, var(--primary-foreground) 60%, transparent)";
+
+/** Target chip colours — status tokens, each paired with an icon + text label. */
+const targetStatusStyle: Record<DeckTargetStatus, { color: string; Icon: typeof CheckCircle2 }> = {
+    normal: { color: "var(--mb-success)", Icon: CheckCircle2 },
+    warning: { color: "var(--mb-warning)", Icon: AlertTriangle },
+    danger: { color: "var(--sidebar-danger)", Icon: AlertTriangle },
+    unknown: { color: DECK_MUTED, Icon: HelpCircle },
+};
 
 /* Icon accents tuned for the dark-purple deck surface: same semantic families
  * as StatsGrid, swapped to the elegant/light token variants that hold contrast
@@ -48,7 +80,7 @@ const deckIconColor: Record<StatVariant, string> = {
  * StatsGrid because they ARE the official per-system records; the deck is the
  * aggregation layer above them. Used on the dashboard only.
  */
-export function CommandDeck({ title, description, actions, stats, className }: CommandDeckProps) {
+export function CommandDeck({ title, description, actions, stats, periodNote, className }: CommandDeckProps) {
     const deckRef = useRef<HTMLElement>(null);
 
     useIsomorphicLayoutEffect(() => {
@@ -182,6 +214,15 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                 <p className="mt-2 sm:mt-2.5 text-xl font-semibold tabular-nums leading-tight truncate text-white print:text-(--primary)">
                                     <CountUp value={stat.value} delay={0.3 + index * 0.06} />
                                 </p>
+                                {/* The period label is ALWAYS rendered. It used to be
+                                    suppressed whenever a trend existed — and every KPI
+                                    has a trend — so the month was invisible on all of
+                                    them, while water / electricity / STP each resolve
+                                    "latest month" by a different rule. An unlabelled
+                                    number from an unknown month is not a KPI. */}
+                                {stat.subtitle && (
+                                    <p className="mt-1.5 text-[11px] sm:text-xs text-white/55 truncate">{stat.subtitle}</p>
+                                )}
                                 {stat.trend && stat.trendValue && (
                                     <div className="mt-2 sm:mt-2.5 flex items-center text-[11px] sm:text-xs min-w-0">
                                         <span
@@ -189,20 +230,31 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                             style={{
                                                 color: isGoodTrend ? "var(--mb-success)" :
                                                     isBadTrend ? "var(--sidebar-danger)" :
-                                                        "rgba(255,255,255,0.6)",
+                                                        DECK_MUTED,
                                             }}
                                         >
-                                            {stat.trend === "up" && <TrendingUp size={13} className="me-1" />}
-                                            {stat.trend === "down" && <TrendingDown size={13} className="me-1" />}
-                                            {stat.trend === "neutral" && <Minus size={13} className="me-1" />}
+                                            {stat.trend === "up" && <TrendingUp size={13} className="me-1" aria-hidden="true" />}
+                                            {stat.trend === "down" && <TrendingDown size={13} className="me-1" aria-hidden="true" />}
+                                            {stat.trend === "neutral" && <Minus size={13} className="me-1" aria-hidden="true" />}
                                             {stat.trendValue}
                                         </span>
-                                        <span className="ms-1.5 text-white/40 truncate">vs last month</span>
+                                        <span className="ms-1.5 text-white/40 truncate">vs prev.</span>
                                     </div>
                                 )}
-                                {stat.subtitle && !stat.trendValue && (
-                                    <p className="mt-2 text-[11px] sm:text-xs text-white/50 truncate">{stat.subtitle}</p>
-                                )}
+                                {/* Target / threshold context — colour is always
+                                    paired with an icon and a text label. */}
+                                {stat.target && (() => {
+                                    const { color, Icon } = targetStatusStyle[stat.target.status];
+                                    return (
+                                        <p
+                                            className="mt-2 flex items-start gap-1 text-[11px] leading-snug"
+                                            style={{ color }}
+                                        >
+                                            <Icon size={12} className="mt-px flex-shrink-0" aria-hidden="true" />
+                                            <span className="min-w-0">{stat.target.label}</span>
+                                        </p>
+                                    );
+                                })()}
                             </>
                         );
 
@@ -218,7 +270,7 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                                 href={stat.href}
                                 data-deck-cell
                                 data-glow
-                                aria-label={`${stat.label}: ${stat.value}. ${stat.trend === "up" ? "Up" : stat.trend === "down" ? "Down" : "No change"} ${stat.trendValue || ""} compared to last period. Click to view details.`}
+                                aria-label={`${stat.label}: ${stat.value}${stat.subtitle ? `, ${stat.subtitle}` : ""}. ${stat.trend === "up" ? "Up" : stat.trend === "down" ? "Down" : "No change"} ${stat.trendValue || ""} compared to the previous period.${stat.target ? ` ${stat.target.label}.` : ""} Click to view details.`}
                                 className={cn(
                                     cellClassName,
                                     "mb-glow transition-colors duration-200",
@@ -235,6 +287,14 @@ export function CommandDeck({ title, description, actions, stats, className }: C
                         );
                     })}
                 </div>
+
+                {/* Why the period labels above can differ between KPIs — disclosed
+                    rather than left for the reader to notice. */}
+                {periodNote && (
+                    <p className="mt-2.5 text-[11px] leading-snug text-white/45 print:text-(--muted-foreground)">
+                        {periodNote}
+                    </p>
+                )}
             </div>
         </section>
     );

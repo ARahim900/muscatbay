@@ -32,6 +32,14 @@ const nextConfig: NextConfig = {
                 { key: "Cache-Control", value: "no-cache" },
             ],
         },
+        {
+            // Offline shell: precached by the SW, so the copy on the network
+            // must never be a stale one when the SW version bumps.
+            source: "/offline.html",
+            headers: [
+                { key: "Cache-Control", value: "no-cache" },
+            ],
+        },
     ],
 };
 

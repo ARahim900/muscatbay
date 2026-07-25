@@ -4,24 +4,27 @@
  * the inspection units here are the PROCESS DIMENSIONS an operator actually
  * watches: treatment efficiency, hydraulic load, TSE reuse, tanker load and
  * data completeness. Severity is data-relative (each day judged against the
- * period's own baseline) plus the efficiency bands the section already uses,
- * so it stays honest without a hard-coded plant nameplate.
+ * period's own baseline) plus the recovery bands published in
+ * `lib/thresholds.ts`, which mirror `lib/operational-alerts.ts` — so the page,
+ * the dashboard alert feed and this module can never tell different stories.
  */
 
 import { format } from "date-fns";
 import type { STPOperation } from "@/lib/mock-data";
 import { STP_RATES } from "@/lib/config";
-import type { HealthMetric, HeatRow, HeatColumn, ExceptionRow, Severity } from "@/components/shared/inspection";
+import {
+    STP_THRESHOLDS, classifyRecovery, classifyHydraulicLoad, classifyTankerTrips, describeSTPGates,
+} from "@/lib/thresholds";
+import type { HealthMetric, HeatRow, HeatColumn, Severity } from "@/components/shared/inspection";
+import { collapseConsecutive, type Finding } from "@/components/inspection/findings-register";
 
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
+const {
+    RECOVERY_GOOD, RECOVERY_WATCH, RECOVERY_CRITICAL,
+    LOAD_HIGH, LOAD_WATCH, EFFICIENCY_DROP_PP,
+} = STP_THRESHOLDS;
 
-// ─── Thresholds (named so they read as plant policy, not magic numbers) ───────
-const EFF_GOOD = 95;    // ≥95% TSE recovery = healthy (matches the section's badge)
-const EFF_WATCH = 90;   // 90–95% = keep an eye on it
-const EFF_HIGH = 80;    // 80–90% = investigate; <80% = critical
-const LOAD_HIGH = 1.4;  // inlet ≥ 1.4× the period baseline = hydraulic surge
-const LOAD_WATCH = 1.2; // inlet ≥ 1.2× baseline = elevated
-const LOAD_LOW = 0.4;   // inlet ≤ 0.4× baseline (but non-zero) = possible plant issue
+export const STP_GATE_NOTE = describeSTPGates();
 
 export interface STPDay {
     id: string;
@@ -31,9 +34,11 @@ export interface STPDay {
     ym: string;           // yyyy-MM
     dom: number;          // day of month
     inlet: number;
-    tse: number;
+    tse: number;          // kept RAW — a negative value is preserved, never clamped
     trips: number;
     eff: number | null;   // tse/inlet %, null when no inlet
+    /** True when the logged TSE is below zero — physically impossible, so a data fault. */
+    tseNegative: boolean;
 }
 
 export interface STPModel {
@@ -51,6 +56,10 @@ export interface STPModel {
         economicImpact: number;
         daysLogged: number;
         daysExpected: number;
+        /** daysLogged ÷ daysExpected as a percentage; null when the span is unknown. */
+        completenessPct: number | null;
+        /** Days inside the first→last span with no record at all. */
+        missingDays: number;
     };
 }
 
@@ -72,7 +81,10 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
         .filter(({ date }) => !Number.isNaN(date.getTime()))
         .map(({ op, date }) => {
             // Coerce numerics defensively — a string/null from Supabase would
-            // otherwise poison every downstream sum with NaN.
+            // otherwise poison every downstream sum with NaN. `Number(x) || 0`
+            // maps NaN/null to 0 but PRESERVES negatives, which is deliberate:
+            // a negative TSE is a real, documented data fault and must stay
+            // visible rather than being flattened into "reuse stopped".
             const inlet = Number(op.inlet_sewage) || 0;
             const tse = Number(op.tse_for_irrigation) || 0;
             const trips = Number(op.tanker_trips) || 0;
@@ -87,6 +99,7 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
                 tse,
                 trips,
                 eff: inlet > 0 ? (tse / inlet) * 100 : null,
+                tseNegative: tse < 0,
             };
         })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
@@ -128,44 +141,25 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
             economicImpact: income + savings,
             daysLogged: days.length,
             daysExpected,
+            completenessPct: daysExpected > 0 ? (days.length / daysExpected) * 100 : null,
+            missingDays: Math.max(0, daysExpected - days.length),
         },
     };
 }
 
 // ─── Per-day severity for each process dimension ──────────────────────────────
+// All four delegate to lib/thresholds so Plant Watch, the heatmap, the findings
+// register and the dashboard alert feed share one set of gates.
 
-export function effSeverity(eff: number | null): Severity {
-    if (eff === null) return "nodata";
-    if (eff >= EFF_GOOD) return "good";
-    if (eff >= EFF_WATCH) return "watch";
-    if (eff >= EFF_HIGH) return "high";
-    return "critical";
-}
-
-function loadSeverity(inlet: number, baseline: number): Severity {
-    if (inlet <= 0) return "nodata";
-    if (baseline <= 0) return "good";
-    const r = inlet / baseline;
-    if (r >= LOAD_HIGH) return "high";
-    if (r >= LOAD_WATCH || r <= LOAD_LOW) return "watch";
-    return "good";
-}
+export const effSeverity = classifyRecovery;
+const loadSeverity = classifyHydraulicLoad;
+const tripsSeverity = classifyTankerTrips;
 
 function tseSeverity(tse: number, inlet: number): Severity {
+    if (tse < 0) return "critical";                // impossible value — data fault
     if (inlet <= 0) return "nodata";
-    if (tse <= 0) return "critical";              // reuse stopped while sewage came in
-    const recovery = tse / inlet;
-    if (recovery < 0.8) return "high";
-    if (recovery < 0.9) return "watch";
-    return "good";
-}
-
-function tripsSeverity(trips: number, baseline: number): Severity {
-    const highGate = Math.max(4, Math.ceil(baseline * 2));
-    const watchGate = Math.max(3, Math.ceil(baseline) + 2);
-    if (trips >= highGate) return "high";
-    if (trips >= watchGate) return "watch";
-    return "good";
+    if (tse === 0) return "critical";              // reuse stopped while sewage came in
+    return classifyRecovery((tse / inlet) * 100);
 }
 
 // ─── Health cards ─────────────────────────────────────────────────────────────
@@ -181,12 +175,12 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
     // 1 — Treatment efficiency
     const effDays = days.filter((d) => d.eff !== null);
     const avgEff = summary.avgEfficiency;
-    const effSev = effSeverity(avgEff);
+    const effSev = classifyRecovery(avgEff);
     // trailing run below target (leak-signature analogue)
     let effRun = 0;
     for (let i = days.length - 1; i >= 0; i--) {
         if (days[i].eff === null) continue;
-        if ((days[i].eff as number) < EFF_WATCH) effRun++; else break;
+        if ((days[i].eff as number) < RECOVERY_WATCH) effRun++; else break;
     }
 
     // 2 — Hydraulic load
@@ -196,15 +190,28 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
     const surgeDays = days.filter((d) => d.inlet > 0 && baselineInlet > 0 && d.inlet / baselineInlet >= LOAD_WATCH).length;
     const peakInlet = days.reduce((m, d) => Math.max(m, d.inlet), 0);
 
-    // 3 — TSE reuse
-    const zeroReuse = days.filter((d) => d.inlet > 0 && d.tse <= 0).length;
+    // 3 — TSE reuse. Negative days are counted separately from zero days: a
+    // negative is a metering/data fault, a zero is "reuse stopped".
+    const negativeReuse = days.filter((d) => d.tseNegative).length;
+    const zeroReuse = days.filter((d) => d.inlet > 0 && d.tse === 0).length;
     const recovery = summary.totalInlet > 0 ? (summary.totalTSE / summary.totalInlet) * 100 : null;
-    const tseSev: Severity = zeroReuse > 0 ? "critical" : recovery === null ? "nodata" : recovery < 80 ? "high" : recovery < 90 ? "watch" : "good";
+    const tseSev: Severity = negativeReuse > 0 || zeroReuse > 0
+        ? "critical"
+        : classifyRecovery(recovery);
 
     // 4 — Tanker load
     const highTankerDays = days.filter((d) => tripsSeverity(d.trips, baselineTrips) !== "good").length;
     const tankerSev = highTankerDays === 0 ? "good" : days.some((d) => tripsSeverity(d.trips, baselineTrips) === "high") ? "high" : "watch";
     const avgTrips = days.length ? summary.totalTrips / days.length : 0;
+
+    // 5 — Data completeness. Previously computed and never rendered, which meant
+    // a period missing a third of its days looked as trustworthy as a full one.
+    const completeness = summary.completenessPct;
+    const completenessSev: Severity = completeness === null
+        ? "nodata"
+        : completeness >= 98 ? "good"
+            : completeness >= 90 ? "watch"
+                : completeness >= 75 ? "high" : "critical";
 
     return [
         {
@@ -212,21 +219,21 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             title: "Treatment Efficiency",
             severity: effSev,
             headline: avgEff !== null ? `${avgEff.toFixed(1)}%` : "—",
-            headlineNote: `target ≥ ${EFF_GOOD}% · TSE ÷ inlet`,
+            headlineNote: `target ≥ ${RECOVERY_GOOD}% · TSE ÷ inlet`,
             facts: [
                 { label: "best", value: effDays.length ? `${Math.max(...effDays.map((d) => d.eff as number)).toFixed(0)}%` : "—" },
                 { label: "worst", value: effDays.length ? `${Math.min(...effDays.map((d) => d.eff as number)).toFixed(0)}%` : "—" },
             ],
             spark: last14.map((d) => d.eff),
             sparkNote: `${effDays.length} days measured`,
-            signal: effRun >= 2 ? { label: `${effRun}d below target`, tone: "danger" } : undefined,
+            signal: effRun >= 2 ? { label: `${effRun}d below ${RECOVERY_WATCH}%`, tone: "danger" } : undefined,
         },
         {
             key: "load",
             title: "Hydraulic Load",
             severity: loadSev,
             headline: `${num(recentAvgInlet)} m³`,
-            headlineNote: `recent daily inlet · typical ${num(baselineInlet)} m³`,
+            headlineNote: `recent daily inlet · typical ${num(baselineInlet)} m³ · surge ≥ ${LOAD_HIGH}×`,
             facts: [
                 { label: "peak", value: `${num(peakInlet)}` },
                 { label: "total", value: `${num(summary.totalInlet)}` },
@@ -243,11 +250,15 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             headlineNote: recovery !== null ? `${recovery.toFixed(0)}% of inlet reused for irrigation` : "no inlet in range",
             facts: [
                 { label: "savings", value: `${num(summary.savings, 0)} OMR` },
-                { label: "zero-days", value: String(zeroReuse) },
+                negativeReuse > 0
+                    ? { label: "negative", value: String(negativeReuse) }
+                    : { label: "zero-days", value: String(zeroReuse) },
             ],
             spark: last14.map((d) => d.tse),
             sparkNote: "14-day reuse output",
-            signal: zeroReuse > 0 ? { label: `${zeroReuse} zero-output`, tone: "danger" } : undefined,
+            signal: negativeReuse > 0
+                ? { label: `${negativeReuse} negative reading${negativeReuse === 1 ? "" : "s"}`, tone: "danger" }
+                : zeroReuse > 0 ? { label: `${zeroReuse} zero-output`, tone: "danger" } : undefined,
         },
         {
             key: "tankers",
@@ -263,12 +274,26 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             sparkNote: "14-day tanker trips",
             signal: highTankerDays >= 2 ? { label: `${highTankerDays}d busy`, tone: "warning" } : undefined,
         },
+        {
+            key: "completeness",
+            title: "Data Completeness",
+            severity: completenessSev,
+            headline: completeness !== null ? `${completeness.toFixed(0)}%` : "—",
+            headlineNote: `${summary.daysLogged} of ${summary.daysExpected} calendar days logged`,
+            facts: [
+                { label: "missing", value: String(summary.missingDays) },
+                { label: "logged", value: String(summary.daysLogged) },
+            ],
+        },
     ];
 }
 
 // ─── Metric × day heatmap (latest calendar month in range) ────────────────────
 
-export function buildHeatmap(model: STPModel): { columns: HeatColumn[]; rows: HeatRow[] } {
+export function buildHeatmap(
+    model: STPModel,
+    onCell?: (day: STPDay) => void,
+): { columns: HeatColumn[]; rows: HeatRow[] } {
     const { days, baselineInlet, baselineTrips } = model;
     if (days.length === 0) return { columns: [], rows: [] };
 
@@ -293,79 +318,117 @@ export function buildHeatmap(model: STPModel): { columns: HeatColumn[]; rows: He
         cells: columns.map((c) => {
             const d = byDom.get(c.key as number);
             if (!d) return { severity: "nodata" as Severity, label: "·", title: `Day ${c.key}: no record` };
-            return { severity: sev(d), label: val(d), title: `${d.dayLabel}: ${label} ${val(d)}` };
+            return {
+                severity: sev(d),
+                label: val(d),
+                title: `${d.dayLabel}: ${label} ${val(d)}${onCell ? " — open this day in the operations log" : ""}`,
+                onClick: onCell ? () => onCell(d) : undefined,
+            };
         }),
     });
 
     return {
         columns,
         rows: [
-            mk("Efficiency", (d) => effSeverity(d.eff), (d) => (d.eff !== null ? String(Math.round(d.eff)) : "·")),
+            mk("Efficiency", (d) => classifyRecovery(d.eff), (d) => (d.eff !== null ? String(Math.round(d.eff)) : "·")),
             mk("Inlet load", (d) => loadSeverity(d.inlet, baselineInlet), (d) => (d.inlet > 0 ? String(Math.round(d.inlet / 100) / 10) : "0")),
-            mk("TSE reuse", (d) => tseSeverity(d.tse, d.inlet), (d) => (d.tse > 0 ? String(Math.round(d.tse / 100) / 10) : "0")),
+            mk("TSE reuse", (d) => tseSeverity(d.tse, d.inlet), (d) => (d.tse !== 0 ? String(Math.round(d.tse / 100) / 10) : "0")),
             mk("Tankers", (d) => tripsSeverity(d.trips, baselineTrips), (d) => String(d.trips)),
         ],
     };
 }
 
-// ─── Exceptions & Actions register ────────────────────────────────────────────
+// ─── Findings register ────────────────────────────────────────────────────────
+// Identification only: severity, item, value, remarks, suggested action. No
+// owner, no status, no due date — management explicitly does not want assignment
+// or resolution tracking here.
 
-const OWNER = "STP Operations";
-
-export function buildSTPExceptions(model: STPModel): ExceptionRow[] {
+export function buildSTPFindings(model: STPModel): Finding[] {
     const { days, baselineInlet, baselineTrips } = model;
-    const rows: ExceptionRow[] = [];
+    const efficiency: Finding[] = [];
+    const reuse: Finding[] = [];
+    const negatives: Finding[] = [];
+    const load: Finding[] = [];
+    const uptime: Finding[] = [];
+    const tankers: Finding[] = [];
+    const drops: Finding[] = [];
 
-    // Trailing 7-day efficiency mean, recomputed as we walk forward, for drop detection.
     for (let i = 0; i < days.length; i++) {
         const d = days[i];
 
         // Efficiency band
         if (d.eff !== null) {
-            const sev = effSeverity(d.eff);
+            const sev = classifyRecovery(d.eff);
             if (sev === "critical" || sev === "high") {
-                rows.push({
-                    Date: d.dayLabel, Category: "Treatment Efficiency", Item: "Low TSE recovery",
-                    Severity: sev === "critical" ? "Critical" : "Watch",
-                    Value: `${d.eff.toFixed(1)}%`, Owner: OWNER, Status: "Open",
-                    Action: "Inspect aeration/treatment train and verify TSE flow metering; recovery is below the operating target.",
+                efficiency.push({
+                    id: `eff-${d.iso}`, date: d.dayLabel, category: "Treatment Efficiency",
+                    item: "Low TSE recovery",
+                    severity: sev === "critical" ? "Critical" : "Watch",
+                    value: `${d.eff.toFixed(1)}%`,
+                    remarks: `gate: < ${sev === "critical" ? RECOVERY_CRITICAL : RECOVERY_WATCH}% recovery`,
+                    action: "Inspect aeration/treatment train and verify TSE flow metering; recovery is below the operating target.",
                 });
             }
         }
 
+        // Negative TSE — physically impossible, so a metering/entry fault. Kept
+        // strictly apart from "reuse stopped" so the two never mask each other.
+        if (d.tseNegative) {
+            negatives.push({
+                id: `tse-neg-${d.iso}`, date: d.dayLabel, category: "Data Integrity",
+                item: "Negative TSE reading",
+                severity: "Critical",
+                value: `${num(d.tse, 1)} m³`,
+                remarks: "impossible value — treated effluent cannot be negative",
+                action: "Negative irrigation output logged — correct the daily entry and check the TSE flow meter for a reset or reversed reading.",
+            });
+        }
+
         // Reuse stopped while sewage arrived
-        if (d.inlet > 0 && d.tse <= 0) {
-            rows.push({
-                Date: d.dayLabel, Category: "TSE Reuse", Item: "No irrigation output",
-                Severity: "Critical", Value: `${num(d.inlet)} m³ in / 0 out`, Owner: OWNER, Status: "Open",
-                Action: "Irrigation reuse stopped — check TSE pumps, valves and storage; treated effluent may be leaving unused.",
+        if (d.inlet > 0 && d.tse === 0) {
+            reuse.push({
+                id: `reuse-${d.iso}`, date: d.dayLabel, category: "TSE Reuse",
+                item: "No irrigation output",
+                severity: "Critical",
+                value: `${num(d.inlet)} m³ in / 0 out`,
+                remarks: "inlet recorded but zero reuse",
+                action: "Irrigation reuse stopped — check TSE pumps, valves and storage; treated effluent may be leaving unused.",
             });
         }
 
         // Hydraulic surge
         if (d.inlet > 0 && baselineInlet > 0 && d.inlet / baselineInlet >= LOAD_HIGH) {
-            rows.push({
-                Date: d.dayLabel, Category: "Hydraulic Load", Item: "Inlet surge",
-                Severity: "Watch", Value: `${num(d.inlet)} m³ (${(d.inlet / baselineInlet).toFixed(1)}× typical)`, Owner: OWNER, Status: "Open",
-                Action: "Inlet well above typical — check for stormwater infiltration/inflow and confirm capacity headroom.",
+            load.push({
+                id: `surge-${d.iso}`, date: d.dayLabel, category: "Hydraulic Load",
+                item: "Inlet surge",
+                severity: "Watch",
+                value: `${num(d.inlet)} m³`,
+                remarks: `${(d.inlet / baselineInlet).toFixed(1)}× typical · gate: ≥ ${LOAD_HIGH}× the period median (${num(baselineInlet)} m³)`,
+                action: "Inlet well above typical — check for stormwater infiltration/inflow and confirm capacity headroom.",
             });
         }
 
         // No inlet on a day that exists in the log
         if (d.inlet <= 0) {
-            rows.push({
-                Date: d.dayLabel, Category: "Data / Uptime", Item: "No inlet recorded",
-                Severity: "Watch", Value: "0 m³", Owner: OWNER, Status: "Open",
-                Action: "Zero inlet logged — confirm the plant was running and the daily reading was captured.",
+            uptime.push({
+                id: `noinlet-${d.iso}`, date: d.dayLabel, category: "Data / Uptime",
+                item: "No inlet recorded",
+                severity: "Watch",
+                value: "0 m³",
+                remarks: "day present in the log with a zero inlet reading",
+                action: "Zero inlet logged — confirm the plant was running and the daily reading was captured.",
             });
         }
 
         // Elevated tanker discharge
         if (tripsSeverity(d.trips, baselineTrips) === "high") {
-            rows.push({
-                Date: d.dayLabel, Category: "Tanker Load", Item: "High tanker discharge",
-                Severity: "Watch", Value: `${d.trips} trips`, Owner: OWNER, Status: "Open",
-                Action: "Elevated tanker discharge — reconcile contractor logs; sustained highs can signal a network bypass.",
+            tankers.push({
+                id: `tanker-${d.iso}`, date: d.dayLabel, category: "Tanker Load",
+                item: "High tanker discharge",
+                severity: "Watch",
+                value: `${d.trips} trips`,
+                remarks: `typical ${num(baselineTrips)}/day`,
+                action: "Elevated tanker discharge — reconcile contractor logs; sustained highs can signal a network bypass.",
             });
         }
 
@@ -374,18 +437,35 @@ export function buildSTPExceptions(model: STPModel): ExceptionRow[] {
             const prior = days.slice(Math.max(0, i - 7), i).filter((p) => p.eff !== null).map((p) => p.eff as number);
             if (prior.length >= 3) {
                 const mean = prior.reduce((s, v) => s + v, 0) / prior.length;
-                if (mean - d.eff >= 10) {
-                    rows.push({
-                        Date: d.dayLabel, Category: "Treatment Efficiency", Item: "Efficiency drop",
-                        Severity: "Watch", Value: `−${(mean - d.eff).toFixed(1)} pp vs 7-day`, Owner: OWNER, Status: "Open",
-                        Action: "Recovery fell sharply against the trailing week — inspect process before it trends into a low-recovery run.",
+                if (mean - d.eff >= EFFICIENCY_DROP_PP) {
+                    drops.push({
+                        id: `drop-${d.iso}`, date: d.dayLabel, category: "Treatment Efficiency",
+                        item: "Efficiency drop",
+                        severity: "Watch",
+                        value: `−${(mean - d.eff).toFixed(1)} pp`,
+                        remarks: `vs the trailing 7-day mean (${mean.toFixed(1)}%) · gate: ≥ ${EFFICIENCY_DROP_PP} pp`,
+                        action: "Recovery fell sharply against the trailing week — inspect process before it trends into a low-recovery run.",
                     });
                 }
             }
         }
     }
 
-    // Worst first, then most recent first within a severity.
+    // Collapse runs of the SAME finding on consecutive log days. A month-long
+    // outage used to emit 30 near-identical "No inlet recorded" rows that buried
+    // every Critical row beneath them; it now reads as one row with a span and a
+    // count. Each list is already in chronological order, so a run is contiguous.
+    const rows = [
+        ...negatives,
+        ...reuse,
+        ...collapseConsecutive(efficiency),
+        ...collapseConsecutive(drops),
+        ...collapseConsecutive(load),
+        ...collapseConsecutive(tankers),
+        ...collapseConsecutive(uptime),
+    ];
+
+    // Worst first; within a severity keep the grouped order (chronological).
     const sevRank = { Critical: 1, Watch: 0 } as const;
-    return rows.sort((a, b) => sevRank[b.Severity] - sevRank[a.Severity]);
+    return rows.sort((a, b) => sevRank[b.severity] - sevRank[a.severity]);
 }

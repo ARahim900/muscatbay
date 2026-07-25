@@ -40,9 +40,11 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
                         />
                     )}
                     {pill.label}
+                    {/* Touch devices get a full 44×44 hit area (WCAG 2.5.5);
+                        mouse/trackpad keeps the compact 16px glyph. */}
                     <button
                         onClick={pill.onRemove}
-                        className="ml-0.5 w-4 h-4 flex items-center justify-center rounded-full hover:bg-border transition-colors flex-shrink-0"
+                        className="ml-0.5 w-4 h-4 pointer-coarse:min-h-11 pointer-coarse:min-w-11 flex items-center justify-center rounded-full hover:bg-border transition-colors flex-shrink-0"
                         aria-label={`Remove ${pill.label} filter`}
                     >
                         <X className="w-2.5 h-2.5" />

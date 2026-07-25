@@ -1,97 +1,240 @@
-// Bump this version to force every client to flush stale caches on their
-// next visit. The `activate` handler below deletes any cache whose name
-// doesn't match CACHE_NAME, so bumping invalidates everything older.
-// Last bumped 2026-07-03: flush clients still showing the pre-June water
-// data / pre-auto-sync build. The new SW takes control immediately
-// (skipWaiting + clients.claim) and register-sw.tsx reloads previously
-// controlled tabs on controllerchange, so stale sessions self-heal on
-// their next visit.
-// Previous bump 2026-06-27: unstick clients stranded on a cached app shell
-// that referenced deleted `_next/` chunk hashes — those 404'd, the bundle
-// never loaded, and the app hung on the splash screen. (The SW is also no
-// longer registered in local development; see components/pwa/register-sw.tsx.)
-const CACHE_NAME = "muscatbay-v6";
-const STATIC_ASSETS = [
-  "/",
+/* Muscat Bay Operations — service worker
+ *
+ * The app is READ-ONLY: it renders live plant data and never writes from the
+ * client. There is therefore deliberately NO background-sync / offline write
+ * queue here — an operator must never believe a change was saved offline.
+ *
+ * Strategy
+ * ────────
+ *   navigations       network-first → cached page → /offline.html
+ *   /_next/static/*    cache-first (immutable, content-hashed URLs)
+ *   other same-origin  stale-while-revalidate (icons, images, manifest)
+ *   /api/*, /auth/*    network-only, never cached (auth + live data)
+ *   cross-origin       passthrough (Supabase, fonts — never cached here)
+ *
+ * Versioning
+ * ──────────
+ * Bump CACHE_VERSION to invalidate every cache; `activate` deletes any cache
+ * whose name is not in the current set, then claims open clients (register-sw
+ * reloads them on controllerchange), so stale sessions self-heal on next visit.
+ *
+ * History:
+ *   v7 (2026-07-25) split shell/static/pages caches, added the offline shell,
+ *                   stale-while-revalidate, and an explicit no-cache list for
+ *                   authenticated endpoints.
+ *   v6 flushed clients showing pre-auto-sync water data.
+ *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
+ */
+
+const CACHE_VERSION = "v7";
+const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
+const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
+const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
+const CURRENT_CACHES = [SHELL_CACHE, STATIC_CACHE, PAGES_CACHE];
+
+const OFFLINE_URL = "/offline.html";
+
+/** Precached offline shell — must stay small and must always resolve. */
+const SHELL_ASSETS = [
+  OFFLINE_URL,
   "/manifest.json",
   "/logo.png",
+  "/icons/icon-192x192.png",
+  "/icons/icon-512x512.png",
 ];
 
-// ─── Install ────────────────────────────────────────────────────────────────────
+/** Never cached: authenticated or inherently live endpoints. */
+const NO_STORE_PREFIXES = ["/api/", "/auth/"];
+
+/** Cap the page cache so a long session can't grow it without bound. */
+const MAX_PAGES = 40;
+
+// ─── Install ────────────────────────────────────────────────────────────────
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(SHELL_CACHE).then((cache) =>
+      // addAll() rejects the whole install if any single asset 404s, which
+      // would leave clients on the previous SW. Add them individually instead.
+      Promise.all(
+        SHELL_ASSETS.map((url) =>
+          cache.add(new Request(url, { cache: "reload" })).catch(() => {
+            console.warn("[sw] could not precache", url);
+          })
+        )
+      )
+    )
   );
   self.skipWaiting();
 });
 
-// ─── Activate ───────────────────────────────────────────────────────────────────
+// ─── Activate ───────────────────────────────────────────────────────────────
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
+        keys.filter((key) => !CURRENT_CACHES.includes(key)).map((key) => caches.delete(key))
+      );
+      // Serve navigations from the HTTP cache preload where supported.
+      if (self.registration.navigationPreload) {
+        await self.registration.navigationPreload.enable();
+      }
+      await self.clients.claim();
+    })()
   );
-  self.clients.claim();
 });
 
-// ─── Fetch (caching strategy) ───────────────────────────────────────────────────
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isNoStore(url) {
+  return NO_STORE_PREFIXES.some((prefix) => url.pathname.startsWith(prefix));
+}
+
+function isImmutableAsset(url) {
+  // Next.js content-hashes everything under /_next/static — the URL changes
+  // whenever the bytes do, so it is safe to serve from cache forever.
+  return url.pathname.startsWith("/_next/static/");
+}
+
+/** Trim a cache to `max` entries, oldest-first. */
+async function trimCache(cacheName, max) {
+  const cache = await caches.open(cacheName);
+  const keys = await cache.keys();
+  if (keys.length <= max) return;
+  await Promise.all(keys.slice(0, keys.length - max).map((key) => cache.delete(key)));
+}
+
+/** Cache-first: cached hit wins; otherwise fetch and store. */
+async function cacheFirst(request, cacheName) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  if (response.ok) {
+    const cache = await caches.open(cacheName);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+/**
+ * Stale-while-revalidate: answer instantly from cache while refreshing in the
+ * background, so a returning operator sees the app paint immediately and still
+ * picks up new assets on the following load.
+ */
+async function staleWhileRevalidate(event, cacheName) {
+  const { request } = event;
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(request);
+
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok && response.type === "basic") {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    // Keep the worker alive until the background refresh settles, otherwise
+    // the revalidation is killed the moment we return the cached response.
+    event.waitUntil(network);
+    return cached;
+  }
+
+  const response = await network;
+  if (response) return response;
+  throw new Error("offline and not cached");
+}
+
+/** Network-first for navigations, falling back to the cached page, then the shell. */
+async function handleNavigation(event) {
+  const { request } = event;
+  try {
+    const preload = event.preloadResponse ? await event.preloadResponse : null;
+    const response = preload || (await fetch(request));
+    if (response && response.ok) {
+      const cache = await caches.open(PAGES_CACHE);
+      cache.put(request, response.clone());
+      void trimCache(PAGES_CACHE, MAX_PAGES);
+    }
+    return response;
+  } catch {
+    const cachedPage = await caches.match(request, { ignoreSearch: true });
+    if (cachedPage) return cachedPage;
+
+    const offline = await caches.match(OFFLINE_URL);
+    if (offline) return offline;
+
+    return new Response("You are offline.", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+}
+
+// ─── Fetch ──────────────────────────────────────────────────────────────────
 
 self.addEventListener("fetch", (event) => {
-  // Only cache GET requests
-  if (event.request.method !== "GET") return;
+  const { request } = event;
 
-  // Skip non-http(s) requests
-  if (!event.request.url.startsWith("http")) return;
+  // Only GET is cacheable; everything else goes straight to the network.
+  if (request.method !== "GET") return;
+
+  let url;
+  try {
+    url = new URL(request.url);
+  } catch {
+    return;
+  }
+
+  // chrome-extension:, blob:, etc.
+  if (url.protocol !== "http:" && url.protocol !== "https:") return;
+
+  // Supabase, Google Fonts and any other origin: let the browser handle it.
+  // Caching authenticated cross-origin responses here would be a data leak.
+  if (!isSameOrigin(url)) return;
+
+  // Auth + API traffic must always hit the network.
+  if (isNoStore(url)) return;
+
+  if (request.mode === "navigate") {
+    event.respondWith(handleNavigation(event));
+    return;
+  }
+
+  if (isImmutableAsset(url)) {
+    event.respondWith(
+      cacheFirst(request, STATIC_CACHE).catch(
+        () => new Response("", { status: 503, statusText: "Offline" })
+      )
+    );
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      // Network-first for navigation, cache-first for static assets
-      if (event.request.mode === "navigate") {
-        return fetch(event.request)
-          .then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            return response;
-          })
-          .catch(() => cached || caches.match("/"));
-      }
-
-      // Network-first for _next/ assets (hashed chunks change per build)
-      if (event.request.url.includes("/_next/")) {
-        return fetch(event.request)
-          .then((response) => {
-            if (response.ok) {
-              const clone = response.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-            }
-            return response;
-          })
-          .catch(() => cached || new Response("", { status: 503 }));
-      }
-
-      // Cache-first for other static assets
-      if (cached) return cached;
-
-      return fetch(event.request).then((response) => {
-        // Only cache successful responses for same-origin
-        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
-      });
-    })
+    staleWhileRevalidate(event, STATIC_CACHE).catch(
+      () => new Response("", { status: 503, statusText: "Offline" })
+    )
   );
 });
 
-// ─── Push Notifications ─────────────────────────────────────────────────────────
+// ─── Messages ───────────────────────────────────────────────────────────────
+// Lets the app force an update without a hard reload (register-sw.tsx).
+
+self.addEventListener("message", (event) => {
+  if (event.data === "SKIP_WAITING" || event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
+// ─── Push Notifications ─────────────────────────────────────────────────────
 // Handles push events from the server (future: web-push integration).
 // Currently used for showNotification() calls from the main thread via
 // ServiceWorkerRegistration.showNotification(), which works on both
@@ -129,7 +272,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ─── Notification Click ─────────────────────────────────────────────────────────
+// ─── Notification Click ─────────────────────────────────────────────────────
 // When the user clicks a browser notification, focus the app or open it.
 
 self.addEventListener("notificationclick", (event) => {
@@ -156,7 +299,7 @@ self.addEventListener("notificationclick", (event) => {
   );
 });
 
-// ─── Notification Close ─────────────────────────────────────────────────────────
+// ─── Notification Close ─────────────────────────────────────────────────────
 // Optional: track when notifications are dismissed (useful for analytics later)
 
 self.addEventListener("notificationclose", () => {

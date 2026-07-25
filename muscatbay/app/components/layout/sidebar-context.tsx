@@ -2,19 +2,24 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+/**
+ * Desktop-only sidebar state.
+ *
+ * There is deliberately NO mobile "open" state: on small screens the sidebar
+ * is never rendered on-canvas — the floating bottom-nav dock (Modules /
+ * Alerts / Profile sheets) is the sole mobile navigation surface. The previous
+ * `isOpen` / `toggleSidebar` pair had zero consumers that could ever set it
+ * true, so the whole mobile drawer branch was unreachable code.
+ */
 interface SidebarContextType {
-  isOpen: boolean; // Mobile state
-  setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isCollapsed: boolean; // Desktop state
   setIsCollapsed: (isCollapsed: boolean) => void;
-  toggleSidebar: () => void;
   toggleCollapse: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
@@ -42,29 +47,13 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     }
   }, [isCollapsed, isMounted]);
 
-  // Close mobile sidebar on resize if screen becomes large
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setIsOpen(false);
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const toggleSidebar = () => setIsOpen((prev) => !prev);
   const toggleCollapse = () => setIsCollapsed((prev) => !prev);
 
   return (
     <SidebarContext.Provider
       value={{
-        isOpen,
-        setIsOpen,
         isCollapsed,
         setIsCollapsed,
-        toggleSidebar,
         toggleCollapse
       }}
     >

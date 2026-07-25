@@ -14,6 +14,7 @@ import { ELECTRICITY_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend, describeTrend } from "@/lib/trends";
+import { TARGET_LOSS_PCT } from "@/lib/water-monthly-data";
 import type { WaterMeter } from "@/lib/water-data";
 
 export interface DashboardStats {
@@ -26,6 +27,36 @@ export interface DashboardStats {
     trendValue?: string;
     /** true = down is good (savings: water, electricity). false/omit = up is good (STP output, income). */
     invertTrend?: boolean;
+    /**
+     * Target / threshold context, present ONLY where an agreed target exists in
+     * the codebase (water loss target, STP recovery bands). Never invented:
+     * metrics without a published target simply omit this.
+     */
+    target?: { label: string; status: "normal" | "warning" | "danger" | "unknown" };
+}
+
+/**
+ * Year-to-date roll-up with an honest run-rate projection.
+ *
+ * `value` sums only the months that actually have a reading — a month with no
+ * data is SKIPPED, never counted as zero (which would understate YTD and drag
+ * the projection down). `projection` is therefore the mean of the months we
+ * have, annualised, and is explicitly a projection, not a measurement.
+ */
+export interface YtdMetric {
+    key: string;
+    label: string;
+    /** Sum over months that have a reading, in the metric's base unit. */
+    value: number;
+    unit: string;
+    /** Divide value/projection by this before display (1000 for k / MWh). */
+    scale: number;
+    /** How many months in the year actually carried a reading. */
+    monthsWithData: number;
+    /** Straight-line full-year projection, or null when nothing has been read yet. */
+    projection: number | null;
+    year: string;
+    href: string;
 }
 
 export interface ChartData {
@@ -68,6 +99,25 @@ const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Se
 // the same reality as the module page.
 const MIN_DAYS_FOR_COMPLETE_MONTH = 25;
 
+/**
+ * STP recovery bands (TSE irrigation output as a % of inlet sewage).
+ * These mirror the bands the STP module and the alert engine already use
+ * (lib/operational-alerts.ts STP_RECOVERY_WATCH / STP_RECOVERY_CRITICAL).
+ * At or above TARGET = on target; below CRITICAL = a plant failure condition.
+ */
+export const STP_RECOVERY_TARGET_PCT = 90;
+export const STP_RECOVERY_CRITICAL_PCT = 80;
+
+/**
+ * How each module resolves "latest month" — deliberately different rules, so
+ * the deck's KPIs can legitimately sit on different months. Disclosed on the
+ * dashboard instead of leaving the mismatch for the reader to spot.
+ */
+export const PERIOD_BASIS_NOTE =
+    `Each KPI is labelled with the period it covers. Water and electricity show the newest month with meter readings; ` +
+    `STP shows the newest month with at least ${MIN_DAYS_FOR_COMPLETE_MONTH} daily logs, so a part-way month is not reported as a shortfall. ` +
+    `Trends compare each KPI against its own previous period.`;
+
 // Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
 const DASHBOARD_CACHE_KEY = "dashboard:data";
 interface DashboardCache {
@@ -75,6 +125,7 @@ interface DashboardCache {
     chartData: ChartData[];
     stpChartData: ChartData[];
     recentActivity: RecentActivityItem[];
+    ytd: YtdMetric[];
     isLiveData: boolean;
 }
 
@@ -138,6 +189,63 @@ function buildWaterMonthlyFromSupabase(waterMeters: WaterMeter[]): { month: stri
     return sortedKeys.map(month => ({ month, value: monthTotals[month] }));
 }
 
+/**
+ * Total system loss for one month, using the SAME definition as the water
+ * module (lib/water-data.ts calculateMonthlyAnalysis): A1 (L1 supply) minus
+ * A3-individual (end-user L3 non-building-bulk + L4 + DC).
+ *
+ * Returns null when the month has no L1 supply reading — an unknown loss must
+ * read as unknown, never as 0%.
+ */
+function calcSystemLossPct(meters: WaterMeter[], month: string): number | null {
+    if (meters.length === 0) return null;
+    const val = (m: WaterMeter) => {
+        const v = m.consumption[month];
+        return v !== null && v !== undefined ? v : 0;
+    };
+
+    const a1 = meters.filter(m => m.level === 'L1').reduce((s, m) => s + val(m), 0);
+    if (a1 <= 0) return null;
+
+    const a3Individual =
+        meters.filter(m => m.level === 'L3' && !m.type.includes('Building_Bulk')).reduce((s, m) => s + val(m), 0) +
+        meters.filter(m => m.level === 'L4').reduce((s, m) => s + val(m), 0) +
+        meters.filter(m => m.level === 'DC').reduce((s, m) => s + val(m), 0);
+
+    return ((a1 - a3Individual) / a1) * 100;
+}
+
+/** Year part of an app-standard `Mon-YY` key, as a 4-digit string. */
+function yearOfMonthKey(key: string): string {
+    return `20${key.split('-')[1] ?? ''}`;
+}
+
+/**
+ * Sum the months of `year` that HAVE a reading, and annualise the mean.
+ * Months with no reading are skipped, not zeroed — see {@link YtdMetric}.
+ */
+function buildYtd(
+    entries: Iterable<readonly [string, number]>,
+    year: string,
+    meta: { key: string; label: string; unit: string; scale: number; href: string },
+): YtdMetric {
+    let total = 0;
+    let monthsWithData = 0;
+    for (const [monthKey, value] of entries) {
+        if (yearOfMonthKey(monthKey) !== year) continue;
+        if (!Number.isFinite(value) || value <= 0) continue;
+        total += value;
+        monthsWithData += 1;
+    }
+    return {
+        ...meta,
+        value: total,
+        monthsWithData,
+        projection: monthsWithData > 0 ? (total / monthsWithData) * 12 : null,
+        year,
+    };
+}
+
 export function useDashboardData() {
     // Seed from the session cache so returning to the dashboard renders the
     // command deck instantly; the mount fetch below refreshes it in place.
@@ -146,6 +254,7 @@ export function useDashboardData() {
     const [chartData, setChartData] = useState<ChartData[]>(cached?.chartData ?? []);
     const [stpChartData, setStpChartData] = useState<ChartData[]>(cached?.stpChartData ?? []);
     const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>(cached?.recentActivity ?? []);
+    const [ytd, setYtd] = useState<YtdMetric[]>(cached?.ytd ?? []);
     const [loading, setLoading] = useState(!cached);
     const [isLiveData, setIsLiveData] = useState(cached?.isLiveData ?? false);
     const [error, setError] = useState<string | null>(null);
@@ -300,6 +409,32 @@ export function useDashboardData() {
             const formattedElecMonth = latestElecMonth || "Latest Month";
             const formattedStpMonth = stpLatestMonth ? ymToMonthKey(stpLatestMonth) : "Latest Month";
 
+            // === TARGETS ===
+            // Only where a target actually exists in the codebase. Where a figure
+            // cannot be computed from live data the target reads "unknown" — it is
+            // never defaulted to a passing value.
+            const systemLossPct = calcSystemLossPct(waterMeters, waterMonth);
+            const waterTarget: DashboardStats["target"] = systemLossPct === null
+                ? { label: `System loss unavailable · target ≤ ${TARGET_LOSS_PCT}%`, status: "unknown" }
+                : {
+                    label: `System loss ${systemLossPct.toFixed(1)}% · target ≤ ${TARGET_LOSS_PCT}%`,
+                    status: systemLossPct <= TARGET_LOSS_PCT ? "normal"
+                        : systemLossPct <= TARGET_LOSS_PCT * 1.5 ? "warning"
+                            : "danger",
+                };
+
+            const stpRecoveryPct = stpLatestData.inlet > 0
+                ? (stpLatestData.tse / stpLatestData.inlet) * 100
+                : null;
+            const stpTarget: DashboardStats["target"] = stpRecoveryPct === null
+                ? { label: `Recovery unavailable · target ≥ ${STP_RECOVERY_TARGET_PCT}%`, status: "unknown" }
+                : {
+                    label: `Recovery ${stpRecoveryPct.toFixed(0)}% · target ≥ ${STP_RECOVERY_TARGET_PCT}%`,
+                    status: stpRecoveryPct >= STP_RECOVERY_TARGET_PCT ? "normal"
+                        : stpRecoveryPct >= STP_RECOVERY_CRITICAL_PCT ? "warning"
+                            : "danger",
+                };
+
             // === STATS ===
             const nextStats: DashboardStats[] = [
                 {
@@ -311,6 +446,7 @@ export function useDashboardData() {
                     trend: waterTrend.trend,
                     trendValue: waterTrend.trendValue,
                     invertTrend: true,   // Less water drawn = conservation = green ✓
+                    target: waterTarget,
                 },
                 {
                     label: "ELECTRICITY USAGE",
@@ -341,6 +477,7 @@ export function useDashboardData() {
                     trend: stpInletTrend.trend,
                     trendValue: stpInletTrend.trendValue,
                     // default: more inlet = system processing more = green ✓
+                    target: stpTarget,
                 },
                 {
                     label: "TSE OUTPUT",
@@ -351,6 +488,7 @@ export function useDashboardData() {
                     trend: stpTseTrend.trend,
                     trendValue: stpTseTrend.trendValue,
                     // default: more TSE = more irrigation savings = green ✓
+                    target: stpTarget,
                 },
                 {
                     label: "STP ECONOMIC IMPACT",
@@ -397,6 +535,31 @@ export function useDashboardData() {
             });
             setStpChartData(nextStpChartData);
 
+            // === YEAR TO DATE + RUN RATE ===
+            // The "current year" is the year of the newest month we hold data
+            // for — not the wall-clock year, so the panel never shows an empty
+            // 2026 while the pipeline is still delivering 2025.
+            const allMonthKeys = sortMonthKeys([
+                ...waterByMonth.keys(),
+                ...stpByMonth.keys(),
+                ...Object.keys(allReadings),
+            ]);
+            const ytdYear = allMonthKeys.length > 0
+                ? yearOfMonthKey(allMonthKeys[allMonthKeys.length - 1])
+                : String(new Date().getFullYear());
+
+            const nextYtd: YtdMetric[] = [
+                buildYtd(waterByMonth, ytdYear,
+                    { key: "water", label: "Water production", unit: "k m³", scale: 1000, href: "/water" }),
+                buildYtd(Object.entries(allReadings), ytdYear,
+                    { key: "electricity", label: "Electricity usage", unit: "MWh", scale: 1000, href: "/electricity" }),
+                buildYtd([...stpByMonth].map(([m, b]) => [m, b.inlet] as const), ytdYear,
+                    { key: "stp-inlet", label: "STP inlet", unit: "k m³", scale: 1000, href: "/stp" }),
+                buildYtd([...stpByMonth].map(([m, b]) => [m, b.tse] as const), ytdYear,
+                    { key: "tse", label: "TSE output", unit: "k m³", scale: 1000, href: "/stp" }),
+            ];
+            setYtd(nextYtd);
+
             // === GENERATE RECENT ACTIVITY from real data ===
             const trendDesc = describeTrend;
 
@@ -442,6 +605,7 @@ export function useDashboardData() {
                     chartData: nextChartData,
                     stpChartData: nextStpChartData,
                     recentActivity: activities,
+                    ytd: nextYtd,
                     isLiveData: liveDataFetched,
                 });
             }
@@ -480,6 +644,7 @@ export function useDashboardData() {
         chartData,
         stpChartData,
         recentActivity,
+        ytd,
         loading,
         isLiveData,
         error,

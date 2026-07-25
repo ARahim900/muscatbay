@@ -1051,6 +1051,27 @@
     }
   }
 
+  /* ── Touch target utility (WCAG 2.5.5 Target Size) ──
+   * Put `tap-target` on any control whose visual box is smaller than 44×44 —
+   * chip dismiss buttons, table row actions, icon-only toggles. min-*-size
+   * beats width/height, so the existing `w-4 h-4` styling stays as the icon's
+   * size while the *hit area* grows to the accessible minimum. */
+  .tap-target {
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Row-action variant: 44px tall, but only as wide as it needs to be so a
+   * table's action column doesn't balloon on desktop. */
+  .tap-target-row {
+    min-block-size: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
   /* ── Accessibility: visually hidden (screen-reader only) ── */
   .visually-hidden {
     position: absolute;
@@ -1316,6 +1337,133 @@
 
 /* ═══════════════════════════════════════════════════════════════════════
  * End Dark Surface Remap
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Accessibility floor — touch targets, focus indicator, safe areas
+ * ───────────────────────────────────────────────────────────────────────
+ * The touch-target and safe-area rules are UNLAYERED on purpose (like the dark
+ * remap above): unlayered author styles beat *every* Tailwind utility, so a
+ * stray `h-8` cannot shrink a control back below the accessible minimum. The
+ * escape hatch is explicit and greppable — `data-tap="exempt"`.
+ *
+ * The focus rule is the opposite: it lives in @layer base so it is only a
+ * floor. Components that ship their own `focus-visible:ring-*` keep exactly
+ * the indicator they designed; controls with no focus styling inherit this one.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Touch targets on coarse pointers (WCAG 2.5.5) ──
+ * Muscat Bay operators run this on tablets, in control rooms and on site,
+ * frequently gloved. On a touch device every interactive control gets at
+ * least a 44px hit height. Mouse/trackpad (pointer: fine) is untouched, so
+ * the dense desktop layout is preserved exactly as designed.
+ *
+ * min-block-size only: growing width too would reflow chip rows and table
+ * action columns. Controls that also need width use `.tap-target`
+ * (or the `pointer-coarse:min-w-11` idiom already used in components/ui).
+ *
+ * Opt out with `data-tap="exempt"` on genuinely decorative or nested hit
+ * areas (e.g. an inline "…" expander inside a 44px row that is itself the
+ * target). */
+@media (pointer: coarse) {
+  :where(
+    button,
+    [role="button"],
+    [role="tab"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"],
+    [role="option"],
+    [role="switch"],
+    [role="checkbox"],
+    [role="radio"],
+    a[href],
+    select,
+    summary
+  ):not([data-tap="exempt"], [disabled], [aria-disabled="true"]) {
+    min-block-size: 44px;
+  }
+
+  /* Native checkboxes/radios ignore min-block-size at their default
+     replaced-element size, so give them a real box instead. */
+  :where(input[type="checkbox"], input[type="radio"]):not([data-tap="exempt"]) {
+    inline-size: 20px;
+    block-size: 20px;
+  }
+}
+
+/* ── 2. One focus indicator, everywhere ──
+ * In @layer base and zero-specificity, so a component's own
+ * `focus-visible:ring-*` (a utility) still wins; this only fills the gap for
+ * controls that ship no focus styling at all, and guarantees the shape and
+ * colour are identical wherever it does apply.
+ * Colour comes from --ring, tuned per theme for WCAG 1.4.11 (≥3:1). */
+@layer base {
+  :where(
+    a[href],
+    button,
+    [role="button"],
+    [role="tab"],
+    [role="menuitem"],
+    [role="option"],
+    [role="switch"],
+    input,
+    select,
+    textarea,
+    summary,
+    [tabindex]:not([tabindex="-1"])
+  ):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Inside horizontally scrolling table shells an outward outline is clipped,
+     so tuck it inside the control instead of losing it. */
+  :where([data-slot="table-container"], .ops-table-shell) :focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+/* ── 3. Safe-area insets (standalone PWA on notched devices) ──
+ * The viewport ships `viewport-fit=cover`, so the app paints under the status
+ * bar, the home indicator and the landscape notch. env() resolves to 0 on
+ * every device without an inset, making these rules a no-op elsewhere. */
+
+/* Horizontal insets: landscape notch / rounded display corners. */
+main#main-content {
+  padding-inline-start: env(safe-area-inset-left, 0px);
+  padding-inline-end: env(safe-area-inset-right, 0px);
+}
+
+/* Vertical inset: only installed (standalone) sessions draw under the status
+   bar. The fixed topbar grows by the inset and the main content's top padding
+   follows it, so nothing ends up hidden behind the notch. */
+@media (display-mode: standalone) {
+  .topbar-dynamic {
+    padding-block-start: env(safe-area-inset-top, 0px);
+    block-size: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+
+  main#main-content {
+    padding-block-start: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+
+  /* Any bottom-anchored chrome clears the home indicator. */
+  .bottom-nav-safe,
+  nav[aria-label="Mobile navigation"] {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Avoid the grey tap flash on touch — the app supplies its own press states. */
+@media (pointer: coarse) {
+  :where(button, a[href], [role="button"], [role="tab"]) {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * End accessibility floor
  * ═══════════════════════════════════════════════════════════════════════ */
 
 /* ═══════════════════════════════════════════════════════════════════════

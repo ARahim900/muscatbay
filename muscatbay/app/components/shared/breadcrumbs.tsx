@@ -11,6 +11,9 @@ const ROUTE_LABELS: Record<string, string> = {
     "/electricity": "Electricity",
     "/stp": "STP Plant",
     "/contractors": "Contractors",
+    // Must match the sidebar label exactly — the auto-generated fallback
+    // rendered "Hvac", which named the module differently from the nav.
+    "/hvac": "HVAC System",
     "/assets": "Assets",
     "/pest-control": "Pest Control",
     "/firefighting": "Fire Safety",

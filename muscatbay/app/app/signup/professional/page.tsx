@@ -171,7 +171,7 @@ export default function ProfessionalApplicationPage() {
                         <div className="space-y-3">
                             <Button
                                 onClick={() => router.push("/login")}
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                             >
                                 Go to Login
                             </Button>
@@ -193,7 +193,7 @@ export default function ProfessionalApplicationPage() {
                 {/* Logo */}
                 <div className="flex justify-center mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-12 rounded-xl bg-[var(--mb-primary)] flex items-center justify-center shadow-lg overflow-hidden">
+                        <div className="relative w-12 h-12 rounded-xl bg-mb-primary flex items-center justify-center shadow-lg overflow-hidden">
                             <Image
                                 src="/logo.png"
                                 alt="Muscat Bay Logo"
@@ -229,7 +229,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="companyName">Company / Business Name <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Building2 className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="companyName"
                                         type="text"
@@ -239,12 +239,12 @@ export default function ProfessionalApplicationPage() {
                                         aria-required="true"
                                         aria-invalid={fieldErrors.companyName ? true : undefined}
                                         aria-describedby={fieldErrors.companyName ? "companyName-error" : undefined}
-                                        className={`pl-10 ${fieldErrors.companyName ? 'border-red-500' : ''}`}
+                                        className={`ps-10 ${fieldErrors.companyName ? 'border-destructive' : ''}`}
                                         maxLength={100}
                                     />
                                 </div>
                                 {fieldErrors.companyName && (
-                                    <p id="companyName-error" className="text-xs text-red-500">{fieldErrors.companyName}</p>
+                                    <p id="companyName-error" className="text-xs text-destructive">{fieldErrors.companyName}</p>
                                 )}
                             </div>
 
@@ -252,7 +252,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="contactName">Contact Person <span aria-hidden="true" className="text-destructive">*</span></Label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <User className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="contactName"
                                         type="text"
@@ -262,12 +262,12 @@ export default function ProfessionalApplicationPage() {
                                         aria-required="true"
                                         aria-invalid={fieldErrors.contactName ? true : undefined}
                                         aria-describedby={fieldErrors.contactName ? "contactName-error" : undefined}
-                                        className={`pl-10 ${fieldErrors.contactName ? 'border-red-500' : ''}`}
+                                        className={`ps-10 ${fieldErrors.contactName ? 'border-destructive' : ''}`}
                                         maxLength={100}
                                     />
                                 </div>
                                 {fieldErrors.contactName && (
-                                    <p id="contactName-error" className="text-xs text-red-500">{fieldErrors.contactName}</p>
+                                    <p id="contactName-error" className="text-xs text-destructive">{fieldErrors.contactName}</p>
                                 )}
                             </div>
 
@@ -276,7 +276,7 @@ export default function ProfessionalApplicationPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
                                     <div className="relative">
-                                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="email"
                                             type="email"
@@ -286,18 +286,18 @@ export default function ProfessionalApplicationPage() {
                                             aria-required="true"
                                             aria-invalid={fieldErrors.email ? true : undefined}
                                             aria-describedby={fieldErrors.email ? "email-error" : undefined}
-                                            className={`pl-10 ${fieldErrors.email ? 'border-red-500' : ''}`}
+                                            className={`ps-10 ${fieldErrors.email ? 'border-destructive' : ''}`}
                                         />
                                     </div>
                                     {fieldErrors.email && (
-                                        <p id="email-error" className="text-xs text-red-500">{fieldErrors.email}</p>
+                                        <p id="email-error" className="text-xs text-destructive">{fieldErrors.email}</p>
                                     )}
                                 </div>
 
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone <span aria-hidden="true" className="text-destructive">*</span></Label>
                                     <div className="relative">
-                                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Phone className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             id="phone"
                                             type="tel"
@@ -307,11 +307,11 @@ export default function ProfessionalApplicationPage() {
                                             aria-required="true"
                                             aria-invalid={fieldErrors.phone ? true : undefined}
                                             aria-describedby={fieldErrors.phone ? "phone-error" : undefined}
-                                            className={`pl-10 ${fieldErrors.phone ? 'border-red-500' : ''}`}
+                                            className={`ps-10 ${fieldErrors.phone ? 'border-destructive' : ''}`}
                                         />
                                     </div>
                                     {fieldErrors.phone && (
-                                        <p id="phone-error" className="text-xs text-red-500">{fieldErrors.phone}</p>
+                                        <p id="phone-error" className="text-xs text-destructive">{fieldErrors.phone}</p>
                                     )}
                                 </div>
                             </div>
@@ -328,9 +328,9 @@ export default function ProfessionalApplicationPage() {
                                         aria-required="true"
                                         aria-invalid={fieldErrors.serviceCategory ? true : undefined}
                                         aria-describedby={fieldErrors.serviceCategory ? "serviceCategory-error" : undefined}
-                                        className={fieldErrors.serviceCategory ? 'border-red-500' : ''}
+                                        className={fieldErrors.serviceCategory ? 'border-destructive' : ''}
                                     >
-                                        <Briefcase className="h-4 w-4 text-muted-foreground mr-2" />
+                                        <Briefcase className="h-4 w-4 text-muted-foreground me-2" />
                                         <SelectValue placeholder="Select your service category" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -342,7 +342,7 @@ export default function ProfessionalApplicationPage() {
                                     </SelectContent>
                                 </Select>
                                 {fieldErrors.serviceCategory && (
-                                    <p id="serviceCategory-error" className="text-xs text-red-500">{fieldErrors.serviceCategory}</p>
+                                    <p id="serviceCategory-error" className="text-xs text-destructive">{fieldErrors.serviceCategory}</p>
                                 )}
                             </div>
 
@@ -350,14 +350,14 @@ export default function ProfessionalApplicationPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="registrationNumber">Business Registration Number (Optional)</Label>
                                 <div className="relative">
-                                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <FileText className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="registrationNumber"
                                         type="text"
                                         placeholder="CR Number or License ID"
                                         value={formData.registrationNumber}
                                         onChange={(e) => handleChange('registrationNumber', e.target.value)}
-                                        className="pl-10"
+                                        className="ps-10"
                                         maxLength={50}
                                     />
                                 </div>
@@ -374,12 +374,12 @@ export default function ProfessionalApplicationPage() {
                                     aria-required="true"
                                     aria-invalid={fieldErrors.description ? true : undefined}
                                     aria-describedby={fieldErrors.description ? "description-error" : "description-hint"}
-                                    className={`min-h-[100px] ${fieldErrors.description ? 'border-red-500' : ''}`}
+                                    className={`min-h-[100px] ${fieldErrors.description ? 'border-destructive' : ''}`}
                                     maxLength={1000}
                                 />
                                 <div className="flex justify-between text-xs text-muted-foreground">
                                     {fieldErrors.description ? (
-                                        <p id="description-error" className="text-red-500">{fieldErrors.description}</p>
+                                        <p id="description-error" className="text-destructive">{fieldErrors.description}</p>
                                     ) : (
                                         <span id="description-hint">Minimum 20 characters</span>
                                     )}
@@ -391,12 +391,12 @@ export default function ProfessionalApplicationPage() {
                         <CardFooter className="flex flex-col gap-4">
                             <Button
                                 type="submit"
-                                className="w-full bg-[var(--mb-primary)] hover:bg-[var(--mb-primary-hover)] text-primary-foreground"
+                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
                                 disabled={loading}
                             >
                                 {loading ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                         Submitting...
                                     </>
                                 ) : (
@@ -407,7 +407,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="flex items-center justify-center gap-4 text-sm">
                                 <Link
                                     href="/signup"
-                                    className="flex items-center gap-1 text-muted-foreground hover:text-[var(--mb-primary)]"
+                                    className="flex items-center gap-1 text-muted-foreground hover:text-mb-primary"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                     Back to Sign Up
@@ -415,7 +415,7 @@ export default function ProfessionalApplicationPage() {
                                 <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
                                 <Link
                                     href="/login"
-                                    className="text-[var(--mb-primary)] hover:underline font-medium"
+                                    className="text-mb-primary hover:underline font-medium"
                                 >
                                     Sign in
                                 </Link>
