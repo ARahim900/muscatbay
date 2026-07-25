@@ -41,7 +41,10 @@ export function KpiTile({
   const shown = value ?? PLACEHOLDER;
 
   return (
-    <Card className={cn('flex-1 gap-2 p-3.5', className)}>
+    // `basis-[48%] grow`, not `flex-1`: inside a wrapping row React Native gives
+    // `flex: 1` a zero basis, so every tile collapses. An explicit basis gives a
+    // clean two-up grid and lets a lone odd tile stretch to full width.
+    <Card className={cn('grow basis-[48%] gap-2 p-3.5', className)}>
       <Text variant="label" numberOfLines={2}>
         {label}
       </Text>

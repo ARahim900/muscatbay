@@ -31,6 +31,33 @@ export function isValidSupabaseKey(key: string): boolean {
 
 export { isSupabaseConfigured };
 
+/** Hard ceiling on any single Supabase request, matching the web client. */
+const REQUEST_TIMEOUT_MS = 30_000;
+
+/**
+ * `fetch` with a 30s ceiling that still honours Supabase's own AbortSignal.
+ *
+ * Written with a plain `AbortController` rather than `AbortSignal.timeout()` /
+ * `AbortSignal.any()`, which the web client uses: React Native's AbortSignal
+ * polyfill has neither static method, so the web version would throw a
+ * TypeError on the first request.
+ *
+ * Supabase's signal must be forwarded, never replaced — dropping it makes its
+ * internal auth cancellations surface as "signal is aborted without reason".
+ */
+function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  const upstream = init.signal;
+  if (upstream) {
+    if (upstream.aborted) controller.abort();
+    else upstream.addEventListener('abort', () => controller.abort(), { once: true });
+  }
+
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 let client: SupabaseClient | null = null;
 
 /**
