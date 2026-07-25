@@ -11,7 +11,7 @@
 import {
     AlertTriangle,
     CheckCircle2,
-    CircleDashed,
+    Circle,
     Info,
     XCircle,
     type LucideIcon,
@@ -84,7 +84,7 @@ const PRESENTATION: Record<StatusDotColor, Omit<StatusPresentation, 'color'>> = 
         tintClass: 'bg-[var(--status-info-bg)]',
     },
     slate: {
-        icon: CircleDashed,
+        icon: Circle,
         severityLabel: 'Inactive',
         borderClass: 'border-s-[var(--status-missing)]',
         iconClass: 'text-[var(--status-missing)]',

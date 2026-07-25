@@ -19,9 +19,8 @@ import {
 import { cn } from "@/lib/utils";
 
 // ─── Subcomponents extracted into ./daily-report/ for maintainability.
-//     These are the ORIGINAL inline implementations (verbatim) — distinct from
-//     the parallel enhanced versions (zone-panel.tsx, dc-panel.tsx,
-//     zone-analytics.tsx) which use a different palette and toggleable legend.
+//     (An unused parallel implementation — zone-panel/dc-panel/zone-analytics/
+//     report-primitives/report-types — was deleted; these are the live ones.)
 import {
     type ReportData, type ReportStatus,
     processReport,
@@ -48,6 +47,21 @@ function getDefaultDay(month: string): number {
     yesterday.setDate(yesterday.getDate() - 1);
     const expected = `${MONTH_ABBREVS[yesterday.getMonth()]}-${String(yesterday.getFullYear()).slice(2)}`;
     return month === expected ? yesterday.getDate() : 1;
+}
+
+/**
+ * Number of days in a `"Mon-YY"` month (leap years included).
+ *
+ * The day slider used to be hardcoded to `max={31}` for every month, so 30 and
+ * 31 February were selectable and silently produced empty panels — a dead-end
+ * the operator had no way to explain.
+ */
+function daysInMonth(month: string): number {
+    const [abbrev, yy] = month.split('-');
+    const monthIdx = MONTH_ABBREVS.indexOf(abbrev);
+    if (monthIdx === -1 || !yy) return 31;
+    // Day 0 of the next month === last day of this one.
+    return new Date(2000 + Number(yy), monthIdx + 1, 0).getDate();
 }
 
 /** Return the month string (e.g. "Mar-26") for yesterday. */
@@ -360,15 +374,16 @@ export function DailyWaterReport() {
                                 <Slider
                                     value={[selectedDay]}
                                     onValueChange={handleSliderChange}
-                                    min={1} max={31} step={1}
+                                    min={1} max={maxDay} step={1}
                                     disabled={status === 'loading'}
+                                    aria-label={`Day of ${selectedMonth}`}
                                 />
                             </div>
                             <Button
                                 variant="outline" size="icon"
                                 className="h-10 w-10 shrink-0"
-                                onClick={() => setSelectedDay(d => Math.min(31, d + 1))}
-                                disabled={selectedDay >= 31 || status === 'loading'}
+                                onClick={() => setSelectedDay(d => Math.min(maxDay, d + 1))}
+                                disabled={selectedDay >= maxDay || status === 'loading'}
                                 aria-label="Next day"
                             >
                                 <ChevronRight className="h-4 w-4" />

@@ -1380,15 +1380,8 @@
     a[href],
     select,
     summary
-  ):not([data-tap="exempt"], [disabled], [aria-disabled="true"]) {
+  ):not([data-tap="exempt"], [disabled], [aria-disabled="true"], .sr-only, [hidden]) {
     min-block-size: 44px;
-  }
-
-  /* Native checkboxes/radios ignore min-block-size at their default
-     replaced-element size, so give them a real box instead. */
-  :where(input[type="checkbox"], input[type="radio"]):not([data-tap="exempt"]) {
-    inline-size: 20px;
-    block-size: 20px;
   }
 }
 

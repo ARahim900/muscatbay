@@ -4,7 +4,7 @@
  */
 
 import Link from "next/link";
-import { Compass } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 export const metadata = {
     title: "Page not found · Muscat Bay Operations",
@@ -26,7 +26,7 @@ export default function NotFound() {
                     aria-hidden="true"
                     className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"
                 >
-                    <Compass className="h-7 w-7 text-muted-foreground" />
+                    <SearchX className="h-7 w-7 text-muted-foreground" />
                 </span>
 
                 <div className="space-y-1">

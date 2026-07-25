@@ -13,15 +13,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TabNavigation } from "@/components/shared/tab-navigation"
-import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves } from "lucide-react"
+import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves, type LucideIcon } from "lucide-react"
 
 type SettingsTab = 'profile' | 'account' | 'notifications'
 
-const SETTINGS_TABS = [
+const SETTINGS_TABS: { key: SettingsTab; label: string; icon: LucideIcon }[] = [
     { key: 'profile', label: 'Profile', icon: User },
     { key: 'account', label: 'Account', icon: Shield },
     { key: 'notifications', label: 'Notifications', icon: Bell },
-] as const
+]
 
 export default function SettingsPage() {
     const { user, profile, isAuthenticated, refreshProfile } = useAuth()

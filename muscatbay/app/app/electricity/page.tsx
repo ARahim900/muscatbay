@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase } from "@/lib/supabase";
-import { ELECTRICITY_RATES } from "@/lib/config";
+import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
@@ -28,6 +28,10 @@ import { ElectricityLoadingSkeleton } from "@/components/electricity/electricity
 import { ElectricityOverviewCharts } from "@/components/electricity/electricity-overview-charts";
 import { ElectricityAnalysisView } from "@/components/electricity/electricity-analysis-view";
 import { LoadWatch } from "@/components/electricity/load-watch";
+import { SectionBoundary } from "@/components/shared/section-boundary";
+import {
+    AnomalyLegend, ReadingValue, describeReading, readingBaseline,
+} from "@/components/electricity/reading-cell";
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
@@ -372,7 +376,15 @@ export default function ElectricityPage() {
                 'Account #': m.account_number,
                 Type: m.type,
             };
-            months.forEach(month => { row[month] = m.readings[month] || 0; });
+            // The API deliberately keeps NULL ("closed / not in service") absent
+            // from the readings map so it stays distinguishable from a genuine
+            // 0 kWh (functions/api/electricity.ts). Coercing to 0 here destroyed
+            // that distinction in every exported file, so an empty month is
+            // exported as an empty cell.
+            months.forEach(month => {
+                const v = m.readings[month];
+                row[month] = v === undefined || v === null ? '' : v;
+            });
             row['Total (kWh)'] = Number(total.toFixed(1));
             row['Cost (OMR)'] = Number((total * ratePerKWh).toFixed(1));
             return row;

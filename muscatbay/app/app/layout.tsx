@@ -38,9 +38,10 @@ export const metadata: Metadata = {
   title: "Muscat Bay Operations",
   description: "Operations Dashboard for Muscat Bay",
   applicationName: "Muscat Bay Operations",
-  // Installable PWA: the manifest link is emitted by Next from here, so it
-  // stays in sync with metadataBase instead of being a hand-written <link>.
-  manifest: "/manifest.json",
+  // NOTE: the manifest is linked with a *relative* <link> in <head> below, not
+  // via `metadata.manifest` — Next resolves that field against metadataBase,
+  // which would emit a cross-origin (preview-deployment) URL on a custom
+  // domain and break installability.
   appleWebApp: {
     capable: true,
     title: "Muscat Bay",
@@ -111,7 +112,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* rel="manifest" is emitted from `metadata.manifest` above. */}
+        <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>

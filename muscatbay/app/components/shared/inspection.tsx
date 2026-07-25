@@ -69,11 +69,13 @@ export const SEV_UI: Record<Severity, { base: string; text: string; bg: string; 
     },
 };
 
+// Token-only: --mb-*-light and --mb-*-text already flip in the .dark block, so
+// one class list is correct in both themes — no dark: variants, no raw palette.
 const CHIP_STYLES: Record<ChipColor, string> = {
-    success: "bg-emerald-50 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20",
-    danger: "bg-red-50 text-red-700 ring-red-500/20 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20",
-    warning: "bg-amber-50 text-amber-700 ring-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20",
-    default: "bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40 dark:text-muted-foreground dark:ring-border/20",
+    success: "bg-mb-success-light text-mb-success-text ring-mb-success/25",
+    danger: "bg-mb-danger-light text-mb-danger-text ring-mb-danger/25",
+    warning: "bg-mb-warning-light text-mb-warning-text ring-mb-warning/25",
+    default: "bg-muted text-muted-foreground ring-border/20 dark:bg-muted/40 dark:ring-border/20",
 };
 
 export function SeverityChip({ severity, label }: { severity: Severity; label?: string }) {
@@ -174,7 +176,7 @@ export function HealthCard({ metric, onInspect }: { metric: HealthMetric; onInsp
                                 "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                 metric.signal.tone === "danger"
                                     ? "bg-mb-danger-light text-mb-danger-text"
-                                    : "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300",
+                                    : "bg-mb-warning-light text-mb-warning-text",
                             )}>
                                 <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
                                 {metric.signal.label}

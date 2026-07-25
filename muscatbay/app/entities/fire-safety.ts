@@ -1,7 +1,11 @@
 /**
  * @fileoverview Fire Safety Entities
  * Type definitions for fire safety equipment, the BEC PPM programme,
- * issues register, quotations and contacts.
+ * issues register and contacts.
+ *
+ * NOTE: quotations are referenced only by the `quote_ref` text column on
+ * FireIssue. There is no quotation type here because no API or UI in this app
+ * reads one.
  * @module entities/fire-safety
  */
 
@@ -65,31 +69,4 @@ export interface FirePpmContact {
     email: string | null;
     phone: string | null;
     active_period: string | null;
-}
-
-/**
- * Fire quotation summary
- */
-export interface FireQuotation {
-    id: string;
-    quote_code: string;
-    date: string;
-    provider: string;
-    status: "draft" | "pending_approval" | "approved" | "rejected";
-    subtotal_omr: number;
-    vat_omr: number;
-    total_omr: number;
-}
-
-/**
- * Fire quotation line item
- */
-export interface FireQuotationItem {
-    id: string;
-    quote_code: string;
-    location: string;
-    description: string;
-    category: string;
-    priority: "high" | "medium" | "low";
-    cost_omr: number;
 }

@@ -1146,14 +1146,20 @@ function MetersView({ data, year, sel, nMonths }: { data: WaterData; year: strin
     );
 }
 
-/* ================= EXCEPTIONS & ACTIONS ================= */
+/* ================= EXCEPTIONS & ACTIONS =================
+ *
+ * This register identifies issues; it deliberately does NOT track them. The
+ * former `Owner` and `Status` columns were hardcoded literals ("O&M / FM",
+ * "Open") rendered in a chip that looked interactive but did nothing — fake
+ * workflow state that a reader could easily mistake for real assignment and
+ * resolution tracking. Management asked for identification only, so those
+ * columns are gone and no assignment / acknowledge / close flow replaces them.
+ */
 interface ExceptionRow {
     Category: string;
     Item: string;
     Severity: string;
     Value: string;
-    Owner: string;
-    Status: string;
     Remarks: string;
     /** All columns are strings; the index signature lets rows feed `downloadRows`. */
     [key: string]: string;
@@ -1171,30 +1177,44 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
                 Item: "Trunk mains — main bulk vs zone bulk + direct",
                 Severity: neg ? "Watch" : statusFromLoss(period.stage1Pct).label,
                 Value: `${period.stage1Pct}% · ${fmt(period.stage1)} m³`,
-                Owner: "O&M / NAMA reconciliation",
-                Status: "Open",
                 Remarks: neg
                     ? "A2 exceeds A1 — reconcile the NAMA main-bulk (L1) reading and check for a reading-date/timing mismatch."
                     : "Confirm every zone-bulk & direct meter reported this period; reconcile L1 vs Σ zone bulk + direct; inspect trunk mains / PRVs before the zones.",
             });
         }
         period.zones.filter((z) => z.lossPct > TARGET_LOSS_PCT).forEach((z) => out.push({
-            Category: "High-loss zone", Item: z.name, Severity: statusFromLoss(z.lossPct).label, Value: `${z.lossPct}% · ${fmt(z.loss)} m³`, Owner: "O&M / FM", Status: z.lossPct > 25 ? "Open" : "Watch", Remarks: actionFromLoss(z.lossPct),
+            Category: "High-loss zone", Item: z.name, Severity: statusFromLoss(z.lossPct).label, Value: `${z.lossPct}% · ${fmt(z.loss)} m³`,
+            Remarks: actionFromLoss(z.lossPct, z.missing),
+        }));
+        // Zones whose own bulk meter was not read — the loss figure for these is
+        // not merely high, it is unusable until the L2 reading is recovered.
+        period.zones.filter((z) => z.bulkMissing).forEach((z) => out.push({
+            Category: "Missing zone bulk reading", Item: z.name, Severity: "Critical", Value: "L2 not read",
+            Remarks: "The zone bulk (L2) meter has no reading this period, so this zone's loss cannot be computed. Recover the reading before interpreting the balance.",
         }));
         period.buildings.filter((b) => b.lossPct > TARGET_LOSS_PCT && b.loss > 0).slice(0, 12).forEach((b) => out.push({
-            Category: "High-loss building", Item: b.name.replace(" Building Bulk Meter", ""), Severity: statusFromLoss(b.lossPct).label, Value: `${b.lossPct}% · ${fmt(b.loss)} m³`, Owner: "FM / Building team", Status: b.lossPct > 25 ? "Open" : "Watch", Remarks: "Compare bulk meter with apartment meters; inspect common area leakage.",
+            Category: "High-loss building", Item: b.name.replace(" Building Bulk Meter", ""), Severity: statusFromLoss(b.lossPct).label, Value: `${b.lossPct}% · ${fmt(b.loss)} m³`,
+            Remarks: "Compare bulk meter with apartment meters; inspect common area leakage.",
         }));
         data.meters.forEach((m) => {
             const c = m.y[year]; if (!c || c.label === "N/A") return;
             const shown = periodValue(c, sel);
-            const avg = c.vals?.length ? c.vals.reduce((a, b) => a + (Number(b) || 0), 0) / c.vals.length : 0;
+            const avg = meanReading(c.vals);
             const flags = meterFlags(c, shown, avg).filter((f) => f !== "Normal");
             flags.forEach((f) => out.push({
-                Category: f, Item: `${m.name} (${m.acct})`, Severity: f.includes("Negative") || f.includes("Missing") || f.includes("spike") ? "Critical" : "Watch", Value: `${fmt1(shown)} m³`, Owner: ["L1", "L2"].includes(c.label) ? "O&M / NAMA check" : "FM / Meter reader", Status: "Open", Remarks: f.includes("spike") ? "Verify reading/photo and inspect for leak." : f.includes("Zero") ? "Check occupancy, valve status, and meter operation." : "Validate source reading before billing/reporting.",
+                Category: f, Item: `${m.name} (${m.acct})`,
+                Severity: f.includes("Negative") || f.includes("Missing") || f.includes("spike") ? "Critical" : "Watch",
+                Value: shown == null ? "no reading" : `${fmt1(shown)} m³`,
+                Remarks: f.includes("spike") ? "Verify reading/photo and inspect for leak."
+                    : f.includes("Zero") ? "Meter reported 0 — check occupancy, valve status and meter operation."
+                        : f.includes("Missing") ? "No reading was recorded for this period; it is not counted in the balance, which understates A1/A2/A3. Recover the reading."
+                            : f.includes("Negative") ? "Reported consumption is negative, which is physically impossible. Validate the source reading before billing/reporting."
+                                : "Validate source reading before billing/reporting.",
             }));
         });
         period.zones.filter((z) => Math.abs(z.bulk - z.end) > 0 && z.lossPct > TARGET_LOSS_PCT).slice(0, 8).forEach((z) => out.push({
-            Category: "Bulk/individual mismatch", Item: z.name, Severity: statusFromLoss(z.lossPct).label, Value: `${fmt(z.bulk)} − ${fmt(z.end)} = ${fmt(z.loss)} m³`, Owner: "O&M analyst", Status: "Open", Remarks: "Reconcile L2 bulk vs L3/L4 total; check missing meters and physical leakage.",
+            Category: "Bulk/individual mismatch", Item: z.name, Severity: statusFromLoss(z.lossPct).label, Value: `${fmt(z.bulk)} − ${fmt(z.end)} = ${fmt(z.loss)} m³`,
+            Remarks: `Reconcile L2 bulk vs L3/L4 total; check physical leakage${z.missing > 0 ? ` — note ${z.missing} end-user meter${z.missing === 1 ? " has" : "s have"} no reading, which inflates this gap` : ""}.`,
         }));
         return out.sort((a, b) => (a.Severity === "Critical" ? 0 : 1) - (b.Severity === "Critical" ? 0 : 1));
     }, [data, year, sel, period]);
@@ -1205,33 +1225,34 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
     return (
         <div className="space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Kpi icon={ClipboardList} label="Open Exceptions" value={rows.length} bg="var(--chart-bg-purple)" ic="#4D445D" sub="Auto-generated from selected period" />
-                <Kpi icon={XCircle} label="Critical" value={critical} bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="Immediate validation/action" />
-                <Kpi icon={AlertTriangle} label="Watch" value={watch} bg="var(--chart-bg-orange)" ic="#B5703A" sub="Monitor or verify" />
+                <Kpi icon={ClipboardList} label="Exceptions Identified" value={rows.length} bg="var(--chart-bg-purple)" ic={C.heading} sub="Auto-generated from selected period" />
+                <Kpi icon={XCircle} label="Critical" value={critical} bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub="Needs validation now" />
+                <Kpi icon={AlertTriangle} label="Watch" value={watch} bg="var(--chart-bg-orange)" ic="var(--mb-warning-text)" sub="Monitor or verify" />
             </div>
-            <Panel title="Exceptions & Actions Register" icon={ClipboardList} note="Operational action queue: high-loss zones/buildings, zero readings, sudden spikes, negative values, missing readings and reconciliation mismatches.">
+            <Panel title="Exceptions Register" icon={ClipboardList} note="Issues detected in the selected period: high-loss zones/buildings, zero readings, sudden spikes, negative values, missing readings and reconciliation mismatches. This register identifies problems and suggests a next step — it does not assign or track them.">
                 <div className="flex items-center justify-between gap-2 mb-2">
                     <RowsPicker value={rowsShown} setValue={setRowsShown} total={rows.length} />
-                    <button onClick={() => downloadRows(rows, `water-exceptions-actions-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" />Export Actions</button>
+                    <button onClick={() => downloadRows(rows, `water-exceptions-${year}.csv`)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold" style={{ background: C.primary, color: "var(--primary-foreground)", borderRadius: RADIUS.md }}><Download className="w-4 h-4" aria-hidden="true" />Export CSV</button>
                 </div>
                 <div className="overflow-auto" style={{ maxHeight: rowsShown === "All" ? 560 : undefined }}>
                     <table className="w-full text-[12px]">
+                        <caption className="sr-only">
+                            {rows.length} exceptions detected for {year}, each with its category, the item affected, a severity band, the measured value and a suggested next step.
+                        </caption>
                         <thead className="sticky top-0 z-10" style={{ background: C.primary, color: "var(--primary-foreground)" }}>
-                            <tr><th className="text-left px-3 py-2">Category</th><th className="text-left px-2 py-2">Item</th><th className="text-left px-2 py-2">Severity</th><th className="text-right px-2 py-2">Value</th><th className="text-left px-2 py-2">Owner</th><th className="text-left px-2 py-2">Status</th><th className="text-left px-3 py-2">Remarks / Suggested Action</th></tr>
+                            <tr><th scope="col" className="text-left px-3 py-2">Category</th><th scope="col" className="text-left px-2 py-2">Item</th><th scope="col" className="text-left px-2 py-2">Severity</th><th scope="col" className="text-right px-2 py-2">Value</th><th scope="col" className="text-left px-3 py-2">Remarks / Suggested Action</th></tr>
                         </thead>
                         <tbody>
                             {limitRows(rows, rowsShown).map((r, i) => { const stClass = r.Severity === "Critical" ? "bg-mb-danger-light text-mb-danger-text" : r.Severity === "Watch" ? "bg-mb-warning-light text-mb-warning-text" : "bg-mb-success-light text-mb-success-text"; return (
                                 <tr key={i} style={{ background: i % 2 ? "var(--wm-zebra)" : "var(--wm-card)" }}>
                                     <td className="px-3 py-1.5 font-semibold" style={{ color: C.ink }}>{r.Category}</td>
-                                    <td className="px-2 py-1.5" style={{ color: C.ink }}>{r.Item}</td>
+                                    <th scope="row" className="px-2 py-1.5 text-left font-normal" style={{ color: C.ink }}>{r.Item}</th>
                                     <td className="px-2 py-1.5"><span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${stClass}`}>{r.Severity}</span></td>
                                     <td className="px-2 py-1.5 text-right font-mono" style={{ color: C.ink }}>{r.Value}</td>
-                                    <td className="px-2 py-1.5" style={{ color: C.muted }}>{r.Owner}</td>
-                                    <td className="px-2 py-1.5"><span className="px-2 py-0.5 rounded-full text-[11px] font-semibold" style={{ background: "var(--wm-comp)", color: C.heading }}>{r.Status}</span></td>
                                     <td className="px-3 py-1.5" style={{ color: C.muted }}>{r.Remarks}</td>
                                 </tr>
                             );})}
-                            {!rows.length && <tr><td colSpan={7} className="text-center py-6" style={{ color: C.muted }}>No exceptions detected for the selected period.</td></tr>}
+                            {!rows.length && <tr><td colSpan={5} className="text-center py-6" style={{ color: C.muted }}>No exceptions detected for the selected period.</td></tr>}
                         </tbody>
                     </table>
                 </div>
@@ -1241,6 +1262,16 @@ function ExceptionsView({ data, year, sel, period }: { data: WaterData; year: st
 }
 
 /* ================= ROOT ================= */
+
+/** Persisted Monthly filter state — mirrors what Daily stores under `water-daily`. */
+const MONTHLY_PREFS_KEY = "water-monthly";
+interface MonthlyPrefs {
+    tab?: string;
+    startMonth?: string;
+    endMonth?: string;
+}
+const isSectionTab = (v: unknown): v is string => SECTION_TABS.some((t) => t.key === v);
+
 export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter[] }) {
     const data = useMemo(() => buildMonthlyData(waterMeters), [waterMeters]);
     const years = data.meta.years;
@@ -1258,6 +1289,27 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
     const [startMonth, setStartMonth] = useState(latestYearMonths[0] ?? "");
     const [endMonth, setEndMonth] = useState(latestYearMonths[latestYearMonths.length - 1] ?? "");
     const [tab, setTab] = useState("overview");
+
+    // ── Restore / persist the section tab and the selected range ──────────────
+    // Daily already persists its tab + zone; Monthly silently reset to Overview
+    // and the latest year on every visit. Client-only (localStorage) and each
+    // saved month is re-validated against the data actually loaded.
+    useEffect(() => {
+        const prefs = loadFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY);
+        if (!prefs) return;
+        if (isSectionTab(prefs.tab)) setTab(prefs.tab);
+        const months = data.meta.availableMonths;
+        if (prefs.startMonth && prefs.endMonth
+            && months.includes(prefs.startMonth) && months.includes(prefs.endMonth)) {
+            setStartMonth(prefs.startMonth);
+            setEndMonth(prefs.endMonth);
+        }
+    }, [data]);
+
+    useEffect(() => {
+        if (!startMonth || !endMonth) return;
+        saveFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY, { tab, startMonth, endMonth });
+    }, [tab, startMonth, endMonth]);
 
     // Year is derived from the selected end month, with a safe fallback.
     const endYear = endMonth ? `20${endMonth.split("-")[1]}` : "";
@@ -1324,7 +1376,16 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
         lossDelta = { up: period.lossPct > prevFull.lossPct, text: `${(period.lossPct - prevFull.lossPct).toFixed(1)} pp YoY` };
     }
 
+    // A single month whose balance is arithmetically impossible (no supply, or a
+    // loss outside 0–100%). We can state *that* the figures don't reconcile; we
+    // cannot know *why*, so the banner below offers candidate explanations
+    // instead of asserting one.
     const anomaly = singleMonthSelection && (period.A1 <= 0 || period.lossPct < 0 || period.lossPct > 100);
+    const anomalyReason = period.A1 <= 0
+        ? "no main-bulk (A1) supply is recorded"
+        : period.lossPct < 0
+            ? "recorded consumption exceeds recorded supply"
+            : "the computed loss exceeds total supply";
 
     if (!years.length || !nMonths) {
         return (
@@ -1356,15 +1417,44 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
             </p>
 
             {anomaly && (
-                <div className="flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg border bg-mb-danger-light text-mb-danger-text border-mb-danger">
-                    <AlertTriangle className="w-4 h-4 shrink-0" /> {MONTHS[safeStart]} {year} contains source billing adjustments (estimate/reset), so this month&apos;s balance isn&apos;t reliable — use Year-to-date for an accurate figure.
+                <div role="alert" className="flex items-start gap-2 text-xs font-medium px-3 py-2 rounded-lg border bg-mb-danger-light text-mb-danger-text border-mb-danger">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
+                    <span>
+                        <b>{MONTHS[safeStart]} {year} does not reconcile</b> — {anomalyReason}, which is not physically possible.
+                        The cause has not been determined. Possible explanations include a source billing adjustment
+                        (estimate or meter reset), a missing or mis-dated bulk reading, or meters read on different dates.
+                        {period.missingMeters > 0 && <> {period.missingMeters} meter{period.missingMeters === 1 ? " has" : "s have"} no reading this month, which is consistent with the second.</>}
+                        {" "}Treat this month&apos;s balance as unverified and prefer the year-to-date figure until it is checked.
+                    </span>
                 </div>
             )}
-            {tab === "overview" && <Overview data={data} period={period} monthly={monthly} sel={periodSel} year={year} nMonths={nMonths} lossDelta={lossDelta} periodLabel={periodLabel} />}
-            {tab === "zones" && <ZonesView data={data} period={period} monthly={monthly} sel={periodSel} nMonths={nMonths} year={year} />}
-            {tab === "assets" && <AssetsView period={period} />}
-            {tab === "meters" && <MetersView data={data} year={year} sel={periodSel} nMonths={nMonths} />}
-            {tab === "exceptions" && <ExceptionsView data={data} year={year} sel={periodSel} period={period} />}
+            {/* Each section is isolated: a render failure in one must not take
+                down the whole Water page. */}
+            {tab === "overview" && (
+                <SectionBoundary title="Overview">
+                    <Overview data={data} period={period} monthly={monthly} sel={periodSel} year={year} nMonths={nMonths} lossDelta={lossDelta} periodLabel={periodLabel} />
+                </SectionBoundary>
+            )}
+            {tab === "zones" && (
+                <SectionBoundary title="Zone Analysis">
+                    <ZonesView data={data} period={period} monthly={monthly} sel={periodSel} nMonths={nMonths} year={year} />
+                </SectionBoundary>
+            )}
+            {tab === "assets" && (
+                <SectionBoundary title="Assets & Connections">
+                    <AssetsView period={period} />
+                </SectionBoundary>
+            )}
+            {tab === "meters" && (
+                <SectionBoundary title="Main Database">
+                    <MetersView data={data} year={year} sel={periodSel} nMonths={nMonths} />
+                </SectionBoundary>
+            )}
+            {tab === "exceptions" && (
+                <SectionBoundary title="Exceptions">
+                    <ExceptionsView data={data} year={year} sel={periodSel} period={period} />
+                </SectionBoundary>
+            )}
 
             <footer className="pt-2 text-[11px]" style={{ color: "var(--wm-muted)" }}>
                 Water balance — <b>A1</b> Main Bulk (NAMA L1) → <b>A2</b> Zone Bulk + Direct Connections (L2 + DC) → <b>A3</b> Individual meters + DC

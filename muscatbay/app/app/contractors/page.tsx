@@ -5,21 +5,28 @@ import {
     getContractorTrackerData,
     getContractorContracts,
     getContractorYearlyCosts,
+    getContractorExpiry,
+    getContractorDetails,
+    getContractorPricing,
     updateContractPdfUrl,
     isSupabaseConfigured,
     type ContractorTracker,
     type ContractorContract,
     type ContractorYearlyCost,
 } from "@/lib/supabase";
+import type {
+    AmcContractorDetails, AmcContractorExpiry, AmcContractorPricing,
+} from "@/entities/contractor";
 import { StatsGridSkeleton, TableSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    Search, Plus, Users, DollarSign, Download, Calendar,
+    Search, Users, DollarSign, Download, Calendar,
     Building2, FileText, RefreshCw, X, TrendingUp, ArrowRightLeft, BarChart3, List,
-    ExternalLink, FileWarning, Link, Pencil, Check, Loader2
+    ExternalLink, FileWarning, Link, Pencil, Check, Loader2, AlertCircle, CalendarClock, ScrollText,
 } from "lucide-react";
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
@@ -35,6 +42,11 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
+import { ExpiryBadge, expiryStatus } from "./contract-dates";
+import { RenewalsPanel } from "./renewals";
+import { TermsPanel } from "./terms";
+import { PricingPanel } from "./pricing";
+import { YearlyCostChart } from "./yearly-chart";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -102,12 +114,17 @@ const TRACKER_EXPORT_COLUMNS: ExportColumn<ContractorTracker>[] = [
     { key: 'Note', header: 'Note' },
 ];
 
-// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
-const CONTRACTORS_CACHE_KEY = "contractors:page";
+// Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit).
+// Key is versioned: the cached payload grew when the expiry / terms / pricing
+// tables were wired in, and a stale entry must not seed the new shape.
+const CONTRACTORS_CACHE_KEY = "contractors:page:v2";
 interface ContractorsPageCache {
     contracts: ContractorContract[];
     yearlyCosts: ContractorYearlyCost[];
     trackerData: ContractorTracker[];
+    expiry: AmcContractorExpiry[];
+    details: AmcContractorDetails[];
+    pricing: AmcContractorPricing[];
     lastUpdated: Date;
 }
 
@@ -122,8 +139,13 @@ export default function ContractorsPage() {
     const [contracts, setContracts] = useState<ContractorContract[]>(cached?.contracts ?? []);
     const [yearlyCosts, setYearlyCosts] = useState<ContractorYearlyCost[]>(cached?.yearlyCosts ?? []);
     const [trackerData, setTrackerData] = useState<ContractorTracker[]>(cached?.trackerData ?? []);
+    const [expiry, setExpiry] = useState<AmcContractorExpiry[]>(cached?.expiry ?? []);
+    const [details, setDetails] = useState<AmcContractorDetails[]>(cached?.details ?? []);
+    const [pricing, setPricing] = useState<AmcContractorPricing[]>(cached?.pricing ?? []);
     const [dataSource, setDataSource] = useState<'supabase' | 'none'>(cached ? 'supabase' : 'none');
     const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
+    // A failed load must never look like an empty database.
+    const [error, setError] = useState<string | null>(null);
 
     // Contracts tab: search, sort, pagination
     const [search, setSearch] = useState("");
@@ -153,29 +175,37 @@ export default function ContractorsPage() {
     const [pdfLinkInput, setPdfLinkInput] = useState('');
     const [pdfLinkSaving, setPdfLinkSaving] = useState(false);
     const [pdfLinkEditing, setPdfLinkEditing] = useState(false);
+    const [pdfLinkError, setPdfLinkError] = useState<string | null>(null);
 
     const openPdfModal = useCallback((id: number | null, name: string, ref: string, url: string | null | undefined) => {
         setPdfModal({ isOpen: true, contractId: id, contractorName: name, contractRef: ref, pdfUrl: url });
         setPdfLinkInput(url || '');
         setPdfLinkEditing(!url);
+        setPdfLinkError(null);
     }, []);
 
     const closePdfModal = useCallback(() => {
         setPdfModal(prev => ({ ...prev, isOpen: false }));
         setPdfLinkEditing(false);
+        setPdfLinkError(null);
     }, []);
 
     const savePdfLink = useCallback(async () => {
         if (!pdfModal.contractId) return;
         setPdfLinkSaving(true);
+        setPdfLinkError(null);
         const url = pdfLinkInput.trim() || null;
-        const ok = await updateContractPdfUrl(pdfModal.contractId, url);
-        if (ok) {
+        // The write used to be fire-and-forget: a rejected update left the
+        // dialog looking exactly like a successful save.
+        const result = await updateContractPdfUrl(pdfModal.contractId, url);
+        if (result.ok) {
             setPdfModal(prev => ({ ...prev, pdfUrl: url }));
             setContracts(prev => prev.map(c =>
                 c.id === pdfModal.contractId ? { ...c, contract_pdf_url: url } : c
             ));
             setPdfLinkEditing(false);
+        } else {
+            setPdfLinkError(result.error ?? 'The link could not be saved. Please try again.');
         }
         setPdfLinkSaving(false);
     }, [pdfModal.contractId, pdfLinkInput]);
@@ -188,18 +218,29 @@ export default function ContractorsPage() {
     const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
         if (!isSupabaseConfigured()) {
-            if (!silent) { setDataSource('none'); setLoading(false); }
+            if (!silent) {
+                setDataSource('none');
+                setError("Not connected to Supabase — no contractor data can be loaded.");
+                setLoading(false);
+            }
             return;
         }
         try {
-            const [contractsRes, yearlyRes, trackerRes] = await Promise.all([
+            const [contractsRes, yearlyRes, trackerRes, expiryRes, detailsRes, pricingRes] = await Promise.all([
                 getContractorContracts(),
                 getContractorYearlyCosts(),
                 getContractorTrackerData(),
+                getContractorExpiry(),
+                getContractorDetails(),
+                getContractorPricing(),
             ]);
             setContracts(contractsRes);
             setYearlyCosts(yearlyRes);
             setTrackerData(trackerRes);
+            setExpiry(expiryRes);
+            setDetails(detailsRes);
+            setPricing(pricingRes);
+            setError(null);
             const hasData = contractsRes.length > 0 || trackerRes.length > 0;
             setDataSource(hasData ? 'supabase' : 'none');
             if (hasData) {
@@ -209,11 +250,17 @@ export default function ContractorsPage() {
                     contracts: contractsRes,
                     yearlyCosts: yearlyRes,
                     trackerData: trackerRes,
+                    expiry: expiryRes,
+                    details: detailsRes,
+                    pricing: pricingRes,
                     lastUpdated: now,
                 });
             }
         } catch (e) {
-            if (!silent) { console.error("Failed to load contractors data", e); setDataSource('none'); }
+            console.error("Failed to load contractors data", e);
+            if (silent) return; // keep the cached view on a failed background refresh
+            setDataSource('none');
+            setError(e instanceof Error ? e.message : "Unable to load contractor data.");
         } finally {
             if (!silent) setLoading(false);
         }
@@ -356,23 +403,28 @@ export default function ContractorsPage() {
     const matrix = useMemo(() => buildYearlyMatrix(yearlyCosts), [yearlyCosts]);
 
     // ── Shared handlers ──────────────────────────────────────────────────────
+    // Direction is toggled outside the field updater: with reactStrictMode the
+    // updater double-invokes in dev, which flipped the direction twice and
+    // cancelled the toggle out.
     const handleSort = useCallback((field: string) => {
-        setSortField(prev => {
-            if (prev === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc');
-            else setSortDirection('asc');
-            return prev === field ? prev : field;
-        });
+        if (sortField === field) {
+            setSortDirection(d => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
         setCurrentPage(1);
-    }, []);
+    }, [sortField]);
 
     const handleTrackerSort = useCallback((field: string) => {
-        setTrackerSortField(prev => {
-            if (prev === field) setTrackerSortDir(d => d === 'asc' ? 'desc' : 'asc');
-            else setTrackerSortDir('asc');
-            return prev === field ? prev : field;
-        });
+        if (trackerSortField === field) {
+            setTrackerSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setTrackerSortField(field);
+            setTrackerSortDir('asc');
+        }
         setTrackerPage(1);
-    }, []);
+    }, [trackerSortField]);
 
     const getFlowDotColor = (flow: string): 'red' | 'green' | 'blue' | 'slate' => {
         if (flow === 'Revenue') return 'green';
@@ -442,30 +494,30 @@ export default function ContractorsPage() {
         return abbrevMap[name] || name.slice(0, 12) + '…';
     };
 
-    // ── Loading skeleton ─────────────────────────────────────────────────────
-    if (loading) {
-        return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in fade-in duration-200">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="space-y-2">
-                        <Skeleton className="h-9 w-48" />
-                        <Skeleton className="h-4 w-64" />
-                    </div>
-                </div>
-                <StatsGridSkeleton />
-                <Skeleton className="h-12 w-80" />
-                <div className="bg-white dark:bg-muted rounded-xl border border-border dark:border-border p-6">
-                    <TableSkeleton columns={7} rows={8} />
-                </div>
-            </div>
-        );
-    }
-
     // ── Stats ────────────────────────────────────────────────────────────────
+    // NOTE: no early `if (loading) return …` — replacing the whole page with a
+    // skeleton unmounted the tab strip and reset the active tab on every
+    // refresh. Sections below render their own in-place skeletons instead.
     const expenseContracts = contracts.filter(c => c.flow === 'Expense');
     const revenueContracts = contracts.filter(c => c.flow === 'Revenue');
     const totalContractValue = expenseContracts.reduce((s, c) => s + (c.total_value_omr ?? 0), 0);
     const currentYearExpense = matrix.rows.length > 0 ? matrix.rows[0].total : 0;
+
+    // Counted from the SAME parsed end dates the Renewals tab renders, so the
+    // KPI and the list can never disagree.
+    const renewalCounts = (() => {
+        const dates = expiry.length > 0
+            ? expiry.map(e => e.end_date)
+            : trackerData.map(t => t["End Date"]);
+        let expired = 0;
+        let dueWithin90 = 0;
+        for (const raw of dates) {
+            const severity = expiryStatus(raw).severity;
+            if (severity === 'critical') expired++;
+            else if (severity === 'high' || severity === 'watch') dueWithin90++;
+        }
+        return { expired, dueWithin90 };
+    })();
 
     const stats = [
         {
@@ -495,6 +547,20 @@ export default function ContractorsPage() {
             unit: "OMR",
             subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
             icon: DollarSign,
+            variant: "warning" as const,
+        },
+        {
+            label: "EXPIRED CONTRACTS",
+            value: renewalCounts.expired.toString(),
+            subtitle: "End date already passed",
+            icon: CalendarClock,
+            variant: "danger" as const,
+        },
+        {
+            label: "DUE WITHIN 90 DAYS",
+            value: renewalCounts.dueWithin90.toString(),
+            subtitle: "Renewal decision window",
+            icon: RefreshCw,
             variant: "warning" as const,
         },
     ];
