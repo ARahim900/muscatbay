@@ -419,7 +419,7 @@ function SummaryStat({ label, value, icon, color, valueColor }: { label: string;
                     <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">{label}</p>
                     <h3 className="text-lg sm:text-xl md:text-2xl font-semibold tabular-nums tracking-tight text-foreground" style={valueColor ? { color: valueColor } : undefined}>{value}</h3>
                 </div>
-                <div className="p-2 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `${color}1A`, color }}>{icon}</div>
+                <div className="p-2 sm:p-3 rounded-lg flex-shrink-0" style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}>{icon}</div>
             </div>
         </div>
     );
