@@ -1,6 +1,13 @@
 /**
- * @fileoverview Entity Index
- * Barrel export for all database entities
+ * @fileoverview Entity Index — the bottom layer of the data stack.
+ *
+ * Types only: the shape of each Supabase table row. Zero runtime, no imports
+ * beyond other entities, safe to import from server code, client components
+ * and the Expo app in `mobile/` alike.
+ *
+ * Layering: entities/ (these types) → functions/api/ (isomorphic readers that
+ * return them) → actions/ (`'use server'` writers on top of those readers).
+ *
  * @module entities
  */
 
