@@ -137,7 +137,7 @@ export default function GulfExpertPage() {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
         <PageHeader
           title="HVAC System"
           description="Preventive maintenance tracker for HVAC & BMS systems"

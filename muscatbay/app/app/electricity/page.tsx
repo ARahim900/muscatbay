@@ -1074,8 +1074,8 @@ export default function ElectricityPage() {
                                 </div>
                             )}
                             {dbFilteredMeters.length > 1 && (
-                                <div className="rounded-[10.5px] border-2 border-module-electricity/40 bg-module-electricity/10 p-4">
-                                    <p className="text-sm font-bold text-module-electricity">Total · {dbFilteredMeters.length} meters</p>
+                                <div className="rounded-[10.5px] border border-border bg-muted/60 p-4">
+                                    <p className="text-sm font-semibold text-foreground"><Gauge className="mr-1.5 inline h-3.5 w-3.5 text-module-electricity" aria-hidden="true" />Total · {dbFilteredMeters.length} meters</p>
                                     <p className="mt-1 font-mono text-sm font-semibold text-foreground">
                                         {grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })} kWh ·{' '}
                                         {(grandRangeTotal * ratePerKWh).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} OMR

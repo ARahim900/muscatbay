@@ -95,7 +95,7 @@ export default function DashboardPage() {
  */
 function DashboardSkeleton() {
     return (
-        <div className="space-y-6 md:space-y-8 w-full" aria-busy="true" aria-live="polite">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full" aria-busy="true" aria-live="polite">
             <span className="sr-only">Loading dashboard…</span>
             <div className="h-56 sm:h-64 rounded-[var(--radius)] bg-muted motion-safe:animate-pulse" />
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
@@ -232,7 +232,7 @@ function DashboardContent() {
     }
 
     return (
-        <div className="space-y-6 md:space-y-8 w-full">
+        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <SectionBoundary title="Command deck">
                 <CommandDeck
                     title={headlineTitle}

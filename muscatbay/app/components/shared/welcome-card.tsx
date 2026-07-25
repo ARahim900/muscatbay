@@ -37,7 +37,7 @@ export function WelcomeCard({ userName, className }: WelcomeCardProps) {
     const greeting = userName ? `Welcome, ${userName}` : "Welcome to Muscat Bay";
 
     return (
-        <div className={cn("rounded-2xl border border-border bg-card p-6 sm:p-8 space-y-6", className)}>
+        <div className={cn("rounded-xl border border-border bg-card p-6 sm:p-8 space-y-6", className)}>
             <div className="space-y-2">
                 <h2 className="text-lg sm:text-xl font-bold text-foreground">
                     {greeting}

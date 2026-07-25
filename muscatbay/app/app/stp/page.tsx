@@ -1016,27 +1016,27 @@ export default function STPPage() {
                                 composed a raw hex with string alpha suffixes
                                 (`${STP_COLOR}50`), which cannot follow the theme. */}
                             {monthTotals && (
-                                <div className="space-y-3 rounded-xl border-2 border-module-stp/40 bg-module-stp/10 p-4">
-                                    <p className="text-sm font-bold text-module-stp">
-                                        <Activity className="mr-1.5 inline h-3.5 w-3.5" aria-hidden="true" />
+                                <div className="space-y-3 rounded-xl border border-border bg-muted/60 p-4">
+                                    <p className="text-sm font-semibold text-foreground">
+                                        <Activity className="mr-1.5 inline h-3.5 w-3.5 text-module-stp" aria-hidden="true" />
                                         Monthly Total — {dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''}
                                     </p>
                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Inlet (m³)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-bold text-module-stp">{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">TSE Output (m³)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-bold text-module-stp">{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Tanker Trips</p>
-                                            <p className="mt-0.5 font-mono text-sm font-bold text-module-stp">{monthTotals.totalTrips}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalTrips}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Impact (OMR)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-bold text-module-stp">{monthTotals.totalImpact.toFixed(1)}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalImpact.toFixed(1)}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1101,13 +1101,13 @@ export default function STPPage() {
                                 {monthTotals && (() => {
                                     const { RECOVERY_GOOD, RECOVERY_WATCH } = STP_THRESHOLDS;
                                     const effColor: BadgeColor = monthTotals.avgEfficiency >= RECOVERY_GOOD ? 'green' : monthTotals.avgEfficiency >= RECOVERY_WATCH ? 'amber' : 'red';
-                                    const cell = "px-4 sm:px-6 py-4 align-middle text-sm font-bold text-right tabular-nums text-module-stp";
+                                    const cell = "px-4 sm:px-6 py-4 align-middle text-sm font-semibold text-right tabular-nums text-foreground";
                                     return (
                                         <TableFooter>
-                                            <tr className="border-t-2 border-border bg-module-stp/10">
-                                                <td className="whitespace-nowrap border-s-4 border-module-stp px-4 py-4 align-middle text-sm font-bold text-module-stp sm:px-6">
+                                            <tr className="border-t-2 border-border bg-muted/80 dark:bg-muted/50">
+                                                <td className="whitespace-nowrap px-4 py-4 align-middle text-sm font-semibold text-foreground sm:px-6">
                                                     <span className="inline-flex items-center gap-2">
-                                                        <Activity className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                                                        <Activity className="h-3.5 w-3.5 shrink-0 text-module-stp" aria-hidden="true" />
                                                         Monthly Total ({dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''})
                                                     </span>
                                                 </td>
@@ -1121,7 +1121,7 @@ export default function STPPage() {
                                                 <td className={cell}>{monthTotals.totalTrips}</td>
                                                 <td className={cell}>{monthTotals.totalIncome.toFixed(1)}</td>
                                                 <td className={cell}>{monthTotals.totalSavings.toFixed(1)}</td>
-                                                <td className={`${cell} bg-module-stp/15`}>{monthTotals.totalImpact.toFixed(1)}</td>
+                                                <td className={`${cell} bg-muted/60 dark:bg-muted/30 text-primary dark:text-foreground`}>{monthTotals.totalImpact.toFixed(1)}</td>
                                             </tr>
                                         </TableFooter>
                                     );
