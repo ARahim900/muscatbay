@@ -290,6 +290,20 @@ now identification-only: severity, item, value, remarks, suggested action.
   rebuilt on the shared table primitives; `RouteRoleGuard` finally wires
   `RequireRole`, which had been written but never imported (route gating was
   dead code — only nav links were hidden).
+- **Chart motion now honours `prefers-reduced-motion` (2026-07-25).** Every
+  other animated surface already checked the setting; Recharts did not. Recharts
+  defaults `isAnimationActive` to `true` and offers no global switch, so all
+  **49 series across 13 files** animated regardless of the user's OS preference
+  — the single largest reduced-motion gap in the app. New reactive hook
+  `hooks/useReducedMotion.ts` (`useReducedMotion` + `useChartMotion`) is now
+  spread onto every series. It is built on `useSyncExternalStore`, so it also
+  responds to the setting being toggled *mid-session*, which the existing
+  one-shot `lib/motion.ts#prefersReducedMotion()` cannot do (that function is
+  for calling inside a GSAP effect, not during render — both are correct, they
+  serve different call sites). Chart duration also moved off Recharts' stock
+  1500ms onto the shared `MOTION.dur.count`, so a chart and the KPI roll-up
+  above it settle together. A duplicate one-shot `matchMedia` read in
+  `liquid-bar-chart.tsx` was removed in favour of the hook.
 - **Dashboard for management.** Acknowledged alerts no longer persist; each
   severity has a distinct icon + text label; KPI period labels are always
   visible (they were suppressed whenever a trend existed, i.e. always) and the

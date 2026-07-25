@@ -17,6 +17,7 @@ import { TrendingDown } from "lucide-react";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { n } from "./inline-shared";
 import { buildDailyGrid, buildZoneDaySeries, buildZoneMtd } from "./daily-metrics";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 const TIP_STYLE = {
     fontSize: 12, borderRadius: 8,
@@ -34,6 +35,7 @@ export function ZoneMtdChart({
     selectedDay: number;
     month: string;
 }) {
+    const chartMotion = useChartMotion();
     const data = useMemo(() => {
         const grid = buildDailyGrid(monthData);
         const series = buildZoneDaySeries(grid).find((s) => s.zoneName === activeZoneName);
@@ -83,9 +85,9 @@ export function ZoneMtdChart({
                         {selectedLabel && (
                             <ReferenceLine x={selectedLabel} stroke="var(--primary)" strokeDasharray="4 4" />
                         )}
-                        <Area type="monotone" dataKey="cumSupply" name="Cumulative supply (L2)" stroke="var(--chart-teal)" strokeWidth={2} fill="url(#mtd-supply)" />
-                        <Area type="monotone" dataKey="cumMetered" name="Cumulative metered (ΣL3)" stroke="var(--chart-brand)" strokeWidth={2} fill="url(#mtd-metered)" />
-                        <Line type="monotone" dataKey="cumLoss" name="Cumulative loss" stroke="var(--chart-loss)" strokeWidth={2.5} dot={false} />
+                        <Area type="monotone" dataKey="cumSupply" name="Cumulative supply (L2)" stroke="var(--chart-teal)" strokeWidth={2} fill="url(#mtd-supply)" {...chartMotion}/>
+                        <Area type="monotone" dataKey="cumMetered" name="Cumulative metered (ΣL3)" stroke="var(--chart-brand)" strokeWidth={2} fill="url(#mtd-metered)" {...chartMotion}/>
+                        <Line type="monotone" dataKey="cumLoss" name="Cumulative loss" stroke="var(--chart-loss)" strokeWidth={2.5} dot={false} {...chartMotion}/>
                     </ComposedChart>
                 </ResponsiveContainer>
             </CardContent>

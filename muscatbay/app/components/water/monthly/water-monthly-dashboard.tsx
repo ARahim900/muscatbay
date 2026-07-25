@@ -42,6 +42,7 @@ import {
     actionFromLoss, lastReadingLabel, downloadRows, meterFlags, meanReading,
     type WaterData, type PeriodResult, type Sel, type ZoneRow,
 } from "@/lib/water-monthly-data";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 /* ---------- Muscat Bay Brand & Design System (mapped to app tokens) ---------- */
 const C = {
@@ -406,6 +407,7 @@ interface OverviewProps {
     periodLabel: string;
 }
 function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewProps) {
+    const chartMotion = useChartMotion();
     const a2f = pct(t.A2, t.A1) / 100, a3f = pct(t.A3, t.A1) / 100;
     const typePie = t.types.map((x) => ({ name: x.type.replace("Residential ", "").replace("(", "").replace(")", ""), value: x.total, pct: x.pct }));
     // `target` is a real management target, so it is drawn as its own series
@@ -476,10 +478,10 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                                 <Tooltip formatter={fmtBalance} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
                                 {selectedLineMonths.map((i) => <ReferenceLine key={i} yAxisId="vol" x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                                <Bar yAxisId="vol" dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Bar yAxisId="vol" dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line yAxisId="pct" dataKey="lossPct" name={LOSS_PCT_SERIES} stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
-                                <Line yAxisId="pct" dataKey="target" name={TARGET_SERIES} stroke="var(--status-danger)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} />
+                                <Bar yAxisId="vol" dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Bar yAxisId="vol" dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Line yAxisId="pct" dataKey="lossPct" name={LOSS_PCT_SERIES} stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
+                                <Line yAxisId="pct" dataKey="target" name={TARGET_SERIES} stroke="var(--status-danger)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
                     </div>
@@ -487,7 +489,7 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                 <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Consumption by Type" icon={Layers} note={`Share of A3 — ${periodLabel}.`}>
                     <ResponsiveContainer width="100%" height={210}>
                         <PieChart>
-                            <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={80} paddingAngle={2}>
+                            <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={80} paddingAngle={2} {...chartMotion}>
                                 {typePie.map((e, i) => <Cell key={i} fill={TYPECOL[i % TYPECOL.length]} />)}
                             </Pie>
                             <Tooltip formatter={(v, n, p) => [`${fmt(Number(v))} m³ (${p?.payload?.pct}%)`, n]} contentStyle={TIP} />
@@ -518,6 +520,7 @@ interface ZonesViewProps {
     year: string;
 }
 function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps) {
+    const chartMotion = useChartMotion();
     const [zoneSel, setZoneSel] = useState("all");
     // Rows to show in the drill-down tables (A1 reconciliation / individual
     // meters) — an operator picks 10/20/50/All instead of scrolling a fixed box.
@@ -605,9 +608,9 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Tooltip formatter={fmtM3} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                                <Bar dataKey="a1" name="Main bulk (A1)" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Bar dataKey="a2" name="Reached zones (A2)" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Trunk loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Bar dataKey="a1" name="Main bulk (A1)" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Bar dataKey="a2" name="Reached zones (A2)" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Line dataKey="loss" name="Trunk loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -618,7 +621,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
                                 <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
-                                <Bar dataKey="val" fill={C.dist} radius={[0, 4, 4, 0]} barSize={13} />
+                                <Bar dataKey="val" fill={C.dist} radius={[0, 4, 4, 0]} barSize={13} {...chartMotion}/>
                             </BarChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -748,9 +751,9 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Tooltip formatter={fmtM3} contentStyle={TIP} />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
                                 {(isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : []).map((i) => <ReferenceLine key={i} x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                                <Bar dataKey="Supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Bar dataKey="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} />
-                                <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} />
+                                <Bar dataKey="Supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Bar dataKey="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                                <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -761,7 +764,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
                                 <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
-                                <Bar dataKey="val" fill={C.cons} radius={[0, 4, 4, 0]} barSize={13} />
+                                <Bar dataKey="val" fill={C.cons} radius={[0, 4, 4, 0]} barSize={13} {...chartMotion}/>
                             </BarChart>
                         </ResponsiveContainer>
                     </Panel>
@@ -890,7 +893,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }} unit="%" />
                             <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: C.ink }} width={90} />
                             <Tooltip formatter={(v, n, p) => [`${v}%  (${fmt(p?.payload?.loss)} m³)`, "Loss"]} contentStyle={TIP} />
-                            <Bar dataKey="lossPct" radius={[0, 4, 4, 0]} barSize={20}>{bar.map((e, i) => <Cell key={i} fill={e.fill} />)}</Bar>
+                            <Bar dataKey="lossPct" radius={[0, 4, 4, 0]} barSize={20} {...chartMotion}>{bar.map((e, i) => <Cell key={i} fill={e.fill} />)}</Bar>
                         </BarChart>
                     </ResponsiveContainer>
                 </Panel>
@@ -902,8 +905,8 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             <YAxis tick={{ fontSize: 11, fill: C.muted }} />
                             <Tooltip formatter={(v, n) => [fmt(Number(v)) + " m³", n === "bulk" ? "Zone supply" : "Consumption"]} contentStyle={TIP} />
                             <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
-                            <Bar dataKey="bulk" name="Zone supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={18} />
-                            <Bar dataKey="end" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={18} />
+                            <Bar dataKey="bulk" name="Zone supply" fill={C.dist} radius={[3, 3, 0, 0]} barSize={18} {...chartMotion}/>
+                            <Bar dataKey="end" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={18} {...chartMotion}/>
                         </BarChart>
                     </ResponsiveContainer>
                 </Panel>
@@ -978,6 +981,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 
 /* ================= BUILDINGS / DIRECT / COMMON ================= */
 function AssetsView({ period }: { period: PeriodResult }) {
+    const chartMotion = useChartMotion();
     // This is now the single home for the building bulk-vs-apartment table (the
     // zone drill-down used to repeat it), so it shows every building rather than
     // an arbitrary top-12 slice.
@@ -1023,7 +1027,7 @@ function AssetsView({ period }: { period: PeriodResult }) {
                         <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                         <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={140} />
                         <Tooltip formatter={fmtConsumptionM3} contentStyle={TIP} />
-                        <Bar dataKey="total" fill={C.accent} radius={[0, 4, 4, 0]} barSize={14} />
+                        <Bar dataKey="total" fill={C.accent} radius={[0, 4, 4, 0]} barSize={14} {...chartMotion}/>
                     </BarChart>
                 </ResponsiveContainer>
             </Panel>

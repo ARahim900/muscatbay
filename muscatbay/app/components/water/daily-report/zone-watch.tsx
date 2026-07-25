@@ -23,6 +23,7 @@ import {
     buildDailyGrid, buildZoneDaySeries, buildZoneWatch, dailySeverity,
     SEVERITY_LABEL, type DailySeverity, type ZoneWatchRow,
 } from "./daily-metrics";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 // ─── Severity → design tokens (no raw hex; flips with the theme) ─────────────
 
@@ -224,6 +225,7 @@ export function ZoneWatch({
     month: string;
     onInspectZone: (zone: string, day?: number) => void;
 }) {
+    const chartMotion = useChartMotion();
     const grid = useMemo(() => buildDailyGrid(monthData), [monthData]);
     const series = useMemo(() => buildZoneDaySeries(grid), [grid]);
     const watch = useMemo(() => buildZoneWatch(series, selectedDay), [series, selectedDay]);
@@ -276,7 +278,7 @@ export function ZoneWatch({
                                 contentStyle={TIP_STYLE}
                                 cursor={{ fill: "var(--chart-cursor-fill)" }}
                             />
-                            <Bar dataKey="loss" radius={[0, 4, 4, 0]} barSize={18}>
+                            <Bar dataKey="loss" radius={[0, 4, 4, 0]} barSize={18} {...chartMotion}>
                                 {lossBars.map((e, i) => <Cell key={i} fill={e.fill} />)}
                             </Bar>
                         </BarChart>
@@ -299,8 +301,8 @@ export function ZoneWatch({
                                 cursor={{ fill: "var(--chart-cursor-fill)" }}
                             />
                             <Legend wrapperStyle={{ fontSize: 11, color: "var(--foreground)" }} />
-                            <Bar dataKey="Supply" fill="var(--chart-teal)" radius={[3, 3, 0, 0]} barSize={16} />
-                            <Bar dataKey="Metered" fill="var(--chart-brand)" radius={[3, 3, 0, 0]} barSize={16} />
+                            <Bar dataKey="Supply" fill="var(--chart-teal)" radius={[3, 3, 0, 0]} barSize={16} {...chartMotion}/>
+                            <Bar dataKey="Metered" fill="var(--chart-brand)" radius={[3, 3, 0, 0]} barSize={16} {...chartMotion}/>
                         </BarChart>
                     </ResponsiveContainer>
                 </WatchPanel>
