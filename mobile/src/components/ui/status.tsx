@@ -4,7 +4,7 @@
  * WCAG 1.4.1: status is NEVER carried by colour alone. Every helper here
  * returns a colour together with a shape-distinct icon and a text label, and
  * `StatusPill` always renders all three — the same contract the web app's
- * `lib/status-colors.ts` / `<StatusIndicator />` enforce.
+ * shared inspection toolkit and `<StatusIndicator />` enforce.
  */
 import {
   AlertTriangle,

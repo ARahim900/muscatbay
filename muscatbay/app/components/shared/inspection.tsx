@@ -14,7 +14,7 @@
  *      · tinted surfaces (chips, heatmap cells, callouts)  → --mb-*-light
  *      · text sitting on a tint (WCAG-tuned)               → --mb-*-text
  *    That is the same split used by StatsGrid, alerts-feed, module-coverage,
- *    PageStatusBar, firefighting/firefighting-ui.tsx and lib/status-colors.ts, so "danger"
+ *    PageStatusBar, firefighting/firefighting-ui.tsx and StatusBadge, so "danger"
  *    is the same red on every module page and flips correctly in both themes.
  *  - Status is never colour-only: every severity is paired with a text label and
  *    an icon (WCAG AA in the field, per design principle #5).

@@ -57,7 +57,7 @@ const variantIconClass: Record<StatVariant, string> = {
 
 // Status is never carried by colour alone (WCAG 1.4.1): the tile renders a
 // shape-distinct icon plus the status word. Glyphs and --status-* tokens match
-// lib/status-colors.ts, alerts-feed and module-coverage, so one status means
+// data-table/status-badge.tsx, alerts-feed and module-coverage, so one status means
 // one glyph + one hue app-wide.
 type StatStatus = NonNullable<StatItem["status"]>;
 const STATUS_UI: Record<StatStatus, { Icon: LucideIcon; token: string }> = {
