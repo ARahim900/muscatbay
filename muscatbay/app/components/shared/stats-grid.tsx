@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { CountUp } from "@/components/motion/count-up";
+import { useValueChanged } from "@/hooks/useValueChanged";
 import Link from "next/link";
 
 export type StatVariant = "primary" | "secondary" | "success" | "warning" | "danger" | "info" | "water" | "default";
@@ -98,110 +99,130 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
             gridCols,
             className
         )}>
-            {stats.map((stat, index) => {
-                const variant = stat.variant || "primary";
-                const iconClass = variantIconClass[variant];
-                const tileBg = stat.bgColor ?? variantTileBg[variant];
-
-                // Resolve whether the current trend direction is "good" or "bad".
-                // invertTrend=true  → down is good (savings: energy, water, cost)
-                // invertTrend=false → up is good  (output: STP treated water, income)
-                const isGoodTrend = stat.trend === 'neutral' ? false :
-                    stat.invertTrend
-                        ? stat.trend === 'down'
-                        : stat.trend === 'up';
-
-                const isBadTrend = stat.trend === 'neutral' ? false :
-                    stat.invertTrend
-                        ? stat.trend === 'up'
-                        : stat.trend === 'down';
-
-                const cardContent = (
-                    <>
-                        {/* Icon tile on the left + label/value to its right — mirrors the
-                            water/monthly Kpi tiles (the app-wide reference). */}
-                        <div className="flex items-center gap-3">
-                            <div
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
-                                style={{ background: tileBg }}
-                            >
-                                <stat.icon
-                                    className={cn("w-5 h-5", !stat.color && iconClass)}
-                                    style={stat.color ? { color: stat.color } : undefined}
-                                />
-                            </div>
-                            <div className="min-w-0">
-                                {/* Wrap to two lines instead of truncating mid-word on
-                                    narrow cards ("STP ECONOMIC I…"). */}
-                                <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
-                                    {stat.label}
-                                </p>
-                                <h3 className="text-xl font-semibold tabular-nums truncate text-foreground leading-tight tracking-tight">
-                                    <CountUp value={stat.value} delay={index * 0.06} />
-                                    {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{stat.unit}</span>}
-                                </h3>
-                            </div>
-                        </div>
-
-                        {/* Trend indicator — small text below, colored green/red */}
-                        {stat.trend && stat.trendValue && (
-                            <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
-                                <span className={cn(
-                                    "flex items-center font-medium",
-                                    isGoodTrend  ? "text-[var(--mb-success-text)]" :
-                                    isBadTrend   ? "text-[var(--mb-danger-text)]" :
-                                                   "text-muted-foreground"
-                                )}>
-                                    {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
-                                    {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}
-                                    {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
-                                    {stat.trendValue}
-                                </span>
-                                <span className="text-muted-foreground ms-1.5 text-xs">vs last month</span>
-                            </div>
-                        )}
-
-                        {stat.subtitle && !stat.trendValue && (
-                            <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
-                        )}
-
-                        {stat.status && (() => {
-                            const { Icon: StatusIcon, token } = STATUS_UI[stat.status];
-                            return (
-                                <div className="mt-2 flex items-center gap-1.5 text-xs">
-                                    <StatusIcon
-                                        aria-hidden="true"
-                                        className="w-3.5 h-3.5 flex-shrink-0"
-                                        style={{ color: token }}
-                                    />
-                                    <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
-                                </div>
-                            );
-                        })()}
-                        {stat.lastUpdated && (
-                            <p className="mt-1 text-[11px] text-muted-foreground/70 tabular-nums">Updated {stat.lastUpdated}</p>
-                        )}
-                    </>
-                );
-
-                const baseCardClassName = "mb-glow bg-card p-4 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]";
-
-                return stat.href ? (
-                    <Link
-                        key={stat.label}
-                        href={stat.href}
-                        data-glow
-                        aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
-                        className={cn(baseCardClassName, "block cursor-pointer")}
-                    >
-                        {cardContent}
-                    </Link>
-                ) : (
-                    <div key={stat.label} data-glow className={baseCardClassName}>
-                        {cardContent}
-                    </div>
-                );
-            })}
+            {stats.map((stat, index) => (
+                <StatTile key={stat.label} stat={stat} index={index} />
+            ))}
         </div>
     );
+}
+
+/**
+ * One KPI tile.
+ *
+ * Split out of the grid so each tile can watch its own value: `useValueChanged`
+ * is a hook, and the grid renders these in a map. Extracting the tile is what
+ * lets a single figure mark itself when it moves, instead of the whole deck.
+ */
+function StatTile({ stat, index }: { stat: StatItem; index: number }) {
+    const justChanged = useValueChanged(stat.value);
+
+            const variant = stat.variant || "primary";
+            const iconClass = variantIconClass[variant];
+            const tileBg = stat.bgColor ?? variantTileBg[variant];
+
+            // Resolve whether the current trend direction is "good" or "bad".
+            // invertTrend=true  → down is good (savings: energy, water, cost)
+            // invertTrend=false → up is good  (output: STP treated water, income)
+            const isGoodTrend = stat.trend === 'neutral' ? false :
+                stat.invertTrend
+                    ? stat.trend === 'down'
+                    : stat.trend === 'up';
+
+            const isBadTrend = stat.trend === 'neutral' ? false :
+                stat.invertTrend
+                    ? stat.trend === 'up'
+                    : stat.trend === 'down';
+
+            const cardContent = (
+                <>
+                    {/* Icon tile on the left + label/value to its right — mirrors the
+                        water/monthly Kpi tiles (the app-wide reference). */}
+                    <div className="flex items-center gap-3">
+                        <div
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
+                            style={{ background: tileBg }}
+                        >
+                            <stat.icon
+                                className={cn("w-5 h-5", !stat.color && iconClass)}
+                                style={stat.color ? { color: stat.color } : undefined}
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            {/* Wrap to two lines instead of truncating mid-word on
+                                narrow cards ("STP ECONOMIC I…"). */}
+                            <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
+                                {stat.label}
+                            </p>
+                            <h3 className={cn(
+                                "text-xl font-semibold tabular-nums truncate text-foreground leading-tight tracking-tight",
+                                justChanged && "mb-value-changed-ink"
+                            )}>
+                                <CountUp value={stat.value} delay={index * 0.06} />
+                                {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{stat.unit}</span>}
+                            </h3>
+                        </div>
+                    </div>
+
+                    {/* Trend indicator — small text below, colored green/red */}
+                    {stat.trend && stat.trendValue && (
+                        <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
+                            <span className={cn(
+                                "flex items-center font-medium",
+                                isGoodTrend  ? "text-[var(--mb-success-text)]" :
+                                isBadTrend   ? "text-[var(--mb-danger-text)]" :
+                                               "text-muted-foreground"
+                            )}>
+                                {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
+                                {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}
+                                {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
+                                {stat.trendValue}
+                            </span>
+                            <span className="text-muted-foreground ms-1.5 text-xs">vs last month</span>
+                        </div>
+                    )}
+
+                    {stat.subtitle && !stat.trendValue && (
+                        <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
+                    )}
+
+                    {stat.status && (() => {
+                        const { Icon: StatusIcon, token } = STATUS_UI[stat.status];
+                        return (
+                            <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                <StatusIcon
+                                    aria-hidden="true"
+                                    className="w-3.5 h-3.5 flex-shrink-0"
+                                    style={{ color: token }}
+                                />
+                                <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
+                            </div>
+                        );
+                    })()}
+                    {stat.lastUpdated && (
+                        <p className="mt-1 text-[11px] text-muted-foreground/70 tabular-nums">Updated {stat.lastUpdated}</p>
+                    )}
+                </>
+            );
+
+            const baseCardClassName = cn(
+        "mb-glow bg-card p-4 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]",
+        // Only present for the ~1.4s after this figure actually moved.
+        justChanged && "mb-value-changed"
+    );
+
+            return stat.href ? (
+                <Link
+                    key={stat.label}
+                    href={stat.href}
+                    data-glow
+                    aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                    className={cn(baseCardClassName, "block cursor-pointer")}
+                >
+                    {cardContent}
+                </Link>
+            ) : (
+                <div key={stat.label} data-glow className={baseCardClassName}>
+                    {cardContent}
+                </div>
+            );
 }

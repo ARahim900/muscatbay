@@ -1629,3 +1629,38 @@ main#main-content {
     display: none;
   }
 }
+
+/* ── Live value change highlight ─────────────────────────────────────────────
+   Marks a figure that has just moved while the operator is looking at the page
+   (Supabase realtime refreshes in place). One soft sweep of the accent, then
+   gone — enough to catch the eye at a glance, not enough to nag.
+
+   Paired with `useValueChanged`, which never fires on first render and stays
+   silent under prefers-reduced-motion, so this rule only ever runs for a
+   genuine change and only for users who accept motion. */
+@keyframes mb-value-changed {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary) 62%, transparent); }
+  35%  { box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 42%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--secondary) 0%, transparent); }
+}
+
+.mb-value-changed {
+  animation: mb-value-changed 1.4s var(--ease-out-quint, ease-out) 1;
+}
+
+/* The figure itself lifts to the accent, then settles back to normal ink. */
+@keyframes mb-value-changed-ink {
+  0%, 45% { color: var(--mb-info-text, var(--foreground)); }
+  100%    { color: var(--foreground); }
+}
+
+.mb-value-changed-ink {
+  animation: mb-value-changed-ink 1.4s var(--ease-out-quint, ease-out) 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-value-changed,
+  .mb-value-changed-ink {
+    animation: none;
+  }
+}
