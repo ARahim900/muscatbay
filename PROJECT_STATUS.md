@@ -304,6 +304,22 @@ now identification-only: severity, item, value, remarks, suggested action.
   1500ms onto the shared `MOTION.dur.count`, so a chart and the KPI roll-up
   above it settle together. A duplicate one-shot `matchMedia` read in
   `liquid-bar-chart.tsx` was removed in favour of the hook.
+- **KPI figures mark themselves when they change (2026-07-26).** The dashboard
+  refreshes from Supabase realtime *in place*, so a reading could move under an
+  operator with nothing to say it had — on a wall-mounted or glanced-at screen
+  that is the difference between noticing a change and missing it. New hook
+  `hooks/useValueChanged.ts`, wired into the KPI tiles: when a figure actually
+  moves, its tile carries one sweep of the accent and the number lifts to the
+  info colour, settling back over 1.4s. Three rules keep it from becoming
+  noise: it **never fires on first render** (`previous` is seeded with the
+  initial value, so a figure appearing is not a figure changing — flashing
+  every tile on load would train people to ignore the signal); the comparison
+  runs **during render**, React's documented "adjust state when a prop changes"
+  pattern, so it costs no second render pass and does not trip
+  `react-hooks/set-state-in-effect`; and it stays **silent under
+  `prefers-reduced-motion`**, because the highlight only ever reinforces the
+  change — the figure updates either way. `StatsGrid`'s tile is now a separate
+  `StatTile` component, since the hook has to run per tile.
 - **Dashboard for management.** Acknowledged alerts no longer persist; each
   severity has a distinct icon + text label; KPI period labels are always
   visible (they were suppressed whenever a trend existed, i.e. always) and the
