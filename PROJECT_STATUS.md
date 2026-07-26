@@ -516,6 +516,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-26 — Mark KPI figures that change while you are watching (#52)
 - 2026-07-26 — Honour prefers-reduced-motion across all Recharts series (#51)
 - 2026-07-25 — Estate briefing ticker on the dashboard + readable Water ticker (#50)
 - 2026-07-25 — Front-end & O&M review remediation + Expo mobile foundation (#49)
