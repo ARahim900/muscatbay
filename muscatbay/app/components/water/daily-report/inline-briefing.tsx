@@ -5,6 +5,7 @@ import {
     type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTickerLoop } from "@/hooks/useTickerLoop";
 import { n } from "./inline-shared";
 import type { BriefingMetrics } from "./briefing-metrics";
 
@@ -52,7 +53,7 @@ function Stat({
 }
 
 /** The run of five stats — rendered twice for the seamless ticker loop. */
-function StatRun({ metrics, duplicate }: { metrics: BriefingMetrics; duplicate?: boolean }) {
+function StatRun({ metrics, duplicate, runRef }: { metrics: BriefingMetrics; duplicate?: boolean; runRef?: (n: HTMLElement | null) => void }) {
     const { totalSupply, l2Total, l3Total, lossM3, lossPct, alarmCount, alarmZones, zoneCount, vsYesterdayPct, status } = metrics;
 
     const isWarning = status === "warning";
@@ -69,6 +70,7 @@ function StatRun({ metrics, duplicate }: { metrics: BriefingMetrics; duplicate?:
         // pr matches gap-x so both copies have identical width — the −50%
         // keyframe then lands exactly on the seam and the loop is invisible.
         <ul
+            ref={runRef}
             className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10"
             aria-hidden={duplicate ? "true" : undefined}
         >
@@ -148,6 +150,10 @@ export function DailyBriefing({
     month: string;
     day: number;
 }) {
+    // Same measurement as the shared ticker: the loop is only seamless while one
+    // run is at least as wide as the viewport.
+    const { viewportRef, runRef, trackProps } = useTickerLoop();
+
     return (
         <section
             aria-label="Daily briefing"
@@ -157,9 +163,9 @@ export function DailyBriefing({
                 <p className="shrink-0 whitespace-nowrap border-e border-border/60 pe-4 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Briefing · {month} · Day {day}
                 </p>
-                <div className="mb-ticker-viewport min-w-0 flex-1">
-                    <div className="mb-ticker-track items-center">
-                        <StatRun metrics={metrics} />
+                <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
+                    <div className="mb-ticker-track items-center" {...trackProps}>
+                        <StatRun metrics={metrics} runRef={runRef} />
                         {/* Second copy exists only to make the loop seamless. */}
                         <StatRun metrics={metrics} duplicate />
                     </div>

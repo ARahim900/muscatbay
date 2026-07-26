@@ -26,6 +26,7 @@ import {
     AlertTriangle, CheckCircle2, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTickerLoop } from "@/hooks/useTickerLoop";
 
 // ─── Severity model ───────────────────────────────────────────────────────────
 
@@ -249,9 +250,9 @@ const TICKER_VALUE: Record<NonNullable<TickerStat["tone"]>, string> = {
     info: "text-foreground",
 };
 
-function TickerRun({ items, duplicate }: { items: TickerStat[]; duplicate?: boolean }) {
+function TickerRun({ items, duplicate, runRef }: { items: TickerStat[]; duplicate?: boolean; runRef?: (n: HTMLElement | null) => void }) {
     return (
-        <ul className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10" aria-hidden={duplicate ? "true" : undefined}>
+        <ul ref={runRef} className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10" aria-hidden={duplicate ? "true" : undefined}>
             {items.map((it, i) => {
                 const tone = it.tone ?? "default";
                 return (
@@ -275,15 +276,18 @@ function TickerRun({ items, duplicate }: { items: TickerStat[]; duplicate?: bool
  * wrapped strip (both handled by the shared mb-ticker-* CSS).
  */
 export function InspectionTicker({ caption, items }: { caption: string; items: TickerStat[] }) {
+    // Measures the run against the viewport so the loop stays seamless and only
+    // runs when there is actually something off-screen to reveal.
+    const { viewportRef, runRef, trackProps } = useTickerLoop();
     return (
         <section aria-label={caption} className="rounded-[10.5px] border border-border bg-card px-4 py-3 shadow-card-standard">
             <div className="flex items-center gap-4">
                 <p className="shrink-0 whitespace-nowrap border-e border-border/60 pe-4 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {caption}
                 </p>
-                <div className="mb-ticker-viewport min-w-0 flex-1">
-                    <div className="mb-ticker-track items-center">
-                        <TickerRun items={items} />
+                <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
+                    <div className="mb-ticker-track items-center" {...trackProps}>
+                        <TickerRun items={items} runRef={runRef} />
                         <TickerRun items={items} duplicate />
                     </div>
                 </div>

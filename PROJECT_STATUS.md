@@ -361,6 +361,25 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Ticker loop fixed — 2026-07-26. It was jamming on wide screens.**
+  The `mb-ticker-*` strips hold two identical copies and animate
+  `translateX(0 → -50%)`, i.e. they shift by exactly one copy's width `W`. For
+  the viewport `V` to stay covered at the worst point of the cycle you need
+  **`W >= V`**. Measured in the browser at 1440px: the strip was **1232px** wide
+  holding a **440px** run — so the content slid off and left an ~800px blank gap
+  before snapping back. That is what "the ticker is jammed" meant. It looked
+  fine on a phone (182px viewport) purely because the run exceeded it there, so
+  the bug was invisible on mobile and obvious on a desktop.
+  CSS cannot measure, so the rule now lives in `hooks/useTickerLoop.ts`, used by
+  both `InspectionTicker` and the Water `DailyBriefing`:
+  - **Only scroll when scrolling reveals something.** If `W < V` every stat is
+    already on screen; the track gets `data-static="true"`, the duplicate copy
+    is hidden and the edge-fade mask is dropped (it was clipping the first
+    label). Static never means hidden — all stats still render.
+  - **Constant speed, not constant duration.** The fixed 36s made a short run
+    crawl at ~12px/s and a long one race; duration is now derived from width at
+    40px/s.
+
 - **`Contractor_Tracker` cleaned and keyed — 2026-07-26. 42 rows → 19.**
   Management reported unrecognised and duplicated contractors. The table held
   **42 rows for 19 real contracts**, and the root cause was structural: it had
