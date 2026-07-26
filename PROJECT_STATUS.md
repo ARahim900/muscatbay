@@ -361,6 +361,42 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **`Contractor_Tracker` cleaned and keyed — 2026-07-26. 42 rows → 19.**
+  Management reported unrecognised and duplicated contractors. The table held
+  **42 rows for 19 real contracts**, and the root cause was structural: it had
+  **no primary key and no uniqueness constraint**, so nothing stopped the same
+  contract being inserted twice.
+  - **21 unrecognised contractors deleted.** Several were plainly corrupted
+    copies of real rows — `Gulf Egypt` ← Gulf **Expert**, `Ras Mountain` ←
+    **Iron** Mountain, `Ocean Prime Manufacturing Om` ← **Oman Pumps**
+    Manufacturing, `ACME Arabian … "Fit" Maintenance` ← "**Lift**". Two shared
+    an identical corruption fingerprint — `OMR/hr` and `VTE` (for VAT), which
+    appear nowhere else in the table.
+  - **The STP contract was triplicated.** `(CWAN)`, `(OWATCO)` and `LLC` all
+    carried *Comprehensive STP Operation and Maintenance* with overlapping
+    dates and two different annual values. Email evidence settled it: order ref
+    **`MB/COM/L 980-2024` dated 26/01/2024** (contract `CO-SBJ-24-0231`, 750
+    m³/day MBR plant) matches the `(OWATCO)` row exactly, and OWATCO's own
+    statement of account shows monthly O&M invoices of **3,229.821** (Jan-26)
+    and **3,355.795** (Mar-26). That reconciles with 3,103.8/month ex-VAT →
+    **37,245.4/year**. The `389,400` figure would require ~32,450/month —
+    **ten times** what is actually invoiced — and clusters within 1% of the two
+    Facility Management values (Kalhat 386,409.718, Nasco 389,468), i.e. it was
+    import noise, not an STP cost. **The STP annual figure is 37,245.4 OMR.**
+  - **Statuses corrected:** Celar Water, COMO and Rimal Global → `Canceled`.
+    KONE Hiessen and Muscat Electronics → `Expired`; both were flagged `Active`
+    with end dates already past (28 Feb 2025 and 2 Jun 2026), which is
+    arithmetic rather than a business judgement.
+  - **Structure fixed:** added an identity `id` primary key plus a unique
+    constraint on **(Contractor, Service Provided)** — the pair, not the
+    contractor alone, because Gulf Expert legitimately holds two AMCs. Verified
+    by attempting a duplicate insert, which is now rejected with `23505`.
+  - **Full pre-change snapshot retained** in `Contractor_Tracker_backup_20260726`
+    (all 42 original rows). Every change above is reversible from it.
+  - Still unverified and carrying no dates or values: **Genetco** and
+    **Uni Gaz**. KONE Hiessen's stored `16,200` also came from a malformed
+    `OMR/hr (inc VTE)` cell and should be re-checked against the contract.
+
 - **June 2026 NAMA main-bulk reading — entered 2026-07-19: 57,932 m³**
   (`MB-L1-001`, account `C43659`). This is the NAMA-billed figure from the June
   invoice; it replaced a provisional 59,574 m³ that had been entered 2026-07-04
