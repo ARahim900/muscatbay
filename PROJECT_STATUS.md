@@ -380,6 +380,14 @@ stops at last month" problem is structurally closed:
     crawl at ~12px/s and a long one race; duration is now derived from width at
     40px/s.
 
+- **Briefing strips restyled as a news band — 2026-07-26.** Both tickers now
+  read like a TV channel's breaking-news strip: a slim rectangular band with a
+  solid caption block on the left and one line of stats beside it. The height
+  came down from ~68px to **34px**, and the reason it was tall is worth
+  recording — each stat stacked its label *above* its value, so the strip was
+  inherently two lines. Stats are now single-line (`.mb-ticker-label` +
+  `.mb-ticker-value`), which is what makes the band shape possible.
+
 - **`Contractor_Tracker` cleaned and keyed — 2026-07-26. 42 rows → 19.**
   Management reported unrecognised and duplicated contractors. The table held
   **42 rows for 19 real contracts**, and the root cause was structural: it had

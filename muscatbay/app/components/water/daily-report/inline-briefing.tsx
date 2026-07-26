@@ -42,12 +42,10 @@ function Stat({
     title?: string;
 }) {
     return (
-        <li className="flex items-center gap-2" title={title}>
-            <Icon className="h-4 w-4 shrink-0" style={{ color: iconColor }} aria-hidden="true" />
-            <div className="leading-tight">
-                <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
-                <p className={cn("whitespace-nowrap text-sm font-semibold tabular-nums text-foreground", valueClassName)}>{value}</p>
-            </div>
+        <li className="flex items-center gap-1.5" title={title}>
+            <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: iconColor }} aria-hidden="true" />
+            <span className="mb-ticker-label">{label}</span>
+            <span className={cn("mb-ticker-value", valueClassName)}>{value}</span>
         </li>
     );
 }
@@ -71,7 +69,7 @@ function StatRun({ metrics, duplicate, runRef }: { metrics: BriefingMetrics; dup
         // keyframe then lands exactly on the seam and the loop is invisible.
         <ul
             ref={runRef}
-            className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10"
+            className="mb-ticker-copy flex list-none items-center gap-x-8 pr-8"
             aria-hidden={duplicate ? "true" : undefined}
         >
             <Stat
@@ -155,14 +153,9 @@ export function DailyBriefing({
     const { viewportRef, runRef, trackProps } = useTickerLoop();
 
     return (
-        <section
-            aria-label="Daily briefing"
-            className="rounded-[10.5px] border border-border bg-card px-4 py-3 shadow-card-standard"
-        >
-            <div className="flex items-center gap-4">
-                <p className="shrink-0 whitespace-nowrap border-e border-border/60 pe-4 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Briefing · {month} · Day {day}
-                </p>
+        <section aria-label="Daily briefing" className="mb-ticker-note">
+            <p className="mb-ticker-note__caption">Briefing · {month} · Day {day}</p>
+            <div className="flex min-w-0 flex-1 items-center px-3">
                 <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
                     <div className="mb-ticker-track items-center" {...trackProps}>
                         <StatRun metrics={metrics} runRef={runRef} />

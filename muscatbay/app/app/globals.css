@@ -1599,6 +1599,56 @@ main#main-content {
   animation: mb-ticker-scroll var(--mb-ticker-duration, 36s) linear infinite;
 }
 
+/* Breaking-news band: a slim rectangular strip with a solid label block on the
+   left and one line of text running beside it — the shape a TV news channel
+   uses. The height comes from putting each stat on a SINGLE line; the old
+   stacked label-over-value layout is what made the strip tall. */
+.mb-ticker-note {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 34px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 4px;
+  background: var(--card);
+}
+
+/* The solid "BREAKING NEWS" block. Full-bleed to the band's edges. */
+.mb-ticker-note__caption {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin: 0;
+  padding-inline: 0.75rem;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* One line per stat: label, then value, then the next stat. */
+.mb-ticker-label {
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.mb-ticker-value {
+  white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
 /* Nothing to reveal: every stat already fits, so holding still is correct —
    sliding would only drag the content into an empty gap and snap back, which
    is what made the strip look jammed on wide screens. Set by useTickerLoop,
