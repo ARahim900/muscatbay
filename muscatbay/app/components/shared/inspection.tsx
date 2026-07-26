@@ -26,6 +26,7 @@ import {
     AlertTriangle, CheckCircle2, HelpCircle, TrendingUp, XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTickerLoop } from "@/hooks/useTickerLoop";
 
 // ─── Severity model ───────────────────────────────────────────────────────────
 
@@ -249,18 +250,16 @@ const TICKER_VALUE: Record<NonNullable<TickerStat["tone"]>, string> = {
     info: "text-foreground",
 };
 
-function TickerRun({ items, duplicate }: { items: TickerStat[]; duplicate?: boolean }) {
+function TickerRun({ items, duplicate, runRef }: { items: TickerStat[]; duplicate?: boolean; runRef?: (n: HTMLElement | null) => void }) {
     return (
-        <ul className="mb-ticker-copy flex list-none items-center gap-x-10 pr-10" aria-hidden={duplicate ? "true" : undefined}>
+        <ul ref={runRef} className="mb-ticker-copy flex list-none items-center gap-x-8 pr-8" aria-hidden={duplicate ? "true" : undefined}>
             {items.map((it, i) => {
                 const tone = it.tone ?? "default";
                 return (
-                    <li key={`${it.label}-${i}`} className="flex items-center gap-2" title={it.title}>
-                        <it.icon className="h-4 w-4 shrink-0" style={{ color: TICKER_ICON[tone] }} aria-hidden="true" />
-                        <div className="leading-tight">
-                            <p className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{it.label}</p>
-                            <p className={cn("whitespace-nowrap text-sm font-semibold tabular-nums", TICKER_VALUE[tone])}>{it.value}</p>
-                        </div>
+                    <li key={`${it.label}-${i}`} className="flex items-center gap-1.5" title={it.title}>
+                        <it.icon className="h-3.5 w-3.5 shrink-0" style={{ color: TICKER_ICON[tone] }} aria-hidden="true" />
+                        <span className="mb-ticker-label">{it.label}</span>
+                        <span className={cn("mb-ticker-value", TICKER_VALUE[tone])}>{it.value}</span>
                     </li>
                 );
             })}
@@ -275,15 +274,16 @@ function TickerRun({ items, duplicate }: { items: TickerStat[]; duplicate?: bool
  * wrapped strip (both handled by the shared mb-ticker-* CSS).
  */
 export function InspectionTicker({ caption, items }: { caption: string; items: TickerStat[] }) {
+    // Measures the run against the viewport so the loop stays seamless and only
+    // runs when there is actually something off-screen to reveal.
+    const { viewportRef, runRef, trackProps } = useTickerLoop();
     return (
-        <section aria-label={caption} className="rounded-[10.5px] border border-border bg-card px-4 py-3 shadow-card-standard">
-            <div className="flex items-center gap-4">
-                <p className="shrink-0 whitespace-nowrap border-e border-border/60 pe-4 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {caption}
-                </p>
-                <div className="mb-ticker-viewport min-w-0 flex-1">
-                    <div className="mb-ticker-track items-center">
-                        <TickerRun items={items} />
+        <section aria-label={caption} className="mb-ticker-note">
+            <p className="mb-ticker-note__caption">{caption}</p>
+            <div className="flex min-w-0 flex-1 items-center px-3">
+                <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
+                    <div className="mb-ticker-track items-center" {...trackProps}>
+                        <TickerRun items={items} runRef={runRef} />
                         <TickerRun items={items} duplicate />
                     </div>
                 </div>

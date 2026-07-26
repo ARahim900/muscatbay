@@ -361,6 +361,69 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Ticker loop fixed — 2026-07-26. It was jamming on wide screens.**
+  The `mb-ticker-*` strips hold two identical copies and animate
+  `translateX(0 → -50%)`, i.e. they shift by exactly one copy's width `W`. For
+  the viewport `V` to stay covered at the worst point of the cycle you need
+  **`W >= V`**. Measured in the browser at 1440px: the strip was **1232px** wide
+  holding a **440px** run — so the content slid off and left an ~800px blank gap
+  before snapping back. That is what "the ticker is jammed" meant. It looked
+  fine on a phone (182px viewport) purely because the run exceeded it there, so
+  the bug was invisible on mobile and obvious on a desktop.
+  CSS cannot measure, so the rule now lives in `hooks/useTickerLoop.ts`, used by
+  both `InspectionTicker` and the Water `DailyBriefing`:
+  - **Only scroll when scrolling reveals something.** If `W < V` every stat is
+    already on screen; the track gets `data-static="true"`, the duplicate copy
+    is hidden and the edge-fade mask is dropped (it was clipping the first
+    label). Static never means hidden — all stats still render.
+  - **Constant speed, not constant duration.** The fixed 36s made a short run
+    crawl at ~12px/s and a long one race; duration is now derived from width at
+    40px/s.
+
+- **Briefing strips restyled as a news band — 2026-07-26.** Both tickers now
+  read like a TV channel's breaking-news strip: a slim rectangular band with a
+  solid caption block on the left and one line of stats beside it. The height
+  came down from ~68px to **34px**, and the reason it was tall is worth
+  recording — each stat stacked its label *above* its value, so the strip was
+  inherently two lines. Stats are now single-line (`.mb-ticker-label` +
+  `.mb-ticker-value`), which is what makes the band shape possible.
+
+- **`Contractor_Tracker` cleaned and keyed — 2026-07-26. 42 rows → 19.**
+  Management reported unrecognised and duplicated contractors. The table held
+  **42 rows for 19 real contracts**, and the root cause was structural: it had
+  **no primary key and no uniqueness constraint**, so nothing stopped the same
+  contract being inserted twice.
+  - **21 unrecognised contractors deleted.** Several were plainly corrupted
+    copies of real rows — `Gulf Egypt` ← Gulf **Expert**, `Ras Mountain` ←
+    **Iron** Mountain, `Ocean Prime Manufacturing Om` ← **Oman Pumps**
+    Manufacturing, `ACME Arabian … "Fit" Maintenance` ← "**Lift**". Two shared
+    an identical corruption fingerprint — `OMR/hr` and `VTE` (for VAT), which
+    appear nowhere else in the table.
+  - **The STP contract was triplicated.** `(CWAN)`, `(OWATCO)` and `LLC` all
+    carried *Comprehensive STP Operation and Maintenance* with overlapping
+    dates and two different annual values. Email evidence settled it: order ref
+    **`MB/COM/L 980-2024` dated 26/01/2024** (contract `CO-SBJ-24-0231`, 750
+    m³/day MBR plant) matches the `(OWATCO)` row exactly, and OWATCO's own
+    statement of account shows monthly O&M invoices of **3,229.821** (Jan-26)
+    and **3,355.795** (Mar-26). That reconciles with 3,103.8/month ex-VAT →
+    **37,245.4/year**. The `389,400` figure would require ~32,450/month —
+    **ten times** what is actually invoiced — and clusters within 1% of the two
+    Facility Management values (Kalhat 386,409.718, Nasco 389,468), i.e. it was
+    import noise, not an STP cost. **The STP annual figure is 37,245.4 OMR.**
+  - **Statuses corrected:** Celar Water, COMO and Rimal Global → `Canceled`.
+    KONE Hiessen and Muscat Electronics → `Expired`; both were flagged `Active`
+    with end dates already past (28 Feb 2025 and 2 Jun 2026), which is
+    arithmetic rather than a business judgement.
+  - **Structure fixed:** added an identity `id` primary key plus a unique
+    constraint on **(Contractor, Service Provided)** — the pair, not the
+    contractor alone, because Gulf Expert legitimately holds two AMCs. Verified
+    by attempting a duplicate insert, which is now rejected with `23505`.
+  - **Full pre-change snapshot retained** in `Contractor_Tracker_backup_20260726`
+    (all 42 original rows). Every change above is reversible from it.
+  - Still unverified and carrying no dates or values: **Genetco** and
+    **Uni Gaz**. KONE Hiessen's stored `16,200` also came from a malformed
+    `OMR/hr (inc VTE)` cell and should be re-checked against the contract.
+
 - **June 2026 NAMA main-bulk reading — entered 2026-07-19: 57,932 m³**
   (`MB-L1-001`, account `C43659`). This is the NAMA-billed figure from the June
   invoice; it replaced a provisional 59,574 m³ that had been entered 2026-07-04

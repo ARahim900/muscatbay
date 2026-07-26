@@ -103,9 +103,19 @@ export async function updateContractPdfUrl(id: number, pdfUrl: string | null): P
 // =============================================================================
 
 /**
- * Fetch all contractor tracker data from Supabase, deduplicated.
- * The Contractor_Tracker table has no unique constraint, so duplicate
- * rows may exist if the seed script was run more than once.
+ * Fetch all contractor tracker data from Supabase.
+ *
+ * Since 2026-07-26 the table has a primary key and a unique constraint on
+ * (Contractor, Service Provided), so the database no longer admits duplicates.
+ * The filter below is kept as a cheap safety net for older rows and for any
+ * future bulk import that lands before the constraint is re-checked.
+ *
+ * Worth knowing what this dedup can and cannot do: it collapses *identical*
+ * (Contractor, Service Provided) pairs only. It never caught the real problem
+ * — a bad import had also produced near-miss variants ("Gulf Egypt" for Gulf
+ * Expert, "Ras Mountain" for Iron Mountain), which are distinct strings and so
+ * passed straight through to the UI. Those were removed at source; see
+ * PROJECT_STATUS.md §4.
  */
 export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
     const client = getSupabaseClient();
