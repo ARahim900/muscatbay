@@ -156,23 +156,44 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
             return { meters: [], error: null, negatives: [] };
         }
 
+        // The consumption table is ~10k rows and PostgREST caps responses at
+        // 1000, so this used to walk 11 pages SEQUENTIALLY — ~11 round-trips
+        // back-to-back was most of /water's first-paint delay on a tablet far
+        // from the ap-northeast-1 region. Ask for the exact count first (a
+        // HEAD request, no rows), then fetch every page in parallel: the wall
+        // time becomes ~2 round-trips regardless of how many months accrue.
+        const countResult = await client
+            .from('water_monthly_consumption')
+            .select('account_number', { count: 'exact', head: true })
+            .gte('period', PERIOD_FLOOR);
+        if (countResult.error) {
+            console.error('Error counting water monthly consumption:', countResult.error.message);
+            return { meters: [], error: `Could not read monthly consumption: ${countResult.error.message}`, negatives: [] };
+        }
+        const totalRows = countResult.count ?? 0;
+
+        const pageCount = Math.ceil(totalRows / CONSUMPTION_PAGE_SIZE);
+        const pages = await Promise.all(
+            Array.from({ length: pageCount }, (_, page) => {
+                const from = page * CONSUMPTION_PAGE_SIZE;
+                return client
+                    .from('water_monthly_consumption')
+                    .select('account_number, period, consumption')
+                    .gte('period', PERIOD_FLOOR)
+                    .order('account_number')
+                    .order('period')
+                    .range(from, from + CONSUMPTION_PAGE_SIZE - 1)
+                    .returns<MonthlyConsumptionRow[]>();
+            })
+        );
+
         const consumptionRows: MonthlyConsumptionRow[] = [];
-        for (let from = 0; ; from += CONSUMPTION_PAGE_SIZE) {
-            const { data, error } = await client
-                .from('water_monthly_consumption')
-                .select('account_number, period, consumption')
-                .gte('period', PERIOD_FLOOR)
-                .order('account_number')
-                .order('period')
-                .range(from, from + CONSUMPTION_PAGE_SIZE - 1)
-                .returns<MonthlyConsumptionRow[]>();
+        for (const { data, error } of pages) {
             if (error) {
                 console.error('Error fetching water monthly consumption:', error.message);
                 return { meters: [], error: `Could not read monthly consumption: ${error.message}`, negatives: [] };
             }
-            if (!data || data.length === 0) break;
-            consumptionRows.push(...data);
-            if (data.length < CONSUMPTION_PAGE_SIZE) break;
+            consumptionRows.push(...(data ?? []));
         }
 
         const byAccount = new Map<string, MonthlyConsumptionRow[]>();

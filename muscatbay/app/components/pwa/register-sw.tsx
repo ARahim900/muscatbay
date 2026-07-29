@@ -50,17 +50,45 @@ export function RegisterSW() {
 
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
 
+    // The app booted cleanly — re-arm the route error boundary's one-shot
+    // stale-chunk reload (app/error.tsx) so the NEXT deploy race can also
+    // self-heal in this tab.
+    try {
+      sessionStorage.removeItem("mb-chunk-reload");
+    } catch {
+      /* storage unavailable — the guard simply stays conservative */
+    }
+
     // Register with `updateViaCache: "none"` so the browser re-fetches
     // sw.js on every navigation rather than serving it from HTTP cache;
     // combined with the explicit `registration.update()` call below this
     // guarantees users always see the latest SW version on their next
     // visit after a deploy.
+    let updateTimer: ReturnType<typeof setInterval> | null = null;
+    let onVisible: (() => void) | null = null;
+
     navigator.serviceWorker
       .register("/sw.js", { updateViaCache: "none" })
       .then((registration) => {
-        registration.update().catch(() => {
-          /* silent — offline etc. */
-        });
+        const checkForUpdate = () => {
+          registration.update().catch(() => {
+            /* silent — offline etc. */
+          });
+        };
+        checkForUpdate();
+
+        // A control-room tablet keeps one session open for days, so a single
+        // mount-time check leaves it referencing pre-deploy chunk hashes until
+        // something 404s (observed 2026-07-29: an open iPad hit the route
+        // error boundary on its first navigation after a deploy). Re-check on
+        // a slow interval and whenever the app returns to the foreground, so
+        // the controllerchange reload above adopts the new build before the
+        // operator trips over it.
+        updateTimer = setInterval(checkForUpdate, 30 * 60 * 1000);
+        onVisible = () => {
+          if (document.visibilityState === "visible") checkForUpdate();
+        };
+        document.addEventListener("visibilitychange", onVisible);
       })
       .catch(() => {
         // Service worker registration failed — silent fallback
@@ -68,6 +96,8 @@ export function RegisterSW() {
 
     return () => {
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      if (updateTimer !== null) clearInterval(updateTimer);
+      if (onVisible) document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 

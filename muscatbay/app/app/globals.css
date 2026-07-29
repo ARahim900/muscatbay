@@ -1678,20 +1678,27 @@ main#main-content {
   animation-play-state: paused;
 }
 
+/* Reduced motion stops the strip AUTO-scrolling — it must not change the
+   band's shape. The previous fallback wrapped the stats (`flex-wrap: wrap`),
+   which ballooned the 34px news band into a 4-row block on any device with
+   "Reduce Motion" on (observed on an operator's iPad, 2026-07-29) and read as
+   the ticker bug returning. Keep the single line; the off-screen tail is
+   reachable by a swipe/scroll — a user-initiated gesture is not "motion" in
+   the sense the OS setting asks us to avoid. */
 @media (prefers-reduced-motion: reduce) {
   .mb-ticker-track {
     animation: none !important;
-    width: 100%;
+    width: max-content;
   }
   .mb-ticker-viewport {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
     -webkit-mask-image: none;
     mask-image: none;
   }
-  .mb-ticker-copy {
-    flex-wrap: wrap;
-    row-gap: 0.5rem;
-    width: 100%;
-    padding-inline-end: 0;
+  .mb-ticker-viewport::-webkit-scrollbar {
+    display: none;
   }
   .mb-ticker-copy[aria-hidden="true"] {
     display: none;
