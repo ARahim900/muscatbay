@@ -118,6 +118,24 @@ export const PERIOD_BASIS_NOTE =
     `STP shows the newest month with at least ${MIN_DAYS_FOR_COMPLETE_MONTH} daily logs, so a part-way month is not reported as a shortfall. ` +
     `Trends compare each KPI against its own previous period.`;
 
+/**
+ * Subtitle used when a KPI has nothing behind it. Paired with a "—" value so a
+ * card that could not be computed is visibly blank rather than reading as a
+ * measured zero.
+ */
+const NO_READING = "No reading";
+
+/**
+ * Format a KPI value, or "—" when there is no reading.
+ *
+ * `hasData` is deliberately separate from the number: a genuine 0 must still
+ * render "0.0", while an absent reading must never be shown as one.
+ */
+function kpi(value: number | null, hasData: boolean, scale: number, unit: string): string {
+    if (!hasData || value === null) return "—";
+    return `${(value / scale).toFixed(1)}${unit}`;
+}
+
 // Session cache — see lib/page-cache.ts (stale-while-revalidate on revisit)
 const DASHBOARD_CACHE_KEY = "dashboard:data";
 interface DashboardCache {
@@ -264,17 +282,23 @@ export function useDashboardData() {
 
         try {
             setError(null);
-            let liveDataFetched = false;
-
-            // Fetch water mock data as fallback
-            const waterMock = await getWaterSystemData();
+            const configured = isSupabaseConfigured();
 
             let stpData: STPOperation[] = [];
             let elecData: MeterReading[] = [];
             let contractorsCount = 0;
             let waterMeters: WaterMeter[] = [];
+            /**
+             * Demo figures. Loaded ONLY when Supabase is not configured at all —
+             * never as a stand-in for a live read that failed or came back empty.
+             * A half-mock deck under a "Live Data" badge is exactly the
+             * plausible-wrong-number failure this dashboard must not produce.
+             */
+            let waterMock: Awaited<ReturnType<typeof getWaterSystemData>> | null = null;
+            /** Sources whose read rejected. Non-empty ⇒ the deck is incomplete. */
+            const failed: string[] = [];
 
-            if (isSupabaseConfigured()) {
+            if (configured) {
                 const [stpResult, elecResult, contractorsResult, waterResult] = await Promise.allSettled([
                     getSTPOperationsFromSupabase(),
                     getElectricityMetersFromSupabase(),
@@ -282,53 +306,47 @@ export function useDashboardData() {
                     getWaterMetersFromSupabase()
                 ]);
 
-                if (stpResult.status === 'fulfilled' && stpResult.value.length > 0) {
-                    stpData = stpResult.value;
-                    liveDataFetched = true;
-                } else if (stpResult.status === 'rejected') {
-                    console.warn("STP fetch from Supabase failed, using mock");
-                }
+                // A rejected read is reported, not papered over. An empty result
+                // stays empty — the affected cards render "—", not a demo number.
+                if (stpResult.status === 'fulfilled') stpData = stpResult.value;
+                else failed.push("STP operations");
 
-                if (elecResult.status === 'fulfilled' && elecResult.value.length > 0) {
-                    elecData = elecResult.value;
-                    liveDataFetched = true;
-                } else if (elecResult.status === 'rejected') {
-                    console.warn("Electricity fetch from Supabase failed, using mock");
-                }
+                if (elecResult.status === 'fulfilled') elecData = elecResult.value;
+                else failed.push("electricity meters");
 
                 // Count-only queries (head: true) — no rows are transferred
-                if (contractorsResult.status === 'fulfilled' && contractorsResult.value.total > 0) {
-                    contractorsCount = contractorsResult.value.active;
-                    liveDataFetched = true;
-                } else if (contractorsResult.status === 'rejected') {
-                    console.warn("Contractors fetch from Supabase failed, using mock");
-                }
+                if (contractorsResult.status === 'fulfilled') contractorsCount = contractorsResult.value.active;
+                else failed.push("contractors");
 
-                if (waterResult.status === 'fulfilled' && waterResult.value.length > 0) {
-                    waterMeters = waterResult.value;
-                    liveDataFetched = true;
-                } else if (waterResult.status === 'rejected') {
-                    console.warn("Water fetch from Supabase failed, using mock");
+                if (waterResult.status === 'fulfilled') waterMeters = waterResult.value;
+                else failed.push("water meters");
+
+                if (failed.length > 0) {
+                    setError(
+                        `Could not read ${failed.join(", ")} from Supabase. ` +
+                        `Those cards show no reading rather than a substituted figure.`
+                    );
                 }
+            } else {
+                // Supabase is not configured at all → demo data is the honest
+                // answer, and the "Demo Mode" badge already says so.
+                waterMock = await getWaterSystemData();
+                stpData = await getSTPOperations();
+                elecData = await getElectricityMeters();
+                contractorsCount = (await getContractors()).filter(c => c.status === "Active").length;
             }
 
-            // Fallback to mock data
-            if (stpData.length === 0) stpData = await getSTPOperations();
-            if (elecData.length === 0) elecData = await getElectricityMeters();
-            if (contractorsCount === 0) {
-                const contractorsMock = await getContractors();
-                contractorsCount = contractorsMock.filter(c => c.status === "Active").length;
-            }
-
-            setIsLiveData(liveDataFetched);
+            setIsLiveData(configured);
 
             // === WATER PRODUCTION (Supabase L1 meters → fallback to mock) ===
             const waterMonthly = buildWaterMonthlyFromSupabase(waterMeters);
             const useSupabaseWater = waterMonthly.length > 0;
 
-            let waterValue: number;
-            let waterMonth: string;
-            let waterPrevValue: number;
+            // `null` = nothing could be read. It is NOT 0 — a zero here would
+            // render "0.0k m³", which reads as a measured collapse in supply.
+            let waterValue: number | null = null;
+            let waterMonth = NO_READING;
+            let waterPrevValue = 0;
 
             if (useSupabaseWater) {
                 const latest = waterMonthly[waterMonthly.length - 1];
@@ -336,7 +354,7 @@ export function useDashboardData() {
                 waterValue = latest.value;
                 waterMonth = latest.month;
                 waterPrevValue = prev?.value || 0;
-            } else {
+            } else if (waterMock) {
                 const latestWater = waterMock.monthlyTrends[waterMock.monthlyTrends.length - 1];
                 const prevWater = waterMock.monthlyTrends.length >= 2 ? waterMock.monthlyTrends[waterMock.monthlyTrends.length - 2] : null;
                 waterValue = latestWater.A1;
@@ -388,8 +406,14 @@ export function useDashboardData() {
             const elecTotal = allReadings[latestElecMonth] || 0;
             const elecPrevTotal = allReadings[prevElecMonth] || 0;
 
+            // Which KPIs actually have something behind them. A source that
+            // returned nothing yields "—", never a 0 that reads as a measurement.
+            const hasWater = waterValue !== null;
+            const hasElec = latestElecMonth !== "";
+            const hasStp = Boolean(stpLatestMonth);
+
             // Month-over-month changes — ONE shared calculation (lib/trends.ts)
-            const waterTrend = calcTrend(waterValue, waterPrevValue);
+            const waterTrend = calcTrend(waterValue ?? 0, waterPrevValue);
             const elecTrend = calcTrend(elecTotal, elecPrevTotal);
             // Electricity cost at the flat tariff — surfaces the OMR figure that
             // executives track alongside the raw MWh usage.
@@ -406,8 +430,8 @@ export function useDashboardData() {
             // Month labels — the app-standard "Mon-YY" everywhere (electricity keys
             // already are; STP buckets are yyyy-MM and previously rendered "Mon YY",
             // a third format on the same KPI deck).
-            const formattedElecMonth = latestElecMonth || "Latest Month";
-            const formattedStpMonth = stpLatestMonth ? ymToMonthKey(stpLatestMonth) : "Latest Month";
+            const formattedElecMonth = latestElecMonth || NO_READING;
+            const formattedStpMonth = stpLatestMonth ? ymToMonthKey(stpLatestMonth) : NO_READING;
 
             // === TARGETS ===
             // Only where a target actually exists in the codebase. Where a figure
@@ -439,65 +463,65 @@ export function useDashboardData() {
             const nextStats: DashboardStats[] = [
                 {
                     label: "WATER PRODUCTION",
-                    value: `${(waterValue / 1000).toFixed(1)}k m³`,
+                    value: kpi(waterValue, hasWater, 1000, "k m³"),
                     subtitle: waterMonth,
                     icon: null,
                     variant: "water" as const,
-                    trend: waterTrend.trend,
-                    trendValue: waterTrend.trendValue,
+                    trend: hasWater ? waterTrend.trend : undefined,
+                    trendValue: hasWater ? waterTrend.trendValue : undefined,
                     invertTrend: true,   // Less water drawn = conservation = green ✓
                     target: waterTarget,
                 },
                 {
                     label: "ELECTRICITY USAGE",
-                    value: `${(elecTotal / 1000).toFixed(1)} MWh`,
+                    value: kpi(elecTotal, hasElec, 1000, " MWh"),
                     subtitle: formattedElecMonth,
                     icon: null,
                     variant: "warning" as const,
-                    trend: elecTrend.trend,
-                    trendValue: elecTrend.trendValue,
+                    trend: hasElec ? elecTrend.trend : undefined,
+                    trendValue: hasElec ? elecTrend.trendValue : undefined,
                     invertTrend: true,   // Less electricity = saving = green ✓
                 },
                 {
                     label: "ELECTRICITY COST",
-                    value: `${(elecCost / 1000).toFixed(1)}k OMR`,
+                    value: kpi(elecCost, hasElec, 1000, "k OMR"),
                     subtitle: formattedElecMonth,
                     icon: null,
                     variant: "warning" as const,
-                    trend: elecCostTrend.trend,
-                    trendValue: elecCostTrend.trendValue,
+                    trend: hasElec ? elecCostTrend.trend : undefined,
+                    trendValue: hasElec ? elecCostTrend.trendValue : undefined,
                     invertTrend: true,   // Lower cost = saving = green ✓
                 },
                 {
                     label: "STP INLET FLOW",
-                    value: `${(stpLatestData.inlet / 1000).toFixed(1)}k m³`,
+                    value: kpi(stpLatestData.inlet, hasStp, 1000, "k m³"),
                     subtitle: formattedStpMonth,
                     icon: null,
                     variant: "success" as const,
-                    trend: stpInletTrend.trend,
-                    trendValue: stpInletTrend.trendValue,
+                    trend: hasStp ? stpInletTrend.trend : undefined,
+                    trendValue: hasStp ? stpInletTrend.trendValue : undefined,
                     // default: more inlet = system processing more = green ✓
                     target: stpTarget,
                 },
                 {
                     label: "TSE OUTPUT",
-                    value: `${(stpLatestData.tse / 1000).toFixed(1)}k m³`,
+                    value: kpi(stpLatestData.tse, hasStp, 1000, "k m³"),
                     subtitle: formattedStpMonth,
                     icon: null,
                     variant: "primary" as const,
-                    trend: stpTseTrend.trend,
-                    trendValue: stpTseTrend.trendValue,
+                    trend: hasStp ? stpTseTrend.trend : undefined,
+                    trendValue: hasStp ? stpTseTrend.trendValue : undefined,
                     // default: more TSE = more irrigation savings = green ✓
                     target: stpTarget,
                 },
                 {
                     label: "STP ECONOMIC IMPACT",
-                    value: `${(currentIncome / 1000).toFixed(1)}k OMR`,
+                    value: kpi(currentIncome, hasStp, 1000, "k OMR"),
                     subtitle: formattedStpMonth,
                     icon: null,
                     variant: "success" as const,
-                    trend: stpEconomicTrend.trend,
-                    trendValue: stpEconomicTrend.trendValue,
+                    trend: hasStp ? stpEconomicTrend.trend : undefined,
+                    trendValue: hasStp ? stpEconomicTrend.trendValue : undefined,
                     // default: more economic impact = better = green ✓
                 }
             ];
@@ -512,7 +536,9 @@ export function useDashboardData() {
             const waterByMonth = new Map(
                 useSupabaseWater
                     ? waterMonthly.map(m => [m.month, m.value] as const)
-                    : waterMock.monthlyTrends.map(w => [w.month, w.A1] as const)
+                    // Demo series only when Supabase is unconfigured; otherwise an
+                    // empty map, which plots as gaps rather than invented volumes.
+                    : (waterMock?.monthlyTrends ?? []).map(w => [w.month, w.A1] as const)
             );
             const stpByMonth = new Map(
                 stpSortedMonths.map(ym => [ymToMonthKey(ym), stpMonthlyCalc[ym]] as const)
@@ -563,50 +589,65 @@ export function useDashboardData() {
             // === GENERATE RECENT ACTIVITY from real data ===
             const trendDesc = describeTrend;
 
+            // Each line reports a figure that exists, or says plainly that it
+            // could not be read. Never a "0.0k m³ · no change" for absent data.
             const activities: RecentActivityItem[] = [
                 {
                     title: `Water Production — ${waterMonth}`,
-                    description: `${(waterValue / 1000).toFixed(1)}k m³ · ${trendDesc(waterTrend)}`,
-                    type: waterTrend.trend === 'up' ? 'warning' : 'info'
+                    description: hasWater
+                        ? `${kpi(waterValue, true, 1000, "k m³")} · ${trendDesc(waterTrend)}`
+                        : `No reading available`,
+                    type: hasWater && waterTrend.trend === 'up' ? 'warning' : 'info'
                 },
                 {
                     title: `Electricity Usage — ${formattedElecMonth}`,
-                    description: `${(elecTotal / 1000).toFixed(1)} MWh · ${trendDesc(elecTrend)}`,
-                    type: elecTrend.trend === 'up' ? 'warning' : 'info'
+                    description: hasElec
+                        ? `${kpi(elecTotal, true, 1000, " MWh")} · ${trendDesc(elecTrend)}`
+                        : `No reading available`,
+                    type: hasElec && elecTrend.trend === 'up' ? 'warning' : 'info'
                 },
                 {
                     title: `STP Inlet Flow — ${formattedStpMonth}`,
-                    description: `${(stpLatestData.inlet / 1000).toFixed(1)}k m³ · ${trendDesc(stpInletTrend)}`,
+                    description: hasStp
+                        ? `${kpi(stpLatestData.inlet, true, 1000, "k m³")} · ${trendDesc(stpInletTrend)}`
+                        : `No reading available`,
                     type: 'info'
                 },
                 {
                     title: `TSE Output — ${formattedStpMonth}`,
-                    description: `${(stpLatestData.tse / 1000).toFixed(1)}k m³ · ${trendDesc(stpTseTrend)}`,
-                    type: stpTseTrend.trend === 'down' ? 'warning' : 'info'
+                    description: hasStp
+                        ? `${kpi(stpLatestData.tse, true, 1000, "k m³")} · ${trendDesc(stpTseTrend)}`
+                        : `No reading available`,
+                    type: hasStp && stpTseTrend.trend === 'down' ? 'warning' : 'info'
                 },
                 {
                     title: `STP Revenue — ${formattedStpMonth}`,
-                    description: `${(currentIncome / 1000).toFixed(1)}k OMR · ${trendDesc(stpEconomicTrend)}`,
-                    type: stpEconomicTrend.trend === 'down' ? 'warning' : 'info'
+                    description: hasStp
+                        ? `${kpi(currentIncome, true, 1000, "k OMR")} · ${trendDesc(stpEconomicTrend)}`
+                        : `No reading available`,
+                    type: hasStp && stpEconomicTrend.trend === 'down' ? 'warning' : 'info'
                 },
                 {
                     title: `Active Contractors`,
-                    description: `${contractorsCount} service providers currently registered`,
+                    description: failed.includes("contractors")
+                        ? `Count unavailable — contractor read failed`
+                        : `${contractorsCount} service providers currently registered`,
                     type: 'info'
                 }
             ];
             setRecentActivity(activities);
 
-            // Cache live results so returning to the dashboard is instant
-            // (mock fallbacks are not cached — they should retry next visit).
-            if (liveDataFetched) {
+            // Cache live results so returning to the dashboard is instant.
+            // Demo data and partially-failed reads are NOT cached — a revisit
+            // must retry rather than re-serve an incomplete deck.
+            if (configured && failed.length === 0) {
                 setPageCache<DashboardCache>(DASHBOARD_CACHE_KEY, {
                     stats: nextStats,
                     chartData: nextChartData,
                     stpChartData: nextStpChartData,
                     recentActivity: activities,
                     ytd: nextYtd,
-                    isLiveData: liveDataFetched,
+                    isLiveData: true,
                 });
             }
 

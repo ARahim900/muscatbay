@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
-import { getElectricityMetersFromSupabase } from "@/lib/supabase";
+import { getElectricityMetersFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
@@ -113,11 +113,24 @@ export default function ElectricityPage() {
     // Stable fetch function — used both on mount and by real-time handler
     const loadData = useCallback(async (silent = false) => {
         if (!silent) setLoading(true);
+        const configured = isSupabaseConfigured();
         try {
+            if (!configured) {
+                // Supabase is not wired up at all → demo data is the honest
+                // answer, and the status bar's "mock" state already says so.
+                if (!silent) {
+                    setMeters(await getElectricityMeters());
+                    setDataSource("mock");
+                    setDebugError(null);
+                }
+                return;
+            }
+
             const supabaseData = await getElectricityMetersFromSupabase();
             if (supabaseData && supabaseData.length > 0) {
                 setMeters(supabaseData);
                 setDataSource("supabase");
+                setDebugError(null);
                 const now = new Date();
                 setLastUpdated(now);
                 const totalReadings = supabaseData.reduce((sum, m) => sum + Object.keys(m.readings).length, 0);
@@ -128,20 +141,24 @@ export default function ElectricityPage() {
                     lastUpdated: now,
                 });
             } else if (!silent) {
-                throw new Error("Supabase returned empty data");
+                // Configured but empty: a real problem with the live table, not
+                // a cue to quietly swap in demo meters.
+                setMeters([]);
+                setReadingsCount(0);
+                setDataSource("supabase");
+                setDebugError(
+                    "Supabase returned no electricity meters. Showing no data rather than demo figures — " +
+                    "check the electricity_meters / electricity_readings tables."
+                );
             }
         } catch (e: unknown) {
             if (!silent) {
                 const message = e instanceof Error ? e.message : "Unknown error";
                 console.warn("Supabase load error:", message);
-                setDebugError(message);
-                try {
-                    const mockData = await getElectricityMeters();
-                    setMeters(mockData);
-                    setDataSource("mock");
-                } catch {
-                    // console.error("Failed to load mock data as well");
-                }
+                setMeters([]);
+                setReadingsCount(0);
+                setDataSource("supabase");
+                setDebugError(`Could not load electricity meters from Supabase: ${message}`);
             }
         } finally {
             if (!silent) setLoading(false);

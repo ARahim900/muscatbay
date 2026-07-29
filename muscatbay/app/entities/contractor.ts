@@ -120,47 +120,6 @@ export interface AmcContractorPricing {
 }
 
 // =============================================================================
-// LEGACY AMC INTERFACES (Backward Compatibility)
-// =============================================================================
-
-export interface AmcContract {
-    id: string;
-    name: string;
-    company: string | null;
-    category: string;
-    status: string;
-    start_date: string | null;
-    created_at?: string;
-}
-
-export interface AmcExpiry {
-    id: string;
-    contract_id: string;
-    expiry_date: string;
-    notification_sent: boolean;
-    amc_contracts?: AmcContract;
-}
-
-export interface AmcContact {
-    id: string;
-    contract_id: string;
-    contact_name: string;
-    role: string | null;
-    phone: string | null;
-    email: string | null;
-    amc_contracts?: AmcContract;
-}
-
-export interface AmcPricing {
-    id: string;
-    contract_id: string;
-    contract_value: number;
-    currency: string;
-    payment_terms: string | null;
-    amc_contracts?: AmcContract;
-}
-
-// =============================================================================
 // LEGACY INTERFACES
 // =============================================================================
 

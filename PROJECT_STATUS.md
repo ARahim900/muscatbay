@@ -361,6 +361,76 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **🔴 OPEN — Supabase RLS lets any signed-in account become an admin.**
+  Found 2026-07-29 by reading the **live** state of project
+  `utnlgeuqajmwibqmdmgt` (not the migration files — the two disagree).
+  `public.profiles` carries the correct anti-self-elevation policy
+  (`"Users can update own profile"`, whose `WITH CHECK` pins `role` to its
+  current value) **and** a blanket `mb_authenticated_all` (`ALL`, `USING true`,
+  `WITH CHECK true`). Postgres **OR**s permissive policies, so the blanket one
+  wins outright: any logged-in user can run
+  `update profiles set role='admin' where id=auth.uid()` and self-promote — and
+  can rewrite every other user's row. That makes `lib/rbac.ts`'s `viewer`
+  default and the whole `ROLE_MODULES` gate unenforceable.
+  **Fix written, NOT applied:** `sql/migrations/20260729_rls_regression_fixes.sql`.
+  It must be run by the owner in the Supabase SQL editor.
+
+- **🟠 OPEN — RBAC is presentation-only.** 68 tables grant `authenticated` a
+  blanket `ALL / USING true / WITH CHECK true`. A `viewer` (board-presentation
+  profile) or `contractor` account is hidden from modules in the sidebar but can
+  still read **and write and delete** every table through the REST API with its
+  own session token. Closing this is a real behavioural change (a demoted
+  account loses write access), so it is deliberately left out of the
+  2026-07-29 migration and sketched at the bottom of that file instead — it
+  needs a per-module decision on who may write.
+
+- **🟠 OPEN — `water_monthly_consumption_backup_20260727` has RLS disabled.**
+  The only table in `public` without RLS, so it is readable *and writable* by
+  `anon` — i.e. by anyone holding the public anon key, which ships in the client
+  bundle. It carries `account_number`. Created by migration `20260727061805`,
+  which post-dates the 2026-07-18 hardening pass and so was missed by it. Also
+  in the 2026-07-29 migration.
+
+- **🟠 OPEN — 12 SECURITY DEFINER functions are callable by `anon`.** Reachable
+  unauthenticated at `/rest/v1/rpc/<name>`; the write-capable ones
+  (`stp_upsert_operations`, `sync_grafana_water_consumption`,
+  `aggregate_daily_to_monthly`, …) let an anonymous caller mutate operational
+  data. None is called from the browser — the syncs run as `service_role`, so
+  the revokes in the 2026-07-29 migration cost nothing.
+
+- **🔵 OPEN — dashboard-only auth settings.** Leaked-password protection
+  (HaveIBeenPwned) is off, and signup restrictions are unconfirmed. Neither can
+  be changed from SQL; both are in `SECURITY_REMEDIATION.md`.
+
+- **Mock-data substitution removed from the last three live paths — 2026-07-29.**
+  The 2026-07-25 pass caught the login screen, `/water` and `lib/water-data.ts`,
+  but three sites survived and were still swapping fabricated figures in front
+  of operators:
+  - **`hooks/useDashboardData.ts` was the worst of them, because it substituted
+    *partially*.** `isLiveData` was set true if **any one** of the four fetches
+    succeeded, then `if (stpData.length === 0) stpData = await getSTPOperations()`
+    filled the gaps with demo numbers. So a deck where water and electricity
+    read fine but STP came back empty rendered invented STP inlet, TSE and
+    revenue figures **under a green "Live Data" badge** — unfalsifiable from the
+    UI. Now: demo data loads only when Supabase is unconfigured; a failed read
+    is named in an error banner; an empty source renders `—` / "No reading", not
+    `0.0k m³`; and a partially-failed deck is no longer written to the session
+    cache.
+  - **`app/electricity/page.tsx`** swapped in `MOCK` meters on a failed *or
+    empty* fetch. Now mirrors the STP page's pattern (which was already correct
+    and is the reference).
+  - **`app/assets/page.tsx`** rendered a demo asset register on fetch failure.
+    Now shows the failure.
+
+- **Four readers queried tables that do not exist — removed 2026-07-29.**
+  `getAmcContracts/Expiry/Contacts/Pricing` in `functions/api/contractors.ts`
+  read `amc_contracts`, `amc_expiry`, `amc_contacts` and `amc_pricing`. The real
+  tables are `amc_contractor_details/expiry/pricing/summary`. Every call had been
+  failing and returning `[]` behind a `console.error`. Nothing in the UI called
+  them, so nothing broke — but they were four live examples of the swallow-the-
+  error pattern. Deleted along with their now-unused `entities/contractor.ts`
+  types and `lib/supabase.ts` re-exports.
+
 - **Ticker loop fixed — 2026-07-26. It was jamming on wide screens.**
   The `mb-ticker-*` strips hold two identical copies and animate
   `translateX(0 → -50%)`, i.e. they shift by exactly one copy's width `W`. For

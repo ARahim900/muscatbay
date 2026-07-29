@@ -13,10 +13,6 @@ import {
     AmcContractorDetails,
     AmcContractorExpiry,
     AmcContractorPricing,
-    AmcContract,
-    AmcExpiry,
-    AmcContact,
-    AmcPricing,
     transformContractor
 } from '@/entities/contractor';
 import type { Contractor } from '@/lib/mock-data';
@@ -231,72 +227,4 @@ export async function getContractorPricing(): Promise<AmcContractorPricing[]> {
 export async function getCombinedContractors(): Promise<Contractor[]> {
     const summaryData = await getContractorSummary();
     return summaryData.map(transformContractor);
-}
-
-// =============================================================================
-// LEGACY FETCH FUNCTIONS (Backward Compatibility)
-// =============================================================================
-
-export async function getAmcContracts(): Promise<AmcContract[]> {
-    const client = getSupabaseClient();
-    if (!client) return [];
-
-    const { data, error } = await client
-        .from('amc_contracts')
-        .select('id, name, company, category, status, start_date')
-        .order('name');
-
-    if (error) {
-        console.error('Error fetching amc_contracts:', error.message);
-        return [];
-    }
-    return data || [];
-}
-
-export async function getAmcExpiry(): Promise<AmcExpiry[]> {
-    const client = getSupabaseClient();
-    if (!client) return [];
-
-    const { data, error } = await client
-        .from('amc_expiry')
-        .select('id, contract_id, expiry_date, notification_sent, amc_contracts(name, company)')
-        .order('expiry_date');
-
-    if (error) {
-        console.error('Error fetching amc_expiry:', error.message);
-        return [];
-    }
-    return (data as unknown as AmcExpiry[]) || [];
-}
-
-export async function getAmcContacts(): Promise<AmcContact[]> {
-    const client = getSupabaseClient();
-    if (!client) return [];
-
-    const { data, error } = await client
-        .from('amc_contacts')
-        .select('id, contract_id, contact_name, role, phone, email, amc_contracts(name)')
-        .order('contact_name');
-
-    if (error) {
-        console.error('Error fetching amc_contacts:', error.message);
-        return [];
-    }
-    return (data as unknown as AmcContact[]) || [];
-}
-
-export async function getAmcPricing(): Promise<AmcPricing[]> {
-    const client = getSupabaseClient();
-    if (!client) return [];
-
-    const { data, error } = await client
-        .from('amc_pricing')
-        .select('id, contract_id, contract_value, currency, payment_terms, amc_contracts(name)')
-        .order('contract_value', { ascending: false });
-
-    if (error) {
-        console.error('Error fetching amc_pricing:', error.message);
-        return [];
-    }
-    return (data as unknown as AmcPricing[]) || [];
 }

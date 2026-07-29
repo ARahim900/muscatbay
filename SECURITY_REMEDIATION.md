@@ -1,5 +1,36 @@
 # Security & Data Remediation — action checklist (2026-07-18)
 
+> ## ⚠️ Status re-verified against the LIVE database — 2026-07-29
+>
+> The audit on 2026-07-29 read the actual state of project
+> `utnlgeuqajmwibqmdmgt` rather than trusting this file. **The 2026-07-18
+> migration was applied by hand, in part.** What landed and what did not:
+>
+> | Step | State on 2026-07-29 |
+> |---|---|
+> | 1. Rotate `service_role` key | Cannot be verified from here — confirm in the dashboard |
+> | 2a. Drop anon write policies on water tables | ✅ **Applied** — no `anon` write policy remains |
+> | 2b. Enable RLS on the tables that had it off | ⚠️ **Partly** — the 2026-07-18 set is done, but `water_monthly_consumption_backup_20260727` (created *after*, by migration `20260727061805`) has **RLS disabled** |
+> | 2c. Block `profiles` role self-elevation | ❌ **Defeated** — the correct policy exists, but a blanket `mb_authenticated_all` (`ALL`, `USING true`, `WITH CHECK true`) sits beside it. Postgres OR's permissive policies, so **any signed-in user can still set their own `role` to `admin`** |
+> | 2d. `profiles.role` default → `viewer` | ✅ **Applied** |
+> | 4. Avatar folder scoping + bucket limits | ✅ **Applied** (a broad public SELECT on `storage.objects` still allows bucket *listing* — cosmetic, closed by the new migration) |
+> | 6. Leaked password protection | ❌ **Still off** |
+> | 6. `search_path` pinning | ❌ **20 functions still mutable** |
+> | 6. `anon` EXECUTE on SECURITY DEFINER functions | ❌ **12 still callable by `anon`** |
+>
+> **The fix for everything marked ❌/⚠️ above is written and ready but NOT
+> applied:** `muscatbay/app/sql/migrations/20260729_rls_regression_fixes.sql`.
+> Review it, then run it in the Supabase SQL editor. It touches no automation
+> path (all syncs write via `service_role` or SECURITY DEFINER, both of which
+> bypass RLS) and removes no access the app actually uses.
+>
+> **Also newly found, and deliberately NOT in that migration** because it is a
+> behavioural change needing a product decision: 68 tables grant `authenticated`
+> a blanket `ALL / USING true / WITH CHECK true`, so `lib/rbac.ts` is
+> presentation-only — a `viewer` account can write and delete every table
+> through the REST API. See the note at the foot of the migration file.
+
+
 Companion to the application/storage audit. This lists the steps that must be
 done **by the project owner in the Supabase/GitHub dashboards** — they cannot
 and should not be automated from a code change. The code + SQL in this PR is the
