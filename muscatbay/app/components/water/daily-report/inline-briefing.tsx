@@ -148,9 +148,9 @@ export function DailyBriefing({
     month: string;
     day: number;
 }) {
-    // Same measurement as the shared ticker: the loop is only seamless while one
-    // run is at least as wide as the viewport.
-    const { viewportRef, runRef, trackProps } = useTickerLoop();
+    // Same measurement as the shared ticker: the run is repeated until half
+    // the track is viewport-wide, so the loop is seamless and always moving.
+    const { viewportRef, runRef, trackProps, repeat } = useTickerLoop();
 
     return (
         <section aria-label="Daily briefing" className="mb-ticker-note">
@@ -158,9 +158,11 @@ export function DailyBriefing({
             <div className="flex min-w-0 flex-1 items-center px-3">
                 <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
                     <div className="mb-ticker-track items-center" {...trackProps}>
-                        <StatRun metrics={metrics} runRef={runRef} />
-                        {/* Second copy exists only to make the loop seamless. */}
-                        <StatRun metrics={metrics} duplicate />
+                        {/* Only the first copy is measured or read aloud; the rest
+                            exist to keep the viewport covered mid-cycle. */}
+                        {Array.from({ length: repeat * 2 }, (_, i) => (
+                            <StatRun key={i} metrics={metrics} duplicate={i > 0} runRef={i === 0 ? runRef : undefined} />
+                        ))}
                     </div>
                 </div>
             </div>

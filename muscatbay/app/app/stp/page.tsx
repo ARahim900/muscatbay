@@ -422,7 +422,6 @@ export default function STPPage() {
         const prevIncome = prevTrips * TANKER_FEE;
         const prevSavings = prevTSE * TSE_SAVING_RATE;
         const prevEconomicImpact = prevIncome + prevSavings;
-        const prevEfficiency = prevInlet > 0 ? (prevTSE / prevInlet) * 100 : 0;
 
         const hasPrev = prevOperations.length > 0;
 
@@ -430,7 +429,6 @@ export default function STPPage() {
         const tseTrend = hasPrev ? calcTrend(totalTSE, prevTSE) : null;
         const tripsTrend = hasPrev ? calcTrend(totalTrips, prevTrips) : null;
         const economicTrend = hasPrev ? calcTrend(totalEconomicImpact, prevEconomicImpact) : null;
-        const efficiencyTrend = hasPrev ? calcTrend(treatmentEfficiency, prevEfficiency) : null;
 
         // Five cards, not eight — the 8-card deck was reported as clutter
         // (2026-07-29). Nothing is dropped, three figures just stop being
@@ -438,7 +436,11 @@ export default function STPPage() {
         // and Generated Income + Water Savings fold into the Total Economic
         // Impact subtitle (the total is their sum — three cards were saying
         // one thing). The monthly financial chart below still plots income
-        // and savings as separate series.
+        // and savings as separate series. Treatment Efficiency also stopped
+        // being a card (owner request, 2026-07-29 — four cards, one clean row):
+        // it is TSE ÷ inlet, so it rides on the TSE subtitle here, and it
+        // remains the LEAD health card on the Plant Watch tab with its target
+        // bands intact.
         const money = (v: number) =>
             v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
@@ -456,7 +458,7 @@ export default function STPPage() {
                 label: "TSE for Irrigation",
                 value: totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 }),
                 unit: "m³",
-                subtitle: "Recycled Water Output",
+                subtitle: `${treatmentEfficiency.toFixed(1)}% of inlet recycled`,
                 icon: Recycle,
                 variant: "secondary" as const,
                 ...(tseTrend && { trend: tseTrend.trend, trendValue: tseTrend.trendValue }),
@@ -477,15 +479,6 @@ export default function STPPage() {
                 icon: TrendingUp,
                 variant: "success" as const,
                 ...(economicTrend && { trend: economicTrend.trend, trendValue: economicTrend.trendValue }),
-            },
-            {
-                label: "Treatment Efficiency",
-                value: treatmentEfficiency.toFixed(1),
-                unit: "%",
-                subtitle: "TSE Output to Inlet Ratio",
-                icon: Gauge,
-                variant: "secondary" as const,
-                ...(efficiencyTrend && { trend: efficiencyTrend.trend, trendValue: efficiencyTrend.trendValue }),
             },
         ];
     }, [operations, prevOperations]);

@@ -5,41 +5,51 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /**
  * Drives the `mb-ticker-*` strips so the loop is seamless at every width.
  *
- * The CSS alone could not do this. The track holds two identical copies and
- * animates `translateX(0 → -50%)`, i.e. it shifts by exactly one copy's width
- * `W`. For the viewport `V` to stay covered at the worst moment of the cycle
- * you need `W >= V` — otherwise the content slides away and leaves a blank gap
- * before snapping back, which reads as a jammed ticker rather than a moving one.
+ * The CSS alone could not do this. The track holds identical copies of the
+ * stat run and animates `translateX(0 → -50%)`, i.e. it shifts by exactly half
+ * the track. For the viewport `V` to stay covered at the worst moment of the
+ * cycle, that half must be at least `V` wide — otherwise the content slides
+ * away and leaves a blank gap before snapping back, which reads as a jammed
+ * ticker rather than a moving one.
  *
- * That is fine on a phone, where a handful of stats easily exceed a 182px
- * viewport, and broken on a desktop, where the same stats occupy ~440px inside
- * a ~1230px strip. The bug therefore only showed on wide screens.
+ * The first fix (2026-07-26) satisfied that constraint by holding the strip
+ * STATIC whenever one run was narrower than the viewport. Correct, but the
+ * owner's verdict (2026-07-29) was that a news band should always be moving —
+ * a still ticker reads as broken. So the constraint is now satisfied the way
+ * a real news channel does it: the run is REPEATED until one half of the
+ * track is at least viewport-wide (`repeat = ceil(V / W)` copies per half),
+ * and the strip always scrolls.
  *
- * Two things follow, and both need a measurement the CSS cannot take:
+ * Both need a measurement the CSS cannot take, which is why this hook exists:
  *
- * 1. **Only scroll when scrolling achieves something.** If `W < V` every stat
- *    is already on screen, so there is nothing to reveal — the strip is held
- *    static instead of sliding into an empty gap.
- * 2. **Constant speed, not constant duration.** A fixed 36s meant a short run
- *    crawled at ~12px/s while a long one raced. Duration is derived from width
- *    so the strip always travels at the same readable pace.
+ * 1. **Repeat enough to be seamless.** `repeat` is how many copies of the run
+ *    each half of the track needs. The component renders `2 × repeat` runs.
+ * 2. **Constant speed, not constant duration.** One cycle travels half the
+ *    track (`repeat × W` px), so duration derives from that distance — every
+ *    strip moves at the same readable pace regardless of content length.
+ *
+ * Reduced motion is handled in CSS (`prefers-reduced-motion`): the animation
+ * is disabled, every `aria-hidden` copy is hidden (so repetition never shows
+ * duplicated stats), and the single remaining run becomes swipeable.
  */
 
 /** Pixels per second. Slow enough to read a value in passing, quick enough to
- *  feel live. Lowered from 40 on the owner's request (2026-07-29) — at 40 the
- *  strip was readable but felt rushed on a control-room screen. */
+ *  feel live. Lowered from 40 on the owner's request (2026-07-29). */
 const TICKER_SPEED_PX_PER_SEC = 26;
 
 /** Below this the measurement is not trustworthy yet (fonts still loading, hidden container). */
 const MIN_MEASURABLE_PX = 8;
 
+/** Hard cap so a pathological measurement (e.g. a 1px run) cannot explode the DOM. */
+const MAX_REPEAT = 12;
+
 export interface TickerLoop {
     /** Attach to the `.mb-ticker-viewport` element. */
     viewportRef: (node: HTMLElement | null) => void;
-    /** Attach to the first `.mb-ticker-copy` run — the one that gets measured. */
+    /** Attach to the FIRST `.mb-ticker-copy` run only — the one that gets measured. */
     runRef: (node: HTMLElement | null) => void;
-    /** False when everything already fits, so the strip should hold still. */
-    isScrolling: boolean;
+    /** Copies of the run per half-track. Render `2 × repeat` runs in total. */
+    repeat: number;
     /** Spread onto the `.mb-ticker-track` element. */
     trackProps: { "data-static"?: "true"; style?: React.CSSProperties };
 }
@@ -47,7 +57,7 @@ export interface TickerLoop {
 export function useTickerLoop(): TickerLoop {
     const viewport = useRef<HTMLElement | null>(null);
     const run = useRef<HTMLElement | null>(null);
-    const [isScrolling, setIsScrolling] = useState(false);
+    const [repeat, setRepeat] = useState(1);
     const [duration, setDuration] = useState<number | null>(null);
 
     const measure = useCallback(() => {
@@ -57,12 +67,16 @@ export function useTickerLoop(): TickerLoop {
 
         const viewportWidth = v.clientWidth;
         const runWidth = r.scrollWidth;
+        // Unmeasurable (hidden container, fonts not in yet) — keep the current
+        // state (initially static) rather than animate blindly into a gap; the
+        // observers below re-measure once there is real geometry.
         if (runWidth < MIN_MEASURABLE_PX || viewportWidth < MIN_MEASURABLE_PX) return;
 
-        // `>=` is the seamlessness condition derived above, not a heuristic.
-        const shouldScroll = runWidth >= viewportWidth;
-        setIsScrolling(shouldScroll);
-        setDuration(shouldScroll ? runWidth / TICKER_SPEED_PX_PER_SEC : null);
+        // Seamlessness condition: repeat × runWidth ≥ viewportWidth.
+        const needed = Math.min(MAX_REPEAT, Math.max(1, Math.ceil(viewportWidth / runWidth)));
+        setRepeat(needed);
+        // One cycle travels half the track — `needed` copies of the run.
+        setDuration((needed * runWidth) / TICKER_SPEED_PX_PER_SEC);
     }, []);
 
     // Re-measure on resize, on font load, and whenever the strip's own content
@@ -95,9 +109,11 @@ export function useTickerLoop(): TickerLoop {
     return {
         viewportRef,
         runRef,
-        isScrolling,
-        trackProps: isScrolling
-            ? { style: duration ? ({ ["--mb-ticker-duration"]: `${duration.toFixed(2)}s` } as React.CSSProperties) : undefined }
+        repeat,
+        trackProps: duration !== null
+            ? { style: { ["--mb-ticker-duration"]: `${duration.toFixed(2)}s` } as React.CSSProperties }
+            // Only while unmeasured: no animation, duplicates hidden — never a
+            // half-measured strip sliding into a blank gap.
             : { "data-static": "true" },
     };
 }

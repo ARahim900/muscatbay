@@ -1651,10 +1651,11 @@ main#main-content {
   color: var(--foreground);
 }
 
-/* Nothing to reveal: every stat already fits, so holding still is correct —
-   sliding would only drag the content into an empty gap and snap back, which
-   is what made the strip look jammed on wide screens. Set by useTickerLoop,
-   which is the only place that can measure it. */
+/* Unmeasured only (hidden container, fonts still loading): hold still rather
+   than animate blindly into a blank gap. Once useTickerLoop can measure, it
+   repeats the run until half the track covers the viewport and the strip
+   ALWAYS scrolls — the "static when everything fits" behaviour was retired on
+   the owner's request (2026-07-29): a news band should be moving. */
 .mb-ticker-track[data-static="true"] {
   animation: none;
   width: 100%;
