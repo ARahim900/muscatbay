@@ -361,6 +361,38 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **"Water section crashed" + "ticker ballooned" QA report — diagnosed and fixed 2026-07-29 (second pass).**
+  Two screenshots from an operator's iPad, taken minutes after the 01:46 UTC
+  production deploy. Neither was what it looked like:
+  - **The /water "unexpected error" was the deploy race, not a water bug.** A
+    PWA session opened before a deploy still references the old content-hashed
+    chunk URLs; the first navigation to a not-yet-visited route requests a
+    chunk the new deployment no longer serves → the rejected dynamic import
+    lands in `app/error.tsx`. Proven not to be data-driven: both water views
+    were rendered in a jsdom harness against the **full live production
+    dataset** (350 meters × 30 months monthly; 350 Jul-26 daily rows, all five
+    tabs) with zero throws. `sw.js`'s own v5 history note records this exact
+    class. Fixes: `app/error.tsx` now detects stale-chunk errors and reloads
+    once automatically (sessionStorage guard against loops, re-armed on clean
+    boot by `register-sw`); `register-sw.tsx` re-checks for a new SW every
+    30 min and on visibilitychange, so long-lived control-room sessions adopt
+    new builds before an operator trips on one; both `/water` views are now
+    wrapped in `SectionBoundary` so a genuine render fault degrades to a
+    section panel instead of blanking the route.
+  - **The ticker was the reduced-motion fallback, not a regression of the
+    2026-07-26 fix.** That iPad has "Reduce Motion" on. The
+    `prefers-reduced-motion` CSS wrapped the stats (`flex-wrap: wrap`),
+    ballooning the 34px news band into a 4-row block. Reduced motion now stops
+    the *auto*-scroll only: the band keeps its single-line shape and the
+    off-screen tail is reachable by swipe (`overflow-x: auto`, scrollbar
+    hidden) — a user-initiated gesture is not the motion the OS setting asks
+    us to remove.
+  - **Perf: `/water` first paint.** `fetchWaterMeters` walked the ~10.5k-row
+    consumption table in 11 **sequential** 1000-row pages — ~11 back-to-back
+    round-trips to ap-northeast-1 was most of the first-visit delay. It now
+    HEAD-counts and fetches all pages in parallel (~2 round-trips total,
+    independent of how many months accrue).
+
 - **Mobile "missing sections / crash" incident — diagnosed and fixed 2026-07-29.**
   Reported after a colleague tested the PWA on their phone on 2026-07-28: the
   bottom navigation did not show all sections, some sections would not open, and

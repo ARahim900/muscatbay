@@ -14,6 +14,7 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 // Shared layout / shell
 import { PageHeader } from "@/components/shared/page-header";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { SectionBoundary } from "@/components/shared/section-boundary";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
@@ -234,17 +235,25 @@ export default function WaterPage() {
                         ]}
                     />
 
-                    {/* Monthly Dashboard View */}
+                    {/* Monthly Dashboard View — boundary-wrapped so a render fault
+                        in the (large) monthly dashboard degrades to a section
+                        panel instead of blanking the whole route into
+                        app/error.tsx. The Daily view's sections carry their own
+                        boundaries internally. */}
                     {dashboardView === "monthly" && (
                         <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
-                            <WaterMonthlyDashboard waterMeters={waterMeters} />
+                            <SectionBoundary title="Monthly water analysis">
+                                <WaterMonthlyDashboard waterMeters={waterMeters} />
+                            </SectionBoundary>
                         </div>
                     )}
 
                     {/* Daily Dashboard View */}
                     {dashboardView === "daily" && (
                         <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                            <DailyWaterReport />
+                            <SectionBoundary title="Daily water report">
+                                <DailyWaterReport />
+                            </SectionBoundary>
                         </div>
                     )}
                 </>

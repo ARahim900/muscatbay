@@ -12,6 +12,31 @@
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
+/**
+ * A failed lazy-chunk load is not a bug in the page — it is the deploy race:
+ * a session opened before a deploy still references old content-hashed chunk
+ * URLs, and the first navigation to a not-yet-visited route 404s on them.
+ * Observed live on 2026-07-29: an iPad PWA open across the 01:46 UTC deploy
+ * hit this exact boundary when the operator tapped Water at 01:52.
+ *
+ * The fix for that case is always the same — reload, which fetches the new
+ * shell and the new chunk hashes. Detect it and reload automatically (once),
+ * so the operator never sees an error panel for a condition that self-heals.
+ */
+function isStaleChunkError(error: Error): boolean {
+    const text = `${error.name} ${error.message}`;
+    return (
+        error.name === "ChunkLoadError" ||
+        /Loading chunk [^ ]+ failed/i.test(text) ||
+        /Failed to fetch dynamically imported module/i.test(text) ||
+        /Importing a module script failed/i.test(text) ||
+        /error loading dynamically imported module/i.test(text)
+    );
+}
+
+/** One reload per session — a genuine outage must not become a reload loop. */
+const RELOAD_GUARD_KEY = "mb-chunk-reload";
+
 export default function RouteError({
     error,
     reset,
@@ -22,6 +47,19 @@ export default function RouteError({
     useEffect(() => {
         // Keep a console breadcrumb; wire to telemetry here if/when it's added.
         console.error("Route error boundary caught:", error);
+
+        if (isStaleChunkError(error)) {
+            let alreadyTried = false;
+            try {
+                alreadyTried = sessionStorage.getItem(RELOAD_GUARD_KEY) === "1";
+                if (!alreadyTried) sessionStorage.setItem(RELOAD_GUARD_KEY, "1");
+            } catch {
+                // Storage unavailable (private mode) — reload once anyway; the
+                // guard only exists to stop loops, and without storage a loop
+                // would need the server to keep serving a broken build.
+            }
+            if (!alreadyTried) window.location.reload();
+        }
     }, [error]);
 
     return (
