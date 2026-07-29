@@ -406,7 +406,7 @@ stops at last month" problem is structurally closed:
   cause of the 2026-07-28 report — the RBAC chain above fully explains it — but
   it is a real hazard on any device below those versions.
 
-- **🔴 OPEN — Supabase RLS lets any signed-in account become an admin.**
+- **✅ CLOSED 2026-07-29 — Supabase RLS let any signed-in account become an admin.**
   Found 2026-07-29 by reading the **live** state of project
   `utnlgeuqajmwibqmdmgt` (not the migration files — the two disagree).
   `public.profiles` carries the correct anti-self-elevation policy
@@ -417,8 +417,10 @@ stops at last month" problem is structurally closed:
   `update profiles set role='admin' where id=auth.uid()` and self-promote — and
   can rewrite every other user's row. That makes `lib/rbac.ts`'s `viewer`
   default and the whole `ROLE_MODULES` gate unenforceable.
-  **Fix written, NOT applied:** `sql/migrations/20260729_rls_regression_fixes.sql`.
-  It must be run by the owner in the Supabase SQL editor.
+  **Applied to the live project on 2026-07-29** (migrations
+  `rls_regression_fixes_20260729` + `revoke_secdef_execute_from_public_20260729`).
+  Verified afterwards: `mb_authenticated_all` is gone and only the three scoped
+  policies remain, so `role` can no longer be self-edited.
 
 - **🟠 OPEN — RBAC is presentation-only.** 68 tables grant `authenticated` a
   blanket `ALL / USING true / WITH CHECK true`. A `viewer` (board-presentation
@@ -429,23 +431,43 @@ stops at last month" problem is structurally closed:
   2026-07-29 migration and sketched at the bottom of that file instead — it
   needs a per-module decision on who may write.
 
-- **🟠 OPEN — `water_monthly_consumption_backup_20260727` has RLS disabled.**
+- **✅ CLOSED 2026-07-29 — `water_monthly_consumption_backup_20260727` had RLS disabled.**
   The only table in `public` without RLS, so it is readable *and writable* by
   `anon` — i.e. by anyone holding the public anon key, which ships in the client
   bundle. It carries `account_number`. Created by migration `20260727061805`,
-  which post-dates the 2026-07-18 hardening pass and so was missed by it. Also
-  in the 2026-07-29 migration.
+  which post-dates the 2026-07-18 hardening pass and so was missed by it.
+  RLS is now enabled with no policy, denying anon and authenticated while
+  leaving `service_role` (restore-from-backup) working.
 
-- **🟠 OPEN — 12 SECURITY DEFINER functions are callable by `anon`.** Reachable
+- **✅ CLOSED 2026-07-29 — 13 SECURITY DEFINER functions were callable by `anon`.** Reachable
   unauthenticated at `/rest/v1/rpc/<name>`; the write-capable ones
   (`stp_upsert_operations`, `sync_grafana_water_consumption`,
   `aggregate_daily_to_monthly`, …) let an anonymous caller mutate operational
-  data. None is called from the browser — the syncs run as `service_role`, so
-  the revokes in the 2026-07-29 migration cost nothing.
+  data. None is called from the browser.
+
+  **This one bit back and is worth remembering.** The first migration ran
+  `revoke execute ... from anon` — a silent no-op. These functions carry the
+  default `EXECUTE TO PUBLIC` grant (the `=X/postgres` entry in
+  `pg_proc.proacl`), and `anon` inherits through PUBLIC; revoking from a *role*
+  never removes what it holds *via PUBLIC*. Post-apply verification caught it —
+  `anon` still had all 13 — and a second migration revoking from PUBLIC closed
+  it properly. **Verify a REVOKE with `has_function_privilege(...)`; do not
+  assume it did anything.** `service_role` (edge functions) and `postgres`
+  (all four cron jobs) keep EXECUTE, so automation was never at risk;
+  `authenticated` deliberately keeps it too, since the exposure was
+  unauthenticated reach.
 
 - **🔵 OPEN — dashboard-only auth settings.** Leaked-password protection
   (HaveIBeenPwned) is off, and signup restrictions are unconfirmed. Neither can
-  be changed from SQL; both are in `SECURITY_REMEDIATION.md`.
+  be changed from SQL or the Management API — they are Supabase dashboard
+  toggles and are the last items needing the owner. See `SECURITY_REMEDIATION.md`.
+
+- **Net effect of the 2026-07-29 database work.** Supabase's security advisor
+  went from **126 findings to 90**. Of the three ERROR-level items, two are
+  closed; the remaining one is the `water_meters_hierarchy` SECURITY DEFINER
+  *view* (a read-only helper, deliberately left alone). What remains is
+  dominated by the 67 `rls_policy_always_true` hits described in the next
+  item — the deliberate, product-decision-gated one.
 
 - **Mock-data substitution removed from the last three live paths — 2026-07-29.**
   The 2026-07-25 pass caught the login screen, `/water` and `lib/water-data.ts`,

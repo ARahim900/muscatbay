@@ -18,11 +18,35 @@
 > | 6. `search_path` pinning | ❌ **20 functions still mutable** |
 > | 6. `anon` EXECUTE on SECURITY DEFINER functions | ❌ **12 still callable by `anon`** |
 >
-> **The fix for everything marked ❌/⚠️ above is written and ready but NOT
-> applied:** `muscatbay/app/sql/migrations/20260729_rls_regression_fixes.sql`.
-> Review it, then run it in the Supabase SQL editor. It touches no automation
-> path (all syncs write via `service_role` or SECURITY DEFINER, both of which
-> bypass RLS) and removes no access the app actually uses.
+> ## ✅ APPLIED — 2026-07-29
+>
+> Everything marked ❌/⚠️ above is now **fixed on the live project**, applied as
+> two migrations: `rls_regression_fixes_20260729` and
+> `revoke_secdef_execute_from_public_20260729`. Source of record:
+> `muscatbay/app/sql/migrations/20260729_rls_regression_fixes.sql`.
+>
+> Verified after applying, by re-reading the live catalog:
+>
+> | Item | Before | After |
+> |---|---|---|
+> | `profiles` blanket `mb_authenticated_all` policy | present | **dropped** — only the 3 scoped policies remain, so `role` cannot be self-edited |
+> | Backup table with RLS off | 1 | **0** |
+> | SECURITY DEFINER functions `anon` can execute | 13 | **0** |
+> | Functions with a mutable `search_path` | 20 | **0** |
+> | Avatar bucket listing policy | present | **dropped** |
+> | Supabase security advisor findings | 126 | **90** (2 of 3 ERRORs cleared) |
+>
+> **Automation re-checked and unaffected:** all four cron jobs run as `postgres`,
+> which retains EXECUTE on every function touched; edge functions use
+> `service_role`, which also retains it. Last runs before the change were all
+> `succeeded`.
+>
+> ⚠️ **One trap worth recording.** The first migration used
+> `revoke execute ... from anon`, which was a **silent no-op** — these functions
+> carry the default `EXECUTE TO PUBLIC` grant and `anon` inherits through
+> PUBLIC, so revoking from the role changed nothing. Post-apply verification
+> caught it (`anon` still had all 13); the second migration revokes from PUBLIC
+> and closed it. Always confirm a REVOKE with `has_function_privilege(...)`.
 >
 > **Also newly found, and deliberately NOT in that migration** because it is a
 > behavioural change needing a product decision: 68 tables grant `authenticated`

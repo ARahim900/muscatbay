@@ -5,9 +5,18 @@
 -- `claude/app-audit-frontend-backend-2p3m0e`, by reading the LIVE state of
 -- project `utnlgeuqajmwibqmdmgt` (not the migration files).
 --
--- IMPORTANT — READ BEFORE APPLYING:
---   * This file is NOT auto-applied. Review it, then run it in the Supabase SQL
---     editor (or via `apply_migration`).
+-- ✅ APPLIED to the live project on 2026-07-29, as two migrations:
+--       `rls_regression_fixes_20260729`
+--       `revoke_secdef_execute_from_public_20260729`  (see the note in §3)
+--    Verified after applying: the blanket `profiles` policy is gone, the backup
+--    table has RLS on, `anon` can execute 0 SECURITY DEFINER functions (down
+--    from 13), 0 functions have a mutable search_path (down from 20), and the
+--    avatar listing policy is gone. Supabase's security advisor dropped from
+--    126 findings to 90, with all three ERROR-level items but one cleared.
+--    Automation re-checked: all four cron jobs run as `postgres`, which keeps
+--    EXECUTE on every function touched here.
+--
+-- NOTES:
 --   * It touches NO automation path. Every sync writes via `service_role` or a
 --     SECURITY DEFINER function, both of which bypass RLS entirely.
 --   * Nothing here removes access the app actually uses. Section 1 is the only
@@ -66,20 +75,41 @@ alter table public.water_monthly_consumption_backup_20260727 enable row level se
 -- /rest/v1/rpc/<name> using the public anon key. The write-capable ones let an
 -- anonymous caller mutate operational data; `reload_schema_cache` is a free
 -- availability lever. None of them is called from the browser — the syncs run
--- as service_role (edge functions / cron), which is unaffected by these revokes.
-revoke execute on function public.aggregate_daily_to_monthly(text, integer)      from anon;
-revoke execute on function public.bulk_upsert_stp_daily_reports(jsonb)           from anon;
-revoke execute on function public.calculate_daily_water_loss(text, integer)      from anon;
-revoke execute on function public.compute_water_loss_summary(text, integer)      from anon;
-revoke execute on function public.handle_new_user()                              from anon;
-revoke execute on function public.null_water_daily_placeholder_zeros()           from anon;
-revoke execute on function public.reload_schema_cache()                          from anon;
-revoke execute on function public.stp_upsert_daily_reports(jsonb)                from anon;
-revoke execute on function public.stp_upsert_operations(jsonb)                   from anon;
-revoke execute on function public.sync_grafana_water_consumption(text, text)     from anon;
-revoke execute on function public.temp_sync_upsert_stp_ops(jsonb)                from anon;
-revoke execute on function public.temp_sync_upsert_stp_reports(jsonb)            from anon;
-revoke execute on function public.get_available_months()                         from anon;
+-- as service_role (edge functions) or postgres (cron), neither of which is
+-- affected by these revokes.
+--
+-- ⚠️ REVOKE FROM **PUBLIC**, NOT FROM `anon`.
+--    The first attempt on 2026-07-29 used `revoke ... from anon` and was a
+--    silent no-op. These functions carry Postgres's default `EXECUTE TO PUBLIC`
+--    grant — visible as the leading `=X/postgres` entry in `pg_proc.proacl` —
+--    and `anon` inherits through PUBLIC. Revoking a privilege *from a role*
+--    does not remove one it holds *via PUBLIC*, so `anon` kept EXECUTE and the
+--    advisor still reported all 13 functions as anonymously callable. Only
+--    revoking from PUBLIC actually closes it. Always verify with
+--    `has_function_privilege('anon', oid, 'EXECUTE')` rather than trusting that
+--    the REVOKE did something.
+--
+--    The explicit postgres / authenticated / service_role grants survive, which
+--    is why automation is unaffected. This produces the same ACL shape that
+--    `rebuild_water_system_view` already had.
+--
+--    `authenticated` deliberately KEEPS execute: the exposure being closed is
+--    UNauthenticated reach. No browser code calls these RPCs, so revoking from
+--    `authenticated` too is possible later — but it is a separate, riskier
+--    change and is not bundled here.
+revoke execute on function public.aggregate_daily_to_monthly(text, integer)      from public, anon;
+revoke execute on function public.bulk_upsert_stp_daily_reports(jsonb)           from public, anon;
+revoke execute on function public.calculate_daily_water_loss(text, integer)      from public, anon;
+revoke execute on function public.compute_water_loss_summary(text, integer)      from public, anon;
+revoke execute on function public.handle_new_user()                              from public, anon;
+revoke execute on function public.null_water_daily_placeholder_zeros()           from public, anon;
+revoke execute on function public.reload_schema_cache()                          from public, anon;
+revoke execute on function public.stp_upsert_daily_reports(jsonb)                from public, anon;
+revoke execute on function public.stp_upsert_operations(jsonb)                   from public, anon;
+revoke execute on function public.sync_grafana_water_consumption(text, text)     from public, anon;
+revoke execute on function public.temp_sync_upsert_stp_ops(jsonb)                from public, anon;
+revoke execute on function public.temp_sync_upsert_stp_reports(jsonb)            from public, anon;
+revoke execute on function public.get_available_months()                         from public, anon;
 
 -- -----------------------------------------------------------------------------
 -- 4. AVATAR BUCKET — stop anonymous enumeration of every avatar
