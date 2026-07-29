@@ -154,7 +154,7 @@ export function DashboardTicker({
     if (loading && stats.length === 0 && !error) {
         return (
             <div
-                className="h-[68px] motion-safe:animate-pulse rounded-[10.5px] border border-border bg-card shadow-card-standard"
+                className="h-[44px] motion-safe:animate-pulse rounded-[10.5px] border border-border bg-card shadow-card-standard"
                 aria-hidden="true"
             />
         );

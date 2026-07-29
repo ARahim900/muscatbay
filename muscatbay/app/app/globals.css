@@ -1602,12 +1602,14 @@ main#main-content {
 /* Breaking-news band: a slim rectangular strip with a solid label block on the
    left and one line of text running beside it — the shape a TV news channel
    uses. The height comes from putting each stat on a SINGLE line; the old
-   stacked label-over-value layout is what made the strip tall. */
+   stacked label-over-value layout is what made the strip tall.
+   Sized up from 34px/10px/12.5px on the owner's request (2026-07-29) — the
+   original read as too small on control-room screens. Still one line. */
 .mb-ticker-note {
   display: flex;
   align-items: stretch;
   width: 100%;
-  min-height: 34px;
+  min-height: 42px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   border-radius: 4px;
@@ -1620,10 +1622,10 @@ main#main-content {
   flex-shrink: 0;
   align-items: center;
   margin: 0;
-  padding-inline: 0.75rem;
+  padding-inline: 0.875rem;
   background: var(--primary);
   color: var(--primary-foreground);
-  font-size: 9.5px;
+  font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.1em;
   line-height: 1;
@@ -1634,7 +1636,7 @@ main#main-content {
 /* One line per stat: label, then value, then the next stat. */
 .mb-ticker-label {
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -1643,7 +1645,7 @@ main#main-content {
 
 .mb-ticker-value {
   white-space: nowrap;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: var(--foreground);

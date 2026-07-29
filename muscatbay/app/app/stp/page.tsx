@@ -17,7 +17,6 @@ import {
     Recycle,
     Truck,
     DollarSign,
-    PiggyBank,
     TrendingUp,
     Gauge,
     Activity,
@@ -424,25 +423,31 @@ export default function STPPage() {
         const prevSavings = prevTSE * TSE_SAVING_RATE;
         const prevEconomicImpact = prevIncome + prevSavings;
         const prevEfficiency = prevInlet > 0 ? (prevTSE / prevInlet) * 100 : 0;
-        const prevDailyAvg = prevOperations.length > 0 ? prevInlet / prevOperations.length : 0;
 
         const hasPrev = prevOperations.length > 0;
 
         const inletTrend = hasPrev ? calcTrend(totalInlet, prevInlet) : null;
         const tseTrend = hasPrev ? calcTrend(totalTSE, prevTSE) : null;
         const tripsTrend = hasPrev ? calcTrend(totalTrips, prevTrips) : null;
-        const incomeTrend = hasPrev ? calcTrend(generatedIncome, prevIncome) : null;
-        const savingsTrend = hasPrev ? calcTrend(waterSavings, prevSavings) : null;
         const economicTrend = hasPrev ? calcTrend(totalEconomicImpact, prevEconomicImpact) : null;
         const efficiencyTrend = hasPrev ? calcTrend(treatmentEfficiency, prevEfficiency) : null;
-        const dailyAvgTrend = hasPrev ? calcTrend(dailyAverageInlet, prevDailyAvg) : null;
+
+        // Five cards, not eight — the 8-card deck was reported as clutter
+        // (2026-07-29). Nothing is dropped, three figures just stop being
+        // headline cards: Daily Average Inlet folds into the Inlet subtitle,
+        // and Generated Income + Water Savings fold into the Total Economic
+        // Impact subtitle (the total is their sum — three cards were saying
+        // one thing). The monthly financial chart below still plots income
+        // and savings as separate series.
+        const money = (v: number) =>
+            v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
         return [
             {
                 label: "Inlet Sewage",
                 value: totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 }),
                 unit: "m³",
-                subtitle: `Range: ${selectedDateRange.start} - ${selectedDateRange.end}`,
+                subtitle: `avg ${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³/day over this range`,
                 icon: Droplets,
                 variant: "primary" as const,
                 ...(inletTrend && { trend: inletTrend.trend, trendValue: inletTrend.trendValue }),
@@ -465,28 +470,10 @@ export default function STPPage() {
                 ...(tripsTrend && { trend: tripsTrend.trend, trendValue: tripsTrend.trendValue }),
             },
             {
-                label: "Generated Income",
-                value: generatedIncome.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-                unit: "OMR",
-                subtitle: "from discharge fees",
-                icon: DollarSign,
-                variant: "success" as const,
-                ...(incomeTrend && { trend: incomeTrend.trend, trendValue: incomeTrend.trendValue }),
-            },
-            {
-                label: "Water Savings",
-                value: waterSavings.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-                unit: "OMR",
-                subtitle: `${TSE_SAVING_RATE} OMR per m³`,
-                icon: PiggyBank,
-                variant: "primary" as const,
-                ...(savingsTrend && { trend: savingsTrend.trend, trendValue: savingsTrend.trendValue }),
-            },
-            {
                 label: "Total Economic Impact",
-                value: totalEconomicImpact.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
+                value: money(totalEconomicImpact),
                 unit: "OMR",
-                subtitle: "Income + Savings",
+                subtitle: `${money(generatedIncome)} income + ${money(waterSavings)} savings`,
                 icon: TrendingUp,
                 variant: "success" as const,
                 ...(economicTrend && { trend: economicTrend.trend, trendValue: economicTrend.trendValue }),
@@ -500,17 +487,8 @@ export default function STPPage() {
                 variant: "secondary" as const,
                 ...(efficiencyTrend && { trend: efficiencyTrend.trend, trendValue: efficiencyTrend.trendValue }),
             },
-            {
-                label: "Daily Average Inlet",
-                value: Math.round(dailyAverageInlet).toLocaleString('en-US', { maximumFractionDigits: 1 }),
-                unit: "m³",
-                subtitle: "Average Daily Input",
-                icon: Activity,
-                variant: "primary" as const,
-                ...(dailyAvgTrend && { trend: dailyAvgTrend.trend, trendValue: dailyAvgTrend.trendValue }),
-            }
         ];
-    }, [operations, prevOperations, selectedDateRange]);
+    }, [operations, prevOperations]);
 
     // Monthly chart data from filtered operations (sorted chronologically)
     const monthlyChartData = useMemo(() => {

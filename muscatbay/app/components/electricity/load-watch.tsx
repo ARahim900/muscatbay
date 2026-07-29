@@ -22,7 +22,7 @@ import { describeElectricityGates } from "@/lib/thresholds";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    HealthCard, MetricHeatmap, InspectionTicker, worstFirst, type TickerStat,
+    HealthCard, MetricHeatmap, InspectionTicker, worstFirst, type TickerStat, type HealthMetric,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import {
@@ -49,6 +49,49 @@ export function LoadWatch({
         [meters, allMonths, startMonth, endMonth],
     );
     const metrics = useMemo(() => worstFirst(buildCategoryMetrics(model)), [model]);
+
+    // ── Card budget: detail cards for what needs eyes, one fold for the rest ──
+    // The estate has 10 meter-type categories, so an exhaustive grid is a 2×5
+    // wall of cards — reported as clutter (2026-07-29). The cards' job is
+    // triage, not enumeration: every category that is NOT healthy always gets
+    // its own card (a warning is never folded away), then the biggest quiet
+    // categories fill up to the budget, and the remaining quiet ones collapse
+    // into a single combined card. Nothing is lost — every category still has
+    // its own row in the heatmap directly below.
+    const CARD_BUDGET = 5;
+    const { visibleMetrics, foldedCard } = useMemo(() => {
+        const calm = (s: HealthMetric["severity"]) => s === "good" || s === "nodata";
+        const attention = metrics.filter((m) => !calm(m.severity));
+        // `metrics` is worst-first, and within equal severity keeps the model's
+        // total-consumption order — so the quiet list starts with the biggest loads.
+        const quiet = metrics.filter((m) => calm(m.severity));
+        const fill = Math.max(0, CARD_BUDGET - attention.length);
+        const folded = quiet.slice(fill);
+
+        if (folded.length <= 1) {
+            // Folding a single category saves nothing — show it directly.
+            return { visibleMetrics: metrics, foldedCard: null };
+        }
+
+        const foldedKeys = new Set(folded.map((m) => m.key));
+        const foldedTotal = model.categories
+            .filter((c) => foldedKeys.has(c.type))
+            .reduce((s, c) => s + c.total, 0);
+        const foldedShare = model.categories
+            .filter((c) => foldedKeys.has(c.type))
+            .reduce((s, c) => s + c.share, 0);
+
+        const card: HealthMetric = {
+            key: "__folded",
+            title: `Other categories (${folded.length})`,
+            severity: "good",
+            headline: `${num(foldedTotal)} kWh`,
+            headlineNote: `${foldedShare.toFixed(0)}% of load · combined`,
+            subtitle: folded.map((m) => m.title).join(" · "),
+            facts: [{ label: "cost", value: `${num(foldedTotal * RATE)} OMR` }],
+        };
+        return { visibleMetrics: [...attention, ...quiet.slice(0, fill)], foldedCard: card };
+    }, [metrics, model]);
     const heat = useMemo(() => buildCategoryHeatmap(model, onInspectCell), [model, onInspectCell]);
     const findings = useMemo(() => buildElectricityFindings(model), [model]);
     const gateNote = useMemo(() => describeElectricityGates(), []);
@@ -104,11 +147,14 @@ export function LoadWatch({
                 <InspectionTicker caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
             </SectionBoundary>
 
-            {/* Category cards — worst first, tap to inspect (types → 2 or 5 cols, gap-free) */}
+            {/* Category cards — worst first, tap to inspect. Detail cards are
+                budgeted (see CARD_BUDGET above); the quiet tail folds into one
+                combined card, and the heatmap below still lists every category. */}
             <SectionBoundary title="Category health">
                 <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                        {metrics.map((m) => <HealthCard key={m.key} metric={m} onInspect={onInspectType} />)}
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                        {visibleMetrics.map((m) => <HealthCard key={m.key} metric={m} onInspect={onInspectType} />)}
+                        {foldedCard && <HealthCard key={foldedCard.key} metric={foldedCard} />}
                     </div>
                     <p className="text-[11px] leading-snug text-muted-foreground">
                         <span className="font-semibold uppercase tracking-wide">Thresholds in force · </span>{gateNote}

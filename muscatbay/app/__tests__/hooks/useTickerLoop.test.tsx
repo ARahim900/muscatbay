@@ -71,8 +71,9 @@ describe('ticker loop geometry', () => {
         stubWidths({ viewport: 400, run: 900 });
         render(<InspectionTicker caption="Estate briefing" items={items} />);
 
-        // 900px at 40px/s = 22.5s. A fixed duration made short runs crawl.
-        expect(track().style.getPropertyValue('--mb-ticker-duration')).toBe('22.50s');
+        // 900px at 26px/s ≈ 34.62s (speed lowered from 40 on the owner's
+        // request, 2026-07-29). A fixed duration made short runs crawl.
+        expect(track().style.getPropertyValue('--mb-ticker-duration')).toBe('34.62s');
     });
 
     it('sets no duration while static', () => {

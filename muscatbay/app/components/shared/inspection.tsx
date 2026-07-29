@@ -257,7 +257,7 @@ function TickerRun({ items, duplicate, runRef }: { items: TickerStat[]; duplicat
                 const tone = it.tone ?? "default";
                 return (
                     <li key={`${it.label}-${i}`} className="flex items-center gap-1.5" title={it.title}>
-                        <it.icon className="h-3.5 w-3.5 shrink-0" style={{ color: TICKER_ICON[tone] }} aria-hidden="true" />
+                        <it.icon className="h-4 w-4 shrink-0" style={{ color: TICKER_ICON[tone] }} aria-hidden="true" />
                         <span className="mb-ticker-label">{it.label}</span>
                         <span className={cn("mb-ticker-value", TICKER_VALUE[tone])}>{it.value}</span>
                     </li>
