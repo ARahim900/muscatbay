@@ -1,5 +1,60 @@
 # Security & Data Remediation — action checklist (2026-07-18)
 
+> ## ⚠️ Status re-verified against the LIVE database — 2026-07-29
+>
+> The audit on 2026-07-29 read the actual state of project
+> `utnlgeuqajmwibqmdmgt` rather than trusting this file. **The 2026-07-18
+> migration was applied by hand, in part.** What landed and what did not:
+>
+> | Step | State on 2026-07-29 |
+> |---|---|
+> | 1. Rotate `service_role` key | Cannot be verified from here — confirm in the dashboard |
+> | 2a. Drop anon write policies on water tables | ✅ **Applied** — no `anon` write policy remains |
+> | 2b. Enable RLS on the tables that had it off | ⚠️ **Partly** — the 2026-07-18 set is done, but `water_monthly_consumption_backup_20260727` (created *after*, by migration `20260727061805`) has **RLS disabled** |
+> | 2c. Block `profiles` role self-elevation | ❌ **Defeated** — the correct policy exists, but a blanket `mb_authenticated_all` (`ALL`, `USING true`, `WITH CHECK true`) sits beside it. Postgres OR's permissive policies, so **any signed-in user can still set their own `role` to `admin`** |
+> | 2d. `profiles.role` default → `viewer` | ✅ **Applied** |
+> | 4. Avatar folder scoping + bucket limits | ✅ **Applied** (a broad public SELECT on `storage.objects` still allows bucket *listing* — cosmetic, closed by the new migration) |
+> | 6. Leaked password protection | ❌ **Still off** |
+> | 6. `search_path` pinning | ❌ **20 functions still mutable** |
+> | 6. `anon` EXECUTE on SECURITY DEFINER functions | ❌ **12 still callable by `anon`** |
+>
+> ## ✅ APPLIED — 2026-07-29
+>
+> Everything marked ❌/⚠️ above is now **fixed on the live project**, applied as
+> two migrations: `rls_regression_fixes_20260729` and
+> `revoke_secdef_execute_from_public_20260729`. Source of record:
+> `muscatbay/app/sql/migrations/20260729_rls_regression_fixes.sql`.
+>
+> Verified after applying, by re-reading the live catalog:
+>
+> | Item | Before | After |
+> |---|---|---|
+> | `profiles` blanket `mb_authenticated_all` policy | present | **dropped** — only the 3 scoped policies remain, so `role` cannot be self-edited |
+> | Backup table with RLS off | 1 | **0** |
+> | SECURITY DEFINER functions `anon` can execute | 13 | **0** |
+> | Functions with a mutable `search_path` | 20 | **0** |
+> | Avatar bucket listing policy | present | **dropped** |
+> | Supabase security advisor findings | 126 | **90** (2 of 3 ERRORs cleared) |
+>
+> **Automation re-checked and unaffected:** all four cron jobs run as `postgres`,
+> which retains EXECUTE on every function touched; edge functions use
+> `service_role`, which also retains it. Last runs before the change were all
+> `succeeded`.
+>
+> ⚠️ **One trap worth recording.** The first migration used
+> `revoke execute ... from anon`, which was a **silent no-op** — these functions
+> carry the default `EXECUTE TO PUBLIC` grant and `anon` inherits through
+> PUBLIC, so revoking from the role changed nothing. Post-apply verification
+> caught it (`anon` still had all 13); the second migration revokes from PUBLIC
+> and closed it. Always confirm a REVOKE with `has_function_privilege(...)`.
+>
+> **Also newly found, and deliberately NOT in that migration** because it is a
+> behavioural change needing a product decision: 68 tables grant `authenticated`
+> a blanket `ALL / USING true / WITH CHECK true`, so `lib/rbac.ts` is
+> presentation-only — a `viewer` account can write and delete every table
+> through the REST API. See the note at the foot of the migration file.
+
+
 Companion to the application/storage audit. This lists the steps that must be
 done **by the project owner in the Supabase/GitHub dashboards** — they cannot
 and should not be automated from a code change. The code + SQL in this PR is the

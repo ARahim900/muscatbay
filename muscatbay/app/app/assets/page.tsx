@@ -256,12 +256,15 @@ export default function AssetsPage() {
                 console.warn("Assets silent refresh failed:", e);
                 return;
             }
+            // Supabase IS configured but the read failed. Demo assets here would
+            // put a fabricated register in front of an operator who has no way to
+            // tell it apart from the real one — show the failure instead.
             console.error("Supabase fetch failed:", e);
-            setError("Unable to load live data — showing demo data.");
-            const mockData = await getAssets();
-            setAssets(mockData);
-            setTotalCount(mockData.length);
-            setDataSource('mock');
+            const message = e instanceof Error ? e.message : "Unknown error";
+            setError(`Could not load the asset register from Supabase: ${message}`);
+            setAssets([]);
+            setTotalCount(0);
+            setDataSource('supabase');
         } finally {
             if (!silent) setLoading(false);
         }

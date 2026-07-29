@@ -3,9 +3,13 @@
 
 const { createClient } = require('@supabase/supabase-js');
 
-// NEW Supabase credentials
-const supabaseUrl = 'https://utnlgeuqajmwibqmdmgt.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0bmxnZXVxYWptd2licW1kbWd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3ODUzMDAsImV4cCI6MjA4MTM2MTMwMH0.W7SuJF5Ka0IhkCz4RwfaGuEboVrmR2tK9FqTxBb7kxM';
+// Credentials come from the environment — never hardcode keys in the repo.
+// Usage: NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... node scripts/tests/test-new-supabase.js
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY before running this script.');
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 

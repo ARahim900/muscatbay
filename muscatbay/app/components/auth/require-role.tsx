@@ -58,11 +58,15 @@ export function RequireRole({ module, children }: RequireRoleProps) {
 
     const allowed = isDevMode || canAccessModule(role, module);
 
-    useEffect(() => {
-        if (roleUnknown || allowed) return;
-        const t = setTimeout(() => router.push("/"), 4000);
-        return () => clearTimeout(t);
-    }, [roleUnknown, allowed, router]);
+    // NOTE — there is deliberately no auto-redirect here any more.
+    //
+    // A blocked module used to bounce to the dashboard after 4 s. On a phone
+    // that is indistinguishable from a crash: you tap a module, the page does
+    // not render, and moments later you are back at the start screen. That is
+    // precisely how this was reported on 2026-07-28 ("the app crashed and
+    // restarted from the beginning"). Navigating away from a page the user
+    // asked for, without them touching anything, is the wrong default — the
+    // panel below explains the situation and offers an explicit way back.
 
     if (roleUnknown) {
         return (
@@ -91,14 +95,14 @@ export function RequireRole({ module, children }: RequireRoleProps) {
                     </h2>
                     <p className="text-sm text-muted-foreground">
                         Your account is a <strong className="text-foreground">{ROLE_LABEL[role]}</strong> and this module is restricted.
-                        Returning you to the dashboard shortly.
+                        Ask an administrator to change your role if you need access.
                     </p>
                 </div>
                 <button
                     onClick={() => router.push("/")}
                     className="min-h-11 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                    Go to dashboard now
+                    Go to dashboard
                 </button>
             </div>
         </div>

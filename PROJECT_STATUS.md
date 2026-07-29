@@ -361,6 +361,143 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Mobile "missing sections / crash" incident — diagnosed and fixed 2026-07-29.**
+  Reported after a colleague tested the PWA on their phone on 2026-07-28: the
+  bottom navigation did not show all sections, some sections would not open, and
+  the app "crashed and restarted from the beginning". **None of it was a crash.**
+  All three symptoms were one root cause, confirmed against the live database:
+  - That colleague's account was created **2026-07-28** and carries the role
+    **`viewer`** — which is also the `profiles.role` column default, so it is
+    what *every* new sign-up gets. `ROLE_MODULES.viewer` listed only dashboard,
+    water, electricity, stp and settings.
+  - **Symptom 1** — the Modules sheet in `components/layout/bottom-nav.tsx`
+    filters through `canAccessModule`, so it rendered **3 of 8** modules.
+    (The dock itself is always 4 fixed tabs: Overview / Modules / Alerts /
+    Profile.)
+  - **Symptom 2 + 3** — `components/dashboard/module-coverage.tsx` was **not**
+    RBAC-filtered. It rendered `<Link>` cards for exactly the five modules a
+    viewer cannot open. Tapping one hit `RouteRoleGuard`, which showed a
+    "Module not available" panel and then **auto-redirected to `/` after 4 s**.
+    Tap a module → it does not render → seconds later you are back at the start
+    screen. That is the "crash and restart".
+
+  Fixes, all in the 2026-07-29 change:
+  - **`lib/rbac.ts` — every role now sees every module**, per the owner's
+    instruction that all users may view all sections. The per-role split is gone
+    rather than patched, so a new sign-up needs no manual promotion. The `Role`
+    type and the gating machinery stay in place for future use.
+  - **`components/dashboard/module-coverage.tsx` now applies the same RBAC
+    filter as the sidebar and bottom nav**, so all three navigation surfaces
+    agree and the dashboard can never again offer a door the guard slams.
+  - **`components/auth/require-role.tsx` no longer auto-redirects.** Navigating
+    the user away from a page they asked for, with no input from them, is what
+    made a permissions block read as a crash. The panel now explains and offers
+    an explicit button.
+  - **`__tests__/lib/rbac.test.ts`** (14 tests) locks all of the above in.
+
+- **`AbortSignal.any` was unguarded on older iOS — fixed 2026-07-29.**
+  `functions/supabase-client.ts` wrapped every Supabase request in
+  `AbortSignal.any([...])`, which landed in **Safari 17.4** (and Chrome 116 /
+  Firefox 124). On an older iPhone that threw a `TypeError` inside *every*
+  Supabase call, auth included — a whole-app failure that would look exactly
+  like "sections don't render on his device but work on mine". `AbortSignal.timeout`
+  (Safari 16) had the same exposure. Both are now feature-detected, falling back
+  to Supabase's own signal rather than throwing. This was **not** confirmed as a
+  cause of the 2026-07-28 report — the RBAC chain above fully explains it — but
+  it is a real hazard on any device below those versions.
+
+- **✅ CLOSED 2026-07-29 — Supabase RLS let any signed-in account become an admin.**
+  Found 2026-07-29 by reading the **live** state of project
+  `utnlgeuqajmwibqmdmgt` (not the migration files — the two disagree).
+  `public.profiles` carries the correct anti-self-elevation policy
+  (`"Users can update own profile"`, whose `WITH CHECK` pins `role` to its
+  current value) **and** a blanket `mb_authenticated_all` (`ALL`, `USING true`,
+  `WITH CHECK true`). Postgres **OR**s permissive policies, so the blanket one
+  wins outright: any logged-in user can run
+  `update profiles set role='admin' where id=auth.uid()` and self-promote — and
+  can rewrite every other user's row. That makes `lib/rbac.ts`'s `viewer`
+  default and the whole `ROLE_MODULES` gate unenforceable.
+  **Applied to the live project on 2026-07-29** (migrations
+  `rls_regression_fixes_20260729` + `revoke_secdef_execute_from_public_20260729`).
+  Verified afterwards: `mb_authenticated_all` is gone and only the three scoped
+  policies remain, so `role` can no longer be self-edited.
+
+- **🟠 OPEN — RBAC is presentation-only.** 68 tables grant `authenticated` a
+  blanket `ALL / USING true / WITH CHECK true`. A `viewer` (board-presentation
+  profile) or `contractor` account is hidden from modules in the sidebar but can
+  still read **and write and delete** every table through the REST API with its
+  own session token. Closing this is a real behavioural change (a demoted
+  account loses write access), so it is deliberately left out of the
+  2026-07-29 migration and sketched at the bottom of that file instead — it
+  needs a per-module decision on who may write.
+
+- **✅ CLOSED 2026-07-29 — `water_monthly_consumption_backup_20260727` had RLS disabled.**
+  The only table in `public` without RLS, so it is readable *and writable* by
+  `anon` — i.e. by anyone holding the public anon key, which ships in the client
+  bundle. It carries `account_number`. Created by migration `20260727061805`,
+  which post-dates the 2026-07-18 hardening pass and so was missed by it.
+  RLS is now enabled with no policy, denying anon and authenticated while
+  leaving `service_role` (restore-from-backup) working.
+
+- **✅ CLOSED 2026-07-29 — 13 SECURITY DEFINER functions were callable by `anon`.** Reachable
+  unauthenticated at `/rest/v1/rpc/<name>`; the write-capable ones
+  (`stp_upsert_operations`, `sync_grafana_water_consumption`,
+  `aggregate_daily_to_monthly`, …) let an anonymous caller mutate operational
+  data. None is called from the browser.
+
+  **This one bit back and is worth remembering.** The first migration ran
+  `revoke execute ... from anon` — a silent no-op. These functions carry the
+  default `EXECUTE TO PUBLIC` grant (the `=X/postgres` entry in
+  `pg_proc.proacl`), and `anon` inherits through PUBLIC; revoking from a *role*
+  never removes what it holds *via PUBLIC*. Post-apply verification caught it —
+  `anon` still had all 13 — and a second migration revoking from PUBLIC closed
+  it properly. **Verify a REVOKE with `has_function_privilege(...)`; do not
+  assume it did anything.** `service_role` (edge functions) and `postgres`
+  (all four cron jobs) keep EXECUTE, so automation was never at risk;
+  `authenticated` deliberately keeps it too, since the exposure was
+  unauthenticated reach.
+
+- **🔵 OPEN — dashboard-only auth settings.** Leaked-password protection
+  (HaveIBeenPwned) is off, and signup restrictions are unconfirmed. Neither can
+  be changed from SQL or the Management API — they are Supabase dashboard
+  toggles and are the last items needing the owner. See `SECURITY_REMEDIATION.md`.
+
+- **Net effect of the 2026-07-29 database work.** Supabase's security advisor
+  went from **126 findings to 90**. Of the three ERROR-level items, two are
+  closed; the remaining one is the `water_meters_hierarchy` SECURITY DEFINER
+  *view* (a read-only helper, deliberately left alone). What remains is
+  dominated by the 67 `rls_policy_always_true` hits described in the next
+  item — the deliberate, product-decision-gated one.
+
+- **Mock-data substitution removed from the last three live paths — 2026-07-29.**
+  The 2026-07-25 pass caught the login screen, `/water` and `lib/water-data.ts`,
+  but three sites survived and were still swapping fabricated figures in front
+  of operators:
+  - **`hooks/useDashboardData.ts` was the worst of them, because it substituted
+    *partially*.** `isLiveData` was set true if **any one** of the four fetches
+    succeeded, then `if (stpData.length === 0) stpData = await getSTPOperations()`
+    filled the gaps with demo numbers. So a deck where water and electricity
+    read fine but STP came back empty rendered invented STP inlet, TSE and
+    revenue figures **under a green "Live Data" badge** — unfalsifiable from the
+    UI. Now: demo data loads only when Supabase is unconfigured; a failed read
+    is named in an error banner; an empty source renders `—` / "No reading", not
+    `0.0k m³`; and a partially-failed deck is no longer written to the session
+    cache.
+  - **`app/electricity/page.tsx`** swapped in `MOCK` meters on a failed *or
+    empty* fetch. Now mirrors the STP page's pattern (which was already correct
+    and is the reference).
+  - **`app/assets/page.tsx`** rendered a demo asset register on fetch failure.
+    Now shows the failure.
+
+- **Four readers queried tables that do not exist — removed 2026-07-29.**
+  `getAmcContracts/Expiry/Contacts/Pricing` in `functions/api/contractors.ts`
+  read `amc_contracts`, `amc_expiry`, `amc_contacts` and `amc_pricing`. The real
+  tables are `amc_contractor_details/expiry/pricing/summary`. Every call had been
+  failing and returning `[]` behind a `console.error`. Nothing in the UI called
+  them, so nothing broke — but they were four live examples of the swallow-the-
+  error pattern. Deleted along with their now-unused `entities/contractor.ts`
+  types and `lib/supabase.ts` re-exports.
+
 - **Ticker loop fixed — 2026-07-26. It was jamming on wide screens.**
   The `mb-ticker-*` strips hold two identical copies and animate
   `translateX(0 → -50%)`, i.e. they shift by exactly one copy's width `W`. For

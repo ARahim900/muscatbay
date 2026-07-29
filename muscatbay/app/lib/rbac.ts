@@ -33,32 +33,42 @@ export type ModuleKey =
     | "firefighting"
     | "settings";
 
-/** Which modules each role can see. Roles inherit nothing — list exhaustively. */
+/** Every module in the app, in sidebar order. */
+const ALL_MODULES: ModuleKey[] = [
+    "dashboard", "water", "electricity", "stp",
+    "contractors", "hvac", "assets", "pest-control", "firefighting",
+    "settings",
+];
+
+/**
+ * Which modules each role can see.
+ *
+ * **Every role sees every module — decided by the owner on 2026-07-29.**
+ *
+ * This map used to differ per role, and that caused a real incident. A
+ * colleague signed up on 2026-07-28, landed on the `viewer` default (which is
+ * also the `profiles.role` column default, so it is what EVERY new sign-up
+ * gets), and could reach only Water, Electricity and STP. The Modules sheet
+ * showed 3 of 8 entries, and the dashboard's coverage rail still linked to the
+ * 5 hidden modules — so tapping one hit `RouteRoleGuard`, which bounced back to
+ * the dashboard. It read as "the app crashed and restarted".
+ *
+ * The instruction is that all users may view all sections, so the per-role
+ * split is gone rather than patched: a new sign-up now sees the whole app with
+ * no manual promotion step. The `Role` type is kept because it still labels the
+ * account in the UI (`ROLE_LABEL`), and the machinery below is unchanged — if
+ * modules ever need restricting again, narrow a role here and the sidebar,
+ * bottom nav and route guard all follow.
+ *
+ * Note this governs VISIBILITY only. It never was, and is not, a data-access
+ * control: the hard gate is Supabase RLS on the underlying tables.
+ */
 export const ROLE_MODULES: Record<Role, ModuleKey[]> = {
-    admin: [
-        "dashboard", "water", "electricity", "stp",
-        "contractors", "hvac", "assets", "pest-control", "firefighting",
-        "settings",
-    ],
-    manager: [
-        "dashboard", "water", "electricity", "stp",
-        "contractors", "hvac", "assets", "pest-control", "firefighting",
-        "settings",
-    ],
-    operator: [
-        "dashboard", "water", "electricity", "stp",
-        "hvac", "assets", "pest-control", "firefighting",
-        "settings",
-    ],
-    contractor: [
-        // Contractors see only their assigned module(s). Default: HVAC.
-        // Override per-user via user_profiles.module_scope (JSONB array) if needed.
-        "dashboard", "hvac", "settings",
-    ],
-    viewer: [
-        // Read-only board-presentation profile.
-        "dashboard", "water", "electricity", "stp", "settings",
-    ],
+    admin: ALL_MODULES,
+    manager: ALL_MODULES,
+    operator: ALL_MODULES,
+    contractor: ALL_MODULES,
+    viewer: ALL_MODULES,
 };
 
 /** Module → route mapping (used by sidebar + bottom-nav). */

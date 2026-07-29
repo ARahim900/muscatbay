@@ -62,10 +62,6 @@ export {
     type AmcContractorDetails,
     type AmcContractorExpiry,
     type AmcContractorPricing,
-    type AmcContract,
-    type AmcExpiry,
-    type AmcContact,
-    type AmcPricing,
     transformContractor,
     // Electricity
     type ElectricityMeter,
@@ -102,10 +98,6 @@ export {
     getContractorExpiry,
     getContractorPricing,
     getCombinedContractors,
-    getAmcContracts,
-    getAmcExpiry,
-    getAmcContacts,
-    getAmcPricing,
     // Electricity
     getElectricityMetersFromSupabase,
     // STP
