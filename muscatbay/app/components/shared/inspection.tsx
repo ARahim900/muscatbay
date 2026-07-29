@@ -270,21 +270,25 @@ function TickerRun({ items, duplicate, runRef }: { items: TickerStat[]; duplicat
 /**
  * A compact news-ticker briefing strip: a fixed caption on the left and the
  * stats looping continuously beside it — the same idiom as the Water Daily
- * briefing. Hover/focus pauses the loop; reduced-motion falls back to a static
- * wrapped strip (both handled by the shared mb-ticker-* CSS).
+ * briefing. The run is repeated (`2 × repeat` copies) until half the track is
+ * viewport-wide, so the loop is seamless AND always moving. Hover/focus pauses
+ * it; reduced-motion gets a single still, swipeable run (shared mb-ticker CSS).
  */
 export function InspectionTicker({ caption, items }: { caption: string; items: TickerStat[] }) {
-    // Measures the run against the viewport so the loop stays seamless and only
-    // runs when there is actually something off-screen to reveal.
-    const { viewportRef, runRef, trackProps } = useTickerLoop();
+    // Measures one run against the viewport to derive how many copies the
+    // seamless loop needs and how long one cycle takes at constant speed.
+    const { viewportRef, runRef, trackProps, repeat } = useTickerLoop();
     return (
         <section aria-label={caption} className="mb-ticker-note">
             <p className="mb-ticker-note__caption">{caption}</p>
             <div className="flex min-w-0 flex-1 items-center px-3">
                 <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
                     <div className="mb-ticker-track items-center" {...trackProps}>
-                        <TickerRun items={items} runRef={runRef} />
-                        <TickerRun items={items} duplicate />
+                        {/* Only the first copy is measured or read aloud; the rest
+                            exist to keep the viewport covered mid-cycle. */}
+                        {Array.from({ length: repeat * 2 }, (_, i) => (
+                            <TickerRun key={i} items={items} duplicate={i > 0} runRef={i === 0 ? runRef : undefined} />
+                        ))}
                     </div>
                 </div>
             </div>

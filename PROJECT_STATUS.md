@@ -361,6 +361,31 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Ticker always scrolls + STP down to four cards — 2026-07-29 (owner follow-up).**
+  - **The "static when everything fits" ticker rule is retired.** The
+    2026-07-26 jam fix held the strip still whenever one run was narrower than
+    the viewport — geometrically correct, but the owner's verdict is that a
+    news band should always be moving. `useTickerLoop` now satisfies the same
+    seamlessness constraint the way a news channel does: the run is
+    **repeated** (`repeat = ceil(viewport / run)` copies per half-track, both
+    tickers render `2 × repeat` runs) so half the track always covers the
+    viewport, and the strip always scrolls at the constant 26 px/s. Duration
+    derives from the travelled distance (`repeat × runWidth`). Copies after
+    the first are `aria-hidden` (read aloud once); under
+    `prefers-reduced-motion` the CSS hides every hidden copy, so the repeat
+    never shows duplicated stats — one still, swipeable run. `data-static`
+    now means "unmeasured yet" only. Geometry tests updated (6 cases).
+  - **STP summary: 5 → 4 cards** (Inlet Sewage, TSE for Irrigation, Tanker
+    Trips, Total Economic Impact — one clean 4-across row). Treatment
+    Efficiency stopped being a card: it is TSE ÷ inlet, so it now rides on the
+    TSE subtitle ("N% of inlet recycled") and remains the LEAD health card on
+    the Plant Watch tab with its target bands intact.
+  - **Note for testers**: on a device with iOS/macOS "Reduce Motion" enabled
+    (as on the iPad in the 2026-07-29 screenshots) the ticker deliberately
+    does not auto-scroll — that is the OS accessibility contract, and the
+    strip is swipeable instead. Turn off Settings → Accessibility → Motion →
+    Reduce Motion to see the marquee.
+
 - **Ticker pace/size + Electricity/STP KPI de-clutter — 2026-07-29 (owner request).**
   - **Ticker**: scroll speed lowered 40 → 26 px/s (`hooks/useTickerLoop.ts` —
     the speed constant is the single source; the pace test derives from it) and
