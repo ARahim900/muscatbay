@@ -18,6 +18,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CoverageState, ModuleCoverage } from "@/hooks/useModuleCoverage";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useAuth } from "@/components/auth/auth-provider";
+import { canAccessModule } from "@/lib/rbac";
 import { MOTION } from "@/lib/motion";
 
 /**
@@ -146,6 +149,21 @@ function ModuleGrid({ modules }: { modules: ModuleCoverage[] }) {
 }
 
 export function ModuleCoverageSection({ modules, loading }: ModuleCoverageSectionProps) {
+    const role = useUserRole();
+    const { isDevMode } = useAuth();
+
+    // Every card here is a <Link>. Offering one for a module the user's role
+    // cannot open sends them into RouteRoleGuard, which shows a "not available"
+    // panel and then redirects to the dashboard — indistinguishable, on a phone,
+    // from the app crashing and restarting. That is exactly what was reported on
+    // 2026-07-28. Show only doors that open. Same rule as the sidebar and the
+    // bottom nav, so all three navigation surfaces agree.
+    const visible = isDevMode ? modules : modules.filter((m) => canAccessModule(role, m.key));
+
+    // Nothing this user can reach → drop the section rather than render an
+    // empty card with a heading promising five modules.
+    if (!loading && visible.length === 0) return null;
+
     return (
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
@@ -166,7 +184,7 @@ export function ModuleCoverageSection({ modules, loading }: ModuleCoverageSectio
                         ))}
                     </div>
                 ) : (
-                    <ModuleGrid modules={modules} />
+                    <ModuleGrid modules={visible} />
                 )}
             </CardContent>
         </Card>

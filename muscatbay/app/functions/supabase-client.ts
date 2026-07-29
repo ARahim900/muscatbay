@@ -52,10 +52,29 @@ export function getSupabaseClient(): SupabaseClient | null {
                     // We must NOT replace Supabase's signal — dropping it causes
                     // "signal is aborted without reason" AbortErrors when Supabase
                     // internally cancels auth requests (e.g. lock refresh conflicts).
-                    const timeoutSignal = AbortSignal.timeout(30_000);
-                    const signal = options.signal
-                        ? AbortSignal.any([options.signal, timeoutSignal])
-                        : timeoutSignal;
+                    //
+                    // Both APIs are feature-detected. `AbortSignal.any` landed in
+                    // Safari 17.4 (Mar 2024) and `AbortSignal.timeout` in Safari 16,
+                    // so on an older iPhone the unguarded calls threw a TypeError
+                    // inside EVERY Supabase request — auth included. The failure
+                    // surfaced as modules that never render on one colleague's
+                    // device while working everywhere else. Losing the timeout on
+                    // an old browser is a far better outcome than losing the app.
+                    const timeoutSignal =
+                        typeof AbortSignal.timeout === "function"
+                            ? AbortSignal.timeout(30_000)
+                            : null;
+
+                    let signal = options.signal ?? undefined;
+                    if (timeoutSignal) {
+                        if (!options.signal) {
+                            signal = timeoutSignal;
+                        } else if (typeof AbortSignal.any === "function") {
+                            signal = AbortSignal.any([options.signal, timeoutSignal]);
+                        }
+                        // else: keep Supabase's own signal — combining is
+                        // unsupported here, and its signal is the critical one.
+                    }
 
                     return fetch(url, { ...options, signal });
                 },

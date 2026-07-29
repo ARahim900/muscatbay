@@ -361,6 +361,51 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Mobile "missing sections / crash" incident — diagnosed and fixed 2026-07-29.**
+  Reported after a colleague tested the PWA on their phone on 2026-07-28: the
+  bottom navigation did not show all sections, some sections would not open, and
+  the app "crashed and restarted from the beginning". **None of it was a crash.**
+  All three symptoms were one root cause, confirmed against the live database:
+  - That colleague's account was created **2026-07-28** and carries the role
+    **`viewer`** — which is also the `profiles.role` column default, so it is
+    what *every* new sign-up gets. `ROLE_MODULES.viewer` listed only dashboard,
+    water, electricity, stp and settings.
+  - **Symptom 1** — the Modules sheet in `components/layout/bottom-nav.tsx`
+    filters through `canAccessModule`, so it rendered **3 of 8** modules.
+    (The dock itself is always 4 fixed tabs: Overview / Modules / Alerts /
+    Profile.)
+  - **Symptom 2 + 3** — `components/dashboard/module-coverage.tsx` was **not**
+    RBAC-filtered. It rendered `<Link>` cards for exactly the five modules a
+    viewer cannot open. Tapping one hit `RouteRoleGuard`, which showed a
+    "Module not available" panel and then **auto-redirected to `/` after 4 s**.
+    Tap a module → it does not render → seconds later you are back at the start
+    screen. That is the "crash and restart".
+
+  Fixes, all in the 2026-07-29 change:
+  - **`lib/rbac.ts` — every role now sees every module**, per the owner's
+    instruction that all users may view all sections. The per-role split is gone
+    rather than patched, so a new sign-up needs no manual promotion. The `Role`
+    type and the gating machinery stay in place for future use.
+  - **`components/dashboard/module-coverage.tsx` now applies the same RBAC
+    filter as the sidebar and bottom nav**, so all three navigation surfaces
+    agree and the dashboard can never again offer a door the guard slams.
+  - **`components/auth/require-role.tsx` no longer auto-redirects.** Navigating
+    the user away from a page they asked for, with no input from them, is what
+    made a permissions block read as a crash. The panel now explains and offers
+    an explicit button.
+  - **`__tests__/lib/rbac.test.ts`** (14 tests) locks all of the above in.
+
+- **`AbortSignal.any` was unguarded on older iOS — fixed 2026-07-29.**
+  `functions/supabase-client.ts` wrapped every Supabase request in
+  `AbortSignal.any([...])`, which landed in **Safari 17.4** (and Chrome 116 /
+  Firefox 124). On an older iPhone that threw a `TypeError` inside *every*
+  Supabase call, auth included — a whole-app failure that would look exactly
+  like "sections don't render on his device but work on mine". `AbortSignal.timeout`
+  (Safari 16) had the same exposure. Both are now feature-detected, falling back
+  to Supabase's own signal rather than throwing. This was **not** confirmed as a
+  cause of the 2026-07-28 report — the RBAC chain above fully explains it — but
+  it is a real hazard on any device below those versions.
+
 - **🔴 OPEN — Supabase RLS lets any signed-in account become an admin.**
   Found 2026-07-29 by reading the **live** state of project
   `utnlgeuqajmwibqmdmgt` (not the migration files — the two disagree).
