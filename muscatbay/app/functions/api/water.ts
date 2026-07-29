@@ -70,6 +70,17 @@ function periodToConsumptionKey(period: string): string | null {
     return `${MONTH_ABBR[monthIdx]}-${match[1].slice(2)}`;
 }
 
+/** Inverse of {@link periodToConsumptionKey}: `"Jul-26"` → `"2026-07"`, or `null`. */
+function consumptionKeyToPeriod(key: string): string | null {
+    const [mon, yy] = key.split('-');
+    const monthIdx = MONTH_ABBR.indexOf(mon);
+    if (monthIdx === -1 || !/^\d{2}$/.test(yy ?? '')) return null;
+    return `20${yy}-${String(monthIdx + 1).padStart(2, '0')}`;
+}
+
+/** The 31 `day_N` columns of the wide `water_daily_consumption` table. */
+const DAY_COLUMNS = Array.from({ length: 31 }, (_, i) => `day_${i + 1}`);
+
 const METER_LEVELS = new Set<WaterMeter['level']>(['L1', 'L2', 'L3', 'L4', 'DC', 'N/A']);
 
 interface WaterMeterRow {
@@ -88,6 +99,49 @@ interface MonthlyConsumptionRow {
     account_number: string;
     period: string;
     consumption: number | string | null;
+}
+
+/** One wide daily row, reduced to the columns the month-to-date rollup needs. */
+type DailyWideRow = { account_number: string; month: string } & Record<string, number | string | null>;
+
+/**
+ * A month whose figures in the response are **month-to-date sums of the daily
+ * readings**, because the official monthly import for it has not landed yet.
+ *
+ * The official monthly reads for a month are imported a few days into the
+ * following month, so without this the current month never appeared anywhere
+ * in the Monthly view until that import. The daily readings are real recorded
+ * data — summing them is aggregation, not estimation — but they are not the
+ * official billing reads, so the UI must label these months as month-to-date
+ * rather than presenting them as final.
+ */
+export interface DerivedMonth {
+    /** Consumption key, e.g. `"Jul-26"`. */
+    month: string;
+    /** Highest day-of-month that has at least one reading (e.g. `28`). */
+    throughDay: number;
+}
+
+/**
+ * Sum one wide daily row's `day_N` readings.
+ *
+ * `null` days are skipped, not counted as zero; a row with no readings at all
+ * yields `value: null` so "not read" never masquerades as "consumed nothing".
+ * Negative days keep their sign — the caller surfaces impossible totals.
+ * Exported for tests; pure.
+ */
+export function monthToDateFromDailyRow(row: DailyWideRow): { value: number | null; lastDay: number } {
+    let value: number | null = null;
+    let lastDay = 0;
+    for (let day = 1; day <= 31; day++) {
+        const raw = row[`day_${day}`];
+        if (raw === null || raw === undefined) continue;
+        const num = Number(raw);
+        if (!Number.isFinite(num)) continue;
+        value = (value ?? 0) + num;
+        lastDay = day;
+    }
+    return { value, lastDay };
 }
 
 /** A monthly reading the source data reported as negative (physically impossible). */
@@ -109,12 +163,15 @@ export interface NegativeReading {
  * honest error state instead of silently rendering an empty (or fabricated)
  * dashboard. `negatives` lists source rows whose consumption is negative — the
  * values are passed through untouched so the UI can flag them, rather than
- * being rewritten to 0 behind the operator's back.
+ * being rewritten to 0 behind the operator's back. `derivedMonths` names the
+ * months whose figures are month-to-date daily sums (see {@link DerivedMonth})
+ * so the UI can label their provenance.
  */
 export interface WaterMetersResult {
     meters: WaterMeter[];
     error: string | null;
     negatives: NegativeReading[];
+    derivedMonths: DerivedMonth[];
 }
 
 /**
@@ -135,7 +192,7 @@ export interface WaterMetersResult {
 export async function fetchWaterMeters(): Promise<WaterMetersResult> {
     const client = getSupabaseClient();
     if (!client) {
-        return { meters: [], error: 'Supabase is not configured.', negatives: [] };
+        return { meters: [], error: 'Supabase is not configured.', negatives: [], derivedMonths: [] };
     }
 
     try {
@@ -148,12 +205,12 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
 
         if (metersResult.error) {
             console.error('Error fetching water meters:', metersResult.error.message);
-            return { meters: [], error: `Could not read water meters: ${metersResult.error.message}`, negatives: [] };
+            return { meters: [], error: `Could not read water meters: ${metersResult.error.message}`, negatives: [], derivedMonths: [] };
         }
 
         const meters = metersResult.data ?? [];
         if (meters.length === 0) {
-            return { meters: [], error: null, negatives: [] };
+            return { meters: [], error: null, negatives: [], derivedMonths: [] };
         }
 
         // The consumption table is ~10k rows and PostgREST caps responses at
@@ -168,7 +225,7 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
             .gte('period', PERIOD_FLOOR);
         if (countResult.error) {
             console.error('Error counting water monthly consumption:', countResult.error.message);
-            return { meters: [], error: `Could not read monthly consumption: ${countResult.error.message}`, negatives: [] };
+            return { meters: [], error: `Could not read monthly consumption: ${countResult.error.message}`, negatives: [], derivedMonths: [] };
         }
         const totalRows = countResult.count ?? 0;
 
@@ -191,7 +248,7 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
         for (const { data, error } of pages) {
             if (error) {
                 console.error('Error fetching water monthly consumption:', error.message);
-                return { meters: [], error: `Could not read monthly consumption: ${error.message}`, negatives: [] };
+                return { meters: [], error: `Could not read monthly consumption: ${error.message}`, negatives: [], derivedMonths: [] };
             }
             consumptionRows.push(...(data ?? []));
         }
@@ -202,6 +259,77 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
             if (list) list.push(row);
             else byAccount.set(row.account_number, [row]);
         }
+
+        // ── Month-to-date fallback for months the monthly import hasn't reached ──
+        // The official monthly reads for a month are imported a few days into the
+        // NEXT month, so the current month has daily readings but no monthly rows
+        // — and used to be invisible in the Monthly view until that import. Sum
+        // the real daily readings for exactly those months and report them as
+        // `derivedMonths` so the UI labels them as month-to-date, not final.
+        // When the official import lands, the month leaves this branch on the
+        // next fetch and the official figures take over automatically.
+        const monthlyKeys = new Set<string>();
+        for (const row of consumptionRows) {
+            const key = periodToConsumptionKey(row.period);
+            if (key) monthlyKeys.add(key);
+        }
+
+        // PostgREST `not in` list of the months the monthly table already covers.
+        const monthNotInFilter = `(${Array.from(monthlyKeys).map((k) => `"${k}"`).join(',')})`;
+
+        let dailyCountQuery = client
+            .from('water_daily_consumption')
+            .select('account_number', { count: 'exact', head: true });
+        if (monthlyKeys.size > 0) dailyCountQuery = dailyCountQuery.not('month', 'in', monthNotInFilter);
+        const dailyCount = await dailyCountQuery;
+        if (dailyCount.error) {
+            console.error('Error counting daily water consumption:', dailyCount.error.message);
+            return { meters: [], error: `Could not read daily consumption: ${dailyCount.error.message}`, negatives: [], derivedMonths: [] };
+        }
+        const dailyTotal = dailyCount.count ?? 0;
+        const dailyPages = await Promise.all(
+            Array.from({ length: Math.ceil(dailyTotal / CONSUMPTION_PAGE_SIZE) }, (_, page) => {
+                const from = page * CONSUMPTION_PAGE_SIZE;
+                let q = client
+                    .from('water_daily_consumption')
+                    .select(`account_number, month, ${DAY_COLUMNS.join(', ')}`);
+                if (monthlyKeys.size > 0) q = q.not('month', 'in', monthNotInFilter);
+                return q
+                    .order('account_number')
+                    .range(from, from + CONSUMPTION_PAGE_SIZE - 1)
+                    .returns<DailyWideRow[]>();
+            })
+        );
+
+        // value per account per derived month, plus the latest day read per month
+        const derivedByMonth = new Map<string, Map<string, number | null>>();
+        const throughDayByMonth = new Map<string, number>();
+        for (const { data, error } of dailyPages) {
+            if (error) {
+                console.error('Error fetching daily water consumption:', error.message);
+                return { meters: [], error: `Could not read daily consumption: ${error.message}`, negatives: [], derivedMonths: [] };
+            }
+            for (const row of data ?? []) {
+                const period = consumptionKeyToPeriod(row.month);
+                // Malformed month keys and pre-floor backfills never surface.
+                if (!period || period < PERIOD_FLOOR) continue;
+                const { value, lastDay } = monthToDateFromDailyRow(row);
+                let monthMap = derivedByMonth.get(row.month);
+                if (!monthMap) derivedByMonth.set(row.month, (monthMap = new Map()));
+                monthMap.set(row.account_number, value);
+                if (lastDay > (throughDayByMonth.get(row.month) ?? 0)) {
+                    throughDayByMonth.set(row.month, lastDay);
+                }
+            }
+        }
+
+        // Months where not a single meter has a reading yet stay invisible —
+        // an empty placeholder month is not data.
+        const derivedMonths: DerivedMonth[] = Array.from(derivedByMonth.entries())
+            .filter(([, values]) => Array.from(values.values()).some((v) => v != null))
+            .map(([month]) => ({ month, throughDay: throughDayByMonth.get(month) ?? 0 }))
+            .sort((a, b) => (consumptionKeyToPeriod(a.month) ?? '').localeCompare(consumptionKeyToPeriod(b.month) ?? ''));
+        const derivedMonthKeys = new Set(derivedMonths.map((d) => d.month));
 
         const negatives: NegativeReading[] = [];
 
@@ -230,6 +358,18 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
                 consumption[key] = value;
             }
 
+            // Month-to-date months come only from the daily rollup — by
+            // construction they have no monthly rows, so no official value is
+            // ever overwritten here.
+            for (const monthKey of derivedMonthKeys) {
+                const value = derivedByMonth.get(monthKey)?.get(m.account_number);
+                if (value === undefined) continue;
+                if (value !== null && value < 0) {
+                    negatives.push({ label: displayLabel, account: m.account_number, month: monthKey, value });
+                }
+                consumption[monthKey] = value;
+            }
+
             return {
                 id: m.meter_id || m.account_number || undefined,
                 label: displayLabel,
@@ -242,13 +382,14 @@ export async function fetchWaterMeters(): Promise<WaterMetersResult> {
             };
         });
 
-        return { meters: result, error: null, negatives };
+        return { meters: result, error: null, negatives, derivedMonths };
     } catch (err) {
         console.error('Error in fetchWaterMeters:', err);
         return {
             meters: [],
             error: err instanceof Error ? err.message : String(err),
             negatives: [],
+            derivedMonths: [],
         };
     }
 }

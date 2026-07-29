@@ -358,6 +358,24 @@ stops at last month" problem is structurally closed:
   (applied to the live DB as `water_monthly_auto_sync` + `_hardening`).
 - Daily data path (unchanged): CSV/Grafana → `water_daily_consumption`
   (GitHub-Actions Grafana sync exists on unmerged PR #6 only).
+- **Current-month fallback (added 2026-07-29):** the official monthly reads for
+  a month are imported a few days into the NEXT month (June-26's rows were
+  created 3–4 July), so the in-progress month used to be invisible in the
+  Monthly view (owner report: "July doesn't appear"). `fetchWaterMeters` now
+  detects months present in `water_daily_consumption` but absent from
+  `water_monthly_consumption` (PostgREST `not in` on the covered month keys),
+  sums the real daily readings per meter (nulls skipped — an unread meter
+  stays `null`, never 0; negatives kept and flagged), and merges them in as
+  **month-to-date** values. It reports them as `derivedMonths`
+  (`{ month, throughDay }`) and the dashboard shows a labelled info note
+  ("July 2026 is month-to-date — summed from daily readings through day N;
+  official monthly readings will replace these figures automatically"). By
+  construction the merge never overwrites an official monthly value, and the
+  month leaves the fallback on the first fetch after the import lands. The
+  Water page also subscribes to `water_daily_consumption` realtime now, so the
+  month-to-date figures freshen as daily data arrives. Note for testers: daily
+  sums ≠ official monthly reads (June-26: 317/350 meters differ, avg ~56 m³),
+  which is exactly why these months carry the provenance label.
 
 ## 4. Known gaps & data debt
 
