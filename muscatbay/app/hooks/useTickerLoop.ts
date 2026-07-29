@@ -25,8 +25,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *    so the strip always travels at the same readable pace.
  */
 
-/** Pixels per second. Slow enough to read a value in passing, quick enough to feel live. */
-const TICKER_SPEED_PX_PER_SEC = 40;
+/** Pixels per second. Slow enough to read a value in passing, quick enough to
+ *  feel live. Lowered from 40 on the owner's request (2026-07-29) — at 40 the
+ *  strip was readable but felt rushed on a control-room screen. */
+const TICKER_SPEED_PX_PER_SEC = 26;
 
 /** Below this the measurement is not trustworthy yet (fonts still loading, hidden container). */
 const MIN_MEASURABLE_PX = 8;

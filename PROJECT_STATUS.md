@@ -361,6 +361,27 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Ticker pace/size + Electricity/STP KPI de-clutter — 2026-07-29 (owner request).**
+  - **Ticker**: scroll speed lowered 40 → 26 px/s (`hooks/useTickerLoop.ts` —
+    the speed constant is the single source; the pace test derives from it) and
+    the band sized up: 34 → 42px min-height, label 10 → 11px, value 12.5 →
+    14px, caption 9.5 → 10.5px, icons 14 → 16px. Applies to all four strips
+    (Estate briefing, Water Daily briefing, Load briefing, Plant briefing) via
+    the shared `mb-ticker-*` classes. Still a single-line news band.
+  - **Electricity Load Watch**: the category health grid no longer renders all
+    10 meter-type cards (a 2×5 wall). Cards are budgeted for triage: every
+    non-healthy category ALWAYS gets its own card (a warning is never folded),
+    the biggest quiet categories fill up to 5, and the remaining quiet ones
+    collapse into one combined "Other categories (N)" card. Every category
+    still has its own row in the heatmap directly below, so nothing is lost.
+    Grid is now xl:3-across (wider, calmer cards).
+  - **STP summary**: 8 KPI cards → 5. Nothing dropped — three figures stopped
+    being headline cards: Daily Average Inlet folded into the Inlet Sewage
+    subtitle; Generated Income + Water Savings folded into the Total Economic
+    Impact subtitle (the total is their sum — three cards were saying one
+    thing). The monthly financial chart still plots income and savings as
+    separate series.
+
 - **"Water section crashed" + "ticker ballooned" QA report — diagnosed and fixed 2026-07-29 (second pass).**
   Two screenshots from an operator's iPad, taken minutes after the 01:46 UTC
   production deploy. Neither was what it looked like:
