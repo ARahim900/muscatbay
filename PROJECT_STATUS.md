@@ -769,6 +769,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-29 — Slow and enlarge the ticker, de-clutter the Electricity and STP KPI decks (#57)
 - 2026-07-29 — Self-heal the PWA deploy race, fix the Reduce-Motion ticker, parallelise the water fetch (#56)
 - 2026-07-29 — Audit fixes: honest dashboard figures, mobile nav access, Supabase RLS hardening (#55)
 - 2026-07-26 — Fix the ticker jam, reshape it as a news band, record the contractor cleanup (#54)
