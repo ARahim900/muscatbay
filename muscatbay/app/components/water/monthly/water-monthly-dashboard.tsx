@@ -26,7 +26,7 @@ import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
-    BarChart3, Database, List, ChevronRight, type LucideIcon,
+    BarChart3, Database, List, ChevronRight, CalendarClock, type LucideIcon,
 } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -36,6 +36,7 @@ import { SectionBoundary } from "@/components/shared/section-boundary";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
 import type { WaterMeter } from "@/lib/water-data";
+import type { DerivedMonth } from "@/functions/api/water";
 import {
     buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT, LOSS_RATE_OMR, TYPECOL,
     fmt, fmt1, pct, isRangeSel, periodValue, monthInSelection, sev, statusFromLoss,
@@ -1276,7 +1277,25 @@ type MonthlyPrefs = FilterPreferences & {
 };
 const isSectionTab = (v: unknown): v is string => SECTION_TABS.some((t) => t.key === v);
 
-export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter[] }) {
+const MONTH_FULL: Record<string, string> = {
+    Jan: "January", Feb: "February", Mar: "March", Apr: "April", May: "May", Jun: "June",
+    Jul: "July", Aug: "August", Sep: "September", Oct: "October", Nov: "November", Dec: "December",
+};
+
+/** `"Jul-26"` → `"July 2026"` for the month-to-date provenance note. */
+const formatDerivedMonth = (key: string): string => {
+    const [mon, yy] = key.split("-");
+    return `${MONTH_FULL[mon] ?? mon} 20${yy}`;
+};
+
+export function WaterMonthlyDashboard({
+    waterMeters,
+    derivedMonths = [],
+}: {
+    waterMeters: WaterMeter[];
+    /** Months whose figures are month-to-date sums of daily readings, not the official monthly import. */
+    derivedMonths?: DerivedMonth[];
+}) {
     const data = useMemo(() => buildMonthlyData(waterMeters), [waterMeters]);
     const years = data.meta.years;
     const latestYear = years.length ? String(years[years.length - 1]) : "";
@@ -1328,6 +1347,13 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
     const endYear = endMonth ? `20${endMonth.split("-")[1]}` : "";
     const year = endYear && data.meta.monthsWithData[endYear] ? endYear : latestYear;
     const nMonths = data.meta.monthsWithData[year] ?? 0;
+
+    // Month-to-date months that fall inside the displayed year (usually just
+    // the current month while its official import is pending).
+    const derivedMonthsShown = useMemo(
+        () => derivedMonths.filter((d) => `20${d.month.split("-")[1]}` === year),
+        [derivedMonths, year],
+    );
 
     // Map the "Mon-YY" range onto Jan-first month indices for the compute layer.
     const monthNames: readonly string[] = MONTHS;
@@ -1428,6 +1454,28 @@ export function WaterMonthlyDashboard({ waterMeters }: { waterMeters: WaterMeter
             <p className="text-[11px] -mt-2 px-1" style={{ color: "var(--wm-muted)" }}>
                 NAMA Bulk Account {data.meta.mainAccount} · {data.meta.totalMeters} meters · {periodLabel}
             </p>
+
+            {/* Provenance note for month-to-date months. The official monthly
+                import for a month lands a few days into the next month; until
+                then the month's figures are sums of the real daily readings.
+                Shown only when a derived month sits in the displayed year, so
+                browsing history stays quiet. */}
+            {derivedMonthsShown.length > 0 && (
+                <div role="note" className="flex items-start gap-2 text-xs font-medium px-3 py-2 rounded-lg border bg-mb-info-light text-mb-info-text border-mb-info">
+                    <CalendarClock className="w-4 h-4 shrink-0 mt-px" aria-hidden="true" />
+                    <span>
+                        {derivedMonthsShown.map((d, i) => (
+                            <span key={d.month}>
+                                {i > 0 && "; "}
+                                <b>{formatDerivedMonth(d.month)} is month-to-date</b> — summed from the daily meter
+                                readings through day {d.throughDay}
+                            </span>
+                        ))}
+                        . The official monthly readings have not been imported yet; when they arrive they will
+                        replace these figures automatically.
+                    </span>
+                </div>
+            )}
 
             {anomaly && (
                 <div role="alert" className="flex items-start gap-2 text-xs font-medium px-3 py-2 rounded-lg border bg-mb-danger-light text-mb-danger-text border-mb-danger">

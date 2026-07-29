@@ -691,7 +691,7 @@ export async function loadDashboard(): Promise<DashboardData> {
   const waterResult: WaterMetersResult =
     waterRead.status === 'fulfilled'
       ? waterRead.value
-      : { meters: [], error: message(waterRead.reason), negatives: [] };
+      : { meters: [], error: message(waterRead.reason), negatives: [], derivedMonths: [] };
   if (waterResult.error) alertSourcesFailed.push('Water');
 
   const stpOperations = stpRead.status === 'fulfilled' ? stpRead.value : null;

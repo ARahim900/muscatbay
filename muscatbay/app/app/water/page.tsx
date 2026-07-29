@@ -8,7 +8,7 @@ import type { WaterMeter } from "@/lib/water-data";
 
 // Supabase — the result-returning fetch, so a failure is reported rather than
 // silently swallowed (it also hands back the negative-reading register).
-import { fetchWaterMeters, type NegativeReading } from "@/functions/api/water";
+import { fetchWaterMeters, type NegativeReading, type DerivedMonth } from "@/functions/api/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 
 // Shared layout / shell
@@ -34,7 +34,7 @@ type DashboardView = "monthly" | "daily";
 // Base tables behind the monthly dashboard — module-level so the array
 // reference stays stable across renders (the realtime hook re-subscribes
 // when the reference changes).
-const WATER_REALTIME_TABLES = ["water_meters", "water_monthly_consumption"];
+const WATER_REALTIME_TABLES = ["water_meters", "water_monthly_consumption", "water_daily_consumption"];
 
 // Session cache — revisiting /water renders the last data instantly and
 // refreshes silently in the background instead of re-showing the skeleton.
@@ -42,6 +42,8 @@ const WATER_CACHE_KEY = "water:page";
 interface WaterPageCache {
     meters: WaterMeter[];
     lastUpdated: Date;
+    /** Months whose figures are month-to-date daily sums (may be absent in old caches). */
+    derivedMonths?: DerivedMonth[];
 }
 
 /**
@@ -99,6 +101,7 @@ export default function WaterPage() {
     const [isLoading, setIsLoading] = useState(!cached);
     const [error, setError] = useState<string | null>(null);
     const [negatives, setNegatives] = useState<NegativeReading[]>([]);
+    const [derivedMonths, setDerivedMonths] = useState<DerivedMonth[]>(cached?.derivedMonths ?? []);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
 
     // Stable fetch function — used both on mount and by the real-time handler
@@ -114,10 +117,15 @@ export default function WaterPage() {
         setNegatives(result.negatives);
         if (!result.error) {
             setWaterMeters(result.meters);
+            setDerivedMonths(result.derivedMonths);
             const now = new Date();
             setLastUpdated(now);
             if (result.meters.length > 0) {
-                setPageCache<WaterPageCache>(WATER_CACHE_KEY, { meters: result.meters, lastUpdated: now });
+                setPageCache<WaterPageCache>(WATER_CACHE_KEY, {
+                    meters: result.meters,
+                    lastUpdated: now,
+                    derivedMonths: result.derivedMonths,
+                });
             }
         }
         if (!silent) setIsLoading(false);
@@ -243,7 +251,7 @@ export default function WaterPage() {
                     {dashboardView === "monthly" && (
                         <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                             <SectionBoundary title="Monthly water analysis">
-                                <WaterMonthlyDashboard waterMeters={waterMeters} />
+                                <WaterMonthlyDashboard waterMeters={waterMeters} derivedMonths={derivedMonths} />
                             </SectionBoundary>
                         </div>
                     )}
