@@ -409,6 +409,11 @@ export async function getWaterMetersFromSupabase(): Promise<WaterMeter[]> {
  * Fetch daily water consumption data from Supabase
  * @param month - Optional month filter as string (e.g., "Feb-26")
  * @param year - Optional year filter (e.g., 2026)
+ *
+ * Paginated: PostgREST caps any single select at 1,000 rows, and the table
+ * holds more than that once every meter logs daily. An unfiltered call used
+ * to return the first 1,000 rows as if they were all of them — whole months
+ * vanished from callers with no error to see.
  */
 export async function getDailyWaterConsumptionFromSupabase(
     month?: string,
@@ -419,30 +424,39 @@ export async function getDailyWaterConsumptionFromSupabase(
         return [];
     }
 
+    const PAGE = 1000;
+    const rows: SupabaseDailyWaterConsumption[] = [];
+
     try {
-        let query = client
-            .from('water_daily_consumption')
-            .select(DAILY_WATER_CONSUMPTION_SELECT_COLUMNS);
+        for (let from = 0; ; from += PAGE) {
+            let query = client
+                .from('water_daily_consumption')
+                .select(DAILY_WATER_CONSUMPTION_SELECT_COLUMNS);
 
-        if (month) {
-            query = query.eq('month', month);
+            if (month) {
+                query = query.eq('month', month);
+            }
+            if (year) {
+                query = query.eq('year', year);
+            }
+
+            const { data, error } = await query
+                .order('id', { ascending: true })
+                .range(from, from + PAGE - 1)
+                .returns<SupabaseDailyWaterConsumption[]>();
+
+            if (error) {
+                console.error('Error fetching daily water consumption:', error.message);
+                return [];
+            }
+
+            rows.push(...(data ?? []));
+            if (!data || data.length < PAGE) {
+                break;
+            }
         }
-        if (year) {
-            query = query.eq('year', year);
-        }
 
-        const { data, error } = await query.returns<SupabaseDailyWaterConsumption[]>();
-
-        if (error) {
-            console.error('Error fetching daily water consumption:', error.message);
-            return [];
-        }
-
-        if (!data || data.length === 0) {
-            return [];
-        }
-
-        return data.map((record) => transformDailyWaterConsumption(record));
+        return rows.map((record) => transformDailyWaterConsumption(record));
     } catch (err) {
         console.error('Error in getDailyWaterConsumptionFromSupabase:', err);
         return [];

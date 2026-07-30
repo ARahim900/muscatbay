@@ -140,7 +140,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
   border-radius:10.5px;backdrop-filter:blur(10px);z-index:20;
   box-shadow:0 2px 10px rgba(0,0,0,.35),0 8px 30px rgba(0,0,0,.28);
 }
-#left{left:14px;top:14px;width:330px;max-height:calc(100% - 205px);display:flex;flex-direction:column;}
+#left{left:14px;top:14px;width:330px;max-height:calc(100% - 240px);display:flex;flex-direction:column;}
 #left .hd{padding:13px 15px 10px;border-bottom:1px solid var(--border);}
 #left .hd h2{font-size:16px;}
 #left .hd p{font-size:13px;color:var(--ink3);margin-top:4px;}
@@ -203,12 +203,19 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 #rwrap.min #right{display:none;}
 #right{overflow-y:auto;padding:9px 15px 15px;}
 .selrow{margin-top:9px;}
-.selrow .lbl,.lfoot .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+.selrow2{margin-top:9px;display:flex;gap:8px;}
+.selrow2 .selcol{flex:1;min-width:0;}
+.selrow2 .selcol[hidden]{display:none;}
+.selrow .lbl,.selrow2 .lbl,.lfoot .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
 select{font:inherit;font-size:14px;color:var(--ink);background:#201d27;border:1px solid var(--border);
   border-radius:5px;padding:7px 9px;}
 select:focus{outline:3px solid var(--teal);outline-offset:1px;}
-.selrow select{display:block;width:100%;margin-top:5px;}
+.selrow select,.selrow2 select{display:block;width:100%;margin-top:5px;}
 .lfoot select{flex:1;min-width:0;}
+.dayslide{display:flex;align-items:center;gap:9px;margin-top:7px;}
+.dayslide input[type=range]{flex:1;min-width:0;accent-color:var(--teal);height:20px;}
+.dayslide input[type=range]:focus-visible{outline:3px solid var(--teal);outline-offset:1px;border-radius:5px;}
+#dayOut{font-family:"Roboto Slab",Georgia,serif;font-size:13px;white-space:nowrap;color:var(--ink);}
 #right h2{font-size:17px;}
 #right .sub{font-size:13px;color:var(--ink3);margin-top:2px;}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0;}
@@ -253,10 +260,17 @@ td.n{text-align:right;}
 #tl .tlnums b{color:var(--ink);}
 #spark{flex:1;height:44px;display:block;min-width:0;}
 
-#viewctl{position:absolute;left:14px;bottom:122px;z-index:20;display:flex;gap:6px;flex-wrap:wrap;max-width:330px;}
+#viewctl{position:absolute;left:14px;bottom:122px;z-index:20;width:330px;
+  background:rgba(22,20,27,.9);border:1px solid var(--border);border-radius:10.5px;
+  backdrop-filter:blur(10px);padding:9px 11px 10px;display:flex;flex-direction:column;gap:8px;
+  box-shadow:0 2px 10px rgba(0,0,0,.35),0 8px 30px rgba(0,0,0,.28);}
+#viewctl .vrow{display:flex;align-items:center;gap:8px;}
+#viewctl .vrow .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+#viewctl .vrow select{flex:1;min-width:0;}
+#viewctl .vbtns{display:flex;gap:6px;flex-wrap:wrap;}
 #viewctl button{
-  padding:7px 11px;border-radius:5px;background:rgba(22,20,27,.9);border:1px solid var(--border);
-  font-size:13px;color:var(--ink2);backdrop-filter:blur(10px);
+  padding:6px 10px;border-radius:5px;background:rgba(255,255,255,.04);border:1px solid var(--border);
+  font-size:13px;color:var(--ink2);
 }
 #viewctl button:hover{background:rgba(164,197,187,.16);color:var(--ink);}
 #viewctl button.on{border-color:var(--teal);color:var(--ink);}
@@ -305,6 +319,31 @@ td.n{text-align:right;}
         <h2>Meter explorer</h2>
         <input id="search" type="search" placeholder="Search name or account…"
                aria-label="Search meters by name or account number">
+        <div class="selrow2">
+          <div class="selcol">
+            <span class="lbl">Data view</span>
+            <select id="viewSel" aria-label="Monthly or daily view">
+              <option value="monthly" selected>Monthly</option>
+              <option value="daily">Daily</option>
+            </select>
+          </div>
+          <div class="selcol" id="monthRow">
+            <span class="lbl">Month</span>
+            <select id="monthSel" aria-label="Month shown on the map"></select>
+          </div>
+          <div class="selcol" id="dailyMonthRow" hidden>
+            <span class="lbl">Month</span>
+            <select id="dailyMonthSel" aria-label="Month of daily readings"></select>
+          </div>
+        </div>
+        <div class="selrow" id="dayRow" hidden>
+          <span class="lbl">Date</span>
+          <div class="dayslide">
+            <input type="range" id="daySel" min="0" max="0" step="1" value="0"
+                   aria-label="Day of the month">
+            <span id="dayOut">—</span>
+          </div>
+        </div>
         <div class="selrow">
           <span class="lbl">Zone selection</span>
           <select id="zoneSel" aria-label="Zone selection"></select>
@@ -331,12 +370,19 @@ td.n{text-align:right;}
     </div>
 
     <div id="viewctl">
-      <button id="vTop">Plan</button>
-      <button id="vObl" class="on">Oblique</button>
-      <button id="vGround">Ground</button>
-      <button id="vSpin">Orbit</button>
-      <button id="vTerr" class="on">Terrain</button>
-      <button id="vProv">House connections</button>
+      <div class="vrow">
+        <span class="lbl">Camera</span>
+        <select id="camSel" aria-label="Camera angle">
+          <option value="obl" selected>Oblique</option>
+          <option value="top">Plan</option>
+          <option value="ground">Ground level</option>
+        </select>
+      </div>
+      <div class="vbtns">
+        <button id="vSpin">Orbit</button>
+        <button id="vTerr" class="on">Terrain</button>
+        <button id="vProv">House connections</button>
+      </div>
     </div>
 
     <div id="hint">Drag to pan · right-drag or ctrl-drag to orbit and tilt · scroll to zoom</div>
@@ -597,19 +643,21 @@ const VILLA_BY_ZONE = {};
 for (const v of VILLAS) (VILLA_BY_ZONE[v.zone] ||= []).push(v);
 
 /* Zone anchors come from the survey, not from hand-typed coordinates. The
-   hand-typed ones put Zone 5 in the lagoon and 3A/3B on the entry T-junction.
-   The anchor is the zone's MEDOID plot — the surveyed plot closest to all the
-   others — so it always lands on a real villa inside the zone, never in water
-   (a centroid of the island's curve would). FM and Village Square have no
-   plots and keep their stated positions. */
+   zone card is the ZONE BULK meter's card, and a bulk chamber sits where the
+   feed enters the zone — so the anchor is the surveyed plot nearest the NAMA
+   supply point: the beginning of the zone, not the middle of the villas the
+   card would otherwise sit on top of. FM and Village Square have no plots and
+   keep their stated positions. */
+const SUPPLY_PT = [58.6295910, 23.5431822];   // Main Bulk (NAMA), surveyed
 for (const z of ZONES){
   const list = (VILLA_BY_ZONE[z.name] || []).filter(v => v.kind !== "tank");
   if (!list.length) continue;
   let best = null, bd = Infinity;
   for (const a of list){
-    let sum = 0;
-    for (const b of list){ const dx = a.e-b.e, dy = a.n-b.n; sum += dx*dx + dy*dy; }
-    if (sum < bd){ bd = sum; best = a; }
+    const dx = (a.c[0] - SUPPLY_PT[0]) * Math.cos(a.c[1] * Math.PI / 180);
+    const dy = a.c[1] - SUPPLY_PT[1];
+    const d = dx*dx + dy*dy;
+    if (d < bd){ bd = d; best = a; }
   }
   z.lon = best.c[0]; z.lat = best.c[1];
   z.anchored = true;                       // position derived from plot survey
@@ -652,20 +700,38 @@ function zoneHull(z){
   return out;
 }
 
-// Consumption band for a villa, relative to the median of its own zone, so a
-// zone of large villas is not flagged wholesale against a zone of small ones.
-const ZONE_MEDIAN = {};
-for (const [z, list] of Object.entries(VILLA_BY_ZONE)){
-  const vals = list.filter(v => v.type !== "Building (Bulk)" && v.kind !== "tank")
-                   .map(v => v.h1).sort((a,b)=>a-b);
-  ZONE_MEDIAN[z] = vals.length ? vals[Math.floor(vals.length/2)] : 0;
+/* ---- figure in view ----
+   Every figure on the map (cards, tree, plates, topbar) follows one setting:
+   the full-period total, or one chosen month. A month with no reading stays
+   null all the way to the card — fmt() renders "—" and no loss percentage is
+   computed from it, because a fabricated 0% is worse than an honest blank. */
+let figMonth = -1;                 // -1 = full period, else an index into MONTHS
+const hasVal = v => v !== null && v !== undefined;
+const zIn  = z => figMonth < 0 ? z.l2 : z.ml2[figMonth];
+const zOut = z => figMonth < 0 ? z.l3 : z.ml3[figMonth];
+const mVal = m => figMonth < 0 ? m.h1 : (m.months ? m.months[figMonth] : null);
+const figLabel = () => figMonth < 0 ? PERIOD.short : MONTHS[figMonth] + mtd(figMonth);
+
+// Consumption band for a villa, relative to the median of its own zone FOR THE
+// FIGURE IN VIEW — a villa can be typical over the period yet far above the
+// median in a single month. Medians are cached per selected month.
+const MEDIAN_CACHE = {};
+function zoneMedian(zone){
+  const c = (MEDIAN_CACHE[figMonth] ||= {});
+  if (zone in c) return c[zone];
+  const vals = (VILLA_BY_ZONE[zone] || [])
+    .filter(v => v.type !== "Building (Bulk)" && v.kind !== "tank")
+    .map(mVal).filter(hasVal).sort((a,b)=>a-b);
+  return (c[zone] = vals.length ? vals[Math.floor(vals.length/2)] : 0);
 }
 function villaBand(v){
   if (v.kind === "tank") return { c:"#9B86A8", t:"irrigation tank" };
-  const med = ZONE_MEDIAN[v.zone] || 0;
-  if (v.h1 === 0) return { c:"#8E8A96", t:"no consumption" };
-  if (!med)       return { c:"#6B9AC4", t:"" };
-  const r = v.h1 / med;
+  const val = mVal(v);
+  if (!hasVal(val)) return { c:"#8E8A96", t:"no reading" };
+  const med = zoneMedian(v.zone);
+  if (val === 0) return { c:"#8E8A96", t:"no consumption" };
+  if (!med)      return { c:"#6B9AC4", t:"" };
+  const r = val / med;
   if (r >= 2.5) return { c:"#D67A7A", t:"far above zone median" };
   if (r >= 1.5) return { c:"#E8C064", t:"above zone median" };
   if (r <= 0.35) return { c:"#6B9AC4", t:"well below zone median" };
@@ -676,10 +742,12 @@ function villaBand(v){
    place on the terrain, and carries the status colour at map scale. */
 function zonePlateFeatures(){
   return { type:"FeatureCollection", features: ZONES.map(z => {
-    const lp = pct(z.l2 - z.l3, z.l2);
+    const inV = zIn(z);
+    const lp = hasVal(inV) ? pct(inV - zOut(z), inV) : null;
     const hull = zoneHull(z);
     return { type:"Feature",
-             properties:{ id:z.id, name:z.name, colour:lossColour(lp), lp },
+             properties:{ id:z.id, name:z.name,
+                          colour: lp === null ? "#8E8A96" : lossColour(lp), lp },
              geometry:{ type:"Polygon",
                         coordinates: hull ? [hull] : circle(z.lon, z.lat, 40, 40) } };
   })};
@@ -860,7 +928,10 @@ const CHEV_UP = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" str
 const CHEV_DN = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
 
 function zoneCard(z){
-  const lp = pct(z.l2 - z.l3, z.l2), col = lossColour(lp);
+  const inV = zIn(z), outV = zOut(z);
+  const noRead = !hasVal(inV);
+  const lp = noRead ? 0 : pct(inV - outV, inV);
+  const col = noRead ? "#8E8A96" : lossColour(lp);
   const state = zoneCardState.get(z.id) || (selectedZone === z.id ? "open" : "min");
   const nv = (VILLA_BY_ZONE[z.name] || []).length;
   const el = document.createElement("div");
@@ -869,8 +940,8 @@ function zoneCard(z){
     el.className = "card3d zpill" + (selectedZone === z.id ? " on" : "");
     el.innerHTML =
       `<span class="zn">${esc(z.name)}</span>
-       <span class="zv">${fmt(z.l2)}<small> m³ ${PERIOD.short}</small></span>
-       <span class="zp" style="color:${col}">${lp.toFixed(0)}%</span>
+       <span class="zv">${fmt(inV)}<small> m³ ${figLabel()}</small></span>
+       <span class="zp" style="color:${col}">${noRead ? "—" : lp.toFixed(0) + "%"}</span>
        <button class="ccol" aria-label="Expand the ${esc(z.name)} card">${CHEV_DN}</button>
        <div class="stem"></div>`;
   } else {
@@ -878,11 +949,11 @@ function zoneCard(z){
     el.innerHTML =
       `<button class="ccol" aria-label="Collapse the ${esc(z.name)} card">${CHEV_UP}</button>
        <div class="eyebrow">${esc(z.name)}</div>
-       <div class="big">${fmt(z.l2)} <small>m³ · ${PERIOD.short} in</small></div>
+       <div class="big">${fmt(inV)} <small>m³ · ${figLabel()} in</small></div>
        <div class="row"><span class="dot" style="background:${col}"></span>
-         <span class="txt" style="color:${col}">${lp.toFixed(1)}% unbilled</span></div>
-       <div class="track"><i style="width:${Math.min(100,lp).toFixed(1)}%;background:${col}"></i></div>
-       <div class="foot">${fmt(z.l3)} m³ billed · ${z.nL3} meters${nv?` · ${nv} plots mapped`:""}</div>
+         <span class="txt" style="color:${col}">${noRead ? "no bulk reading" : lp.toFixed(1) + "% unbilled"}</span></div>
+       <div class="track"><i style="width:${noRead ? 0 : Math.min(100,lp).toFixed(1)}%;background:${col}"></i></div>
+       <div class="foot">${fmt(outV)} m³ billed · ${z.nL3} meters${nv?` · ${nv} plots mapped`:""}</div>
        <div class="stem"></div>`;
   }
   el.querySelector(".ccol").addEventListener("click", ev => {
@@ -897,13 +968,14 @@ function zoneCard(z){
 function villaCard(v){
   const b = villaBand(v);
   const bulk = v.type === "Building (Bulk)";
-  const med = ZONE_MEDIAN[v.zone] || 1;
+  const val = mVal(v);
+  const med = zoneMedian(v.zone) || 1;
   const el = document.createElement("div");
   el.className = "card3d vcard" + (bulk ? " bulk" : "") + (selectedVilla === v.id ? " on" : "");
   el.innerHTML =
     `<div class="vid">${esc(v.label || v.id)}</div>
-     <div class="vv" style="color:${b.c}">${fmt(v.h1)} <small>m³ H1</small></div>
-     <div class="pipbar"><i style="width:${Math.min(100, v.h1/med*50).toFixed(0)}%;background:${b.c}"></i></div>
+     <div class="vv" style="color:${b.c}">${fmt(val)} <small>m³ ${figLabel()}</small></div>
+     <div class="pipbar"><i style="width:${hasVal(val) ? Math.min(100, val/med*50).toFixed(0) : 0}%;background:${b.c}"></i></div>
      <div class="vmore">${esc(v.name)}<br>Account ${esc(v.acct)}${
        bulk ? `<br>${v.kids} apartment meters` : ""}</div>
      <div class="stem"></div>`;
@@ -921,7 +993,7 @@ function buildMarkers(){
     m.__alt = ALT_ZONE;
     m.__kind = "zone";
     m.__zoneId = z.id;
-    m.__weight = z.l2;
+    m.__weight = zIn(z) || 0;
     m.addTo(map);
     markers.push(m);
   }
@@ -933,7 +1005,7 @@ function buildMarkers(){
     m.__kind = "villa";
     m.__zone = v.zone;
     m.__id = v.id;
-    m.__weight = v.h1;
+    m.__weight = mVal(v) || 0;
     m.addTo(map);
     markers.push(m);
   }
@@ -971,7 +1043,7 @@ function refreshVillaCards(){
   let allow = null;                                  // Set of ids, or null = none
   if (zName && cardMode !== "zone"){
     const inZone = VILLAS.filter(v => v.zone === zName)
-                         .sort((a,b) => b.h1 - a.h1);
+                         .sort((a,b) => (mVal(b) ?? -1) - (mVal(a) ?? -1));
     const keep = cardMode === "all" ? inZone : inZone.slice(0, TOP_N);
     allow = new Set(keep.map(v => v.id));
     if (selectedVilla) allow.add(selectedVilla);     // never hide what is open
@@ -1142,9 +1214,13 @@ function spin(){
   map.setBearing(map.getBearing() + 0.09);
   spinRAF = requestAnimationFrame(spin);
 }
-$("#vTop").onclick    = () => { stopSpin(); setBtn("vObl",false); map.easeTo({ pitch:0,  bearing:0,   duration:1400 }); };
-$("#vObl").onclick    = () => { stopSpin(); setBtn("vObl",true);  map.easeTo({ pitch:58, bearing:-38, zoom:14.75, center:CENTRE, duration:1400 }); };
-$("#vGround").onclick = () => { stopSpin(); setBtn("vObl",false); map.easeTo({ pitch:82, bearing:-38, zoom:16.4, duration:1600 }); };
+$("#camSel").onchange = () => {
+  stopSpin();
+  const cam = $("#camSel").value;
+  if (cam === "top")         map.easeTo({ pitch:0,  bearing:0,   duration:1400 });
+  else if (cam === "ground") map.easeTo({ pitch:82, bearing:-38, zoom:16.4, duration:1600 });
+  else                       map.easeTo({ pitch:58, bearing:-38, zoom:14.75, center:CENTRE, duration:1400 });
+};
 $("#vSpin").onclick   = () => {
   spinning = !spinning;
   $("#vSpin").classList.toggle("on", spinning);
@@ -1166,6 +1242,107 @@ $("#cardSel").onchange = () => {
   refreshVillaCards();
 };
 
+/* ---- data view: monthly (period total or one month) vs daily (timeline) ---- */
+function updateTopbar(){
+  $("#tSupplyLbl").textContent = figLabel() + " supply";
+  const supply = figMonth < 0 ? SUPPLY.total : SUPPLY.monthly[figMonth];
+  $("#tSupply").textContent = hasVal(supply) ? fmt(supply) + " m³" : "—";
+  let loss = null;
+  if (figMonth < 0){
+    loss = pct(TOTALLOSS, SUPPLY.total);
+  } else if (hasVal(supply)){
+    // Same balance as the period figure, for one month: L1 − DC − all L3.
+    const l3m = ZONES.reduce((s,z) => s + (z.ml3[figMonth] || 0), 0);
+    loss = pct(supply - C.dc_monthly[figMonth] - l3m, supply);
+  }
+  $("#tLoss").textContent = loss === null ? "—" : loss.toFixed(1) + "%";
+}
+
+function updateFigNote(){
+  const daily = $("#viewSel").value === "daily";
+  $("#figNote").textContent = daily
+    ? "Daily readings cover the NAMA main meter; map cards keep their monthly figures."
+    : figMonth < 0
+      ? "All figures are " + PERIOD.label + " totals in m³."
+      : "All figures are for " + MONTHS[figMonth] + " 2026" + mtd(figMonth) + ", in m³.";
+}
+
+/* One re-render for a figure change: cards, tree, plates, topbar and — if a
+   zone is open — its panel, all move to the same month together. */
+function refreshFigures(){
+  renderZoneList();
+  buildMarkers();
+  if (map.getSource("zplate")) map.getSource("zplate").setData(zonePlateFeatures());
+  if (map.getSource("vplate")) map.getSource("vplate").setData(villaPlateFeatures());
+  updateTopbar();
+  updateFigNote();
+  if (selectedZone){
+    zonePeriod = figMonth < 0 ? "H1" : figMonth;
+    renderZonePanel();
+  }
+}
+
+function renderMonthSel(){
+  const sel = $("#monthSel");
+  sel.replaceChildren();
+  const mk = (label, val) => {
+    const o = document.createElement("option");
+    o.value = val; o.textContent = label;
+    sel.appendChild(o);
+  };
+  mk("All months — " + PERIOD.short + " total", "-1");
+  MONTHS.forEach((m, i) => mk(m + " 2026" + mtd(i), String(i)));
+  sel.value = String(figMonth);
+  sel.onchange = () => { figMonth = +sel.value; refreshFigures(); };
+}
+
+function renderDailySel(){
+  const sel = $("#dailyMonthSel");
+  sel.replaceChildren();
+  DAILY_MONTHS.forEach((m, i) => {
+    const o = document.createElement("option");
+    o.value = String(i); o.textContent = m.label;
+    sel.appendChild(o);
+  });
+  sel.value = String(monthIdx);
+  sel.onchange = () => {
+    monthIdx = +sel.value;
+    day = Math.min(day, lastRead(curMonth()));
+    renderMonths(); renderSpark();
+  };
+}
+
+/* The slider stops at the last day actually read — an in-progress month has
+   real days ahead of the meter reader, and they are "not yet", not data. */
+function syncDaySlider(){
+  const M = curMonth(), r = $("#daySel");
+  r.max = String(lastRead(M));
+  r.value = String(day);
+  $("#dayOut").textContent = (day + 1) + " " + M.label.replace(" 2026", "");
+  const sel = $("#dailyMonthSel");
+  if (sel.options.length) sel.value = String(monthIdx);
+}
+$("#daySel").oninput = () => {
+  day = +$("#daySel").value;
+  renderSpark();
+};
+
+$("#viewSel").onchange = () => {
+  const daily = $("#viewSel").value === "daily";
+  $("#monthRow").hidden = daily;
+  $("#dailyMonthRow").hidden = !daily;
+  $("#dayRow").hidden = !daily;
+  if (daily){
+    renderDailySel();
+    setTl(false);            // the timeline is where the day's readings live
+    syncDaySlider();
+  } else {
+    if (playing) $("#play").click();
+    setTl(true);
+  }
+  updateFigNote();
+};
+
 /* Right panel collapse. Collapsed by default so the map leads; expands on
    demand via the header, and automatically when the user asks for something
    that renders there (zone or meter selection). The header title mirrors
@@ -1185,7 +1362,6 @@ $("#search").addEventListener("input", e => {
   query = e.target.value.trim().toLowerCase();
   renderZoneList();
 });
-function setBtn(id,on){ const b = $("#"+id); if (b) b.classList.toggle("on", on); }
 
 /* ============================================================ GAUGE */
 function gauge(valuePct, colour, centre, sub, size){
@@ -1268,7 +1444,9 @@ function renderZoneList(){
     // there as an empty row the user has to rule out by hand.
     if (query && !zoneMeters.length) continue;
 
-    const lp = pct(z.l2 - z.l3, z.l2), col = lossColour(lp);
+    const inV = zIn(z), noRead = !hasVal(inV);
+    const lp = noRead ? 0 : pct(inV - zOut(z), inV);
+    const col = noRead ? "#8E8A96" : lossColour(lp);
     const zk = "z:" + z.id;
     const zOpen = openNodes.has(zk) || (!!query);
     shown++;
@@ -1276,8 +1454,8 @@ function renderZoneList(){
     wrap.appendChild(row("d0" + (zOpen ? " open" : "") + (selectedZone === z.id ? " on" : ""), 0, {
       html: `<span class="tw">${CARET}</span>
              <span class="tn">${esc(z.name)}</span>
-             <span class="tpc" style="color:${col}">${lp.toFixed(1)}%</span>
-             <span class="tv">${fmt(z.l2)}</span>`,
+             <span class="tpc" style="color:${col}">${noRead ? "—" : lp.toFixed(1) + "%"}</span>
+             <span class="tv">${fmt(inV)}</span>`,
       onclick: () => selectZone(z.id)
     }));
     if (!zOpen) continue;
@@ -1290,7 +1468,7 @@ function renderZoneList(){
       if (!list.length) continue;
       const gk = `g:${z.id}:${g}`;
       const gOpen = openNodes.has(gk) || (!!query);
-      const gTot = list.reduce((s,m) => s + m.h1, 0);
+      const gTot = list.reduce((s,m) => s + (mVal(m) ?? 0), 0);
       wrap.appendChild(row("d1" + (gOpen ? " open" : ""), 1, {
         html: `<span class="tw">${CARET}</span>
                <span class="tn">${GROUP_LABEL[g]}<span class="tsub">${list.length}</span></span>
@@ -1313,7 +1491,7 @@ function renderZoneList(){
                  <span class="tn">${esc(v ? (v.label || v.id) : m.name)}${
                    m.children ? `<span class="tsub">${m.children.length} sub</span>` : ""}${
                    bad ? ` <span class="warn">${fmt(m.sub_loss)}</span>` : ""}</span>
-                 <span class="tv" style="color:${band.c}">${fmt(m.h1)}</span>`,
+                 <span class="tv" style="color:${band.c}">${fmt(mVal(m))}</span>`,
           onclick: ev => {
             // The caret opens the building; the row itself opens the meter.
             if (m.children && ev.offsetX < 22){ toggle(mk); return; }
@@ -1326,7 +1504,7 @@ function renderZoneList(){
           wrap.appendChild(row("d3", 3, {
             html: `<span class="tw"></span>
                    <span class="tn">${esc(c.name)}</span>
-                   <span class="tv">${fmt(c.h1)}</span>`,
+                   <span class="tv">${fmt(mVal(c))}</span>`,
             onclick: () => showMeterRecord(c, m)
           }));
         }
@@ -1534,7 +1712,7 @@ function selectZone(id){
                  bearing:map.getBearing(), duration:1400, offset:[0,90] });
   }
 
-  zonePeriod = "H1";
+  zonePeriod = figMonth < 0 ? "H1" : figMonth;   // panel opens on the month in view
   renderZonePanel();
 }
 
@@ -1629,9 +1807,9 @@ function showVilla(id){
 
   const b = villaBand(v);
   const bulk = v.type === "Building (Bulk)";
-  const med = ZONE_MEDIAN[v.zone] || 0;
-  const mx = Math.max(1, ...v.months);
-  const monthly = v.months.length === 6;
+  const med = zoneMedian(v.zone);
+  const mx = Math.max(1, ...v.months.filter(hasVal));
+  const monthly = v.months.length === MONTHS.length;
 
   // A building bulk should read at least what its apartments read. When it
   // reads less, the sub-meters are over-registering or the bulk is stuck —
@@ -1651,7 +1829,7 @@ function showVilla(id){
       </div>
       <div class="${sl < 0 ? "warnbox" : "okbox"}">
         ${sl < 0
-          ? `<b>The apartments read more than the bulk.</b> ${fmt(Math.abs(sl))} m³ over six months.
+          ? `<b>The apartments read more than the bulk.</b> ${fmt(Math.abs(sl))} m³ over ${MONTHS.length} months.
              That is not physically possible on a sound installation — it points to a
              stalled or under-registering bulk meter, or an apartment fed from outside this bulk.`
           : `Apartments account for <b>${(100 - slp).toFixed(0)}%</b> of what the building bulk
@@ -1664,8 +1842,8 @@ function showVilla(id){
     <div class="sub">${esc(v.zone)} · ${esc(v.kind === "tank" ? v.name : v.type)} ·
       <span class="tag ${v.precision === "label" ? "apx" : "ver"}">${v.kind === "tank" ? (v.precision === "label" ? "Label position" : "Surveyed from DWG") : "Plot surveyed"}</span></div>
     <div class="kpis">
-      <div class="kpi"><div class="k">H1-2026</div><div class="v" style="color:${b.c}">${fmt(v.h1)} <small>m³</small></div></div>
-      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(v.h1/6)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">${PERIOD.short} 2026</div><div class="v" style="color:${b.c}">${fmt(v.h1)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(v.h1/MONTHS.length)} <small>m³</small></div></div>
       <div class="kpi"><div class="k">Account</div><div class="v" style="font-size:16px">${esc(v.acct)}</div></div>
       <div class="kpi"><div class="k">${v.kind === "tank" ? "Footprint" : "Meter ID"}</div><div class="v" style="font-size:16px">${v.kind === "tank" ? (v.footprint_m2 ? v.footprint_m2 + " m²" : "—") : esc(v.mid || "—")}</div></div>
     </div>
@@ -1673,19 +1851,19 @@ function showVilla(id){
       <div class="mh">Monthly consumption</div>
       <table>
         <thead><tr><th>Month</th><th style="text-align:right">m³</th><th style="width:44%"></th></tr></thead>
-        <tbody>${MONTHS.map((m,i) => `<tr><td>${m}</td><td class="n">${fmt(v.months[i])}</td>
+        <tbody>${MONTHS.map((m,i) => `<tr><td>${m}${mtd(i)}</td><td class="n">${fmt(v.months[i])}</td>
           <td><div style="height:5px;border-radius:5px;background:rgba(255,255,255,.09)">
             <i style="display:block;height:100%;border-radius:5px;background:${b.c};
-               width:${(v.months[i]/mx*100).toFixed(0)}%"></i></div></td></tr>`).join("")}</tbody>
+               width:${hasVal(v.months[i]) ? (v.months[i]/mx*100).toFixed(0) : 0}%"></i></div></td></tr>`).join("")}</tbody>
       </table>
     </div>` : ""}
     ${subBlock}
     <div class="mini">
       <div class="mh">Against its zone</div>
       <p style="font-size:14px;color:#C9C6CE">Median villa in ${esc(v.zone)} used
-        <b>${fmt(med)} m³</b> over the same six months. This plot is
-        <b style="color:${b.c}">${med ? (v.h1/med).toFixed(2) : "—"}×</b> that${b.t ? ` — ${esc(b.t)}` : ""}.
-        ${v.h1 === 0 ? "A zero read over six months is either a vacant plot or a stopped meter; it should be confirmed on site."
+        <b>${fmt(med)} m³</b> over ${figMonth < 0 ? "the same " + MONTHS.length + " months" : MONTHS[figMonth] + mtd(figMonth)}. This plot is
+        <b style="color:${b.c}">${med && hasVal(mVal(v)) ? (mVal(v)/med).toFixed(2) : "—"}×</b> that${b.t ? ` — ${esc(b.t)}` : ""}.
+        ${v.h1 === 0 ? "A zero read over " + MONTHS.length + " months is either a vacant plot or a stopped meter; it should be confirmed on site."
           : v.type === "Unsold" ? "The plot is flagged unsold in the register, so any sustained draw is construction, irrigation or a leak on the service."
           : ""}</p>
     </div>
@@ -1721,7 +1899,7 @@ window.showVilla = showVilla;
 function showMeterRecord(m, parent){
   expandRight();
   selectedVilla = null;
-  const mx = Math.max(1, ...m.months);
+  const mx = Math.max(1, ...m.months.filter(hasVal));
   const col = parent ? "#A4C5BB" : "#6B9AC4";
   const share = parent && parent.h1 > 0 ? m.h1 / parent.h1 * 100 : null;
   $("#right").innerHTML = `
@@ -1729,8 +1907,8 @@ function showMeterRecord(m, parent){
     <div class="sub">${esc(m.zone || (parent && parent.zone) || "")} · ${esc(m.type)}${
       parent ? ` · sub-meter of ${esc(parent.name)}` : ""}</div>
     <div class="kpis">
-      <div class="kpi"><div class="k">H1-2026</div><div class="v" style="color:${col}">${fmt(m.h1)} <small>m³</small></div></div>
-      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(m.h1/6)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">${PERIOD.short} 2026</div><div class="v" style="color:${col}">${fmt(m.h1)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(m.h1/MONTHS.length)} <small>m³</small></div></div>
       <div class="kpi"><div class="k">Account</div><div class="v" style="font-size:16px">${esc(m.acct)}</div></div>
       <div class="kpi"><div class="k">${parent ? "Share of building" : "Level"}</div>
         <div class="v" style="font-size:16px">${share !== null ? share.toFixed(1) + "%" : (m.children ? "L3 bulk" : "L3")}</div></div>
@@ -1739,13 +1917,13 @@ function showMeterRecord(m, parent){
       <div class="mh">Monthly consumption</div>
       <table>
         <thead><tr><th>Month</th><th style="text-align:right">m³</th><th style="width:44%"></th></tr></thead>
-        <tbody>${MONTHS.map((mo,i) => `<tr><td>${mo}</td><td class="n">${fmt(m.months[i])}</td>
+        <tbody>${MONTHS.map((mo,i) => `<tr><td>${mo}${mtd(i)}</td><td class="n">${fmt(m.months[i])}</td>
           <td><div style="height:5px;border-radius:5px;background:rgba(255,255,255,.09)">
             <i style="display:block;height:100%;border-radius:5px;background:${col};
-               width:${(m.months[i]/mx*100).toFixed(0)}%"></i></div></td></tr>`).join("")}</tbody>
+               width:${hasVal(m.months[i]) ? (m.months[i]/mx*100).toFixed(0) : 0}%"></i></div></td></tr>`).join("")}</tbody>
       </table>
     </div>
-    ${m.h1 === 0 ? `<div class="warnbox">No consumption recorded in six months —
+    ${m.h1 === 0 ? `<div class="warnbox">No consumption recorded in ${MONTHS.length} months —
       either the unit is empty or the meter has stopped. Worth confirming on site.</div>` : ""}
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
@@ -1851,6 +2029,7 @@ function renderSpark(){
       ? ` <span style="color:#E8C064">· not logged</span>` : "") +
     (dc === 1 ? ` <span style="color:#E8C064">· DC placeholder</span>` : "") +
     (M.partial ? ` <span style="color:#8E8A96">· ${M.logged} of ${M.days} days read</span>` : "");
+  if (!$("#dayRow").hidden) syncDaySlider();   // keep the Date slider on the same day
 }
 
 $("#play").onclick = () => {
@@ -1886,10 +2065,13 @@ $("#tlToggle").onclick = () => {
 };
 $("#play").innerHTML = ICON.play;
 $("#tMeters").textContent = fmt(METER_COUNTS.total);
-$("#tSupplyLbl").textContent = PERIOD.short + " supply";
-$("#figNote").textContent = "All figures are " + PERIOD.label + " totals in m³ unless a month is chosen.";
-$("#tSupply").textContent = fmt(SUPPLY.total) + " m³";
-$("#tLoss").textContent   = pct(TOTALLOSS, SUPPLY.total).toFixed(1) + "%";
+renderMonthSel();
+updateTopbar();
+updateFigNote();
+if (!DAILY_MONTHS.length){
+  // No daily series arrived with the payload — the option would show nothing.
+  $("#viewSel").querySelector('option[value="daily"]').disabled = true;
+}
 window.addEventListener("resize", renderSpark);
 // Exported because panel HTML uses inline onclick="showOverview()" — inside
 // the __satvizBoot wrapper it is no longer a global by default.
