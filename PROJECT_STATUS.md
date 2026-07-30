@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-30 — fix(water/satellite): anchor villa cards over their villas, cull by zoom
 - 2026-07-30 — feat(water/satellite): monthly/daily data views + organised controls
 - 2026-07-30 — feat(water/satellite): collapsible detail panel + dropdown controls
 - 2026-07-30 — feat(water): Satellite View tab — as-built network map fed live from Supabase
