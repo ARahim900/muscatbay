@@ -95,6 +95,18 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 .zcard .track i{display:block;height:100%;border-radius:4px;}
 .zcard .foot{font-size:12px;color:var(--ink3);margin-top:7px;}
 .zcard .stem{height:30px;}
+/* Bulk / individual / loss on one card — mirrors the right panel's gauge trio. */
+.zcard .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:8px;
+  background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden;}
+.zcard .trio > div{background:rgba(12,10,16,.55);padding:5px 8px 6px;}
+.zcard .trio small{display:block;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink3);}
+.zcard .trio b{display:block;font-size:13px;font-weight:600;margin-top:1px;
+  font-variant-numeric:tabular-nums;}
+/* Focus dimming: cards of non-selected zones recede with their ground plates;
+   hovering one restores it so the rest of the estate stays reachable. */
+.card3d.dimz{opacity:.45;filter:saturate(.55);transition:opacity .25s,filter .25s;}
+.card3d.dimz:hover{opacity:1 !important;filter:none;}
 
 /* villa card — compact by default, detail on hover */
 .vcard{padding:6px 10px 7px;min-width:64px;text-align:left;
@@ -740,6 +752,9 @@ function villaBand(v){
 
 /* Ground plates. Cards float above these; the plate is what ties a card to a
    place on the terrain, and carries the status colour at map scale. */
+/* Focus dimming: with a zone selected, every OTHER zone's geometry drops back
+   (`dim:1`) so the eye lands on the zone being read. The plate sources are tiny
+   (6 hulls + ~120 plots), so re-issuing setData on selection is cheap. */
 function zonePlateFeatures(){
   return { type:"FeatureCollection", features: ZONES.map(z => {
     const inV = zIn(z);
@@ -747,13 +762,15 @@ function zonePlateFeatures(){
     const hull = zoneHull(z);
     return { type:"Feature",
              properties:{ id:z.id, name:z.name,
-                          colour: lp === null ? "#8E8A96" : lossColour(lp), lp },
+                          colour: lp === null ? "#8E8A96" : lossColour(lp), lp,
+                          dim: selectedZone && z.id !== selectedZone ? 1 : 0 },
              geometry:{ type:"Polygon",
                         coordinates: hull ? [hull] : circle(z.lon, z.lat, 40, 40) } };
   })};
 }
 
 function villaPlateFeatures(){
+  const focusName = zoneNameOf(selectedZone);
   return { type:"FeatureCollection", features: VILLAS.map(v => {
     const b = villaBand(v);
     // Zone 8 plots carry a real building footprint from the drawings; the rest
@@ -762,9 +779,17 @@ function villaPlateFeatures(){
       ? { type:"Polygon", coordinates:[v.ring] }
       : { type:"Polygon", coordinates: circle(v.c[0], v.c[1], v.type === "Building (Bulk)" ? 13 : 8, 20) };
     return { type:"Feature",
-             properties:{ id:v.id, colour:b.c, surveyed: v.ring ? 1 : 0 },
+             properties:{ id:v.id, colour:b.c, surveyed: v.ring ? 1 : 0,
+                          dim: focusName && v.zone !== focusName ? 1 : 0 },
              geometry: geom };
   })};
+}
+
+/* Push the current selection into the plate sources (called on zone select /
+   clear and on figure changes — the colours track the figures too). */
+function refreshPlates(){
+  if (map.getSource("zplate")) map.getSource("zplate").setData(zonePlateFeatures());
+  if (map.getSource("vplate")) map.getSource("vplate").setData(villaPlateFeatures());
 }
 
 function networkFeatures(kinds){
@@ -855,19 +880,27 @@ map.on("load", () => {
   map.on("mouseenter","main-core", () => map.getCanvas().style.cursor="pointer");
   map.on("mouseleave","main-core", () => map.getCanvas().style.cursor="");
 
-  // Ground plates — the anchor each floating card is tethered to.
+  // Ground plates — the anchor each floating card is tethered to. Plates in a
+  // non-selected zone fall back (`dim:1`) so the chosen zone owns the eye.
   map.addLayer({ id:"zplate-fill", type:"fill", source:"zplate",
-    paint:{ "fill-color":["get","colour"], "fill-opacity":0.05 } });
+    paint:{ "fill-color":["get","colour"],
+            "fill-opacity":["case",["==",["get","dim"],1], 0.02, 0.05] } });
   map.addLayer({ id:"zplate-line", type:"line", source:"zplate",
-    paint:{ "line-color":["get","colour"], "line-opacity":0.85, "line-width":1.6 } });
+    paint:{ "line-color":["get","colour"],
+            "line-opacity":["case",["==",["get","dim"],1], 0.28, 0.85],
+            "line-width":1.6 } });
 
   // Villa plates: real footprints where the drawings give one, a disc otherwise.
   map.addLayer({ id:"vplate-fill", type:"fill", source:"vplate",
     paint:{ "fill-color":["get","colour"],
-            "fill-opacity":["interpolate",["linear"],["zoom"],14.2,0,15.0,0.45] } });
+            "fill-opacity":["interpolate",["linear"],["zoom"],
+              14.2, 0,
+              15.0, ["case",["==",["get","dim"],1], 0.12, 0.45]] } });
   map.addLayer({ id:"vplate-line", type:"line", source:"vplate",
     paint:{ "line-color":["get","colour"],
-            "line-opacity":["interpolate",["linear"],["zoom"],14.2,0,15.0,1],
+            "line-opacity":["interpolate",["linear"],["zoom"],
+              14.2, 0,
+              15.0, ["case",["==",["get","dim"],1], 0.3, 1]],
             "line-width":["interpolate",["linear"],["zoom"],15,1.2,19,2.6] } });
 
   for (const lyr of ["zplate-fill","zplate-line"]){
@@ -951,6 +984,10 @@ function zoneCard(z){
        <button class="ccol" aria-label="Expand the ${esc(z.name)} card">${CHEV_DN}</button>
        <div class="stem"></div>`;
   } else {
+    // The full zone story on one card — what the bulk meter recorded, what the
+    // individual meters recorded, and the loss between them — so the map card
+    // matches the right panel's gauge trio instead of stopping at a percentage.
+    const loss = noRead ? null : inV - outV;
     el.className = "card3d zcard" + (selectedZone === z.id ? " on" : "");
     el.innerHTML =
       `<button class="ccol" aria-label="Collapse the ${esc(z.name)} card">${CHEV_UP}</button>
@@ -959,7 +996,12 @@ function zoneCard(z){
        <div class="row"><span class="dot" style="background:${col}"></span>
          <span class="txt" style="color:${col}">${noRead ? "no bulk reading" : lp.toFixed(1) + "% unbilled"}</span></div>
        <div class="track"><i style="width:${noRead ? 0 : Math.min(100,lp).toFixed(1)}%;background:${col}"></i></div>
-       <div class="foot">${fmt(outV)} m³ billed · ${z.nL3} meters${nv?` · ${nv} plots mapped`:""}</div>
+       <div class="trio">
+         <div><small>bulk</small><b>${fmt(inV)}</b></div>
+         <div><small>individual</small><b>${fmt(outV)}</b></div>
+         <div><small>loss</small><b style="color:${col}">${loss === null ? "—" : fmt(loss)}</b></div>
+       </div>
+       <div class="foot">${z.nL3} account${z.nL3 === 1 ? "" : "s"}${z.nL4 ? ` + ${z.nL4} apartment` : ""}${nv?` · ${nv} plots mapped`:""}</div>
        <div class="stem"></div>`;
   }
   el.querySelector(".ccol").addEventListener("click", ev => {
@@ -1067,8 +1109,14 @@ function refreshVillaCards(){
     // "Zones only" with a zone chosen means exactly that zone's card — the
     // other five are the clutter the user just asked to remove.
     const show = (cardMode === "zone" && selectedZone) ? mine : !(deep && !mine);
-    m.getElement().style.display = show ? "" : "none";
-    m.getElement().style.opacity = (deep && show) ? "0.6" : "1";
+    const el = m.getElement();
+    el.style.display = show ? "" : "none";
+    // Inline opacity only for the in-zone anchor card; elsewhere it is left
+    // empty so the .dimz class below can take effect (inline would beat CSS).
+    el.style.opacity = (deep && show && mine) ? "0.6" : "";
+    // Focus dimming: with a zone selected, the OTHER zones' cards recede along
+    // with their ground plates (hover restores full strength — see .dimz CSS).
+    el.classList.toggle("dimz", !!selectedZone && show && !mine);
   }
 
   // The named points are almost all Zone FM buildings packed into one corner —
@@ -1300,8 +1348,7 @@ function updateFigNote(){
 function refreshFigures(){
   renderZoneList();
   buildMarkers();
-  if (map.getSource("zplate")) map.getSource("zplate").setData(zonePlateFeatures());
-  if (map.getSource("vplate")) map.getSource("vplate").setData(villaPlateFeatures());
+  refreshPlates();
   updateTopbar();
   updateFigNote();
   if (selectedZone){
@@ -1586,6 +1633,7 @@ function showOverview(){
   renderChips();
   renderZoneList();
   buildMarkers();
+  refreshPlates();
   const s1 = pct(STAGE1, SUPPLY.total), s2 = pct(STAGE2, L2_TOTAL), tot = pct(TOTALLOSS, SUPPLY.total);
   $("#right").innerHTML = `
     <h2>Network overview</h2>
@@ -1726,6 +1774,7 @@ function selectZone(id){
   renderChips();
   renderZoneList();
   buildMarkers();
+  refreshPlates();
   stopSpin();
   flyToZone(z);
 
@@ -1837,7 +1886,7 @@ function showVilla(id){
   hideHover();
   selectedVilla = id;
   const zid = (ZONES.find(z => z.name === v.zone) || {}).id;
-  if (zid && selectedZone !== zid){ selectedZone = zid; openNodes.add("z:" + zid); }
+  if (zid && selectedZone !== zid){ selectedZone = zid; openNodes.add("z:" + zid); refreshPlates(); }
   renderChips();
   renderZoneList();
   buildMarkers();
