@@ -192,7 +192,23 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
   gap:6px;flex-wrap:wrap;}
 .lfoot .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
 
-#right{right:14px;top:14px;width:352px;max-height:calc(100% - 150px);overflow-y:auto;padding:15px;}
+#rwrap{right:14px;top:14px;width:352px;max-height:calc(100% - 150px);
+  display:flex;flex-direction:column;}
+#rhead{display:flex;align-items:center;gap:8px;width:100%;padding:11px 15px;text-align:left;
+  font:inherit;font-size:14.5px;font-weight:600;color:var(--ink);border-radius:10.5px;}
+#rhead .rchev{margin-left:auto;color:var(--ink3);display:flex;transition:transform .15s ease;}
+#rwrap:not(.min) #rhead .rchev{transform:rotate(180deg);}
+#rwrap:not(.min) #rhead{border-bottom:1px solid var(--border);border-radius:10.5px 10.5px 0 0;}
+#rhead:hover{background:rgba(164,197,187,.08);}
+#rwrap.min #right{display:none;}
+#right{overflow-y:auto;padding:9px 15px 15px;}
+.selrow{margin-top:9px;}
+.selrow .lbl,.lfoot .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+select{font:inherit;font-size:14px;color:var(--ink);background:#201d27;border:1px solid var(--border);
+  border-radius:5px;padding:7px 9px;}
+select:focus{outline:3px solid var(--teal);outline-offset:1px;}
+.selrow select{display:block;width:100%;margin-top:5px;}
+.lfoot select{flex:1;min-width:0;}
 #right h2{font-size:17px;}
 #right .sub{font-size:13px;color:var(--ink3);margin-top:2px;}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0;}
@@ -262,7 +278,7 @@ td.n{text-align:right;}
   padding:8px 14px;font-size:13px;color:var(--ink3);backdrop-filter:blur(10px);
   transition:opacity .4s ease;
 }
-@media (max-width:1100px){ #left,#right{width:296px;} }
+@media (max-width:1100px){ #left,#rwrap{width:296px;} }
 @media (max-width:860px){ #left{display:none;} #viewctl{max-width:none;} }
 </style>
 </head>
@@ -289,19 +305,30 @@ td.n{text-align:right;}
         <h2>Meter explorer</h2>
         <input id="search" type="search" placeholder="Search name or account…"
                aria-label="Search meters by name or account number">
-        <div id="zchips"></div>
+        <div class="selrow">
+          <span class="lbl">Zone selection</span>
+          <select id="zoneSel" aria-label="Zone selection"></select>
+        </div>
         <p id="figNote">All figures are period totals in m³ unless a month is chosen.</p>
       </div>
       <div id="zlist"></div>
       <div class="lfoot">
         <span class="lbl">Map cards</span>
-        <button class="chip" data-cards="zone">Zones only</button>
-        <button class="chip on" data-cards="top">Top 10</button>
-        <button class="chip" data-cards="all">All</button>
+        <select id="cardSel" aria-label="Which cards to show on the map">
+          <option value="zone">Zones only</option>
+          <option value="top" selected>Top 10</option>
+          <option value="all">All</option>
+        </select>
       </div>
     </div>
 
-    <div class="panel" id="right"></div>
+    <div class="panel min" id="rwrap">
+      <button id="rhead" aria-expanded="false" aria-controls="right">
+        <span id="rtitle">Network overview</span>
+        <span class="rchev" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+      </button>
+      <div id="right"></div>
+    </div>
 
     <div id="viewctl">
       <button id="vTop">Plan</button>
@@ -959,8 +986,11 @@ function refreshVillaCards(){
   for (const m of markers){
     if (m.__kind !== "zone") continue;
     const mine = m.__zoneId === selectedZone;
-    m.getElement().style.display = (deep && !mine) ? "none" : "";
-    m.getElement().style.opacity = deep ? "0.6" : "1";
+    // "Zones only" with a zone chosen means exactly that zone's card — the
+    // other five are the clutter the user just asked to remove.
+    const show = (cardMode === "zone" && selectedZone) ? mine : !(deep && !mine);
+    m.getElement().style.display = show ? "" : "none";
+    m.getElement().style.opacity = (deep && show) ? "0.6" : "1";
   }
 
   // The named points are almost all Zone FM buildings packed into one corner —
@@ -1008,7 +1038,7 @@ function applyAltitudes(){
     return { l: r.left - c.left, r: r.right - c.left,
              t: r.top - c.top,  b: r.bottom - c.top };
   };
-  const panels = ["#left", "#right", "#tl"].map(panelRect).filter(Boolean);
+  const panels = ["#left", "#rwrap", "#tl"].map(panelRect).filter(Boolean);
   placed.push(...panels);
   const panelCover = r => panels.reduce((s, q) => s +
     Math.max(0, Math.min(r.r, q.r) - Math.max(r.l, q.l)) *
@@ -1131,14 +1161,25 @@ $("#vProv").onclick = () => {
   if (map.getLayer("svc-line"))
     map.setLayoutProperty("svc-line","visibility", showService ? "visible" : "none");
 };
-for (const b of document.querySelectorAll("[data-cards]")){
-  b.onclick = () => {
-    cardMode = b.dataset.cards;
-    for (const o of document.querySelectorAll("[data-cards]"))
-      o.classList.toggle("on", o === b);
-    refreshVillaCards();
-  };
+$("#cardSel").onchange = () => {
+  cardMode = $("#cardSel").value;
+  refreshVillaCards();
+};
+
+/* Right panel collapse. Collapsed by default so the map leads; expands on
+   demand via the header, and automatically when the user asks for something
+   that renders there (zone or meter selection). The header title mirrors
+   whatever the panel currently shows. */
+function setRight(min){
+  $("#rwrap").classList.toggle("min", min);
+  $("#rhead").setAttribute("aria-expanded", String(!min));
 }
+function expandRight(){ setRight(false); }
+$("#rhead").onclick = () => setRight(!$("#rwrap").classList.contains("min"));
+new MutationObserver(() => {
+  const h = $("#right").querySelector("h2");
+  $("#rtitle").textContent = h ? h.textContent : "Details";
+}).observe($("#right"), { childList: true });
 
 $("#search").addEventListener("input", e => {
   query = e.target.value.trim().toLowerCase();
@@ -1302,17 +1343,17 @@ function renderZoneList(){
 }
 
 function renderChips(){
-  const wrap = $("#zchips");
-  wrap.replaceChildren();
-  const mk = (label, id) => {
-    const b = document.createElement("button");
-    b.className = "chip" + (selectedZone === id ? " on" : "");
-    b.textContent = label;
-    b.onclick = () => { if (id) selectZone(id); else showOverview(); };
-    wrap.appendChild(b);
+  const sel = $("#zoneSel");
+  sel.replaceChildren();
+  const mk = (label, val) => {
+    const o = document.createElement("option");
+    o.value = val; o.textContent = label;
+    sel.appendChild(o);
   };
-  mk("All zones", null);
-  for (const z of ZONES) mk(z.name === "Village Square" ? "VS" : z.name.replace("Zone ",""), z.id);
+  mk("All zones", "");
+  for (const z of ZONES) mk(z.name, z.id);
+  sel.value = selectedZone || "";
+  sel.onchange = () => { if (sel.value) selectZone(sel.value); else showOverview(); };
 }
 
 function sparkline(series, colour, w, h){
@@ -1473,6 +1514,7 @@ function selectZone(id){
   selectedZone = id;
   selectedVilla = null;
   zoneCardState.clear();
+  expandRight();
   openNodes.add("z:" + id);
   renderChips();
   renderZoneList();
@@ -1542,16 +1584,21 @@ function renderZonePanel(){
       <table>
         <thead><tr><th>Month</th><th style="text-align:right">In</th><th style="text-align:right">Individual</th><th style="text-align:right">Loss</th></tr></thead>
         <tbody>${MONTHS.map((m,i) => {
+          // A month with no bulk reading has no loss figure — "0%" would be a
+          // fabricated number, the exact thing this app never shows.
+          const noRead = z.ml2[i] === null || z.ml2[i] === undefined;
           const lo = z.ml2[i]-z.ml3[i], lpm = pct(lo, z.ml2[i]);
-          return `<tr><td>${m}</td><td class="n">${fmt(z.ml2[i])}</td><td class="n">${fmt(z.ml3[i])}</td>
-                  <td class="n" style="color:${lossColour(lpm)}">${lpm.toFixed(0)}%</td></tr>`;
+          const lossCell = noRead ? `<td class="n" style="color:var(--ink3)">—</td>`
+            : `<td class="n" style="color:${lossColour(lpm)}">${lpm.toFixed(0)}%</td>`;
+          return `<tr><td>${m}${mtd(i)}</td><td class="n">${fmt(z.ml2[i])}</td><td class="n">${fmt(z.ml3[i])}</td>
+                  ${lossCell}</tr>`;
         }).join("")}</tbody>
       </table>
     </div>
     <div class="mini"><div class="mh">Loss trend (m³/month)</div>${sparkline(lossSeries, lossColour(h1lp), 290, 44)}</div>
     <div class="mini">
       <div class="mh">Read</div>
-      <p style="font-size:14px;color:#C9C6CE">Average billed volume per L3 meter is <b>${fmt(perMeter)} m³</b> over six months.
+      <p style="font-size:14px;color:#C9C6CE">Average billed volume per L3 meter is <b>${fmt(perMeter)} m³</b> over ${MONTHS.length} months.
       ${h1lp>=50 ? "Loss above 50% of bulk input is not explicable by meter under-registration alone — treat as physical leakage and step-test the zone."
        : h1lp>=30 ? "Loss in the 30–50% band usually mixes real leakage with under-registering meters. A night-flow test will separate the two."
        : "Loss is within a band where meter accuracy and billing lag are the likely causes rather than burst leakage."}</p>
@@ -1672,6 +1719,7 @@ window.showVilla = showVilla;
 /* A meter with no plot of its own — a retail unit, an apartment, a common-area
    meter. Same shape as the villa panel so the two read alike. */
 function showMeterRecord(m, parent){
+  expandRight();
   selectedVilla = null;
   const mx = Math.max(1, ...m.months);
   const col = parent ? "#A4C5BB" : "#6B9AC4";
@@ -1705,6 +1753,7 @@ function showMeterRecord(m, parent){
 window.showMeterRecord = showMeterRecord;
 
 function showMeter(p){
+  expandRight();
   $("#right").innerHTML = `
     <h2>${esc(p.n)}</h2>
     <div class="sub">Account ${esc(p.id)} · level ${esc(p.t.toUpperCase())} ·
