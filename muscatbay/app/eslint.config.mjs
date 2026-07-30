@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored third-party bundles served as static assets (e.g. the
+    // Satellite View's self-hosted MapLibre build) — not ours to lint.
+    "public/**/vendor/**",
   ]),
   {
     files: ["**/*.tsx", "**/*.ts"],
