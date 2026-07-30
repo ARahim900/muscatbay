@@ -888,7 +888,10 @@ map.on("load", () => {
     const id = f.properties.id;
     if (id === hoverId) return;
     const pinned = markers.find(m => m.__kind === "villa" && m.__id === id);
-    if (pinned && pinned.getElement().style.display !== "none"){ hideHover(); return; }
+    // A card culled by the layout (visibility) is not "already on screen" —
+    // the hover popup is exactly how a culled villa stays reachable.
+    if (pinned && pinned.getElement().style.display !== "none"
+               && pinned.getElement().style.visibility !== "hidden"){ hideHover(); return; }
     const v = VILLAS.find(x => x.id === id);
     if (!v){ hideHover(); return; }
     hideHover();
@@ -932,7 +935,10 @@ function zoneCard(z){
   const noRead = !hasVal(inV);
   const lp = noRead ? 0 : pct(inV - outV, inV);
   const col = noRead ? "#8E8A96" : lossColour(lp);
-  const state = zoneCardState.get(z.id) || (selectedZone === z.id ? "open" : "min");
+  // When villa cards are on show, the selected zone's numbers are already in
+  // the right panel — the expanded card would only blanket the villas' space.
+  const state = zoneCardState.get(z.id) ||
+    (selectedZone === z.id && cardMode === "zone" ? "open" : "min");
   const nv = (VILLA_BY_ZONE[z.name] || []).length;
   const el = document.createElement("div");
 
@@ -1082,11 +1088,13 @@ function refreshVillaCards(){
 function zoneNameOf(id){ return (ZONES.find(z => z.id === id) || {}).name; }
 
 /* MapLibre markers clamp to terrain, so altitude is applied as a screen-space
-   lift. Cards at the same altitude collide wherever zones sit close together,
-   so anything that overlaps a card already placed is pushed further up until it
-   clears — the stack fans out vertically and every leader line still points at
-   its own plate. Placement runs largest-first so the biggest zone keeps the
-   lowest, most readable position. */
+   lift. Zone cards and point labels that collide are pushed up or sideways
+   until they clear. VILLA cards are different: a villa card belongs directly
+   over its villa — lifting thirty of them into a fan produced an unreadable
+   cloud with leader lines crossing half the screen. So a villa card either
+   sits over its plot or is culled for this zoom level, largest consumer
+   first; zooming in frees screen space and reveals the rest, and any culled
+   villa is still one hover on its plate away. */
 const LIFT_STEP = 34, LIFT_TRIES = 6;
 const EDGE_TOP = 8, EDGE_BOTTOM = 10, EDGE_SIDE = 6;    // frame; the panels below carve out the rest
 
@@ -1146,19 +1154,36 @@ function applyAltitudes(){
                  Math.max(0, Math.min(r.b, q.b) - Math.max(r.t, q.t));
     }, 0);
 
-    // Prefer straight up; if that is blocked or leaves the frame, step sideways.
     let best = null, bestCost = Infinity;
-    outer:
-    for (let i = 0; i <= LIFT_TRIES; i++){
-      for (const dx of [0, w * 0.62, -w * 0.62, w * 1.25, -w * 1.25]){
-        const r = rectAt(dx, base + i * LIFT_STEP);
-        if (!inView(r)) continue;
-        const c = clash(r);
-        if (c === 0){ best = r; break outer; }
-        // penalise distance from the anchor so a clear-ish spot nearby beats a
-        // marginally cleaner one halfway across the screen
-        const cost = c + Math.abs(dx) * 6 + i * 220;
-        if (cost < bestCost){ bestCost = cost; best = r; }
+    if (m.__kind === "villa" && m.__id !== selectedVilla){
+      // Over its own villa or not at all. Two candidates: the resting height
+      // and one half-step up (for two houses sharing a wall). Anything that
+      // still collides is culled at this zoom — placement runs largest-first,
+      // so the biggest consumers hold their cards the longest.
+      for (const dy of [base, base + LIFT_STEP * 0.6, base + LIFT_STEP * 1.2]){
+        const r0 = rectAt(0, dy);
+        if (!inView(r0)) continue;
+        if (clash(r0) === 0){ best = r0; break; }
+      }
+      if (!best){
+        el.style.visibility = "hidden";
+        m.setOffset([0, -base]);
+        continue;
+      }
+    } else {
+      // Prefer straight up; if that is blocked or leaves the frame, step sideways.
+      outer:
+      for (let i = 0; i <= LIFT_TRIES; i++){
+        for (const dx of [0, w * 0.62, -w * 0.62, w * 1.25, -w * 1.25]){
+          const r = rectAt(dx, base + i * LIFT_STEP);
+          if (!inView(r)) continue;
+          const c = clash(r);
+          if (c === 0){ best = r; break outer; }
+          // penalise distance from the anchor so a clear-ish spot nearby beats a
+          // marginally cleaner one halfway across the screen
+          const cost = c + Math.abs(dx) * 6 + i * 220;
+          if (cost < bestCost){ bestCost = cost; best = r; }
+        }
       }
     }
     const r = best || rectAt(0, base);
@@ -1239,7 +1264,10 @@ $("#vProv").onclick = () => {
 };
 $("#cardSel").onchange = () => {
   cardMode = $("#cardSel").value;
-  refreshVillaCards();
+  buildMarkers();         // the zone card's pill/expanded default depends on the mode
+  // The card budget changed, so the right framing changed with it.
+  const z = ZONES.find(v => v.id === selectedZone);
+  if (z) flyToZone(z);
 };
 
 /* ---- data view: monthly (period total or one month) vs daily (timeline) ---- */
@@ -1350,6 +1378,7 @@ $("#viewSel").onchange = () => {
 function setRight(min){
   $("#rwrap").classList.toggle("min", min);
   $("#rhead").setAttribute("aria-expanded", String(!min));
+  queueLayout();          // cards hidden under the open panel come back
 }
 function expandRight(){ setRight(false); }
 $("#rhead").onclick = () => setRight(!$("#rwrap").classList.contains("min"));
@@ -1698,6 +1727,17 @@ function selectZone(id){
   renderZoneList();
   buildMarkers();
   stopSpin();
+  flyToZone(z);
+
+  zonePeriod = figMonth < 0 ? "H1" : figMonth;   // panel opens on the month in view
+  renderZonePanel();
+}
+
+/* Default camera for a selected zone. "All" cards need screen room — every
+   card sits directly over its villa now, and what does not fit is culled — so
+   that mode lands closer than the plain bounds fit, and switching card modes
+   re-frames the zone to match. */
+function flyToZone(z){
   const bb = zoneBounds(z);
   let cam = null;
   if (bb){
@@ -1705,15 +1745,15 @@ function selectZone(id){
     catch (err){ cam = null; }
   }
   if (cam){
-    map.easeTo({ center:cam.center, zoom:Math.min(cam.zoom, 17.4), pitch:62,
+    const zoom = cardMode === "all"
+      ? Math.min(Math.max(cam.zoom, 17.2), 17.8)
+      : Math.min(cam.zoom, 17.4);
+    map.easeTo({ center:cam.center, zoom, pitch:62,
                  bearing:map.getBearing(), duration:1400 });
   } else {
-    map.easeTo({ center:[z.lon, z.lat], zoom:16.3, pitch:62,
+    map.easeTo({ center:[z.lon, z.lat], zoom: cardMode === "all" ? 17.2 : 16.3, pitch:62,
                  bearing:map.getBearing(), duration:1400, offset:[0,90] });
   }
-
-  zonePeriod = figMonth < 0 ? "H1" : figMonth;   // panel opens on the month in view
-  renderZonePanel();
 }
 
 /* The zone panel Rahim asked for: pick the period explicitly (six-month total
