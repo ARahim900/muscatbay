@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-30 — feat(water/satellite): collapsible detail panel + dropdown controls
 - 2026-07-30 — feat(water): Satellite View tab — as-built network map fed live from Supabase
 - 2026-07-29 — Show the in-progress month in Water Monthly as labelled month-to-date data (#59)
 - 2026-07-29 — Make the ticker always scroll and take the STP summary to four cards (#58)
