@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { BarChart3, CalendarDays, DatabaseZap, RefreshCw, AlertTriangle } from "lucide-react";
+import { BarChart3, CalendarDays, DatabaseZap, RefreshCw, AlertTriangle, Satellite } from "lucide-react";
 
 // Water data
 import type { WaterMeter } from "@/lib/water-data";
@@ -28,8 +28,13 @@ const DailyWaterReport = dynamic(
     () => import("@/components/water/daily-water-report").then((m) => ({ default: m.DailyWaterReport })),
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
 );
+// Satellite View hosts a maplibre engine — browser-only by nature.
+const SatelliteView = dynamic(
+    () => import("@/components/water/satellite/satellite-view").then((m) => ({ default: m.SatelliteView })),
+    { loading: () => <Skeleton className="h-[75vh] w-full rounded-xl" />, ssr: false },
+);
 
-type DashboardView = "monthly" | "daily";
+type DashboardView = "monthly" | "daily" | "satellite";
 
 // Base tables behind the monthly dashboard — module-level so the array
 // reference stays stable across renders (the realtime hook re-subscribes
@@ -240,6 +245,7 @@ export default function WaterPage() {
                         tabs={[
                             { key: "monthly", label: "Monthly", icon: BarChart3 },
                             { key: "daily", label: "Daily", icon: CalendarDays },
+                            { key: "satellite", label: "Satellite View", icon: Satellite },
                         ]}
                     />
 
@@ -261,6 +267,15 @@ export default function WaterPage() {
                         <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                             <SectionBoundary title="Daily water report">
                                 <DailyWaterReport />
+                            </SectionBoundary>
+                        </div>
+                    )}
+
+                    {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
+                    {dashboardView === "satellite" && (
+                        <div id="panel-satellite" role="tabpanel" aria-labelledby="tab-satellite" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                            <SectionBoundary title="Satellite network view">
+                                <SatelliteView waterMeters={waterMeters} derivedMonths={derivedMonths} />
                             </SectionBoundary>
                         </div>
                     )}

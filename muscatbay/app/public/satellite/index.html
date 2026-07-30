@@ -1,0 +1,1855 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Muscat Bay — Live Water Network (3D)</title>
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Slab:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#4E4456; --teal:#A4C5BB;
+  --page:#0A090C; --card:#16141B; --border:#2A2731;
+  --ink:#F5F4F6; --ink2:#C9C6CE; --ink3:#8E8A96;
+  --water:#6B9AC4; --ok:#84B59F; --warn:#E8C064; --danger:#D67A7A;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--page);}
+body{
+  font-family:"Inter",-apple-system,system-ui,sans-serif;
+  color:var(--ink); font-size:15px; line-height:1.5;
+  font-variant-numeric:tabular-nums;
+}
+h1,h2,h3{font-family:"Roboto Slab",Georgia,serif;font-weight:600;letter-spacing:-0.01em;}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer;}
+button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
+
+#app{position:fixed;inset:0;display:flex;flex-direction:column;}
+#topbar{
+  height:54px;flex:0 0 54px;background:var(--purple);
+  display:flex;align-items:center;gap:18px;padding:0 16px;z-index:40;
+}
+#topbar .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+#topbar .sep{width:1px;height:22px;background:rgba(255,255,255,.22);}
+#topbar .ttl{font-family:"Roboto Slab",Georgia,serif;font-size:16px;}
+#topbar .spacer{flex:1;}
+#topbar .stat{font-size:13px;color:rgba(255,255,255,.75);white-space:nowrap;}
+#topbar .stat b{color:#fff;font-size:15px;}
+
+/* Embedded in the Operations app: the app supplies its own chrome. */
+.embed #topbar{display:none;}
+#bootwait{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--page);z-index:99;}
+#bootwait .bw-card{background:var(--card);border:1px solid var(--border);border-radius:10.5px;
+  padding:18px 26px;font-size:14px;color:var(--ink2);text-align:center;line-height:1.6;}
+
+#main{flex:1;position:relative;overflow:hidden;}
+#map{position:absolute;inset:0;}
+.maplibregl-ctrl-group{background:rgba(22,20,27,.92)!important;border:1px solid var(--border)!important;border-radius:10.5px!important;}
+.maplibregl-ctrl-group button{background:transparent!important;}
+.maplibregl-ctrl-group button+button{border-top:1px solid var(--border)!important;}
+.maplibregl-ctrl-group button span{filter:invert(1) brightness(1.6);}
+.maplibregl-ctrl-attrib{background:rgba(10,9,12,.72)!important;color:var(--ink3)!important;font-size:11px!important;}
+.maplibregl-ctrl-attrib a{color:var(--ink2)!important;}
+
+/* ---------- floating cards ----------
+   Every datum in the scene is a card standing above its own ground plate,
+   tethered by a leader line. Cards replace the earlier extruded cylinders:
+   a column encodes one number in its height and nothing else, whereas a card
+   carries the figure, the trend and the status at the size the eye needs. */
+/* NOTE: never set position on .card3d — these are MapLibre marker elements and
+   the library positions them absolutely; overriding that drops them into normal
+   flow, where they stretch into full-width bars. They are already positioned,
+   so absolute children (.ccol, .stem) anchor to the card as-is. */
+.card3d{
+  pointer-events:auto;cursor:pointer;
+  background:linear-gradient(180deg,rgba(28,25,34,.74),rgba(18,16,23,.70));
+  border:1px solid var(--border);border-radius:10.5px;
+  backdrop-filter:blur(10px);
+  box-shadow:0 1px 2px rgba(0,0,0,.6),0 14px 38px rgba(0,0,0,.5);
+  transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;
+  will-change:transform;
+}
+.card3d:hover{border-color:var(--teal);transform:translateY(-2px);
+  background:linear-gradient(180deg,rgba(28,25,34,.95),rgba(18,16,23,.95));
+  box-shadow:0 1px 2px rgba(0,0,0,.6),0 20px 46px rgba(0,0,0,.58);}
+.card3d.on{border-color:var(--teal);}
+/* leader line down to the ground plate */
+.card3d .stem{position:absolute;left:50%;top:100%;width:1px;
+  background:linear-gradient(to bottom,var(--teal),rgba(164,197,187,0));}
+.card3d .stem::after{content:"";position:absolute;left:-2.5px;bottom:-2px;
+  width:6px;height:6px;border-radius:50%;background:var(--teal);opacity:.85;}
+
+/* zone card */
+.zcard{padding:10px 13px 11px;min-width:172px;}
+.zcard .eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--teal);font-weight:600;}
+.zcard .big{font-weight:600;font-size:19px;margin-top:4px;line-height:1.2;letter-spacing:-0.01em;}
+.zcard .big small{font-size:12px;color:var(--ink3);font-family:"Inter",sans-serif;}
+.zcard .row{display:flex;align-items:center;gap:7px;margin-top:7px;}
+.zcard .row .dot{width:7px;height:7px;border-radius:50%;flex:0 0 7px;}
+.zcard .row .txt{font-size:13px;font-weight:600;}
+.zcard .track{height:4px;border-radius:4px;background:rgba(255,255,255,.10);margin-top:8px;overflow:hidden;}
+.zcard .track i{display:block;height:100%;border-radius:4px;}
+.zcard .foot{font-size:12px;color:var(--ink3);margin-top:7px;}
+.zcard .stem{height:30px;}
+
+/* villa card — compact by default, detail on hover */
+.vcard{padding:6px 10px 7px;min-width:64px;text-align:left;
+  background:linear-gradient(180deg,rgba(32,29,39,.96),rgba(21,19,26,.96));
+  border-color:#3A3644;}
+.vcard .vid{font-size:12px;font-weight:600;color:var(--ink2);letter-spacing:.02em;line-height:1.25;}
+.vcard .vv{font-weight:600;font-size:13.5px;margin-top:1px;line-height:1.25;}
+.vcard .vv small{font-size:10px;color:var(--ink3);font-family:"Inter",sans-serif;}
+.vcard .vmore{display:none;font-size:12px;color:var(--ink3);margin-top:4px;
+  padding-top:4px;border-top:1px solid var(--border);white-space:nowrap;}
+.vcard:hover .vmore{display:block;}
+.vcard:hover{z-index:9;}
+.vcard .stem{height:18px;}
+.vcard .pipbar{height:3px;border-radius:3px;background:rgba(255,255,255,.10);margin-top:5px;overflow:hidden;}
+.vcard .pipbar i{display:block;height:100%;border-radius:3px;}
+.vcard.bulk{border-left:1px solid var(--border);}
+.vcard.bulk .vid::before{content:"▤ ";color:var(--ink3);font-size:10px;}
+
+/* collapsed zone pill + expand/collapse control */
+.zpill{padding:7px 11px 8px;display:flex;align-items:baseline;gap:9px;white-space:nowrap;}
+.zpill .zn{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal);font-weight:600;}
+.zpill .zv{font-weight:600;font-size:13.5px;}
+.zpill .zv small{font-size:10px;color:var(--ink3);font-family:"Inter",sans-serif;}
+.zpill .zp{font-size:12px;font-weight:600;}
+.zpill .stem{height:22px;}
+.ccol{flex:0 0 18px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;
+  color:var(--ink3);border-radius:4px;align-self:center;}
+.ccol:hover{color:var(--ink);background:rgba(164,197,187,.16);}
+.zcard .ccol{position:absolute;top:8px;right:8px;}
+.hoverpop{z-index:30;}
+
+/* plain point label (verified meter positions) */
+.mlabel{
+  pointer-events:auto;cursor:pointer;
+  background:rgba(10,9,12,.8);border:1px solid var(--border);border-radius:5px;
+  padding:3px 8px;font-size:12px;font-weight:600;color:var(--ink2);white-space:nowrap;
+}
+.mlabel:hover{border-color:var(--teal);color:var(--ink);}
+
+/* ---------- panels ---------- */
+.panel{
+  position:absolute;background:rgba(22,20,27,.9);border:1px solid var(--border);
+  border-radius:10.5px;backdrop-filter:blur(10px);z-index:20;
+  box-shadow:0 2px 10px rgba(0,0,0,.35),0 8px 30px rgba(0,0,0,.28);
+}
+#left{left:14px;top:14px;width:330px;max-height:calc(100% - 205px);display:flex;flex-direction:column;}
+#left .hd{padding:13px 15px 10px;border-bottom:1px solid var(--border);}
+#left .hd h2{font-size:16px;}
+#left .hd p{font-size:13px;color:var(--ink3);margin-top:4px;}
+#zlist{overflow-y:auto;padding:8px;}
+.zrow{width:100%;text-align:left;padding:10px 11px;border-radius:10.5px;
+  border:1px solid transparent;margin-bottom:5px;transition:background .15s ease,border-color .15s ease;}
+.zrow:hover{background:rgba(164,197,187,.08);}
+.zrow.on{border-color:var(--teal);background:rgba(164,197,187,.12);}
+.zrow .r1{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.zrow .nm{font-weight:600;font-size:14px;}
+.zrow .ls{font-size:14px;font-weight:600;font-family:"Roboto Slab",Georgia,serif;}
+.zrow .r2{font-size:12px;color:var(--ink3);margin-top:3px;}
+.zrow .bar{height:5px;border-radius:5px;background:rgba(255,255,255,.09);margin-top:7px;overflow:hidden;}
+.zrow .bar i{display:block;height:100%;border-radius:5px;}
+.zrow.back{display:flex;align-items:center;justify-content:center;gap:7px;color:var(--ink2);font-size:14px;}
+/* ---------- meter explorer (collapsible tree) ---------- */
+#search{width:100%;margin-top:9px;padding:7px 10px;border-radius:5px;font:inherit;font-size:14px;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--ink);}
+#search::placeholder{color:var(--ink3);}
+#search:focus{outline:3px solid var(--teal);outline-offset:1px;border-color:transparent;}
+#zchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;}
+.chip{padding:4px 9px;border-radius:5px;font-size:13px;border:1px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--ink2);transition:background .15s ease,border-color .15s ease;}
+.chip:hover{background:rgba(164,197,187,.14);color:var(--ink);}
+.chip.on{border-color:var(--teal);background:rgba(164,197,187,.18);color:var(--ink);}
+
+.tnode{display:flex;align-items:center;gap:7px;width:100%;text-align:left;
+  padding:6px 9px;border-radius:5px;border:1px solid transparent;
+  transition:background .15s ease,border-color .15s ease;}
+.tnode:hover{background:rgba(164,197,187,.08);}
+.tnode.on{border-color:var(--teal);background:rgba(164,197,187,.12);}
+.tnode .tw{flex:0 0 12px;width:12px;color:var(--ink3);display:flex;align-items:center;
+  transition:transform .15s ease;}
+.tnode.open>.tw{transform:rotate(90deg);}
+.tnode .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;}
+.tnode .tsub{font-size:12px;color:var(--ink3);margin-left:6px;}
+.tnode .tv{font-weight:600;font-size:13px;white-space:nowrap;}
+.tnode .tpc{font-size:12px;font-weight:600;width:46px;text-align:right;}
+.tnode.d0{font-weight:600;margin-top:3px;}
+.tnode.d1{color:var(--ink2);}
+.tnode.d1 .tn{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+.tnode.d2{padding-left:26px;}
+.tnode.d3{padding-left:44px;color:var(--ink3);}
+.tnode.d3 .tn,.tnode.d3 .tv{font-size:13px;}
+.tnode .dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;}
+.tnode .warn{color:var(--danger);font-size:12px;font-weight:600;}
+#empty{padding:16px 12px;font-size:13px;color:var(--ink3);}
+.lfoot{border-top:1px solid var(--border);padding:9px 11px;display:flex;align-items:center;
+  gap:6px;flex-wrap:wrap;}
+.lfoot .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+
+#right{right:14px;top:14px;width:352px;max-height:calc(100% - 150px);overflow-y:auto;padding:15px;}
+#right h2{font-size:17px;}
+#right .sub{font-size:13px;color:var(--ink3);margin-top:2px;}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:13px 0;}
+.kpi{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10.5px;padding:9px 11px;}
+.kpi .k{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:600;}
+.kpi .v{font-weight:600;font-size:18px;margin-top:3px;letter-spacing:-0.01em;}
+.kpi .v small{font-size:12px;color:var(--ink3);font-family:"Inter",sans-serif;}
+.gaugewrap{display:flex;gap:11px;justify-content:center;margin:6px 0 13px;}
+.perrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
+.kpis.k3{grid-template-columns:repeat(3,1fr);}
+.kpis.k3 .kpi .v{font-size:16px;}
+.gauge{text-align:center;}
+.gauge .gl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin-top:4px;}
+.mini{margin-top:6px;}
+.mini .mh{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600;margin-bottom:6px;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
+   font-weight:600;padding:5px 6px 5px 0;border-bottom:1px solid var(--border);}
+td{padding:6px 6px 6px 0;border-bottom:1px solid var(--border);color:var(--ink2);}
+tr:last-child td{border-bottom:none;}
+td.n{text-align:right;}
+
+#tl{left:14px;right:14px;bottom:14px;padding:8px 15px 10px;display:flex;flex-direction:column;gap:8px;}
+#tl.min{padding:8px 15px;}
+#tl.min #tlbody{display:none;}
+#tlbar{display:flex;align-items:center;gap:11px;min-width:0;}
+#tlbar .tltitle{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:600;white-space:nowrap;}
+#tlToggle{width:24px;height:24px;flex:0 0 24px;display:flex;align-items:center;justify-content:center;
+  color:var(--ink3);border:1px solid var(--border);border-radius:5px;}
+#tlToggle:hover{color:var(--ink);border-color:var(--teal);}
+#tlToggle svg{transition:transform .18s ease;}
+#tl.min #tlToggle svg{transform:rotate(180deg);}
+#tlbody{display:flex;align-items:center;gap:13px;}
+#tl .playbtn{width:30px;height:30px;flex:0 0 30px;border-radius:50%;background:var(--teal);color:#0A090C;
+  display:flex;align-items:center;justify-content:center;transition:transform .15s ease;}
+#tl .playbtn:hover{transform:translateY(-1px);}
+#tl .tlspacer{flex:1;}
+#tl #tlmonths{display:flex;gap:5px;}
+#tl #tlmonths .chip{padding:3px 9px;font-size:12px;}
+#tl .tlday{font-family:"Roboto Slab",Georgia,serif;font-size:14px;white-space:nowrap;}
+#tl .tlnums{font-size:13px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#tl .tlnums b{color:var(--ink);}
+#spark{flex:1;height:44px;display:block;min-width:0;}
+
+#viewctl{position:absolute;left:14px;bottom:122px;z-index:20;display:flex;gap:6px;flex-wrap:wrap;max-width:330px;}
+#viewctl button{
+  padding:7px 11px;border-radius:5px;background:rgba(22,20,27,.9);border:1px solid var(--border);
+  font-size:13px;color:var(--ink2);backdrop-filter:blur(10px);
+}
+#viewctl button:hover{background:rgba(164,197,187,.16);color:var(--ink);}
+#viewctl button.on{border-color:var(--teal);color:var(--ink);}
+
+.warnbox{margin-top:12px;padding:10px 12px;border-radius:10.5px;
+  background:rgba(232,192,100,.12);border:1px solid var(--warn);font-size:13px;color:var(--ink2);}
+.warnbox b{color:var(--ink);}
+.okbox{margin-top:12px;padding:10px 12px;border-radius:10.5px;
+  background:rgba(132,181,159,.12);border:1px solid var(--ok);font-size:13px;color:var(--ink2);}
+.okbox b{color:var(--ink);}
+.tag{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:600;
+  letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--border);}
+.tag.ver{background:rgba(132,181,159,.16);border-color:var(--ok);color:#BFE0D0;}
+.tag.apx{background:rgba(232,192,100,.16);border-color:var(--warn);color:#F0DCA8;}
+
+#hint{
+  position:absolute;left:50%;transform:translateX(-50%);bottom:122px;z-index:20;
+  background:rgba(22,20,27,.9);border:1px solid var(--border);border-radius:10.5px;
+  padding:8px 14px;font-size:13px;color:var(--ink3);backdrop-filter:blur(10px);
+  transition:opacity .4s ease;
+}
+@media (max-width:1100px){ #left,#right{width:296px;} }
+@media (max-width:860px){ #left{display:none;} #viewctl{max-width:none;} }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="bootwait"><div class="bw-card">Waiting for live meter data from the app…<br>
+    <span style="color:var(--ink3)">Figures come from Supabase via the Water page — nothing is baked into this view.</span></div></div>
+  <div id="topbar">
+    <span class="brand">Muscat Bay · Assets &amp; Operations</span>
+    <span class="sep"></span>
+    <span class="ttl">Potable Water Network — Live 3D</span>
+    <span class="spacer"></span>
+    <span class="stat">Meters <b id="tMeters">—</b></span>
+    <span class="stat">Network <b id="tNet">—</b></span>
+    <span class="stat"><span id="tSupplyLbl">Supply</span> <b id="tSupply">—</b></span>
+    <span class="stat">System loss <b id="tLoss">—</b></span>
+  </div>
+
+  <div id="main">
+    <div id="map"></div>
+
+    <div class="panel" id="left">
+      <div class="hd">
+        <h2>Meter explorer</h2>
+        <input id="search" type="search" placeholder="Search name or account…"
+               aria-label="Search meters by name or account number">
+        <div id="zchips"></div>
+        <p id="figNote">All figures are period totals in m³ unless a month is chosen.</p>
+      </div>
+      <div id="zlist"></div>
+      <div class="lfoot">
+        <span class="lbl">Map cards</span>
+        <button class="chip" data-cards="zone">Zones only</button>
+        <button class="chip on" data-cards="top">Top 10</button>
+        <button class="chip" data-cards="all">All</button>
+      </div>
+    </div>
+
+    <div class="panel" id="right"></div>
+
+    <div id="viewctl">
+      <button id="vTop">Plan</button>
+      <button id="vObl" class="on">Oblique</button>
+      <button id="vGround">Ground</button>
+      <button id="vSpin">Orbit</button>
+      <button id="vTerr" class="on">Terrain</button>
+      <button id="vProv">House connections</button>
+    </div>
+
+    <div id="hint">Drag to pan · right-drag or ctrl-drag to orbit and tilt · scroll to zoom</div>
+
+    <div class="panel min" id="tl">
+      <div id="tlbar">
+        <button id="tlToggle" aria-expanded="false" aria-label="Expand the daily readings panel">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+        </button>
+        <span class="tltitle">Daily readings</span>
+        <span id="tlmonths"></span>
+        <span class="tlday" id="tlday">—</span>
+        <span class="tlspacer"></span>
+        <span class="tlnums" id="tlnums"></span>
+      </div>
+      <div id="tlbody">
+        <button class="playbtn" id="play" aria-label="Step through the days"></button>
+        <svg id="spark" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/maplibre-gl.js"></script>
+<script src="data/network.js?v=3"></script>
+<script src="data/plots-geo.js?v=2"></script>
+<script src="data/assets.js?v=1"></script>
+<script>
+"use strict";
+/* ============================================================
+   EMBEDDED MODE (Muscat Bay Operations app)
+   Consumption and daily figures are NO LONGER baked into this page.
+   The host React tab (components/water/satellite/satellite-view.tsx)
+   posts them from the same Supabase fetch the Monthly view renders,
+   so the two views can never disagree. This page boots only after
+   that payload arrives; until then it shows the waiting state below.
+   Geometry (pipes/plots/tank) stays static — it comes from the
+   as-built DWGs and does not change with readings.
+   ============================================================ */
+(function () {
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("embed") === "1") document.documentElement.classList.add("embed");
+
+  let booted = false;
+  window.addEventListener("message", (ev) => {
+    if (ev.origin !== location.origin) return;
+    const d = ev.data;
+    if (!d || d.type !== "satviz:data" || booted) return;
+    if (!d.consumption || !Array.isArray(d.consumption.zones)) return;
+    window.CONSUMPTION = d.consumption;
+    window.DAILY_DATA = Array.isArray(d.daily) ? d.daily : [];
+    booted = true;
+    const w = document.getElementById("bootwait");
+    if (w) w.remove();
+    try {
+      window.__satvizBoot();
+    } catch (err) {
+      const el = document.createElement("div");
+      el.id = "bootwait";
+      el.innerHTML = '<div class="bw-card">Satellite view failed to start.<br>' +
+        '<span style="color:var(--ink3)">' + String(err && err.message || err) + "</span></div>";
+      document.body.appendChild(el);
+      throw err;
+    }
+  });
+  if (window.parent !== window) {
+    window.parent.postMessage({ type: "satviz:ready" }, location.origin);
+  }
+})();
+</script>
+<script>
+"use strict";
+window.__satvizBoot = function () {
+
+/* ============================================================
+   DATA
+   Consumption: "Water 26-Master View" CSV (350 meters, Jan-Jun 2026), the
+     authoritative parent/child register. Kept in data/master-view.csv and
+     compiled by _build/build_data.py — see the note above ZONES on why nothing
+     here is transcribed. Daily June series is still from Supabase
+     water_daily_consumption.
+   Geometry: window.NETWORK — extracted from the COO87 as-built sheets
+     PW-01..PW-08, georeferenced to each sheet's own printed survey grid
+     (max deviation 18 cm), UTM 40N -> WGS84, simplified to ~1.2 m.
+   ============================================================ */
+/* Everything below is derived from data/consumption.js, which _build/build_data.py
+   computes from the master view CSV. Nothing is typed by hand — the previous
+   build carried transcribed Supabase aggregates and they had drifted from the
+   master view by 18,972 m³ on L1 and 4,878 m³ on Zone 8. */
+const C = window.CONSUMPTION;
+const MONTHS = C.months;
+// Period comes from the payload now — never hardcode a month range here.
+const PERIOD = { label: C.period_label || "", short: C.period_short || "Total",
+                 derived: C.derived_idx || [] };
+const mtd = i => PERIOD.derived.includes(i) ? " (MTD)" : "";
+const SUPPLY = { total: C.l1.total, monthly: C.l1.monthly, acct: C.l1.acct };
+const DIRECT = {
+  meters: C.dc.length,
+  total: C.dc.reduce((s,d) => s + d.total, 0),
+  monthly: C.dc_monthly,
+  list: C.dc
+};
+const UNASSIGNED = C.na;      // four TSE meters that hang off nothing
+
+// Positions are the viewer's own; only Zone FM's chamber coordinates are surveyed.
+const ZONE_POS = {
+  Zone_03A:{ lat:23.55057, lon:58.64177, verified:false },
+  Zone_03B:{ lat:23.55199, lon:58.64050, verified:false },
+  Zone_05: { lat:23.54760, lon:58.63740, verified:false },
+  Zone_08: { lat:23.54726, lon:58.64401, verified:false },
+  Zone_FM: { lat:23.5414327, lon:58.6333192, verified:true },
+  Zone_VS: { lat:23.54582, lon:58.63505, verified:false }
+};
+const ZONES = C.zones.map(z => Object.assign({}, z, ZONE_POS[z.id] || {}));
+
+const POINTS = [
+  {id:"C43659" ,n:"Main Bulk (NAMA)"        ,t:"l1",lat:23.5431822,lon:58.6295910},
+  {id:"4300297",n:"Building (Security)"     ,t:"dc",lat:23.5418710,lon:58.6323657},
+  {id:"4300295",n:"Sales Center Common"     ,t:"dc",lat:23.5458243,lon:58.6350470},
+  {id:"4300294",n:"Irrigation Tank 04 (Z08)",t:"dc",lat:23.5472570,lon:58.6440136},
+  {id:"4300300",n:"B1 — SA"                 ,t:"l3",lat:23.5410469,lon:58.6337936},
+  {id:"4300301",n:"B2 — SA"                 ,t:"l3",lat:23.5409337,lon:58.6340144},
+  {id:"4300302",n:"B3 — SA"                 ,t:"l3",lat:23.5408259,lon:58.6342207},
+  {id:"4300303",n:"B4 — SA"                 ,t:"l3",lat:23.5413591,lon:58.6347064},
+  {id:"4300304",n:"B5 — SA"                 ,t:"l3",lat:23.5415728,lon:58.6346233},
+  {id:"4300305",n:"B6 — SA"                 ,t:"l3",lat:23.5417426,lon:58.6345380},
+  {id:"4300306",n:"B7 — SA"                 ,t:"l3",lat:23.5419359,lon:58.6344521},
+  {id:"4300307",n:"B8 — SA"                 ,t:"l3",lat:23.5421354,lon:58.6343595},
+  {id:"4300324",n:"Building CIF"            ,t:"l3",lat:23.5408934,lon:58.6346852},
+  {id:"4300296",n:"Building FM"             ,t:"l3",lat:23.5412180,lon:58.6334506},
+  {id:"4300325",n:"Nursery Building"        ,t:"l3",lat:23.5414221,lon:58.6335857},
+  {id:"4300298",n:"Building Taxi"           ,t:"l3",lat:23.5416937,lon:58.6335959},
+  {id:"4300308",n:"IRR Pump Room — FM"      ,t:"l3",lat:23.5415138,lon:58.6337890},
+  {id:"4300409",n:"Pump Room (Fire)"        ,t:"l3",lat:23.5414807,lon:58.6338696},
+  {id:"4300310",n:"Building (MEP)"          ,t:"l3",lat:23.5414134,lon:58.6338327},
+  {id:"4300337",n:"Cabinet FM"              ,t:"l3",lat:23.5413027,lon:58.6337867},
+  {id:"4300339",n:"CIF / Coffee Shop"       ,t:"l3",lat:23.5409248,lon:58.6345929}
+];
+
+/* Daily readings, compiled from data/daily.csv by _build/build_daily.py.
+   June carries all four levels; July so far carries only the main meter, and a
+   blank day means not logged rather than zero. */
+const DAILY_MONTHS = window.DAILY_DATA || [];
+let monthIdx = Math.max(0, DAILY_MONTHS.length - 1);
+const curMonth = () => DAILY_MONTHS[monthIdx] || { series:{}, days:0, label:"" };
+/* Scrubbing stops at the last day that has been read. An in-progress month has
+   real days ahead of the meter reader, and letting the cursor sit on one shows
+   an empty panel that reads as missing data rather than as "not yet". */
+function lastRead(M){
+  const l1 = M.series.L1 || [];
+  for (let i = l1.length - 1; i >= 0; i--) if (l1[i] !== null && l1[i] !== undefined) return i;
+  return Math.max(0, (M.days || 1) - 1);
+}const METER_COUNTS = {
+  L1: C.counts.L1, L2: C.counts.L2, DC: C.counts.DC,
+  L3: C.counts.L3, L4: C.counts.L4, NA: C.counts["N/A"],
+  total: C.total_meters
+};
+
+/* ============================================================ HELPERS */
+const $ = s => document.querySelector(s);
+const esc = v => String(v).replace(/[&<>"']/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => (n === null || n === undefined) ? "—" : Math.round(n).toLocaleString("en-GB");
+const pct = (a,b) => b > 0 ? (a/b*100) : 0;
+
+const ICON = {
+  play:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v17l14-8.5z"/></svg>',
+  pause: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg>',
+  back:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>'
+};
+
+function lossColour(p){
+  if (p >= 50) return "#D67A7A";
+  if (p >= 30) return "#E8C064";
+  if (p >= 15) return "#6B9AC4";
+  return "#84B59F";
+}
+const TYPE_COLOUR = { l1:"#E8C064", l2:"#6B9AC4", l3:"#A4C5BB", dc:"#D67A7A" };
+
+const L2_TOTAL  = ZONES.reduce((s,z)=>s+z.l2,0);
+const L3_TOTAL  = ZONES.reduce((s,z)=>s+z.l3,0);
+const STAGE1    = SUPPLY.total - (L2_TOTAL + DIRECT.total);
+const STAGE2    = L2_TOTAL - L3_TOTAL;
+const TOTALLOSS = STAGE1 + STAGE2;
+
+/* ============================================================ MAP */
+const CENTRE = [58.6390, 23.5468];
+
+const map = new maplibregl.Map({
+  container: "map",
+  attributionControl: { compact: true },
+  preserveDrawingBuffer: true,      // lets the view be exported as an image
+  maxPitch: 85,
+  center: CENTRE, zoom: 14.75, pitch: 58, bearing: -38,
+  style: {
+    version: 8,
+    sources: {
+      sat: {
+        type: "raster", tileSize: 256, maxzoom: 19,
+        tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+        attribution: "Imagery © Esri · Network geometry from COO87 as-built sheets"
+      },
+      dem: {
+        type: "raster-dem", tileSize: 256, maxzoom: 15, encoding: "terrarium",
+        tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+        attribution: "Elevation © Mapzen / AWS Terrain Tiles"
+      }
+    },
+    layers: [
+      { id: "sat", type: "raster", source: "sat" }
+    ],
+    sky: {
+      "sky-color": "#0d1420", "sky-horizon-blend": 0.6,
+      "horizon-color": "#2b2733", "horizon-fog-blend": 0.7,
+      "fog-color": "#0A090C", "fog-ground-blend": 0.3
+    }
+  }
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
+map.dragRotate.enable();
+map.touchZoomRotate.enableRotation();
+
+/* ---- geometry helpers ---- */
+function circle(lon, lat, radiusM, steps){
+  const c = [], dLat = radiusM / 110540, dLon = radiusM / (111320 * Math.cos(lat*Math.PI/180));
+  for (let i = 0; i <= steps; i++){
+    const a = i/steps * 2*Math.PI;
+    c.push([lon + dLon*Math.cos(a), lat + dLat*Math.sin(a)]);
+  }
+  return [c];
+}
+
+/* ---- meters ----
+   consumption.js carries every figure; plots-geo.js carries only where a meter
+   is. Joining them here means a number can never disagree with itself between
+   two files. 119 of the 121 L3 meters in Zones 3A/3B/5/8 have a position — the
+   two without are the irrigation tanks, which are assets rather than plots. */
+const METER = {};
+for (const z of C.zones)
+  for (const m of z.meters){
+    METER[m.acct] = Object.assign({ zone: z.name, zoneId: z.id }, m);
+    for (const c of (m.children || []))
+      METER[c.acct] = Object.assign({ zone: z.name, zoneId: z.id, parent: m.acct }, c);
+  }
+
+const VILLAS = (window.PLOTS || []).concat(window.ASSETS || []).map(p => {
+  const m = METER[p.acct];
+  if (!m) return null;
+  return Object.assign({}, p, {
+    name: m.name, type: m.type, h1: m.h1, months: m.months,
+    kids: (m.children || []).length, kids_m3: m.kids_m3,
+    sub_loss: m.sub_loss, children: m.children
+  });
+}).filter(Boolean);
+const VILLA_BY_ACCT = {};
+for (const v of VILLAS) VILLA_BY_ACCT[v.acct] = v;
+const VILLA_BY_ZONE = {};
+for (const v of VILLAS) (VILLA_BY_ZONE[v.zone] ||= []).push(v);
+
+/* Zone anchors come from the survey, not from hand-typed coordinates. The
+   hand-typed ones put Zone 5 in the lagoon and 3A/3B on the entry T-junction.
+   The anchor is the zone's MEDOID plot — the surveyed plot closest to all the
+   others — so it always lands on a real villa inside the zone, never in water
+   (a centroid of the island's curve would). FM and Village Square have no
+   plots and keep their stated positions. */
+for (const z of ZONES){
+  const list = (VILLA_BY_ZONE[z.name] || []).filter(v => v.kind !== "tank");
+  if (!list.length) continue;
+  let best = null, bd = Infinity;
+  for (const a of list){
+    let sum = 0;
+    for (const b of list){ const dx = a.e-b.e, dy = a.n-b.n; sum += dx*dx + dy*dy; }
+    if (sum < bd){ bd = sum; best = a; }
+  }
+  z.lon = best.c[0]; z.lat = best.c[1];
+  z.anchored = true;                       // position derived from plot survey
+}
+
+// Extent of a zone = bounding box of its surveyed plots (rings included).
+function zoneBounds(z){
+  const list = VILLA_BY_ZONE[z.name] || [];
+  if (!list.length) return null;
+  let w = 180, so = 90, e = -180, n = -90;
+  for (const v of list)
+    for (const [x, y] of (v.ring ? v.ring.concat([v.c]) : [v.c])){
+      if (x < w) w = x; if (x > e) e = x;
+      if (y < so) so = y; if (y > n) n = y;
+    }
+  return [[w, so], [e, n]];
+}
+
+// Convex hull (monotone chain) of the zone's plots — the ground plate.
+function zoneHull(z){
+  const pts = (VILLA_BY_ZONE[z.name] || []).map(v => v.c);
+  if (pts.length < 3) return null;
+  const P = pts.slice().sort((a,b) => a[0]-b[0] || a[1]-b[1]);
+  const cross = (o,a,b) => (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0]);
+  const lo = [], hi = [];
+  for (const pt of P){
+    while (lo.length > 1 && cross(lo[lo.length-2], lo[lo.length-1], pt) <= 0) lo.pop();
+    lo.push(pt);
+  }
+  for (const pt of P.slice().reverse()){
+    while (hi.length > 1 && cross(hi[hi.length-2], hi[hi.length-1], pt) <= 0) hi.pop();
+    hi.push(pt);
+  }
+  const hull = lo.slice(0, -1).concat(hi.slice(0, -1));
+  // pad ~8% from the centroid so the boundary clears the outermost villas
+  const cx = hull.reduce((t,q) => t+q[0], 0) / hull.length;
+  const cy = hull.reduce((t,q) => t+q[1], 0) / hull.length;
+  const out = hull.map(([x,y]) => [cx + (x-cx)*1.08, cy + (y-cy)*1.08]);
+  out.push(out[0]);
+  return out;
+}
+
+// Consumption band for a villa, relative to the median of its own zone, so a
+// zone of large villas is not flagged wholesale against a zone of small ones.
+const ZONE_MEDIAN = {};
+for (const [z, list] of Object.entries(VILLA_BY_ZONE)){
+  const vals = list.filter(v => v.type !== "Building (Bulk)" && v.kind !== "tank")
+                   .map(v => v.h1).sort((a,b)=>a-b);
+  ZONE_MEDIAN[z] = vals.length ? vals[Math.floor(vals.length/2)] : 0;
+}
+function villaBand(v){
+  if (v.kind === "tank") return { c:"#9B86A8", t:"irrigation tank" };
+  const med = ZONE_MEDIAN[v.zone] || 0;
+  if (v.h1 === 0) return { c:"#8E8A96", t:"no consumption" };
+  if (!med)       return { c:"#6B9AC4", t:"" };
+  const r = v.h1 / med;
+  if (r >= 2.5) return { c:"#D67A7A", t:"far above zone median" };
+  if (r >= 1.5) return { c:"#E8C064", t:"above zone median" };
+  if (r <= 0.35) return { c:"#6B9AC4", t:"well below zone median" };
+  return { c:"#84B59F", t:"typical for the zone" };
+}
+
+/* Ground plates. Cards float above these; the plate is what ties a card to a
+   place on the terrain, and carries the status colour at map scale. */
+function zonePlateFeatures(){
+  return { type:"FeatureCollection", features: ZONES.map(z => {
+    const lp = pct(z.l2 - z.l3, z.l2);
+    const hull = zoneHull(z);
+    return { type:"Feature",
+             properties:{ id:z.id, name:z.name, colour:lossColour(lp), lp },
+             geometry:{ type:"Polygon",
+                        coordinates: hull ? [hull] : circle(z.lon, z.lat, 40, 40) } };
+  })};
+}
+
+function villaPlateFeatures(){
+  return { type:"FeatureCollection", features: VILLAS.map(v => {
+    const b = villaBand(v);
+    // Zone 8 plots carry a real building footprint from the drawings; the rest
+    // get a disc at the plot tag. Both are honest about what is known.
+    const geom = v.ring
+      ? { type:"Polygon", coordinates:[v.ring] }
+      : { type:"Polygon", coordinates: circle(v.c[0], v.c[1], v.type === "Building (Bulk)" ? 13 : 8, 20) };
+    return { type:"Feature",
+             properties:{ id:v.id, colour:b.c, surveyed: v.ring ? 1 : 0 },
+             geometry: geom };
+  })};
+}
+
+function networkFeatures(kinds){
+  return { type:"FeatureCollection", features: (window.NETWORK||[])
+    .filter(f => kinds.includes(f.k))
+    .map(f => ({ type:"Feature",
+                 properties:{ d: f.d || 90, m: f.m || "HDPE", k: f.k },
+                 geometry:{ type:"LineString", coordinates:f.c } })) };
+}
+
+// Totals straight from the extracted geometry, so the header can't drift.
+function netStats(){
+  const s = { main:0, service:0, other:0 };
+  const R = 6371000, rad = x => x*Math.PI/180;
+  for (const f of (window.NETWORK||[])){
+    let L = 0;
+    for (let i=0;i<f.c.length-1;i++){
+      const a=f.c[i], b=f.c[i+1];
+      const dl=rad(b[1]-a[1]), dn=rad(b[0]-a[0]);
+      const q=Math.sin(dl/2)**2 + Math.cos(rad(a[1]))*Math.cos(rad(b[1]))*Math.sin(dn/2)**2;
+      L += 2*R*Math.asin(Math.sqrt(q));
+    }
+    s[f.k===0 ? "main" : f.k===1 ? "service" : "other"] += L;
+  }
+  return s;
+}
+
+const NET_KM = 13.7;   // recomputed from geometry at load
+
+let markers = [];
+let hoverMarker = null, hoverId = null;
+function hideHover(){ if (hoverMarker){ hoverMarker.remove(); hoverMarker = null; hoverId = null; } }
+let selectedZone = null;
+let selectedVilla = null;
+let zonePeriod = "H1";     // "H1" or a month index 0-5 — the zone panel's period
+let showService = false;
+
+map.on("load", () => {
+  map.setTerrain({ source:"dem", exaggeration:1.0 });   // true elevation — 1.35x pushed draped imagery off the surveyed lines on Zone 3's slope
+
+  map.addSource("main",    { type:"geojson", data:networkFeatures([0]) });
+  map.addSource("service", { type:"geojson", data:networkFeatures([1]) });
+  map.addSource("assets",  { type:"geojson", data:networkFeatures([2,3,4]) });
+  map.addSource("zplate",  { type:"geojson", data:zonePlateFeatures() });
+  map.addSource("vplate",  { type:"geojson", data:villaPlateFeatures() });
+
+  // trunk / distribution main — wide soft glow under a bright animated core
+  // House connections — thin, under the mains.
+  map.addLayer({ id:"svc-line", type:"line", source:"service",
+    layout:{ "line-cap":"round", "line-join":"round", "visibility":"none" },
+    paint:{ "line-color":"#557E6F", "line-opacity":0.9,
+            "line-width":["interpolate",["linear"],["zoom"],14,0.8,19,2.8] } });
+
+  // Hydrant branches, washouts and isolation valves.
+  map.addLayer({ id:"asset-line", type:"line", source:"assets",
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":"#E8C064", "line-opacity":0.9,
+            "line-width":["interpolate",["linear"],["zoom"],14,1.2,19,3.4] } });
+
+  // Mains — width scales with real bore, colour by material.
+  // Mains: a pale casing for contrast against sand, a solid navy core (deep
+  // amber for the DI trunk), and a thin bright flow line animated on top. The
+  // earlier pale-blue dashed line washed out on bright ground.
+  map.addLayer({ id:"main-case", type:"line", source:"main",
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":["match",["get","m"],"DI","#F6EFD9","#EDF3F9"],
+            "line-opacity":0.55,
+            "line-width":["interpolate",["linear"],["zoom"],
+              13,["*",["get","d"],0.024], 16,["*",["get","d"],0.048], 19,["*",["get","d"],0.10]] } });
+  map.addLayer({ id:"main-core", type:"line", source:"main",
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":["match",["get","m"],"DI","#9A742E","#24507E"],
+            "line-opacity":1,
+            "line-width":["interpolate",["linear"],["zoom"],
+              13,["*",["get","d"],0.013], 16,["*",["get","d"],0.026], 19,["*",["get","d"],0.055]] } });
+  map.addLayer({ id:"main-flow", type:"line", source:"main",
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":["match",["get","m"],"DI","#FFE9AD","#9FC9EE"],
+            "line-opacity":0.95,
+            "line-width":["interpolate",["linear"],["zoom"],
+              13,["*",["get","d"],0.005], 16,["*",["get","d"],0.010], 19,["*",["get","d"],0.022]],
+            "line-dasharray":[0,3.5,1.6] } });
+
+  map.on("click","main-core", e => {
+    const f = e.features[0]; if (!f) return;
+    showPipe(f.properties);
+  });
+  map.on("mouseenter","main-core", () => map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave","main-core", () => map.getCanvas().style.cursor="");
+
+  // Ground plates — the anchor each floating card is tethered to.
+  map.addLayer({ id:"zplate-fill", type:"fill", source:"zplate",
+    paint:{ "fill-color":["get","colour"], "fill-opacity":0.05 } });
+  map.addLayer({ id:"zplate-line", type:"line", source:"zplate",
+    paint:{ "line-color":["get","colour"], "line-opacity":0.85, "line-width":1.6 } });
+
+  // Villa plates: real footprints where the drawings give one, a disc otherwise.
+  map.addLayer({ id:"vplate-fill", type:"fill", source:"vplate",
+    paint:{ "fill-color":["get","colour"],
+            "fill-opacity":["interpolate",["linear"],["zoom"],14.2,0,15.0,0.45] } });
+  map.addLayer({ id:"vplate-line", type:"line", source:"vplate",
+    paint:{ "line-color":["get","colour"],
+            "line-opacity":["interpolate",["linear"],["zoom"],14.2,0,15.0,1],
+            "line-width":["interpolate",["linear"],["zoom"],15,1.2,19,2.6] } });
+
+  for (const lyr of ["zplate-fill","zplate-line"]){
+    map.on("click", lyr, e => {
+      if (map.queryRenderedFeatures(e.point, { layers:["vplate-fill"] }).length) return;
+      if (e.features[0]) selectZone(e.features[0].properties.id);
+    });
+  }
+  map.on("click", "vplate-fill", e => { if (e.features[0]) showVilla(e.features[0].properties.id); });
+
+  // Individual meters on demand: hovering a plot's ground plate raises its
+  // card without changing mode or selection; it vanishes on leave. Plates are
+  // the affordance, so nothing is ever more than a hover away even when the
+  // card budget is showing zones only.
+  map.on("mousemove", "vplate-fill", e => {
+    const f = e.features && e.features[0];
+    if (!f) return;
+    const id = f.properties.id;
+    if (id === hoverId) return;
+    const pinned = markers.find(m => m.__kind === "villa" && m.__id === id);
+    if (pinned && pinned.getElement().style.display !== "none"){ hideHover(); return; }
+    const v = VILLAS.find(x => x.id === id);
+    if (!v){ hideHover(); return; }
+    hideHover();
+    hoverId = id;
+    const el = villaCard(v);
+    el.classList.add("hoverpop");
+    hoverMarker = new maplibregl.Marker({ element: el, anchor: "bottom" })
+      .setLngLat(v.c).setOffset([0, -24]).addTo(map);
+  });
+  map.on("mouseleave", "vplate-fill", hideHover);
+  map.on("dragstart", hideHover);
+  map.on("zoomstart", hideHover);
+  for (const lyr of ["zplate-fill","vplate-fill"]){
+    map.on("mouseenter", lyr, () => map.getCanvas().style.cursor = "pointer");
+    map.on("mouseleave", lyr, () => map.getCanvas().style.cursor = "");
+  }
+  map.on("zoom", refreshVillaCards);
+
+  buildMarkers();
+  animateFlow();
+  const st = netStats();
+  $("#tNet").textContent = ((st.main+st.service+st.other)/1000).toFixed(1) + " km";
+  setTimeout(() => { const h = $("#hint"); if (h) { h.style.opacity = 0;
+    setTimeout(() => h.remove(), 500); } }, 7000);
+});
+
+/* ---- floating cards ----
+   Zone cards sit high, villa cards low, so the two tiers read as separate
+   layers in depth rather than fighting for the same band of screen. */
+const ALT_ZONE = 110, ALT_VILLA = 34, ALT_POINT = 18;
+
+/* Zone cards open collapsed — a pill with the three numbers that matter — and
+   expand for the selected zone or on demand via the caret. The override map
+   remembers a manual choice until the selection changes. */
+const zoneCardState = new Map();          // id -> "open" | "min"
+const CHEV_UP = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>';
+const CHEV_DN = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+function zoneCard(z){
+  const lp = pct(z.l2 - z.l3, z.l2), col = lossColour(lp);
+  const state = zoneCardState.get(z.id) || (selectedZone === z.id ? "open" : "min");
+  const nv = (VILLA_BY_ZONE[z.name] || []).length;
+  const el = document.createElement("div");
+
+  if (state === "min"){
+    el.className = "card3d zpill" + (selectedZone === z.id ? " on" : "");
+    el.innerHTML =
+      `<span class="zn">${esc(z.name)}</span>
+       <span class="zv">${fmt(z.l2)}<small> m³ ${PERIOD.short}</small></span>
+       <span class="zp" style="color:${col}">${lp.toFixed(0)}%</span>
+       <button class="ccol" aria-label="Expand the ${esc(z.name)} card">${CHEV_DN}</button>
+       <div class="stem"></div>`;
+  } else {
+    el.className = "card3d zcard" + (selectedZone === z.id ? " on" : "");
+    el.innerHTML =
+      `<button class="ccol" aria-label="Collapse the ${esc(z.name)} card">${CHEV_UP}</button>
+       <div class="eyebrow">${esc(z.name)}</div>
+       <div class="big">${fmt(z.l2)} <small>m³ · ${PERIOD.short} in</small></div>
+       <div class="row"><span class="dot" style="background:${col}"></span>
+         <span class="txt" style="color:${col}">${lp.toFixed(1)}% unbilled</span></div>
+       <div class="track"><i style="width:${Math.min(100,lp).toFixed(1)}%;background:${col}"></i></div>
+       <div class="foot">${fmt(z.l3)} m³ billed · ${z.nL3} meters${nv?` · ${nv} plots mapped`:""}</div>
+       <div class="stem"></div>`;
+  }
+  el.querySelector(".ccol").addEventListener("click", ev => {
+    ev.stopPropagation();
+    zoneCardState.set(z.id, state === "min" ? "open" : "min");
+    buildMarkers();
+  });
+  el.addEventListener("click", ev => { ev.stopPropagation(); selectZone(z.id); });
+  return el;
+}
+
+function villaCard(v){
+  const b = villaBand(v);
+  const bulk = v.type === "Building (Bulk)";
+  const med = ZONE_MEDIAN[v.zone] || 1;
+  const el = document.createElement("div");
+  el.className = "card3d vcard" + (bulk ? " bulk" : "") + (selectedVilla === v.id ? " on" : "");
+  el.innerHTML =
+    `<div class="vid">${esc(v.label || v.id)}</div>
+     <div class="vv" style="color:${b.c}">${fmt(v.h1)} <small>m³ H1</small></div>
+     <div class="pipbar"><i style="width:${Math.min(100, v.h1/med*50).toFixed(0)}%;background:${b.c}"></i></div>
+     <div class="vmore">${esc(v.name)}<br>Account ${esc(v.acct)}${
+       bulk ? `<br>${v.kids} apartment meters` : ""}</div>
+     <div class="stem"></div>`;
+  el.addEventListener("click", ev => { ev.stopPropagation(); showVilla(v.id); });
+  return el;
+}
+
+function buildMarkers(){
+  markers.forEach(m => m.remove());
+  markers = [];
+
+  for (const z of ZONES){
+    const m = new maplibregl.Marker({ element: zoneCard(z), anchor: "bottom" })
+      .setLngLat([z.lon, z.lat]);
+    m.__alt = ALT_ZONE;
+    m.__kind = "zone";
+    m.__zoneId = z.id;
+    m.__weight = z.l2;
+    m.addTo(map);
+    markers.push(m);
+  }
+
+  for (const v of VILLAS){
+    const m = new maplibregl.Marker({ element: villaCard(v), anchor: "bottom" })
+      .setLngLat(v.c);
+    m.__alt = ALT_VILLA;
+    m.__kind = "villa";
+    m.__zone = v.zone;
+    m.__id = v.id;
+    m.__weight = v.h1;
+    m.addTo(map);
+    markers.push(m);
+  }
+
+  for (const p of POINTS){
+    const el = document.createElement("div");
+    el.className = "mlabel";
+    el.style.borderColor = TYPE_COLOUR[p.t];
+    el.textContent = p.n;
+    el.addEventListener("click", ev => { ev.stopPropagation(); showMeter(p); });
+    const m = new maplibregl.Marker({ element: el, anchor: "bottom" })
+      .setLngLat([p.lon, p.lat]);
+    m.__alt = ALT_POINT;
+    m.__kind = "point";
+    m.__ptype = p.t;
+    m.addTo(map);
+    markers.push(m);
+  }
+  applyAltitudes();
+  refreshVillaCards();
+}
+
+/* Card budget.
+   Showing all 119 plot cards at once produced an unreadable wall — the whole
+   point of a card is that you can read it. So plot cards are scoped to the
+   selected zone and capped:
+
+     zone   only the six zone cards
+     top    the selected zone's ten largest consumers   (default)
+     all    every plot in the selected zone
+
+   With no zone selected there are never any plot cards, whatever the mode. */
+function refreshVillaCards(){
+  const zName = zoneNameOf(selectedZone);
+  let allow = null;                                  // Set of ids, or null = none
+  if (zName && cardMode !== "zone"){
+    const inZone = VILLAS.filter(v => v.zone === zName)
+                         .sort((a,b) => b.h1 - a.h1);
+    const keep = cardMode === "all" ? inZone : inZone.slice(0, TOP_N);
+    allow = new Set(keep.map(v => v.id));
+    if (selectedVilla) allow.add(selectedVilla);     // never hide what is open
+  }
+  for (const m of markers){
+    if (m.__kind !== "villa") continue;
+    m.getElement().style.display = (allow && allow.has(m.__id)) ? "" : "none";
+  }
+  // Inside a zone the other zone cards are noise sitting over what you came to
+  // look at. Keep the one you are in, dimmed, as an anchor.
+  const deep = !!selectedZone && allow && allow.size > 0;
+  for (const m of markers){
+    if (m.__kind !== "zone") continue;
+    const mine = m.__zoneId === selectedZone;
+    m.getElement().style.display = (deep && !mine) ? "none" : "";
+    m.getElement().style.opacity = deep ? "0.6" : "1";
+  }
+
+  // The named points are almost all Zone FM buildings packed into one corner —
+  // twenty labels over about 150 m. They stay hidden until you are either in
+  // Zone FM or close enough for them to separate.
+  const z = map.getZoom();
+  for (const m of markers){
+    if (m.__kind !== "point") continue;
+    const t = m.__ptype;
+    const on = t === "l1" ? true
+             : t === "dc" ? !selectedZone
+             : (selectedZone === "Zone_FM" || z >= 16.8);
+    m.getElement().style.display = on ? "" : "none";
+  }
+  applyAltitudes();
+}
+function zoneNameOf(id){ return (ZONES.find(z => z.id === id) || {}).name; }
+
+/* MapLibre markers clamp to terrain, so altitude is applied as a screen-space
+   lift. Cards at the same altitude collide wherever zones sit close together,
+   so anything that overlaps a card already placed is pushed further up until it
+   clears — the stack fans out vertically and every leader line still points at
+   its own plate. Placement runs largest-first so the biggest zone keeps the
+   lowest, most readable position. */
+const LIFT_STEP = 34, LIFT_TRIES = 6;
+const EDGE_TOP = 8, EDGE_BOTTOM = 10, EDGE_SIDE = 6;    // frame; the panels below carve out the rest
+
+function overlaps(a, b){
+  return !(a.r < b.l + 4 || a.l > b.r + 4 || a.b < b.t + 4 || a.t > b.b + 4);
+}
+
+function applyAltitudes(){
+  const t = map.getPitch() / 85;
+  const zf = 0.55 * (map.getZoom() / 15.1) * (0.35 + 0.65 * t);
+  const cv = map.getCanvas();
+  const VW = cv.clientWidth, VH = cv.clientHeight;
+  const placed = [];
+
+  // The side panels are opaque, so a card placed under one is simply lost.
+  // Treat them as occupied space rather than as part of the frame.
+  const panelRect = sel => {
+    const el = $(sel);
+    if (!el || getComputedStyle(el).display === "none") return null;
+    const r = el.getBoundingClientRect(), c = cv.getBoundingClientRect();
+    return { l: r.left - c.left, r: r.right - c.left,
+             t: r.top - c.top,  b: r.bottom - c.top };
+  };
+  const panels = ["#left", "#right", "#tl"].map(panelRect).filter(Boolean);
+  placed.push(...panels);
+  const panelCover = r => panels.reduce((s, q) => s +
+    Math.max(0, Math.min(r.r, q.r) - Math.max(r.l, q.l)) *
+    Math.max(0, Math.min(r.b, q.b) - Math.max(r.t, q.t)), 0);
+
+  // Zone cards first (they matter most), then villa cards, then point labels.
+  const order = markers.slice().sort((a, b) => {
+    const rank = m => m.__kind === "zone" ? 0 : m.__kind === "villa" ? 1 : 2;
+    return rank(a) - rank(b) || (b.__weight || 0) - (a.__weight || 0);
+  });
+
+  for (const m of order){
+    const el = m.getElement();
+    const base = (m.__alt || 0) * zf;
+    if (el.style.display === "none"){ m.setOffset([0, -base]); continue; }
+
+    const p = map.project(m.getLngLat());
+    const w = el.offsetWidth || 120, h = el.offsetHeight || 40;
+
+    const rectAt = (dx, dy) => {
+      const cx = p.x + dx, cy = p.y - dy;
+      return { l: cx - w/2, r: cx + w/2, t: cy - h, b: cy, dx, dy };
+    };
+    const inView = r => r.t >= EDGE_TOP && r.b <= VH - EDGE_BOTTOM &&
+                        r.l >= EDGE_SIDE && r.r <= VW - EDGE_SIDE;
+
+    // Overlap area against everything already placed — used to rank candidates
+    // when nothing is completely clear, so the least-bad position wins instead
+    // of an arbitrary first-found one.
+    const clash = r => placed.reduce((s, q) => {
+      if (!overlaps(r, q)) return s;
+      return s + Math.max(0, Math.min(r.r, q.r) - Math.max(r.l, q.l)) *
+                 Math.max(0, Math.min(r.b, q.b) - Math.max(r.t, q.t));
+    }, 0);
+
+    // Prefer straight up; if that is blocked or leaves the frame, step sideways.
+    let best = null, bestCost = Infinity;
+    outer:
+    for (let i = 0; i <= LIFT_TRIES; i++){
+      for (const dx of [0, w * 0.62, -w * 0.62, w * 1.25, -w * 1.25]){
+        const r = rectAt(dx, base + i * LIFT_STEP);
+        if (!inView(r)) continue;
+        const c = clash(r);
+        if (c === 0){ best = r; break outer; }
+        // penalise distance from the anchor so a clear-ish spot nearby beats a
+        // marginally cleaner one halfway across the screen
+        const cost = c + Math.abs(dx) * 6 + i * 220;
+        if (cost < bestCost){ bestCost = cost; best = r; }
+      }
+    }
+    const r = best || rectAt(0, base);
+
+    // An anchor sitting behind a panel has nowhere clear to go. Half-covered
+    // cards read as broken, so drop them rather than leave a sliver showing —
+    // the zone is still in the list on the left.
+    if (panelCover(r) > 0.34 * w * h){ el.style.visibility = "hidden"; continue; }
+    el.style.visibility = "";
+
+    placed.push(r);
+    m.setOffset([r.dx, -r.dy]);
+
+    // Keep the leader line tethered to the plate after any lift or side-step.
+    const stem = el.querySelector(".stem");
+    if (stem){
+      stem.style.height = Math.max(14, r.dy - base + (m.__kind === "zone" ? 30 : 18)) + "px";
+      stem.style.left = `calc(50% - ${r.dx.toFixed(0)}px)`;
+    }
+  }
+}
+// Coalesce to one layout pass per frame — move, zoom and pitch all fire together.
+let layoutPending = false;
+function queueLayout(){
+  if (layoutPending) return;
+  layoutPending = true;
+  requestAnimationFrame(() => { layoutPending = false; applyAltitudes(); });
+}
+map.on("move", queueLayout);
+map.on("zoom", queueLayout);
+map.on("pitch", queueLayout);
+
+/* ---- animated flow along the mains ---- */
+const DASH = [[0,3.5,1.6],[0.4,3.5,1.2],[0.8,3.5,0.8],[1.2,3.5,0.4],[1.6,3.5,0],
+              [0,0.4,3.5,1.2],[0,0.8,3.5,0.8],[0,1.2,3.5,0.4]];
+let dashStep = 0, lastFlow = 0;
+function animateFlow(ts){
+  const l1 = (curMonth().series.L1 || [])[day];
+  const period = l1 ? Math.max(45, 180 - l1/22) : 180;
+  if (!ts || ts - lastFlow > period){
+    lastFlow = ts || 0;
+    dashStep = (dashStep + 1) % DASH.length;
+    if (map.getLayer("main-flow")) map.setPaintProperty("main-flow","line-dasharray", DASH[dashStep]);
+  }
+  requestAnimationFrame(animateFlow);
+}
+
+/* ============================================================ VIEW CONTROLS */
+let spinning = false, spinRAF = null;
+function stopSpin(){ spinning = false; $("#vSpin").classList.remove("on"); if (spinRAF) cancelAnimationFrame(spinRAF); }
+function spin(){
+  if (!spinning) return;
+  map.setBearing(map.getBearing() + 0.09);
+  spinRAF = requestAnimationFrame(spin);
+}
+$("#vTop").onclick    = () => { stopSpin(); setBtn("vObl",false); map.easeTo({ pitch:0,  bearing:0,   duration:1400 }); };
+$("#vObl").onclick    = () => { stopSpin(); setBtn("vObl",true);  map.easeTo({ pitch:58, bearing:-38, zoom:14.75, center:CENTRE, duration:1400 }); };
+$("#vGround").onclick = () => { stopSpin(); setBtn("vObl",false); map.easeTo({ pitch:82, bearing:-38, zoom:16.4, duration:1600 }); };
+$("#vSpin").onclick   = () => {
+  spinning = !spinning;
+  $("#vSpin").classList.toggle("on", spinning);
+  if (spinning){ if (map.getPitch() < 30) map.easeTo({ pitch:62, duration:900 }); spin(); }
+};
+$("#vTerr").onclick = () => {
+  const on = !$("#vTerr").classList.contains("on");
+  $("#vTerr").classList.toggle("on", on);
+  map.setTerrain(on ? { source:"dem", exaggeration:1.0 } : null);
+};
+$("#vProv").onclick = () => {
+  showService = !showService;
+  $("#vProv").classList.toggle("on", showService);
+  if (map.getLayer("svc-line"))
+    map.setLayoutProperty("svc-line","visibility", showService ? "visible" : "none");
+};
+for (const b of document.querySelectorAll("[data-cards]")){
+  b.onclick = () => {
+    cardMode = b.dataset.cards;
+    for (const o of document.querySelectorAll("[data-cards]"))
+      o.classList.toggle("on", o === b);
+    refreshVillaCards();
+  };
+}
+
+$("#search").addEventListener("input", e => {
+  query = e.target.value.trim().toLowerCase();
+  renderZoneList();
+});
+function setBtn(id,on){ const b = $("#"+id); if (b) b.classList.toggle("on", on); }
+
+/* ============================================================ GAUGE */
+function gauge(valuePct, colour, centre, sub, size){
+  const R = size/2 - 9, C = size/2, A0 = 140, A1 = 400;
+  const ang = A0 + (A1-A0) * Math.min(1, Math.max(0, valuePct/100));
+  const arc = (from,to,col,w,op) => {
+    const p = a => [C + R*Math.cos(a*Math.PI/180), C + R*Math.sin(a*Math.PI/180)];
+    const [x0,y0] = p(from), [x1,y1] = p(to);
+    return `<path d="M${x0.toFixed(1)} ${y0.toFixed(1)} A${R} ${R} 0 ${(to-from)>180?1:0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}"
+            fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" opacity="${op}"/>`;
+  };
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${sub} ${centre}">
+    ${arc(A0,A1,"#ffffff",7,.10)}${ang>A0+0.5?arc(A0,ang,colour,7,.95):""}
+    <text x="${C}" y="${C+4}" text-anchor="middle" fill="#F5F4F6"
+      style="font-family:Inter,-apple-system,sans-serif;font-weight:600;font-size:${size*0.18}px">${centre}</text>
+    <text x="${C}" y="${C+size*0.17}" text-anchor="middle" fill="#8E8A96"
+      style="font-family:Inter,sans-serif;font-size:${size*0.095}px">${sub}</text></svg>`;
+}
+
+/* ============================================================ PANELS */
+/* ============================================================ EXPLORER
+   A collapsible tree over the whole 350-meter register: zone -> group ->
+   meter -> sub-meter. Everything starts collapsed, so the panel opens with six
+   rows rather than a wall of them, and you descend only where you are looking.
+
+   Search matches name or account and auto-expands the path to every hit, so
+   finding one apartment out of 183 does not mean clicking through its building.
+*/
+const openNodes = new Set();
+let query = "";
+let cardMode = "top";       // zone | top | all
+const TOP_N = 10;
+
+function toggle(key){
+  if (openNodes.has(key)) openNodes.delete(key); else openNodes.add(key);
+  renderZoneList();
+}
+
+/* The register is not consistent about zero-padding — it holds both
+   "Z3-51(3)" and "Z3-051(5)", "Z3-49(1)" and "Z3-049(4)". Searching the literal
+   string would silently miss half a building, so both sides are normalised. */
+const unpad = s => s.toLowerCase().replace(/(\D)0+(\d)/g, "$1$2");
+
+function matches(m){
+  if (!query) return true;
+  return unpad(m.name + " " + m.acct).includes(unpad(query));
+}
+
+// A meter is shown when it matches, or when one of its children does.
+function meterVisible(m){
+  return matches(m) || (m.children || []).some(matches);
+}
+
+function groupOf(m){
+  if (m.children) return "bldg";
+  if (/villa|unsold/i.test(m.type)) return "villa";
+  return "other";
+}
+const GROUP_LABEL = { villa:"Villas", bldg:"Buildings", other:"Other connections" };
+
+function row(cls, depth, opts){
+  const b = document.createElement("button");
+  b.className = `tnode d${depth} ${cls}`;
+  b.innerHTML = opts.html;
+  if (opts.onclick) b.onclick = opts.onclick;
+  return b;
+}
+
+const CARET = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>';
+
+function renderZoneList(){
+  const wrap = $("#zlist");
+  wrap.replaceChildren();
+  let shown = 0;
+
+  for (const z of ZONES){
+    if (selectedZone && z.id !== selectedZone) continue;
+    const zoneMeters = (z.meters || []).filter(meterVisible);
+    // A zone with no hit at all disappears while searching, rather than sitting
+    // there as an empty row the user has to rule out by hand.
+    if (query && !zoneMeters.length) continue;
+
+    const lp = pct(z.l2 - z.l3, z.l2), col = lossColour(lp);
+    const zk = "z:" + z.id;
+    const zOpen = openNodes.has(zk) || (!!query);
+    shown++;
+
+    wrap.appendChild(row("d0" + (zOpen ? " open" : "") + (selectedZone === z.id ? " on" : ""), 0, {
+      html: `<span class="tw">${CARET}</span>
+             <span class="tn">${esc(z.name)}</span>
+             <span class="tpc" style="color:${col}">${lp.toFixed(1)}%</span>
+             <span class="tv">${fmt(z.l2)}</span>`,
+      onclick: () => selectZone(z.id)
+    }));
+    if (!zOpen) continue;
+
+    const groups = { villa:[], bldg:[], other:[] };
+    for (const m of zoneMeters) groups[groupOf(m)].push(m);
+
+    for (const g of ["villa","bldg","other"]){
+      const list = groups[g];
+      if (!list.length) continue;
+      const gk = `g:${z.id}:${g}`;
+      const gOpen = openNodes.has(gk) || (!!query);
+      const gTot = list.reduce((s,m) => s + m.h1, 0);
+      wrap.appendChild(row("d1" + (gOpen ? " open" : ""), 1, {
+        html: `<span class="tw">${CARET}</span>
+               <span class="tn">${GROUP_LABEL[g]}<span class="tsub">${list.length}</span></span>
+               <span class="tv">${fmt(gTot)}</span>`,
+        onclick: () => toggle(gk)
+      }));
+      if (!gOpen) continue;
+
+      for (const m of list){
+        const v = VILLA_BY_ACCT[m.acct];
+        const band = v ? villaBand(v) : { c: "#8E8A96" };
+        const mk = "m:" + m.acct;
+        const kidsShown = (m.children || []).filter(matches);
+        const mOpen = openNodes.has(mk) || (!!query && kidsShown.length && !matches(m));
+        const bad = m.sub_loss !== undefined && m.sub_loss < 0;
+        wrap.appendChild(row("d2" + (mOpen ? " open" : "") +
+                             (selectedVilla && v && selectedVilla === v.id ? " on" : ""), 2, {
+          html: `<span class="tw">${m.children ? CARET : ""}</span>
+                 <span class="dot" style="background:${band.c}"></span>
+                 <span class="tn">${esc(v ? (v.label || v.id) : m.name)}${
+                   m.children ? `<span class="tsub">${m.children.length} sub</span>` : ""}${
+                   bad ? ` <span class="warn">${fmt(m.sub_loss)}</span>` : ""}</span>
+                 <span class="tv" style="color:${band.c}">${fmt(m.h1)}</span>`,
+          onclick: ev => {
+            // The caret opens the building; the row itself opens the meter.
+            if (m.children && ev.offsetX < 22){ toggle(mk); return; }
+            if (v) showVilla(v.id); else showMeterRecord(m);
+          }
+        }));
+        if (!mOpen || !m.children) continue;
+
+        for (const c of kidsShown){
+          wrap.appendChild(row("d3", 3, {
+            html: `<span class="tw"></span>
+                   <span class="tn">${esc(c.name)}</span>
+                   <span class="tv">${fmt(c.h1)}</span>`,
+            onclick: () => showMeterRecord(c, m)
+          }));
+        }
+      }
+    }
+  }
+
+  if (!shown){
+    const e = document.createElement("div");
+    e.id = "empty";
+    e.textContent = query ? `Nothing matches “${query}”.` : "No zones in this filter.";
+    wrap.appendChild(e);
+  }
+}
+
+function renderChips(){
+  const wrap = $("#zchips");
+  wrap.replaceChildren();
+  const mk = (label, id) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (selectedZone === id ? " on" : "");
+    b.textContent = label;
+    b.onclick = () => { if (id) selectZone(id); else showOverview(); };
+    wrap.appendChild(b);
+  };
+  mk("All zones", null);
+  for (const z of ZONES) mk(z.name === "Village Square" ? "VS" : z.name.replace("Zone ",""), z.id);
+}
+
+function sparkline(series, colour, w, h){
+  const vals = series.filter(v => v !== null && v !== undefined);
+  if (!vals.length) return "";
+  const mx = Math.max(...vals), mn = Math.min(...vals), rng = (mx - mn) || 1;
+  const step = w / Math.max(1, series.length - 1);
+  let d = "", started = false;
+  series.forEach((v,i) => {
+    if (v === null) return;
+    const x = i*step, y = h - ((v - mn)/rng)*h;
+    d += (started ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+    started = true;
+  });
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    <path d="${d}" fill="none" stroke="${colour}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+function showOverview(){
+  selectedZone = null;
+  selectedVilla = null;
+  zoneCardState.clear();
+  renderChips();
+  renderZoneList();
+  buildMarkers();
+  const s1 = pct(STAGE1, SUPPLY.total), s2 = pct(STAGE2, L2_TOTAL), tot = pct(TOTALLOSS, SUPPLY.total);
+  $("#right").innerHTML = `
+    <h2>Network overview</h2>
+    <div class="sub">${PERIOD.label} · potable only${PERIOD.derived.length ? " · latest month is month-to-date" : ""}</div>
+    <div class="gaugewrap">
+      <div class="gauge">${gauge(s1, lossColour(s1), s1.toFixed(1)+"%", "trunk", 120)}<div class="gl">Stage 1 loss</div></div>
+      <div class="gauge">${gauge(s2, lossColour(s2), s2.toFixed(1)+"%", "zones", 120)}<div class="gl">Stage 2 loss</div></div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Supplied (L1)</div><div class="v">${fmt(SUPPLY.total)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Total loss</div><div class="v" style="color:${lossColour(tot)}">${fmt(TOTALLOSS)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Zone bulk (L2)</div><div class="v">${fmt(L2_TOTAL)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Direct (DC)</div><div class="v">${fmt(DIRECT.total)} <small>m³</small></div></div>
+    </div>
+    <div class="mini">
+      <div class="mh">Water balance</div>
+      <table>
+        <tr><td>Main bulk L1 — ${METER_COUNTS.L1} meter</td><td class="n">${fmt(SUPPLY.total)}</td></tr>
+        <tr><td>− Zone bulk L2 — ${METER_COUNTS.L2} meters</td><td class="n">${fmt(L2_TOTAL)}</td></tr>
+        <tr><td>− Direct connections DC — ${METER_COUNTS.DC}</td><td class="n">${fmt(DIRECT.total)}</td></tr>
+        <tr><td><b style="color:#F5F4F6">= Stage 1 loss (trunk)</b></td><td class="n"><b style="color:${lossColour(s1)}">${fmt(STAGE1)}</b></td></tr>
+        <tr><td>Zone bulk L2</td><td class="n">${fmt(L2_TOTAL)}</td></tr>
+        <tr><td>− Individual meters L3 — ${METER_COUNTS.L3}</td><td class="n">${fmt(L3_TOTAL)}</td></tr>
+        <tr><td><b style="color:#F5F4F6">= Stage 2 loss (zones)</b></td><td class="n"><b style="color:${lossColour(s2)}">${fmt(STAGE2)}</b></td></tr>
+      </table>
+    </div>
+    <div class="mini">
+      <div class="mh">Stage 1 month by month</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">L1 in</th>
+          <th style="text-align:right">L2+DC</th><th style="text-align:right">Trunk</th></tr></thead>
+        <tbody>${MONTHS.map((m,i) => {
+          const out = C.l2_monthly[i] + C.dc_monthly[i], d = C.stage1_monthly[i];
+          const p = SUPPLY.monthly[i] > 0 ? d/SUPPLY.monthly[i]*100 : 0;
+          return `<tr><td>${m}</td><td class="n">${fmt(SUPPLY.monthly[i])}</td>
+            <td class="n">${fmt(out)}</td>
+            <td class="n" style="color:${d < 0 ? "#D67A7A" : lossColour(p)}">${d<0?"":""}${p.toFixed(0)}%</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>
+    <div class="okbox">
+      Stage 1 is a <b>residual</b>, not a meter reading — every meter above reads positive.
+      Month to month it ranges ${C.stage1_spread[0].toFixed(1)}% to ${C.stage1_spread[1].toFixed(1)}%,
+      a spread driven mainly by the NAMA bulk and the sub-meters being read on
+      different dates. <b>Use the full-period figure</b>; a single month's residual
+      says more about reading dates than about the network.
+    </div>
+    ${DAILY_MONTHS.length > 1 ? `<div class="mini">
+      <div class="mh">Main meter — daily average</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">Days read</th>
+          <th style="text-align:right">Mean/day</th><th style="text-align:right">Change</th></tr></thead>
+        <tbody>${DAILY_MONTHS.map((m,i) => {
+          const prev = i > 0 ? DAILY_MONTHS[i-1].mean : null;
+          const ch = prev ? (m.mean/prev - 1) * 100 : null;
+          return `<tr><td>${esc(m.label)}${m.gaps.length ? ` <span style="color:#E8C064">gap ${m.gaps.join(", ")}</span>` : ""}</td>
+            <td class="n">${m.logged}/${m.days}</td>
+            <td class="n">${fmt(m.mean)}</td>
+            <td class="n" style="color:${ch === null ? "#8E8A96" : ch < 0 ? "#84B59F" : "#D67A7A"}">${
+              ch === null ? "—" : (ch > 0 ? "+" : "") + ch.toFixed(1) + "%"}</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>` : ""}
+    <div class="mini">
+      <div class="mh">Direct connections — ${METER_COUNTS.DC} meters, ${fmt(DIRECT.total)} m³</div>
+      <table>
+        ${DIRECT.list.map(d => `<tr><td>${esc(d.name)}</td>
+          <td class="n">${fmt(d.total)}</td>
+          <td class="n" style="color:#8E8A96">${(d.total/SUPPLY.total*100).toFixed(1)}%</td></tr>`).join("")}
+      </table>
+    </div>
+    <div class="mini">
+      <div class="mh">Outside the hierarchy — ${METER_COUNTS.NA} TSE meters</div>
+      <table>
+        ${UNASSIGNED.map(d => {
+          const neg = d.monthly.some(v => v < 0);
+          return `<tr><td>${esc(d.name)}${neg?` <span style="color:#D67A7A">· negative month</span>`:""}</td>
+            <td class="n" style="${neg?"color:#D67A7A":""}">${fmt(d.total)}</td></tr>`;
+        }).join("")}
+      </table>
+    </div>
+    <div class="mini">
+      <div class="mh">Meter inventory — ${METER_COUNTS.total} total</div>
+      <table>
+        <tr><td>L1 main bulk</td><td class="n">${METER_COUNTS.L1}</td></tr>
+        <tr><td>L2 zone bulk</td><td class="n">${METER_COUNTS.L2}</td></tr>
+        <tr><td>DC direct connection</td><td class="n">${METER_COUNTS.DC}</td></tr>
+        <tr><td>L3 villas / building bulk / retail</td><td class="n">${METER_COUNTS.L3}</td></tr>
+        <tr><td>L4 apartments &amp; common areas</td><td class="n">${METER_COUNTS.L4}</td></tr>
+        <tr><td>Unassigned (TSE irrigation)</td><td class="n" style="color:#E8C064">${METER_COUNTS.NA}</td></tr>
+      </table>
+    </div>
+    <div class="okbox">
+      <b>Geometry is from the source AutoCAD files.</b> ${NET_KM.toFixed(1)} km read directly
+      out of the COO87 DWGs (PW-01 to PW-08), whose model space is already
+      <b>UTM 40N</b> — so these are survey coordinates, not a fitted approximation.
+      Pipes come off their own layers, named by bore and material, so every main
+      carries its real diameter: <b>250 &amp; 200 DI</b> trunk, <b>225 / 160 / 110 HDPE</b>
+      distribution, <b>25 / 32 mm</b> house connections.
+    </div>
+    <div class="mini">
+      <div class="mh">Plot-level coverage — Zones 3A, 3B, 5 and 8</div>
+      <table>
+        ${["Zone 3A","Zone 3B","Zone 5","Zone 8"].map(n => {
+          const list = VILLA_BY_ZONE[n] || [];
+          const villas = list.filter(v => v.type !== "Building (Bulk)").length;
+          const bulks  = list.filter(v => v.type === "Building (Bulk)").length;
+          const tot    = list.reduce((s,v) => s + v.h1, 0);
+          return `<tr><td>${esc(n)}</td><td class="n">${villas}${bulks?` + ${bulks} bldg`:""}</td>
+                  <td class="n">${fmt(tot)} m³</td></tr>`;
+        }).join("")}
+      </table>
+    </div>
+    <div class="okbox">
+      <b>Every plot in these four zones is now placed and named.</b> ${VILLAS.length} of the
+      121 L3 meters are matched to their surveyed plot, taken from the plot tags in the
+      as-built master plan. The two unmatched are the Zone 3B and Zone 5 irrigation tanks,
+      which are assets rather than plots. The apartment blocks join through their plot
+      number: <b>D-44 … D-75</b> in the register are plots <b>Z3-44 … Z3-75</b> on the drawing.
+    </div>
+    <div class="warnbox">
+      <b>Elsewhere, meter positions remain unresolved.</b> Outside these four zones only
+      22 meters carry coordinates, all in Zone FM. Zone FM and Village Square are still
+      shown on the surveyed trunk alignment and tagged indicative. The drawings also
+      carry <b>85 plots in Zone 2 and 9 in Zone 3 with no meter at all</b> in the register —
+      worth confirming against the billing list.
+    </div>`;
+}
+
+function selectZone(id){
+  const z = ZONES.find(v => v.id === id);
+  if (!z) return;
+  selectedZone = id;
+  selectedVilla = null;
+  zoneCardState.clear();
+  openNodes.add("z:" + id);
+  renderChips();
+  renderZoneList();
+  buildMarkers();
+  stopSpin();
+  const bb = zoneBounds(z);
+  let cam = null;
+  if (bb){
+    try { cam = map.cameraForBounds(bb, { padding:{ top:110, bottom:150, left:370, right:390 } }); }
+    catch (err){ cam = null; }
+  }
+  if (cam){
+    map.easeTo({ center:cam.center, zoom:Math.min(cam.zoom, 17.4), pitch:62,
+                 bearing:map.getBearing(), duration:1400 });
+  } else {
+    map.easeTo({ center:[z.lon, z.lat], zoom:16.3, pitch:62,
+                 bearing:map.getBearing(), duration:1400, offset:[0,90] });
+  }
+
+  zonePeriod = "H1";
+  renderZonePanel();
+}
+
+/* The zone panel Rahim asked for: pick the period explicitly (six-month total
+   or a single month), then a gauge with the three numbers that define it —
+   what the bulk meter recorded, what the individual meters recorded, and the
+   difference. Nothing on this panel is ambiguous about its period again. */
+function renderZonePanel(){
+  const z = ZONES.find(v => v.id === selectedZone);
+  if (!z) return;
+  const isH1 = zonePeriod === "H1";
+  const inV  = isH1 ? z.l2 : z.ml2[zonePeriod];
+  const outV = isH1 ? z.l3 : z.ml3[zonePeriod];
+  const loss = inV - outV, lp = pct(loss, inV), col = lossColour(lp);
+  const perLabel = isH1 ? `${PERIOD.label} · full-period total`
+                        : `${MONTHS[zonePeriod]}${mtd(zonePeriod)} · single month`;
+  const h1lp = pct(z.l2 - z.l3, z.l2);
+  const perMeter = z.nL3 > 0 ? z.l3 / z.nL3 : 0;
+  const lossSeries = z.ml2.map((v,i) => v - z.ml3[i]);
+  const posTag = z.verified ? `<span class="tag ver">Position verified</span>`
+             : z.anchored ? `<span class="tag ver">Position from plot survey</span>`
+             : `<span class="tag apx">Position indicative</span>`;
+
+  $("#right").innerHTML = `
+    <h2>${esc(z.name)}</h2>
+    <div class="sub">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
+    <div class="perrow">${["H1"].concat(MONTHS).map((m,i) => {
+      const val = m === "H1" ? "H1" : String(i - 1);
+      const on = String(zonePeriod) === val;
+      return `<button class="chip${on ? " on" : ""}" data-per="${val}">${m === "H1" ? PERIOD.short + " total" : m + mtd(i - 1)}</button>`;
+    }).join("")}</div>
+    <div class="sub" style="margin-top:8px">${perLabel} · all figures m³</div>
+    <div class="gaugewrap"><div class="gauge">${gauge(lp, col, lp.toFixed(1)+"%", "loss", 132)}<div class="gl">Zone loss</div></div></div>
+    <div class="kpis k3">
+      <div class="kpi"><div class="k">Bulk meter</div><div class="v">${fmt(inV)}</div></div>
+      <div class="kpi"><div class="k">Individual meters</div><div class="v">${fmt(outV)}</div></div>
+      <div class="kpi"><div class="k">Loss</div><div class="v" style="color:${col}">${fmt(loss)}</div></div>
+    </div>
+    ${z.nL4 ? `<div class="okbox" style="margin-top:2px">
+      <b>How this loss is calculated.</b> The zone bulk is compared with its
+      ${z.nL3} individual L3 meters — the villas and the <b>building bulk</b>
+      meters. The ${z.nL4} apartment and common (L4) meters sit behind those
+      building bulks and are <b>excluded</b>: counting them as well would count
+      every building twice.</div>` : ""}
+    <div class="mini">
+      <div class="mh">Month by month — bulk in vs individual (m³/month)</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">In</th><th style="text-align:right">Individual</th><th style="text-align:right">Loss</th></tr></thead>
+        <tbody>${MONTHS.map((m,i) => {
+          const lo = z.ml2[i]-z.ml3[i], lpm = pct(lo, z.ml2[i]);
+          return `<tr><td>${m}</td><td class="n">${fmt(z.ml2[i])}</td><td class="n">${fmt(z.ml3[i])}</td>
+                  <td class="n" style="color:${lossColour(lpm)}">${lpm.toFixed(0)}%</td></tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>
+    <div class="mini"><div class="mh">Loss trend (m³/month)</div>${sparkline(lossSeries, lossColour(h1lp), 290, 44)}</div>
+    <div class="mini">
+      <div class="mh">Read</div>
+      <p style="font-size:14px;color:#C9C6CE">Average billed volume per L3 meter is <b>${fmt(perMeter)} m³</b> over six months.
+      ${h1lp>=50 ? "Loss above 50% of bulk input is not explicable by meter under-registration alone — treat as physical leakage and step-test the zone."
+       : h1lp>=30 ? "Loss in the 30–50% band usually mixes real leakage with under-registering meters. A night-flow test will separate the two."
+       : "Loss is within a band where meter accuracy and billing lag are the likely causes rather than burst leakage."}</p>
+    </div>
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+
+  for (const b of $("#right").querySelectorAll("[data-per]"))
+    b.onclick = () => {
+      zonePeriod = b.dataset.per === "H1" ? "H1" : +b.dataset.per;
+      renderZonePanel();
+    };
+}
+
+function showVilla(id){
+  const v = VILLAS.find(x => x.id === id);
+  if (!v) return;
+  hideHover();
+  selectedVilla = id;
+  const zid = (ZONES.find(z => z.name === v.zone) || {}).id;
+  if (zid && selectedZone !== zid){ selectedZone = zid; openNodes.add("z:" + zid); }
+  renderChips();
+  renderZoneList();
+  buildMarkers();
+  stopSpin();
+  map.easeTo({ center: v.c, zoom: Math.max(map.getZoom(), 17.4), pitch: 68,
+               bearing: map.getBearing(), duration: 1200, offset: [0, 80] });
+
+  const b = villaBand(v);
+  const bulk = v.type === "Building (Bulk)";
+  const med = ZONE_MEDIAN[v.zone] || 0;
+  const mx = Math.max(1, ...v.months);
+  const monthly = v.months.length === 6;
+
+  // A building bulk should read at least what its apartments read. When it
+  // reads less, the sub-meters are over-registering or the bulk is stuck —
+  // either way it is a metering fault, not leakage, so it is labelled as such.
+  let subBlock = "";
+  if (bulk && v.kids){
+    const sl = v.sub_loss, slp = v.h1 > 0 ? pct(sl, v.h1) : 0;
+    subBlock = `
+      <div class="mini">
+        <div class="mh">Stage 3 — bulk vs its apartments</div>
+        <table>
+          <tr><td>Building bulk (L3)</td><td class="n">${fmt(v.h1)}</td></tr>
+          <tr><td>− ${v.kids} apartment meters (L4)</td><td class="n">${fmt(v.kids_m3)}</td></tr>
+          <tr><td><b style="color:#F5F4F6">= Difference</b></td>
+              <td class="n"><b style="color:${sl < 0 ? "#D67A7A" : lossColour(slp)}">${fmt(sl)}</b></td></tr>
+        </table>
+      </div>
+      <div class="${sl < 0 ? "warnbox" : "okbox"}">
+        ${sl < 0
+          ? `<b>The apartments read more than the bulk.</b> ${fmt(Math.abs(sl))} m³ over six months.
+             That is not physically possible on a sound installation — it points to a
+             stalled or under-registering bulk meter, or an apartment fed from outside this bulk.`
+          : `Apartments account for <b>${(100 - slp).toFixed(0)}%</b> of what the building bulk
+             recorded. The ${fmt(sl)} m³ difference is common-area draw plus in-building loss.`}
+      </div>`;
+  }
+
+  $("#right").innerHTML = `
+    <h2>${esc(v.label || v.id)}</h2>
+    <div class="sub">${esc(v.zone)} · ${esc(v.kind === "tank" ? v.name : v.type)} ·
+      <span class="tag ${v.precision === "label" ? "apx" : "ver"}">${v.kind === "tank" ? (v.precision === "label" ? "Label position" : "Surveyed from DWG") : "Plot surveyed"}</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">H1-2026</div><div class="v" style="color:${b.c}">${fmt(v.h1)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(v.h1/6)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Account</div><div class="v" style="font-size:16px">${esc(v.acct)}</div></div>
+      <div class="kpi"><div class="k">${v.kind === "tank" ? "Footprint" : "Meter ID"}</div><div class="v" style="font-size:16px">${v.kind === "tank" ? (v.footprint_m2 ? v.footprint_m2 + " m²" : "—") : esc(v.mid || "—")}</div></div>
+    </div>
+    ${monthly ? `<div class="mini">
+      <div class="mh">Monthly consumption</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">m³</th><th style="width:44%"></th></tr></thead>
+        <tbody>${MONTHS.map((m,i) => `<tr><td>${m}</td><td class="n">${fmt(v.months[i])}</td>
+          <td><div style="height:5px;border-radius:5px;background:rgba(255,255,255,.09)">
+            <i style="display:block;height:100%;border-radius:5px;background:${b.c};
+               width:${(v.months[i]/mx*100).toFixed(0)}%"></i></div></td></tr>`).join("")}</tbody>
+      </table>
+    </div>` : ""}
+    ${subBlock}
+    <div class="mini">
+      <div class="mh">Against its zone</div>
+      <p style="font-size:14px;color:#C9C6CE">Median villa in ${esc(v.zone)} used
+        <b>${fmt(med)} m³</b> over the same six months. This plot is
+        <b style="color:${b.c}">${med ? (v.h1/med).toFixed(2) : "—"}×</b> that${b.t ? ` — ${esc(b.t)}` : ""}.
+        ${v.h1 === 0 ? "A zero read over six months is either a vacant plot or a stopped meter; it should be confirmed on site."
+          : v.type === "Unsold" ? "The plot is flagged unsold in the register, so any sustained draw is construction, irrigation or a leak on the service."
+          : ""}</p>
+    </div>
+    <div class="mini">
+      <div class="mh">Position</div>
+      <table>
+        <tr><td>Easting (UTM 40N)</td><td class="n">${v.e.toFixed(2)}</td></tr>
+        <tr><td>Northing</td><td class="n">${v.n.toFixed(2)}</td></tr>
+        ${v.plot_area ? `<tr><td>Plot area</td><td class="n">${esc(v.plot_area)}</td></tr>` : ""}
+        ${v.footprint_m2 ? `<tr><td>Building footprint</td><td class="n">${fmt(v.footprint_m2)} m²</td></tr>` : ""}
+      </table>
+    </div>
+    ${v.kind === "tank" ? `<div class="${v.precision === "surveyed" ? "okbox" : "warnbox"}">
+      ${v.precision === "surveyed"
+        ? `<b>Surveyed from the as-built DWG.</b> Structure ${esc(v.dims)} (${v.footprint_m2} m²),
+           read from PW-05 in UTM 40N. Fed by a <b>${v.feed.bore} mm ${esc(v.feed.material)}</b>
+           branch teeing off the ${esc(v.feed.from)} at E ${v.feed.tee_e.toFixed(2)} /
+           N ${v.feed.tee_n.toFixed(2)}, a ${v.feed.run_m} m run. Sheet note:
+           “${esc(v.feed.note)}”.`
+        : `<b>Label position only.</b> The drawing's “IRRIGATION TANK” text sits here, but no
+           tank structure is drawn near it on PW-05 — treat as approximate until confirmed.`}
+    </div>` : `<div class="okbox">Position comes from the plot tag <b>${esc(v.raw || v.id)}</b> in the
+      as-built master plan xref, read straight out of the DWG in UTM 40N.
+      ${v.ring ? "The outline shown is this plot's surveyed building footprint."
+               : "No building footprint is drawn for this plot in the water package, so the plate is a marker at the plot tag."}</div>`}
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
+window.showVilla = showVilla;
+
+/* A meter with no plot of its own — a retail unit, an apartment, a common-area
+   meter. Same shape as the villa panel so the two read alike. */
+function showMeterRecord(m, parent){
+  selectedVilla = null;
+  const mx = Math.max(1, ...m.months);
+  const col = parent ? "#A4C5BB" : "#6B9AC4";
+  const share = parent && parent.h1 > 0 ? m.h1 / parent.h1 * 100 : null;
+  $("#right").innerHTML = `
+    <h2>${esc(m.name)}</h2>
+    <div class="sub">${esc(m.zone || (parent && parent.zone) || "")} · ${esc(m.type)}${
+      parent ? ` · sub-meter of ${esc(parent.name)}` : ""}</div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">H1-2026</div><div class="v" style="color:${col}">${fmt(m.h1)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Monthly average</div><div class="v">${fmt(m.h1/6)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Account</div><div class="v" style="font-size:16px">${esc(m.acct)}</div></div>
+      <div class="kpi"><div class="k">${parent ? "Share of building" : "Level"}</div>
+        <div class="v" style="font-size:16px">${share !== null ? share.toFixed(1) + "%" : (m.children ? "L3 bulk" : "L3")}</div></div>
+    </div>
+    <div class="mini">
+      <div class="mh">Monthly consumption</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">m³</th><th style="width:44%"></th></tr></thead>
+        <tbody>${MONTHS.map((mo,i) => `<tr><td>${mo}</td><td class="n">${fmt(m.months[i])}</td>
+          <td><div style="height:5px;border-radius:5px;background:rgba(255,255,255,.09)">
+            <i style="display:block;height:100%;border-radius:5px;background:${col};
+               width:${(m.months[i]/mx*100).toFixed(0)}%"></i></div></td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+    ${m.h1 === 0 ? `<div class="warnbox">No consumption recorded in six months —
+      either the unit is empty or the meter has stopped. Worth confirming on site.</div>` : ""}
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
+window.showMeterRecord = showMeterRecord;
+
+function showMeter(p){
+  $("#right").innerHTML = `
+    <h2>${esc(p.n)}</h2>
+    <div class="sub">Account ${esc(p.id)} · level ${esc(p.t.toUpperCase())} ·
+      <span class="tag ver">Position verified</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Latitude</div><div class="v" style="font-size:16px">${p.lat.toFixed(6)}</div></div>
+      <div class="kpi"><div class="k">Longitude</div><div class="v" style="font-size:16px">${p.lon.toFixed(6)}</div></div>
+    </div>
+    <div class="warnbox">This point is positioned but not yet joined to a plot. Its
+      consumption is in the master view under account <b>${esc(p.id)}</b>; villa and
+      building plots in Zones 3A, 3B, 5 and 8 carry their full series on the card.</div>
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
+function showPipe(p){
+  const dia = p.d, mat = p.m;
+  const role = dia >= 200 ? "Trunk main" : dia >= 110 ? "Distribution main" : "House connection";
+  $("#right").innerHTML = `
+    <h2>${dia} mm ${esc(mat)}</h2>
+    <div class="sub">${role} · <span class="tag ver">From DWG layer</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Nominal bore</div><div class="v">${dia} <small>mm</small></div></div>
+      <div class="kpi"><div class="k">Material</div><div class="v">${esc(mat)}</div></div>
+    </div>
+    <div class="okbox">Read from AutoCAD layer <b>${dia >= 110 && mat === "DI" ? "DIA " + dia + "-DI"
+      : dia >= 110 ? "DIA " + dia + "-OD HDPE" : "HC PIPE" + dia + "mm"}</b>
+      in the COO87 as-built set. Model space is UTM 40N, so this alignment is survey
+      coordinates rather than a fit to the plotted sheet.</div>
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
+window.showOverview = showOverview;
+
+/* ============================================================ TIMELINE */
+let day = 0, playing = false, timer = null;
+
+const SERIES_STYLE = [
+  ["L1","#E8C064",2,  "L1"],
+  ["L2","#6B9AC4",1.6,"L2"],
+  ["DC","#D67A7A",1.4,"DC"],
+  ["L3","#A4C5BB",1.6,"L3"]
+];
+
+function renderMonths(){
+  const wrap = $("#tlmonths");
+  wrap.replaceChildren();
+  DAILY_MONTHS.forEach((m, i) => {
+    const b = document.createElement("button");
+    b.className = "chip" + (i === monthIdx ? " on" : "");
+    b.textContent = m.label.replace(" 2026","");
+    b.onclick = () => {
+      monthIdx = i;
+      day = Math.min(day, lastRead(m));
+      renderMonths(); renderSpark();
+    };
+    wrap.appendChild(b);
+  });
+}
+
+function renderSpark(){
+  const M = curMonth();
+  const el = $("#spark");
+  const w = el.clientWidth || 600, h = 44;
+  el.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  const n = M.days || 1, step = w / Math.max(1, n - 1);
+
+  // Scale to whatever series this month actually has, so a month with only the
+  // main meter is not squashed against a scale set by a series it lacks.
+  const present = SERIES_STYLE.filter(([k]) => M.series[k]);
+  const all = present.flatMap(([k]) => M.series[k]).filter(v => v !== null && v !== undefined);
+  const mx = Math.max(1, ...all);
+
+  const line = (arr, col, wd) => {
+    let d = "", started = false;
+    arr.forEach((v,i) => {
+      if (v === null || v === undefined){ started = false; return; }   // gap breaks the line
+      const x = i*step, y = h - (v/mx)*h*0.92 - 2;
+      d += (started ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+      started = true;
+    });
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${wd}" stroke-linejoin="round" stroke-linecap="round"/>`;
+  };
+
+  const cx = (day*step).toFixed(1);
+  el.innerHTML = present.map(([k,c,wd]) => line(M.series[k], c, wd)).join("") +
+    `<line x1="${cx}" y1="0" x2="${cx}" y2="${h}" stroke="#F5F4F6" stroke-width="1.4" opacity=".85"/>
+     <circle cx="${cx}" cy="${h/2}" r="2.6" fill="#F5F4F6"/>`;
+
+  const val = k => (M.series[k] || [])[day];
+  $("#tlday").textContent = `${day+1} ${M.label}`;
+  const l1 = val("L1"), dc = val("DC");
+  $("#tlnums").innerHTML =
+    present.map(([k,c,,lbl]) => `${lbl} <b style="color:${c}">${fmt(val(k))}</b>`).join(" · ") + " m³" +
+    (l1 === null || l1 === undefined
+      ? ` <span style="color:#E8C064">· not logged</span>` : "") +
+    (dc === 1 ? ` <span style="color:#E8C064">· DC placeholder</span>` : "") +
+    (M.partial ? ` <span style="color:#8E8A96">· ${M.logged} of ${M.days} days read</span>` : "");
+}
+
+$("#play").onclick = () => {
+  playing = !playing;
+  $("#play").innerHTML = playing ? ICON.pause : ICON.play;
+  $("#play").setAttribute("aria-label", playing ? "Pause daily animation" : "Play daily animation");
+  if (playing) timer = setInterval(() => {
+    day = day >= lastRead(curMonth()) ? 0 : day + 1;
+    renderSpark();
+  }, 700);
+  else clearInterval(timer);
+};
+$("#spark").addEventListener("click", e => {
+  const M = curMonth(), r = e.currentTarget.getBoundingClientRect(), n = M.days;
+  day = Math.max(0, Math.min(lastRead(M), Math.round((e.clientX - r.left)/r.width*(n-1))));
+  renderSpark();
+});
+
+/* ============================================================ INIT */
+const tlEl = $("#tl");
+function setTl(min){
+  tlEl.classList.toggle("min", min);
+  const b = $("#tlToggle");
+  b.setAttribute("aria-expanded", String(!min));
+  b.setAttribute("aria-label", (min ? "Expand" : "Collapse") + " the daily readings panel");
+  $("#viewctl").style.bottom = (tlEl.offsetHeight + 24) + "px";
+  if (!min) renderSpark();          // the chart had zero width while hidden
+  queueLayout();
+}
+$("#tlToggle").onclick = () => {
+  if (playing) $("#play").click();  // pausing on collapse beats a hidden animation
+  setTl(!tlEl.classList.contains("min"));
+};
+$("#play").innerHTML = ICON.play;
+$("#tMeters").textContent = fmt(METER_COUNTS.total);
+$("#tSupplyLbl").textContent = PERIOD.short + " supply";
+$("#figNote").textContent = "All figures are " + PERIOD.label + " totals in m³ unless a month is chosen.";
+$("#tSupply").textContent = fmt(SUPPLY.total) + " m³";
+$("#tLoss").textContent   = pct(TOTALLOSS, SUPPLY.total).toFixed(1) + "%";
+window.addEventListener("resize", renderSpark);
+// Exported because panel HTML uses inline onclick="showOverview()" — inside
+// the __satvizBoot wrapper it is no longer a global by default.
+window.showOverview = showOverview;
+showOverview();
+renderMonths();
+renderSpark();
+setTl(true);
+};
+</script>
+</body>
+</html>

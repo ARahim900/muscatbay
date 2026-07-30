@@ -31,6 +31,34 @@ function buildCsp(): string {
     ].join('; ')
 }
 
+/**
+ * CSP for the self-hosted Satellite View map engine (/satellite/*), which the
+ * Water page embeds in a same-origin iframe. Two deliberate differences from
+ * the app-wide policy — everything else stays as strict:
+ *
+ * - `frame-ancestors 'self'` (not 'none'): the engine exists to be framed by
+ *   this app. Only this origin may frame it; foreign sites still cannot.
+ * - Map runtime allowances: satellite/terrain tiles are fetched from public
+ *   tile CDNs (`connect-src https:`), and MapLibre spins its worker from a
+ *   blob URL (`worker-src blob:`). Neither is needed — or granted — anywhere
+ *   else in the app.
+ */
+function buildSatelliteCsp(): string {
+    return [
+        `default-src 'self'`,
+        `script-src 'self' 'unsafe-inline'`,
+        `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+        `font-src 'self' https://fonts.gstatic.com`,
+        `img-src 'self' data: blob: https:`,
+        `connect-src 'self' https:`,
+        `worker-src blob:`,
+        `frame-ancestors 'self'`,
+        `base-uri 'self'`,
+        `form-action 'none'`,
+        `object-src 'none'`,
+    ].join('; ')
+}
+
 export async function proxy(request: NextRequest) {
     const requestHeaders = new Headers(request.headers)
 
@@ -64,10 +92,17 @@ export async function proxy(request: NextRequest) {
     // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
     await supabase.auth.getUser()
 
-    // Security headers — applied to every navigation response.
-    response.headers.set('Content-Security-Policy', buildCsp())
+    // Security headers — applied to every navigation response. The Satellite
+    // View engine is the one page this app frames itself, so it gets its own
+    // policy (same-origin framing allowed, map-tile fetches allowed).
+    const isSatellite = request.nextUrl.pathname.startsWith('/satellite/')
+    response.headers.set('Content-Security-Policy', isSatellite ? buildSatelliteCsp() : buildCsp())
     response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.set('X-Frame-Options', 'DENY')
+    if (isSatellite) {
+        response.headers.set('X-Frame-Options', 'SAMEORIGIN')
+    } else {
+        response.headers.set('X-Frame-Options', 'DENY')
+    }
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
 
