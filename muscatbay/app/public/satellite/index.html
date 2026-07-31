@@ -337,8 +337,27 @@ td.n{text-align:right;}
   padding:var(--s-1) var(--s-2);font-size:13px;color:var(--ink3);
   transition:opacity .4s ease;
 }
+/* ── Responsive (Stage 3) ─────────────────────────────────────────────
+   ≤1100px  narrower sidebars, same layout.
+   ≤860px   the left panel becomes a sheet behind a Filters button — it
+            used to be display:none, which silently removed search, the
+            period control and zone selection from tablets.
+   ≤640px   the right panel spans the width as a bottom-anchored sheet. */
+#filtersToggle{left:var(--s-2);top:var(--s-2);z-index:26;display:none;align-items:center;
+  gap:var(--s-1);min-height:var(--ctl-h);padding:0 var(--s-2);
+  font-size:14px;font-weight:600;color:var(--ink);}
+#filtersToggle:hover{background:var(--hov-bg);}
 @media (max-width:1100px){ #left,#rwrap{width:272px;} }
-@media (max-width:860px){ #left{display:none;} #viewctl{max-width:none;} }
+@media (max-width:860px){
+  #filtersToggle{display:flex;}
+  #left{display:none;top:72px;max-height:calc(100% - 160px);}
+  #left.open{display:flex;z-index:25;}
+  #viewctl{max-width:calc(100% - 32px);}
+}
+@media (max-width:640px){
+  #rwrap{left:var(--s-2);right:var(--s-2);top:auto;bottom:var(--s-2);width:auto;max-height:60%;}
+  #viewbody{width:auto;min-width:240px;}
+}
 </style>
 </head>
 <body>
@@ -359,6 +378,11 @@ td.n{text-align:right;}
   <div id="main">
     <div id="map"></div>
 
+    <!-- ≤860px only: the left panel folds behind this (Stage 3) -->
+    <button class="panel" id="filtersToggle" aria-expanded="false" aria-controls="left">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      Filters
+    </button>
     <div class="panel" id="left">
       <div class="hd">
         <h2>Meter explorer</h2>
@@ -1012,8 +1036,13 @@ function zoneCard(z){
   const col = noRead ? "#8E8A96" : lossColour(lp);
   // When villa cards are on show, the selected zone's numbers are already in
   // the right panel — the expanded card would only blanket the villas' space.
+  // Stage 3: the same reasoning applies to the right panel itself. While it is
+  // open it carries the full zone story, so the map keeps the compact pill;
+  // the card auto-expands only when the panel is collapsed. The caret is
+  // always available to override either way.
   const state = zoneCardState.get(z.id) ||
-    (selectedZone === z.id && cardMode === "zone" ? "open" : "min");
+    (selectedZone === z.id && cardMode === "zone" && $("#rwrap").classList.contains("min")
+      ? "open" : "min");
   const nv = (VILLA_BY_ZONE[z.name] || []).length;
   const el = document.createElement("div");
 
@@ -1470,6 +1499,8 @@ $("#viewSel").onchange = () => {
 function setRight(min){
   $("#rwrap").classList.toggle("min", min);
   $("#rhead").setAttribute("aria-expanded", String(!min));
+  buildMarkers();         // the selected zone's card expands only while the
+                          // panel is collapsed, so a toggle re-renders cards
   queueLayout();          // cards hidden under the open panel come back
 }
 function expandRight(){ setRight(false); }
@@ -1872,8 +1903,7 @@ function renderZonePanel(){
 
   $("#right").innerHTML = `
     <h2>${esc(z.name)}</h2>
-    <div class="sub">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
-    <div class="sub" style="margin-top:8px">${perLabel} · all figures m³</div>
+    <div class="sub">${perLabel} · all figures m³</div>
     <div class="gaugewrap"><div class="gauge">${gauge(lp, col, lp.toFixed(1)+"%", "loss", 132)}<div class="gl">Zone loss</div></div></div>
     <div class="kpis k3">
       <div class="kpi"><div class="k">Bulk meter</div><div class="v">${fmt(inV)}</div></div>
@@ -1910,6 +1940,7 @@ function renderZonePanel(){
        : h1lp>=30 ? "Loss in the 30–50% band usually mixes real leakage with under-registering meters. A night-flow test will separate the two."
        : "Loss is within a band where meter accuracy and billing lag are the likely causes rather than burst leakage."}</p>
     </div>
+    <div class="sub" style="margin-top:12px">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
   // Stage 2 (owner-approved): the panel no longer carries its own period chips
@@ -2187,6 +2218,13 @@ $("#viewToggle").onclick = () => {
   body.hidden = !open;
   $("#viewctl").classList.toggle("open", open);
   $("#viewToggle").setAttribute("aria-expanded", String(open));
+};
+/* ≤860px: the left panel folds behind the Filters button (Stage 3). On
+   desktop the button is display:none and this handler is unreachable. */
+$("#filtersToggle").onclick = () => {
+  const open = !$("#left").classList.contains("open");
+  $("#left").classList.toggle("open", open);
+  $("#filtersToggle").setAttribute("aria-expanded", String(open));
 };
 $("#play").innerHTML = ICON.play;
 $("#tMeters").textContent = fmt(METER_COUNTS.total);
