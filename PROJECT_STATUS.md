@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-31 — style(water/satellite): Stage 1 of the redesign — tokens, one panel style, typography cleanup (#62)
 - 2026-07-30 — feat(water/satellite): focus-dim unselected zones, full loss story on zone cards (#61)
 - 2026-07-30 — chore(lint): exclude vendored static bundles from ESLint (#60)
 - 2026-07-30 — fix(water/satellite): anchor villa cards over their villas, cull by zoom
