@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-07-31 — feat(water/satellite): Stage 3 — overlay density, right-panel hierarchy, responsive (#64)
 - 2026-07-31 — feat(water/satellite): Stage 2 — one period selector, View popover, region discipline (#63)
 - 2026-07-31 — style(water/satellite): Stage 1 of the redesign — tokens, one panel style, typography cleanup (#62)
 - 2026-07-30 — feat(water/satellite): focus-dim unselected zones, full loss story on zone cards (#61)
