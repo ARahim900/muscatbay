@@ -49,7 +49,7 @@ h1,h2,h3{font-weight:600;letter-spacing:-0.01em;}
 /* The one uppercase label style. Every section label opts in via .t-label
    (kept as a shared selector list below for existing markup). */
 .t-label,
-.selrow .lbl,.selrow2 .lbl,.lfoot .lbl,#viewctl .vrow .lbl,
+.selrow .lbl,.selrow2 .lbl,#viewctl .vrow .lbl,
 .kpi .k,th,.gauge .gl,.mini .mh,#tlbar .tltitle,.tnode.d1 .tn{
   font-size:var(--t-label-size);letter-spacing:var(--t-label-track);
   text-transform:uppercase;color:var(--ink3);font-weight:600;}
@@ -185,7 +185,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
   border-radius:var(--r-panel);z-index:20;
   box-shadow:0 2px 10px rgba(0,0,0,.35),0 8px 30px rgba(0,0,0,.28);
 }
-#left{left:var(--s-2);top:var(--s-2);width:280px;max-height:calc(100% - 248px);display:flex;flex-direction:column;}
+#left{left:var(--s-2);top:var(--s-2);width:280px;max-height:calc(100% - 96px);display:flex;flex-direction:column;}
 #left .hd{padding:var(--s-2);border-bottom:1px solid var(--border);}
 #left .hd h2{font-size:var(--t-primary-size);}
 #left .hd p{font-size:var(--t-help-size);color:var(--ink3);margin-top:var(--s-1);}
@@ -234,8 +234,6 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 .tnode .dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;}
 .tnode .warn{color:var(--danger);font-size:12px;font-weight:600;}
 #empty{padding:16px 12px;font-size:13px;color:var(--ink3);}
-.lfoot{border-top:1px solid var(--border);padding:var(--s-1) var(--s-2);display:flex;align-items:center;
-  gap:var(--s-1);flex-wrap:wrap;}
 
 #rwrap{right:var(--s-2);top:var(--s-2);width:320px;max-height:calc(100% - 152px);
   display:flex;flex-direction:column;}
@@ -256,7 +254,6 @@ select{font:inherit;font-size:14px;color:var(--ink);background:#201d27;border:1p
   border-radius:var(--r-ctl);padding:0 10px;min-height:var(--ctl-h);}
 select:focus{outline:3px solid var(--teal);outline-offset:1px;}
 .selrow select,.selrow2 select{display:block;width:100%;margin-top:4px;}
-.lfoot select{flex:1;min-width:0;}
 .dayslide{display:flex;align-items:center;gap:9px;margin-top:7px;}
 .dayslide input[type=range]{flex:1;min-width:0;accent-color:var(--teal);height:20px;}
 .dayslide input[type=range]:focus-visible{outline:3px solid var(--teal);outline-offset:1px;border-radius:var(--r-ctl);}
@@ -282,6 +279,9 @@ tr:last-child td{border-bottom:none;}
 td.n{text-align:right;}
 
 #tl{left:var(--s-2);right:var(--s-2);bottom:var(--s-2);padding:var(--s-1) var(--s-2);display:flex;flex-direction:column;gap:var(--s-1);}
+/* display:flex above would defeat the hidden attribute — make it decisive.
+   The bar exists only in Daily view (region discipline, Stage 2). */
+#tl[hidden]{display:none;}
 #tl.min{padding:var(--s-1) var(--s-2);}
 #tl.min #tlbody{display:none;}
 #tlbar{display:flex;align-items:center;gap:11px;min-width:0;}
@@ -296,15 +296,20 @@ td.n{text-align:right;}
   display:flex;align-items:center;justify-content:center;transition:transform .15s ease;}
 #tl .playbtn:hover{transform:translateY(-1px);}
 #tl .tlspacer{flex:1;}
-#tl #tlmonths{display:flex;gap:5px;}
-#tl #tlmonths .chip{min-height:24px;padding:0 10px;font-size:12px;}
 #tl .tlday{font-size:14px;font-weight:600;white-space:nowrap;}
 #tl .tlnums{font-size:13px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #tl .tlnums b{color:var(--ink);}
 #spark{flex:1;height:44px;display:block;min-width:0;}
 
-#viewctl{left:var(--s-2);bottom:128px;width:280px;
-  padding:var(--s-2);display:flex;flex-direction:column;gap:var(--s-1);}
+#viewctl{left:var(--s-2);bottom:var(--s-2);padding:0;display:flex;flex-direction:column;overflow:hidden;}
+#viewToggle{display:flex;align-items:center;gap:var(--s-1);min-height:var(--ctl-h);
+  padding:0 var(--s-2);font-size:14px;font-weight:600;color:var(--ink);border-radius:var(--r-panel);}
+#viewToggle:hover{background:var(--hov-bg);}
+#viewToggle .vchev{margin-left:auto;color:var(--ink3);display:flex;transition:transform .15s ease;}
+#viewctl.open #viewToggle{border-bottom:1px solid var(--border);border-radius:var(--r-panel) var(--r-panel) 0 0;}
+#viewctl.open #viewToggle .vchev{transform:rotate(180deg);}
+#viewbody{width:280px;padding:var(--s-2);display:flex;flex-direction:column;gap:var(--s-1);}
+#viewbody[hidden]{display:none;}
 #viewctl .vrow{display:flex;align-items:center;gap:var(--s-1);}
 #viewctl .vrow select{flex:1;min-width:0;}
 #viewctl .vbtns{display:flex;gap:var(--s-1);flex-wrap:wrap;}
@@ -391,14 +396,6 @@ td.n{text-align:right;}
         <p id="figNote">All figures are period totals in m³ unless a month is chosen.</p>
       </div>
       <div id="zlist"></div>
-      <div class="lfoot">
-        <span class="lbl">Map cards</span>
-        <select id="cardSel" aria-label="Which cards to show on the map">
-          <option value="zone">Zones only</option>
-          <option value="top" selected>Top 10</option>
-          <option value="all">All</option>
-        </select>
-      </div>
     </div>
 
     <div class="panel min" id="rwrap">
@@ -409,19 +406,37 @@ td.n{text-align:right;}
       <div id="right"></div>
     </div>
 
+    <!-- View popover (Stage 2): camera and map-card density are display
+         preferences, not task filters — they live behind one collapsed
+         control so the default screen carries none of their weight. -->
     <div class="panel" id="viewctl">
-      <div class="vrow">
-        <span class="lbl">Camera</span>
-        <select id="camSel" aria-label="Camera angle">
-          <option value="obl" selected>Oblique</option>
-          <option value="top">Plan</option>
-          <option value="ground">Ground level</option>
-        </select>
-      </div>
-      <div class="vbtns">
-        <button id="vSpin">Orbit</button>
-        <button id="vTerr" class="on">Terrain</button>
-        <button id="vProv">House connections</button>
+      <button id="viewToggle" aria-expanded="false" aria-controls="viewbody">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        View &amp; camera
+        <span class="vchev" aria-hidden="true"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg></span>
+      </button>
+      <div id="viewbody" hidden>
+        <div class="vrow">
+          <span class="lbl">Camera</span>
+          <select id="camSel" aria-label="Camera angle">
+            <option value="obl" selected>Oblique</option>
+            <option value="top">Plan</option>
+            <option value="ground">Ground level</option>
+          </select>
+        </div>
+        <div class="vbtns">
+          <button id="vSpin">Orbit</button>
+          <button id="vTerr" class="on">Terrain</button>
+          <button id="vProv">House connections</button>
+        </div>
+        <div class="vrow">
+          <span class="lbl">Map cards</span>
+          <select id="cardSel" aria-label="Which cards to show on the map">
+            <option value="zone" selected>Zones only</option>
+            <option value="top">Top 10</option>
+            <option value="all">All</option>
+          </select>
+        </div>
       </div>
     </div>
 
@@ -433,7 +448,6 @@ td.n{text-align:right;}
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
         </button>
         <span class="tltitle">Daily readings</span>
-        <span id="tlmonths"></span>
         <span class="tlday" id="tlday">—</span>
         <span class="tlspacer"></span>
         <span class="tlnums" id="tlnums"></span>
@@ -1435,6 +1449,9 @@ $("#viewSel").onchange = () => {
   $("#monthRow").hidden = daily;
   $("#dailyMonthRow").hidden = !daily;
   $("#dayRow").hidden = !daily;
+  // Region discipline (Stage 2): the bottom bar is DAILY timeline navigation
+  // and nothing else — in Monthly view it is gone, not merely collapsed.
+  tlEl.hidden = !daily;
   if (daily){
     renderDailySel();
     setTl(false);            // the timeline is where the day's readings live
@@ -1496,7 +1513,7 @@ function gauge(valuePct, colour, centre, sub, size){
 */
 const openNodes = new Set();
 let query = "";
-let cardMode = "top";       // zone | top | all
+let cardMode = "zone";      // zone | top | all — zones-only by default (Stage 2: calmer map)
 const TOP_N = 10;
 
 function toggle(key){
@@ -1856,11 +1873,6 @@ function renderZonePanel(){
   $("#right").innerHTML = `
     <h2>${esc(z.name)}</h2>
     <div class="sub">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
-    <div class="perrow">${["H1"].concat(MONTHS).map((m,i) => {
-      const val = m === "H1" ? "H1" : String(i - 1);
-      const on = String(zonePeriod) === val;
-      return `<button class="chip${on ? " on" : ""}" data-per="${val}">${m === "H1" ? PERIOD.short + " total" : m + mtd(i - 1)}</button>`;
-    }).join("")}</div>
     <div class="sub" style="margin-top:8px">${perLabel} · all figures m³</div>
     <div class="gaugewrap"><div class="gauge">${gauge(lp, col, lp.toFixed(1)+"%", "loss", 132)}<div class="gl">Zone loss</div></div></div>
     <div class="kpis k3">
@@ -1900,12 +1912,9 @@ function renderZonePanel(){
     </div>
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
-
-  for (const b of $("#right").querySelectorAll("[data-per]"))
-    b.onclick = () => {
-      zonePeriod = b.dataset.per === "H1" ? "H1" : +b.dataset.per;
-      renderZonePanel();
-    };
+  // Stage 2 (owner-approved): the panel no longer carries its own period chips
+  // — the left sidebar's Month control is the ONE period selector, and
+  // zonePeriod follows it (set on zone select and on every figure refresh).
 }
 
 function showVilla(id){
@@ -2093,19 +2102,10 @@ const SERIES_STYLE = [
 ];
 
 function renderMonths(){
-  const wrap = $("#tlmonths");
-  wrap.replaceChildren();
-  DAILY_MONTHS.forEach((m, i) => {
-    const b = document.createElement("button");
-    b.className = "chip" + (i === monthIdx ? " on" : "");
-    b.textContent = m.label.replace(" 2026","");
-    b.onclick = () => {
-      monthIdx = i;
-      day = Math.min(day, lastRead(m));
-      renderMonths(); renderSpark();
-    };
-    wrap.appendChild(b);
-  });
+  // Stage 2 (owner-approved): the timeline's month chips were the third period
+  // selector on screen. The left sidebar's Month control (daily view) is the
+  // ONE selector now; this only keeps that select in step with monthIdx.
+  syncDaySlider();
 }
 
 function renderSpark(){
@@ -2172,13 +2172,21 @@ function setTl(min){
   const b = $("#tlToggle");
   b.setAttribute("aria-expanded", String(!min));
   b.setAttribute("aria-label", (min ? "Expand" : "Collapse") + " the daily readings panel");
-  $("#viewctl").style.bottom = (tlEl.offsetHeight + 24) + "px";
+  $("#viewctl").style.bottom = (tlEl.hidden ? 16 : tlEl.offsetHeight + 24) + "px";
   if (!min) renderSpark();          // the chart had zero width while hidden
   queueLayout();
 }
 $("#tlToggle").onclick = () => {
   if (playing) $("#play").click();  // pausing on collapse beats a hidden animation
   setTl(!tlEl.classList.contains("min"));
+};
+/* View popover (Stage 2): camera + map-card density behind one collapsed
+   control. Pure show/hide — every control inside keeps its existing binding. */
+$("#viewToggle").onclick = () => {
+  const body = $("#viewbody"), open = body.hidden;
+  body.hidden = !open;
+  $("#viewctl").classList.toggle("open", open);
+  $("#viewToggle").setAttribute("aria-expanded", String(open));
 };
 $("#play").innerHTML = ICON.play;
 $("#tMeters").textContent = fmt(METER_COUNTS.total);
@@ -2194,7 +2202,7 @@ window.addEventListener("resize", renderSpark);
 // the __satvizBoot wrapper it is no longer a global by default.
 window.showOverview = showOverview;
 showOverview();
-renderMonths();
+tlEl.hidden = true;      // boots in Monthly view — Daily brings the bar back
 renderSpark();
 setTl(true);
 };
