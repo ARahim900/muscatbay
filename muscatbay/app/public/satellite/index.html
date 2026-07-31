@@ -728,22 +728,26 @@ for (const v of VILLAS) (VILLA_BY_ZONE[v.zone] ||= []).push(v);
    keep their stated positions. */
 const SUPPLY_PT = [58.6295910, 23.5431822];   // Main Bulk (NAMA), surveyed
 
-/* Owner-directed bulk-meter anchors (2026-07-31). The derived rule below
-   (surveyed plot nearest the supply) only matched reality for Zone 3A; the
-   owner placed the other three. Each pin sits ON the as-built trunk main —
-   the main follows the road, so the chamber stays road-accessible — at the
-   zone's supply-side entry, coordinates taken from the extracted COO87
-   network geometry (not typed by hand):
-   - Zone 3B  the main alongside the zone's southern (supply-side) plots,
-              mirroring the Zone 3A approach toward 3B
-   - Zone 5   the zone-side abutment of the small crossing adjacent to the
-              Zone 3 bridge — the zone's water entrance
+/* Owner-directed bulk-meter anchors (2026-07-31, refined against the owner's
+   annotated satellite screenshot). Every pin is snapped to an as-built
+   network vertex — the main follows the road, so the chamber stays
+   road-accessible. Coordinates come from the extracted COO87 geometry
+   (junction analysis), not typed by hand:
+   - Zone 3A  the spine road 53 m NE of the five-way roundabout junction,
+              at the start of the 3A shore row
+   - Zone 3B  the spine road ~45 m W of the same roundabout, toward 3B
+   - Zone 5   the island-side landing of the small bridge at the block's
+              south corner — the zone's water entrance
    - Zone 8   the first point where the main reaches the zone's plots
-              walking from the supply — the zone entry point */
+              walking from the supply — the zone entry point
+   - Zone VS  the service stub at the NE corner of the Sales Center
+     (The five-way roundabout junction itself is at 58.637792, 23.549066.) */
 const ZONE_ENTRY = {
-  Zone_03B: [58.636268, 23.548939],
-  Zone_05:  [58.638587, 23.547719],
+  Zone_03A: [58.638212, 23.549345],
+  Zone_03B: [58.637472, 23.548906],
+  Zone_05:  [58.639883, 23.548421],
   Zone_08:  [58.644084, 23.547469],
+  Zone_VS:  [58.635159, 23.545717],
 };
 for (const z of ZONES){
   const pin = ZONE_ENTRY[z.id];
