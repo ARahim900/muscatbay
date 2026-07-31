@@ -727,7 +727,36 @@ for (const v of VILLAS) (VILLA_BY_ZONE[v.zone] ||= []).push(v);
    card would otherwise sit on top of. FM and Village Square have no plots and
    keep their stated positions. */
 const SUPPLY_PT = [58.6295910, 23.5431822];   // Main Bulk (NAMA), surveyed
+
+/* Owner-directed bulk-meter anchors (2026-07-31, refined against the owner's
+   annotated satellite screenshot). Every pin is snapped to an as-built
+   network vertex — the main follows the road, so the chamber stays
+   road-accessible. Coordinates come from the extracted COO87 geometry
+   (junction analysis), not typed by hand:
+   - Zone 3A  the spine main ~10 m NE of the wadi-branch junction (where
+              the crossing to the dam leaves the spine), at the foot of
+              the 3A shore run
+   - Zone 3B  the spine main ~30 m W of that same junction, toward 3B
+   - Zone 5   the island's south apex, where the east-side main meets the
+              crossings — the zone's water entrance
+   - Zone 8   the first point where the main reaches the zone's plots
+              walking from the supply — the zone entry point
+   - Zone VS  the service stub at the NE corner of the Sales Center
+     (The wadi-branch junction itself is at 58.637549, 23.548931.) */
+const ZONE_ENTRY = {
+  Zone_03A: [58.637631, 23.548957],
+  Zone_03B: [58.637260, 23.548874],
+  Zone_05:  [58.639883, 23.548421],
+  Zone_08:  [58.644084, 23.547469],
+  Zone_VS:  [58.635159, 23.545717],
+};
 for (const z of ZONES){
+  const pin = ZONE_ENTRY[z.id];
+  if (pin){
+    z.lon = pin[0]; z.lat = pin[1];
+    z.entry = true;                        // position at zone entry, from the as-built main
+    continue;
+  }
   const list = (VILLA_BY_ZONE[z.name] || []).filter(v => v.kind !== "tank");
   if (!list.length) continue;
   let best = null, bd = Infinity;
@@ -1898,6 +1927,7 @@ function renderZonePanel(){
   const perMeter = z.nL3 > 0 ? z.l3 / z.nL3 : 0;
   const lossSeries = z.ml2.map((v,i) => v - z.ml3[i]);
   const posTag = z.verified ? `<span class="tag ver">Position verified</span>`
+             : z.entry ? `<span class="tag ver">Position at zone entry — on the as-built main</span>`
              : z.anchored ? `<span class="tag ver">Position from plot survey</span>`
              : `<span class="tag apx">Position indicative</span>`;
 
