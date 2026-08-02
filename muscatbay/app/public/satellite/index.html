@@ -79,6 +79,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 #map{position:absolute;inset:0;}
 .maplibregl-ctrl-group{background:rgba(22,20,27,.96)!important;border:1px solid var(--border)!important;border-radius:var(--r-ctl)!important;}
 .maplibregl-ctrl-group button{background:transparent!important;}
+.maplibregl-ctrl-group button{width:var(--ctl-h)!important;height:var(--ctl-h)!important;}
 .maplibregl-ctrl-group button+button{border-top:1px solid var(--border)!important;}
 .maplibregl-ctrl-group button span{filter:invert(1) brightness(1.6);}
 .maplibregl-ctrl-attrib{background:rgba(10,9,12,.72)!important;color:var(--ink3)!important;font-size:11px!important;}
@@ -214,7 +215,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 .chip:hover{background:var(--hov-bg);color:var(--ink);}
 .chip.on{border-color:var(--teal);background:var(--sel-bg);color:var(--ink);}
 
-.tnode{display:flex;align-items:center;gap:8px;width:100%;text-align:left;
+.tnode{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--ctl-h);text-align:left;
   padding:6px 10px;border-radius:var(--r-ctl);border:1px solid transparent;
   transition:background .15s ease,border-color .15s ease;}
 .tnode:hover{background:var(--hov-bg);}
@@ -234,6 +235,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 .tnode .dot{width:6px;height:6px;border-radius:50%;flex:0 0 6px;}
 .tnode .warn{color:var(--danger);font-size:12px;font-weight:600;}
 #empty{padding:16px 12px;font-size:13px;color:var(--ink3);}
+.search-section{padding:12px 10px 4px;}
 
 #rwrap{right:var(--s-2);top:var(--s-2);width:320px;max-height:calc(100% - 152px);
   display:flex;flex-direction:column;}
@@ -245,7 +247,7 @@ button:focus-visible{outline:3px solid var(--teal);outline-offset:2px;}
 #rwrap:not(.min) #rhead{border-bottom:1px solid var(--border);border-radius:var(--r-panel) var(--r-panel) 0 0;}
 #rhead:hover{background:var(--hov-bg);}
 #rwrap.min #right{display:none;}
-#right{overflow-y:auto;padding:var(--s-1) var(--s-2) var(--s-2);}
+#right{overflow-x:hidden;overflow-y:auto;padding:var(--s-1) var(--s-2) var(--s-2);}
 .selrow{margin-top:var(--s-1);}
 .selrow2{margin-top:var(--s-1);display:flex;gap:var(--s-1);}
 .selrow2 .selcol{flex:1;min-width:0;}
@@ -260,14 +262,16 @@ select:focus{outline:3px solid var(--teal);outline-offset:1px;}
 #dayOut{font-size:13px;font-weight:600;white-space:nowrap;color:var(--ink);}
 #right h2{font-size:var(--t-primary-size);}
 #right .sub{font-size:var(--t-help-size);color:var(--ink3);margin-top:2px;}
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-1);margin:var(--s-2) 0;}
-.kpi{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r-ctl);padding:var(--s-1) 12px;}
+.kpis{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s-1);margin:var(--s-2) 0;}
+.kpi{min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r-ctl);padding:var(--s-1) 12px;}
 .kpi .v{font-weight:600;font-size:18px;margin-top:3px;letter-spacing:-0.01em;}
 .kpi .v small{font-size:12px;color:var(--ink3);}
 .gaugewrap{display:flex;gap:11px;justify-content:center;margin:6px 0 13px;}
 .perrow{display:flex;gap:5px;flex-wrap:wrap;margin-top:10px;}
-.kpis.k3{grid-template-columns:repeat(3,1fr);}
-.kpis.k3 .kpi .v{font-size:16px;}
+.kpis.k3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.kpis.k3 .kpi{padding:var(--s-1);}
+.kpis.k3 .kpi .k{overflow-wrap:anywhere;}
+.kpis.k3 .kpi .v{font-size:15px;}
 .gauge{text-align:center;}
 .gauge .gl{margin-top:4px;}
 .mini{margin-top:6px;}
@@ -277,6 +281,13 @@ th{text-align:left;padding:5px 6px 5px 0;border-bottom:1px solid var(--border);}
 td{padding:6px 6px 6px 0;border-bottom:1px solid var(--border);color:var(--ink2);}
 tr:last-child td{border-bottom:none;}
 td.n{text-align:right;}
+.metric-table{table-layout:fixed;}
+.metric-table th:first-child,.metric-table td:first-child{width:25%;}
+
+.actionbox{margin:0 0 var(--s-2);padding:12px;border:1px solid var(--action-col);
+  border-radius:var(--r-ctl);background:color-mix(in srgb,var(--action-col) 12%,transparent);}
+.actionbox .action-title{display:block;margin-top:5px;font-size:15px;font-weight:600;color:var(--ink);}
+.actionbox p{margin-top:3px;font-size:13px;color:var(--ink2);}
 
 #tl{left:var(--s-2);right:var(--s-2);bottom:var(--s-2);padding:var(--s-1) var(--s-2);display:flex;flex-direction:column;gap:var(--s-1);}
 /* display:flex above would defeat the hidden attribute — make it decisive.
@@ -352,11 +363,17 @@ td.n{text-align:right;}
   #filtersToggle{display:flex;}
   #left{display:none;top:72px;max-height:calc(100% - 160px);}
   #left.open{display:flex;z-index:25;}
+  #left.open + #rwrap,#left.open ~ #viewctl{display:none;}
   #viewctl{max-width:calc(100% - 32px);}
+  #viewctl button,#tlToggle,#tl .playbtn{min-width:var(--ctl-h);min-height:var(--ctl-h);}
 }
 @media (max-width:640px){
   #rwrap{left:var(--s-2);right:var(--s-2);top:auto;bottom:var(--s-2);width:auto;max-height:60%;}
+  #rwrap:not(.min) ~ #viewctl{display:none;}
   #viewbody{width:auto;min-width:240px;}
+  .ccol{flex-basis:var(--ctl-h);width:var(--ctl-h);height:var(--ctl-h);}
+  .zcard .ccol{top:4px;right:4px;}
+  .mlabel{display:flex;align-items:center;min-height:var(--ctl-h);}
 }
 </style>
 </head>
@@ -385,7 +402,7 @@ td.n{text-align:right;}
     </button>
     <div class="panel" id="left">
       <div class="hd">
-        <h2>Meter explorer</h2>
+        <h2 id="explorerTitle">Meter explorer</h2>
         <input id="search" type="search" placeholder="Search name or account…"
                aria-label="Search meters by name or account number">
         <div class="selrow2">
@@ -393,7 +410,7 @@ td.n{text-align:right;}
             <span class="lbl">Data view</span>
             <select id="viewSel" aria-label="Monthly or daily view">
               <option value="monthly" selected>Monthly</option>
-              <option value="daily">Daily</option>
+              <option value="daily">Main meter daily</option>
             </select>
           </div>
           <div class="selcol" id="monthRow">
@@ -413,7 +430,7 @@ td.n{text-align:right;}
             <span id="dayOut">—</span>
           </div>
         </div>
-        <div class="selrow">
+        <div class="selrow" id="zoneRow">
           <span class="lbl">Zone selection</span>
           <select id="zoneSel" aria-label="Zone selection"></select>
         </div>
@@ -621,6 +638,8 @@ function lastRead(M){
 
 /* ============================================================ HELPERS */
 const $ = s => document.querySelector(s);
+const compactView = () => window.matchMedia("(max-width:860px)").matches;
+const phoneView = () => window.matchMedia("(max-width:640px)").matches;
 const esc = v => String(v).replace(/[&<>"']/g, c =>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = n => (n === null || n === undefined) ? "—" : Math.round(n).toLocaleString("en-GB");
@@ -971,17 +990,22 @@ map.on("load", () => {
 
   for (const lyr of ["zplate-fill","zplate-line"]){
     map.on("click", lyr, e => {
+      if ($("#viewSel").value === "daily") return;
       if (map.queryRenderedFeatures(e.point, { layers:["vplate-fill"] }).length) return;
       if (e.features[0]) selectZone(e.features[0].properties.id);
     });
   }
-  map.on("click", "vplate-fill", e => { if (e.features[0]) showVilla(e.features[0].properties.id); });
+  map.on("click", "vplate-fill", e => {
+    if ($("#viewSel").value === "daily") return;
+    if (e.features[0]) showVilla(e.features[0].properties.id);
+  });
 
   // Individual meters on demand: hovering a plot's ground plate raises its
   // card without changing mode or selection; it vanishes on leave. Plates are
   // the affordance, so nothing is ever more than a hover away even when the
   // card budget is showing zones only.
   map.on("mousemove", "vplate-fill", e => {
+    if ($("#viewSel").value === "daily"){ hideHover(); return; }
     const f = e.features && e.features[0];
     if (!f) return;
     const id = f.properties.id;
@@ -1004,7 +1028,8 @@ map.on("load", () => {
   map.on("dragstart", hideHover);
   map.on("zoomstart", hideHover);
   for (const lyr of ["zplate-fill","vplate-fill"]){
-    map.on("mouseenter", lyr, () => map.getCanvas().style.cursor = "pointer");
+    map.on("mouseenter", lyr, () => map.getCanvas().style.cursor =
+      $("#viewSel").value === "daily" ? "" : "pointer");
     map.on("mouseleave", lyr, () => map.getCanvas().style.cursor = "");
   }
   map.on("zoom", refreshVillaCards);
@@ -1134,7 +1159,21 @@ function buildMarkers(){
     el.className = "mlabel";
     el.style.borderColor = TYPE_COLOUR[p.t];
     el.textContent = p.n;
-    el.addEventListener("click", ev => { ev.stopPropagation(); showMeter(p); });
+    el.addEventListener("click", ev => {
+      ev.stopPropagation();
+      if ($("#viewSel").value === "daily" && p.t === "l1"){
+        expandRight();
+        renderDailyPanel();
+      } else if (p.t === "l1"){
+        showTopMeter({ name:C.l1.name, acct:C.l1.acct, type:"Main bulk",
+          monthly:C.l1.monthly, total:C.l1.total }, "L1");
+      } else if (p.t === "dc"){
+        const direct = DIRECT.list.find(m => m.acct === p.id);
+        if (direct) showTopMeter(direct, "DC"); else showMeter(p);
+      } else {
+        showMeter(p);
+      }
+    });
     const m = new maplibregl.Marker({ element: el, anchor: "bottom" })
       .setLngLat([p.lon, p.lat]);
     m.__alt = ALT_POINT;
@@ -1158,6 +1197,16 @@ function buildMarkers(){
 
    With no zone selected there are never any plot cards, whatever the mode. */
 function refreshVillaCards(){
+  const dailyView = $("#viewSel").value === "daily";
+  if (dailyView){
+    for (const m of markers){
+      const show = m.__kind === "point" && m.__ptype === "l1";
+      m.getElement().style.display = show ? "" : "none";
+    }
+    applyAltitudes();
+    return;
+  }
+
   const zName = zoneNameOf(selectedZone);
   let allow = null;                                  // Set of ids, or null = none
   if (zName && cardMode !== "zone"){
@@ -1174,12 +1223,20 @@ function refreshVillaCards(){
   // Inside a zone the other zone cards are noise sitting over what you came to
   // look at. Keep the one you are in, dimmed, as an anchor.
   const deep = !!selectedZone && allow && allow.size > 0;
+  const phonePriority = phoneView() && !selectedZone && cardMode === "zone"
+    ? new Set(ZONES.slice().sort((a,b) => {
+        const ap = pct(zIn(a) - zOut(a), zIn(a));
+        const bp = pct(zIn(b) - zOut(b), zIn(b));
+        return bp - ap || (zIn(b) || 0) - (zIn(a) || 0);
+      }).slice(0, 4).map(z => z.id))
+    : null;
   for (const m of markers){
     if (m.__kind !== "zone") continue;
     const mine = m.__zoneId === selectedZone;
     // "Zones only" with a zone chosen means exactly that zone's card — the
     // other five are the clutter the user just asked to remove.
-    const show = (cardMode === "zone" && selectedZone) ? mine : !(deep && !mine);
+    const show = (!phonePriority || phonePriority.has(m.__zoneId)) &&
+      ((cardMode === "zone" && selectedZone) ? mine : !(deep && !mine));
     const el = m.getElement();
     el.style.display = show ? "" : "none";
     // Inline opacity only for the in-zone anchor card; elsewhere it is left
@@ -1197,7 +1254,8 @@ function refreshVillaCards(){
   for (const m of markers){
     if (m.__kind !== "point") continue;
     const t = m.__ptype;
-    const on = t === "l1" ? true
+    const on = phoneView() ? t === "l1"
+             : t === "l1" ? true
              : t === "dc" ? !selectedZone
              : (selectedZone === "Zone_FM" || z >= 16.8);
     m.getElement().style.display = on ? "" : "none";
@@ -1408,7 +1466,7 @@ function updateTopbar(){
 function updateFigNote(){
   const daily = $("#viewSel").value === "daily";
   $("#figNote").textContent = daily
-    ? "Daily readings cover the NAMA main meter; map cards keep their monthly figures."
+    ? "Daily mode is limited to the NAMA main meter. Missing days stay blank, never zero."
     : figMonth < 0
       ? "All figures are " + PERIOD.label + " totals in m³."
       : "All figures are for " + MONTHS[figMonth] + " 2026" + mtd(figMonth) + ", in m³.";
@@ -1454,8 +1512,46 @@ function renderDailySel(){
   sel.onchange = () => {
     monthIdx = +sel.value;
     day = Math.min(day, lastRead(curMonth()));
-    renderMonths(); renderSpark();
+    renderMonths(); renderSpark(); renderDailyPanel();
   };
+}
+
+function renderDailyPanel(){
+  if ($("#viewSel").value !== "daily" || !DAILY_MONTHS.length) return;
+  const M = curMonth();
+  const series = M.series.L1 || [];
+  const reading = series[day];
+  const last = lastRead(M);
+  const dateLabel = `${day + 1} ${M.label}`;
+  const statusColour = hasVal(reading) ? "#84B59F" : "#E8C064";
+  const statusLabel = hasVal(reading) ? "Reading logged" : "Not logged";
+  const coverage = `${M.logged} of ${M.days} days`;
+  const guidance = !hasVal(reading)
+    ? "No main-meter reading exists for this date. Keep the value blank and confirm the field log."
+    : M.gaps.length
+      ? `Resolve the missing day${M.gaps.length === 1 ? "" : "s"} ${M.gaps.join(", ")} before comparing daily totals.`
+      : M.partial
+        ? `Month in progress through ${last + 1} ${M.label.replace(" 2026", "")}; future days are not missing data.`
+        : "Daily coverage is complete for this month.";
+
+  $("#right").innerHTML = `
+    <h2>Main meter daily</h2>
+    <div class="sub">NAMA main bulk · account ${esc(C.l1.acct)} · ${esc(M.label)}</div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">${esc(dateLabel)}</div><div class="v" style="color:${statusColour}">${fmt(reading)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Month total</div><div class="v">${fmt(M.total)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Average per day</div><div class="v">${fmt(M.mean)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Coverage</div><div class="v" style="font-size:16px">${coverage}</div></div>
+    </div>
+    <div class="actionbox" style="--action-col:${statusColour}">
+      <span class="tag" style="border-color:${statusColour};color:${statusColour}">${statusLabel}</span>
+      <span class="action-title">${esc(dateLabel)}</span>
+      <p>${guidance}</p>
+    </div>
+    <div class="mini">
+      <div class="mh">Daily data scope</div>
+      <p style="font-size:14px;color:#C9C6CE">This mode shows the single L1 NAMA main meter only. Zone loss remains a monthly analysis and is intentionally hidden here.</p>
+    </div>`;
 }
 
 /* The slider stops at the last day actually read — an in-progress month has
@@ -1475,6 +1571,10 @@ $("#daySel").oninput = () => {
 
 $("#viewSel").onchange = () => {
   const daily = $("#viewSel").value === "daily";
+  $("#explorerTitle").textContent = daily ? "Main meter daily" : "Meter explorer";
+  $("#search").hidden = daily;
+  $("#zlist").hidden = daily;
+  $("#zoneRow").hidden = daily;
   $("#monthRow").hidden = daily;
   $("#dailyMonthRow").hidden = !daily;
   $("#dayRow").hidden = !daily;
@@ -1482,12 +1582,24 @@ $("#viewSel").onchange = () => {
   // and nothing else — in Monthly view it is gone, not merely collapsed.
   tlEl.hidden = !daily;
   if (daily){
+    $("#search").value = "";
+    query = "";
+    selectedZone = null;
+    selectedVilla = null;
+    zoneCardState.clear();
+    renderChips();
+    renderZoneList();
+    refreshPlates();
+    buildMarkers();
     renderDailySel();
     setTl(false);            // the timeline is where the day's readings live
     syncDaySlider();
+    renderDailyPanel();
+    expandRight();
   } else {
     if (playing) $("#play").click();
     setTl(true);
+    showOverview();
   }
   updateFigNote();
 };
@@ -1496,7 +1608,20 @@ $("#viewSel").onchange = () => {
    demand via the header, and automatically when the user asks for something
    that renders there (zone or meter selection). The header title mirrors
    whatever the panel currently shows. */
+function setFilters(open){
+  $("#left").classList.toggle("open", open);
+  $("#filtersToggle").setAttribute("aria-expanded", String(open));
+}
+function setView(open){
+  $("#viewbody").hidden = !open;
+  $("#viewctl").classList.toggle("open", open);
+  $("#viewToggle").setAttribute("aria-expanded", String(open));
+}
 function setRight(min){
+  if (!min && compactView()){
+    setFilters(false);
+    setView(false);
+  }
   $("#rwrap").classList.toggle("min", min);
   $("#rhead").setAttribute("aria-expanded", String(!min));
   buildMarkers();         // the selected zone's card expands only while the
@@ -1555,11 +1680,15 @@ function toggle(key){
 /* The register is not consistent about zero-padding — it holds both
    "Z3-51(3)" and "Z3-051(5)", "Z3-49(1)" and "Z3-049(4)". Searching the literal
    string would silently miss half a building, so both sides are normalised. */
-const unpad = s => s.toLowerCase().replace(/(\D)0+(\d)/g, "$1$2");
+const unpad = s => String(s || "").toLowerCase().replace(/(\D)0+(\d)/g, "$1$2");
+
+function matchesText(...values){
+  if (!query) return true;
+  return unpad(values.join(" ")).includes(unpad(query));
+}
 
 function matches(m){
-  if (!query) return true;
-  return unpad(m.name + " " + m.acct).includes(unpad(query));
+  return matchesText(m.name, m.acct);
 }
 
 // A meter is shown when it matches, or when one of its children does.
@@ -1589,12 +1718,42 @@ function renderZoneList(){
   wrap.replaceChildren();
   let shown = 0;
 
+  const appendSection = label => {
+    const el = document.createElement("div");
+    el.className = "t-label search-section";
+    el.textContent = label;
+    wrap.appendChild(el);
+  };
+  const appendTopResults = (label, level, items) => {
+    if (!items.length) return;
+    appendSection(label);
+    for (const m of items){
+      shown++;
+      const value = figMonth < 0 ? m.total : m.monthly[figMonth];
+      wrap.appendChild(row("search-result", 2, {
+        html: `<span class="tw"></span>
+               <span class="dot" style="background:${TYPE_COLOUR[level.toLowerCase()] || "#8E8A96"}"></span>
+               <span class="tn">${esc(m.name)}<span class="tsub">${esc(m.acct)}</span></span>
+               <span class="tv">${fmt(value)}</span>`,
+        onclick: () => showTopMeter(m, level)
+      }));
+    }
+  };
+
+  if (query){
+    const main = { name:C.l1.name, acct:C.l1.acct, type:"Main bulk", monthly:C.l1.monthly, total:C.l1.total };
+    appendTopResults("Main supply", "L1", matchesText(main.name, main.acct) ? [main] : []);
+    appendTopResults("Direct connections", "DC", DIRECT.list.filter(m => matchesText(m.name, m.acct)));
+    appendTopResults("Outside potable hierarchy", "NA", UNASSIGNED.filter(m => matchesText(m.name, m.acct)));
+  }
+
   for (const z of ZONES){
-    if (selectedZone && z.id !== selectedZone) continue;
+    if (selectedZone && z.id !== selectedZone && !query) continue;
+    const zoneHit = matchesText(z.name, z.acct);
     const zoneMeters = (z.meters || []).filter(meterVisible);
     // A zone with no hit at all disappears while searching, rather than sitting
     // there as an empty row the user has to rule out by hand.
-    if (query && !zoneMeters.length) continue;
+    if (query && !zoneHit && !zoneMeters.length) continue;
 
     const inV = zIn(z), noRead = !hasVal(inV);
     const lp = noRead ? 0 : pct(inV - zOut(z), inV);
@@ -1611,6 +1770,16 @@ function renderZoneList(){
       onclick: () => selectZone(z.id)
     }));
     if (!zOpen) continue;
+
+    if (query && zoneHit){
+      wrap.appendChild(row("search-result", 1, {
+        html: `<span class="tw"></span>
+               <span class="dot" style="background:${TYPE_COLOUR.l2}"></span>
+               <span class="tn">Zone bulk meter<span class="tsub">${esc(z.acct)}</span></span>
+               <span class="tv">${fmt(inV)}</span>`,
+        onclick: () => selectZone(z.id)
+      }));
+    }
 
     const groups = { villa:[], bldg:[], other:[] };
     for (const m of zoneMeters) groups[groupOf(m)].push(m);
@@ -1698,7 +1867,7 @@ function sparkline(series, colour, w, h){
     d += (started ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1) + " ";
     started = true;
   });
-  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+  return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
     <path d="${d}" fill="none" stroke="${colour}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 
@@ -1837,6 +2006,7 @@ function showOverview(){
       carry <b>85 plots in Zone 2 and 9 in Zone 3 with no meter at all</b> in the register —
       worth confirming against the billing list.
     </div>`;
+  setRight(true);
 }
 
 function selectZone(id){
@@ -1863,10 +2033,20 @@ function selectZone(id){
    that mode lands closer than the plain bounds fit, and switching card modes
    re-frames the zone to match. */
 function flyToZone(z){
+  if (phoneView()){
+    const h = map.getCanvas().clientHeight;
+    map.easeTo({ center:[z.lon, z.lat], zoom:cardMode === "all" ? 17.2 : 16.3, pitch:54,
+                 bearing:map.getBearing(), duration:1200, offset:[0, Math.round(h * 0.18)] });
+    return;
+  }
   const bb = zoneBounds(z);
   let cam = null;
   if (bb){
-    try { cam = map.cameraForBounds(bb, { padding:{ top:110, bottom:150, left:370, right:390 } }); }
+    const tablet = compactView();
+    const padding = tablet
+      ? { top:100, bottom:140, left:320, right:40 }
+      : { top:110, bottom:150, left:370, right:390 };
+    try { cam = map.cameraForBounds(bb, { padding }); }
     catch (err){ cam = null; }
   }
   if (cam){
@@ -1897,6 +2077,14 @@ function renderZonePanel(){
   const h1lp = pct(z.l2 - z.l3, z.l2);
   const perMeter = z.nL3 > 0 ? z.l3 / z.nL3 : 0;
   const lossSeries = z.ml2.map((v,i) => v - z.ml3[i]);
+  const action = h1lp >= 50
+    ? { label:"High priority", title:"Step-test this zone",
+        text:"Confirm night flow and isolate branches before treating the loss as a billing issue.", colour:"#D67A7A" }
+    : h1lp >= 30
+      ? { label:"Investigate", title:"Run a night-flow test",
+          text:"Separate physical leakage from under-registering meters before planning repairs.", colour:"#E8C064" }
+      : { label:"Monitor", title:"Check meter accuracy and reading dates",
+          text:"The full-period balance does not yet point to urgent physical leakage.", colour:"#84B59F" };
   const posTag = z.verified ? `<span class="tag ver">Position verified</span>`
              : z.anchored ? `<span class="tag ver">Position from plot survey</span>`
              : `<span class="tag apx">Position indicative</span>`;
@@ -1906,9 +2094,14 @@ function renderZonePanel(){
     <div class="sub">${perLabel} · all figures m³</div>
     <div class="gaugewrap"><div class="gauge">${gauge(lp, col, lp.toFixed(1)+"%", "loss", 132)}<div class="gl">Zone loss</div></div></div>
     <div class="kpis k3">
-      <div class="kpi"><div class="k">Bulk meter</div><div class="v">${fmt(inV)}</div></div>
-      <div class="kpi"><div class="k">Individual meters</div><div class="v">${fmt(outV)}</div></div>
+      <div class="kpi"><div class="k">Bulk input</div><div class="v">${fmt(inV)}</div></div>
+      <div class="kpi"><div class="k">Billed L3</div><div class="v">${fmt(outV)}</div></div>
       <div class="kpi"><div class="k">Loss</div><div class="v" style="color:${col}">${fmt(loss)}</div></div>
+    </div>
+    <div class="actionbox" style="--action-col:${action.colour}">
+      <span class="tag" style="border-color:${action.colour};color:${action.colour}">${action.label}</span>
+      <span class="action-title">${action.title}</span>
+      <p>${action.text} Average billed volume is ${fmt(perMeter)} m³ per L3 meter over ${MONTHS.length} months.</p>
     </div>
     ${z.nL4 ? `<div class="okbox" style="margin-top:2px">
       <b>How this loss is calculated.</b> The zone bulk is compared with its
@@ -1918,8 +2111,8 @@ function renderZonePanel(){
       every building twice.</div>` : ""}
     <div class="mini">
       <div class="mh">Month by month — bulk in vs individual (m³/month)</div>
-      <table>
-        <thead><tr><th>Month</th><th style="text-align:right">In</th><th style="text-align:right">Individual</th><th style="text-align:right">Loss</th></tr></thead>
+      <table class="metric-table">
+        <thead><tr><th>Month</th><th style="text-align:right">Bulk</th><th style="text-align:right">Billed</th><th style="text-align:right">Loss</th></tr></thead>
         <tbody>${MONTHS.map((m,i) => {
           // A month with no bulk reading has no loss figure — "0%" would be a
           // fabricated number, the exact thing this app never shows.
@@ -1933,13 +2126,6 @@ function renderZonePanel(){
       </table>
     </div>
     <div class="mini"><div class="mh">Loss trend (m³/month)</div>${sparkline(lossSeries, lossColour(h1lp), 290, 44)}</div>
-    <div class="mini">
-      <div class="mh">Read</div>
-      <p style="font-size:14px;color:#C9C6CE">Average billed volume per L3 meter is <b>${fmt(perMeter)} m³</b> over ${MONTHS.length} months.
-      ${h1lp>=50 ? "Loss above 50% of bulk input is not explicable by meter under-registration alone — treat as physical leakage and step-test the zone."
-       : h1lp>=30 ? "Loss in the 30–50% band usually mixes real leakage with under-registering meters. A night-flow test will separate the two."
-       : "Loss is within a band where meter accuracy and billing lag are the likely causes rather than burst leakage."}</p>
-    </div>
     <div class="sub" style="margin-top:12px">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
@@ -1951,6 +2137,7 @@ function renderZonePanel(){
 function showVilla(id){
   const v = VILLAS.find(x => x.id === id);
   if (!v) return;
+  expandRight();
   hideHover();
   selectedVilla = id;
   const zid = (ZONES.find(z => z.name === v.zone) || {}).id;
@@ -2087,6 +2274,52 @@ function showMeterRecord(m, parent){
 }
 window.showMeterRecord = showMeterRecord;
 
+function showTopMeter(m, level){
+  expandRight();
+  selectedZone = null;
+  selectedVilla = null;
+  renderChips();
+  refreshPlates();
+  buildMarkers();
+
+  const point = POINTS.find(p => p.id === m.acct);
+  if (point){
+    map.easeTo({ center:[point.lon, point.lat], zoom:Math.max(map.getZoom(), 16.2),
+                 pitch:58, bearing:map.getBearing(), duration:1100,
+                 offset:phoneView() ? [0, 110] : [0, 40] });
+  }
+
+  const levelLabel = level === "L1" ? "Main supply"
+                   : level === "DC" ? "Direct connection"
+                   : "Outside potable hierarchy";
+  const current = figMonth < 0 ? m.total : m.monthly[figMonth];
+  const currentLabel = figMonth < 0 ? PERIOD.label : `${MONTHS[figMonth]} 2026${mtd(figMonth)}`;
+  const mx = Math.max(1, ...m.monthly.filter(hasVal));
+  const colour = TYPE_COLOUR[level.toLowerCase()] || "#8E8A96";
+
+  $("#right").innerHTML = `
+    <h2>${esc(m.name)}</h2>
+    <div class="sub">${levelLabel} · account ${esc(m.acct)}${point ? " · position verified" : ""}</div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Selected period</div><div class="v">${fmt(current)} <small>m³</small></div></div>
+      <div class="kpi"><div class="k">Full period</div><div class="v">${fmt(m.total)} <small>m³</small></div></div>
+    </div>
+    <div class="okbox"><b>${esc(currentLabel)}.</b> Search found this meter by its live register identity.</div>
+    <div class="mini">
+      <div class="mh">Monthly consumption</div>
+      <table>
+        <thead><tr><th>Month</th><th style="text-align:right">m³</th><th style="width:40%"></th></tr></thead>
+        <tbody>${MONTHS.map((month,i) => `<tr><td>${month}${mtd(i)}</td><td class="n">${fmt(m.monthly[i])}</td>
+          <td><div style="height:5px;border-radius:5px;background:rgba(255,255,255,.09)">
+            <i style="display:block;height:100%;border-radius:5px;background:${colour};
+              width:${hasVal(m.monthly[i]) ? (m.monthly[i]/mx*100).toFixed(0) : 0}%"></i></div></td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
+window.showTopMeter = showTopMeter;
+
 function showMeter(p){
   expandRight();
   $("#right").innerHTML = `
@@ -2104,6 +2337,7 @@ function showMeter(p){
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
 }
 function showPipe(p){
+  expandRight();
   const dia = p.d, mat = p.m;
   const role = dia >= 200 ? "Trunk main" : dia >= 110 ? "Distribution main" : "House connection";
   $("#right").innerHTML = `
@@ -2177,7 +2411,10 @@ function renderSpark(){
       ? ` <span style="color:#E8C064">· not logged</span>` : "") +
     (dc === 1 ? ` <span style="color:#E8C064">· DC placeholder</span>` : "") +
     (M.partial ? ` <span style="color:#8E8A96">· ${M.logged} of ${M.days} days read</span>` : "");
-  if (!$("#dayRow").hidden) syncDaySlider();   // keep the Date slider on the same day
+  if (!$("#dayRow").hidden){
+    syncDaySlider();   // keep the Date slider on the same day
+    renderDailyPanel();
+  }
 }
 
 $("#play").onclick = () => {
@@ -2198,12 +2435,17 @@ $("#spark").addEventListener("click", e => {
 
 /* ============================================================ INIT */
 const tlEl = $("#tl");
+function syncPanelOffsets(){
+  const timelineOffset = tlEl.hidden ? 16 : tlEl.offsetHeight + 24;
+  $("#viewctl").style.bottom = timelineOffset + "px";
+  $("#rwrap").style.bottom = phoneView() && !tlEl.hidden ? timelineOffset + "px" : "";
+}
 function setTl(min){
   tlEl.classList.toggle("min", min);
   const b = $("#tlToggle");
   b.setAttribute("aria-expanded", String(!min));
   b.setAttribute("aria-label", (min ? "Expand" : "Collapse") + " the daily readings panel");
-  $("#viewctl").style.bottom = (tlEl.hidden ? 16 : tlEl.offsetHeight + 24) + "px";
+  syncPanelOffsets();
   if (!min) renderSpark();          // the chart had zero width while hidden
   queueLayout();
 }
@@ -2214,17 +2456,22 @@ $("#tlToggle").onclick = () => {
 /* View popover (Stage 2): camera + map-card density behind one collapsed
    control. Pure show/hide — every control inside keeps its existing binding. */
 $("#viewToggle").onclick = () => {
-  const body = $("#viewbody"), open = body.hidden;
-  body.hidden = !open;
-  $("#viewctl").classList.toggle("open", open);
-  $("#viewToggle").setAttribute("aria-expanded", String(open));
+  const open = $("#viewbody").hidden;
+  if (open && compactView()){
+    setFilters(false);
+    setRight(true);
+  }
+  setView(open);
 };
 /* ≤860px: the left panel folds behind the Filters button (Stage 3). On
    desktop the button is display:none and this handler is unreachable. */
 $("#filtersToggle").onclick = () => {
   const open = !$("#left").classList.contains("open");
-  $("#left").classList.toggle("open", open);
-  $("#filtersToggle").setAttribute("aria-expanded", String(open));
+  if (open){
+    setView(false);
+    setRight(true);
+  }
+  setFilters(open);
 };
 $("#play").innerHTML = ICON.play;
 $("#tMeters").textContent = fmt(METER_COUNTS.total);
@@ -2235,7 +2482,12 @@ if (!DAILY_MONTHS.length){
   // No daily series arrived with the payload — the option would show nothing.
   $("#viewSel").querySelector('option[value="daily"]').disabled = true;
 }
-window.addEventListener("resize", renderSpark);
+window.addEventListener("resize", () => {
+  syncPanelOffsets();
+  renderSpark();
+  refreshVillaCards();
+  queueLayout();
+});
 // Exported because panel HTML uses inline onclick="showOverview()" — inside
 // the __satvizBoot wrapper it is no longer a global by default.
 window.showOverview = showOverview;
