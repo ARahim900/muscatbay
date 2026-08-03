@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-04 — fix(water): version monthly initializer (#66)
 - 2026-08-03 — fix(water): correct Satellite View zone mapping
 - 2026-08-03 — feat(water): make satellite view actionable
 - 2026-07-31 — feat(water/satellite): Stage 3 — overlay density, right-panel hierarchy, responsive (#64)
