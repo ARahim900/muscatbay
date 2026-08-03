@@ -332,6 +332,14 @@ td.n{text-align:right;}
 #viewctl button:hover{background:var(--hov-bg);color:var(--ink);}
 #viewctl button.on{border-color:var(--teal);background:var(--sel-bg);color:var(--ink);}
 
+#focusExit{left:var(--s-2);top:var(--s-2);z-index:28;display:none;align-items:center;
+  gap:var(--s-1);min-height:var(--ctl-h);padding:0 var(--s-2);
+  font-size:14px;font-weight:600;color:var(--ink);}
+#focusExit:hover{background:var(--hov-bg);}
+#main.focus-map #left,#main.focus-map #rwrap,#main.focus-map #filtersToggle,
+#main.focus-map #viewctl,#main.focus-map #hint,#main.focus-map #tl{display:none;}
+#main.focus-map #focusExit{display:flex;}
+
 .warnbox{margin-top:var(--s-2);padding:var(--s-1) 12px;border-radius:var(--r-ctl);
   background:rgba(232,192,100,.12);border:1px solid var(--warn);font-size:13px;color:var(--ink2);}
 .warnbox b{color:var(--ink);}
@@ -399,6 +407,10 @@ td.n{text-align:right;}
     <button class="panel" id="filtersToggle" aria-expanded="false" aria-controls="left">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
       Filters
+    </button>
+    <button class="panel" id="focusExit" aria-label="Leave the focused map view">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l-6-6 6-6M3 12h18"/></svg>
+      Show panels
     </button>
     <div class="panel" id="left">
       <div class="hd">
@@ -469,6 +481,7 @@ td.n{text-align:right;}
           <button id="vSpin">Orbit</button>
           <button id="vTerr" class="on">Terrain</button>
           <button id="vProv">House connections</button>
+          <button id="focusMap">Focus map</button>
         </div>
         <div class="vrow">
           <span class="lbl">Map cards</span>
@@ -503,6 +516,7 @@ td.n{text-align:right;}
 
 <script src="vendor/maplibre-gl.js"></script>
 <script src="data/network.js?v=3"></script>
+<script src="data/zone-fm-network.js?v=1"></script>
 <script src="data/plots-geo.js?v=2"></script>
 <script src="data/assets.js?v=1"></script>
 <script>
@@ -559,9 +573,9 @@ window.__satvizBoot = function () {
      compiled by _build/build_data.py — see the note above ZONES on why nothing
      here is transcribed. Daily June series is still from Supabase
      water_daily_consumption.
-   Geometry: window.NETWORK — extracted from the COO87 as-built sheets
-     PW-01..PW-08, georeferenced to each sheet's own printed survey grid
-     (max deviation 18 cm), UTM 40N -> WGS84, simplified to ~1.2 m.
+   Geometry: window.NETWORK — the COO87 network is georeferenced from the
+     printed survey grid. Zone FM adds its external 63 mm network from the
+     approved CAD source. Village Square has no geographic pipe overlay yet.
    ============================================================ */
 /* Everything below is derived from data/consumption.js, which _build/build_data.py
    computes from the master view CSV. Nothing is typed by hand — the previous
@@ -582,16 +596,20 @@ const DIRECT = {
 };
 const UNASSIGNED = C.na;      // four TSE meters that hang off nothing
 
-// Positions are the viewer's own; only Zone FM's chamber coordinates are surveyed.
+// Fallback positions. Zone FM's chamber coordinates are surveyed.
 const ZONE_POS = {
-  Zone_03A:{ lat:23.55057, lon:58.64177, verified:false },
-  Zone_03B:{ lat:23.55199, lon:58.64050, verified:false },
-  Zone_05: { lat:23.54760, lon:58.63740, verified:false },
   Zone_08: { lat:23.54726, lon:58.64401, verified:false },
   Zone_FM: { lat:23.5414327, lon:58.6333192, verified:true },
-  Zone_VS: { lat:23.54582, lon:58.63505, verified:false }
 };
-const ZONES = C.zones.map(z => Object.assign({}, z, ZONE_POS[z.id] || {}));
+
+// Bulk-meter locations snapped to surveyed main-pipe geometry at each zone entrance.
+const OWNER_ZONE_POS = {
+  Zone_03A:{ lat:23.549146, lon:58.637927 },
+  Zone_03B:{ lat:23.548906, lon:58.637472 },
+  Zone_05: { lat:23.548135, lon:58.639325 },
+  Zone_VS: { lat:23.5473952, lon:58.6359902 },
+};
+const ZONES = C.zones.map(z => Object.assign({}, z, ZONE_POS[z.id] || {}, OWNER_ZONE_POS[z.id] || {}));
 
 const POINTS = [
   {id:"C43659" ,n:"Main Bulk (NAMA)"        ,t:"l1",lat:23.5431822,lon:58.6295910},
@@ -680,7 +698,7 @@ const map = new maplibregl.Map({
       sat: {
         type: "raster", tileSize: 256, maxzoom: 19,
         tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
-        attribution: "Imagery © Esri · Network geometry from COO87 as-built sheets"
+        attribution: "Imagery © Esri · COO87 + Zone FM as-built networks"
       },
       dem: {
         type: "raster-dem", tileSize: 256, maxzoom: 15, encoding: "terrarium",
@@ -747,6 +765,10 @@ for (const v of VILLAS) (VILLA_BY_ZONE[v.zone] ||= []).push(v);
    keep their stated positions. */
 const SUPPLY_PT = [58.6295910, 23.5431822];   // Main Bulk (NAMA), surveyed
 for (const z of ZONES){
+  if (OWNER_ZONE_POS[z.id]){
+    z.ownerConfirmed = true;
+    continue;
+  }
   const list = (VILLA_BY_ZONE[z.name] || []).filter(v => v.kind !== "tank");
   if (!list.length) continue;
   let best = null, bd = Infinity;
@@ -763,7 +785,15 @@ for (const z of ZONES){
 // Extent of a zone = bounding box of its surveyed plots (rings included).
 function zoneBounds(z){
   const list = VILLA_BY_ZONE[z.name] || [];
-  if (!list.length) return null;
+  if (!list.length){
+    const zoneLines = (window.NETWORK || []).filter(line => line.zoneId === z.id);
+    if (!zoneLines.length) return null;
+    const points = zoneLines.flatMap(line => line.c);
+    return [
+      [Math.min(...points.map(point => point[0])), Math.min(...points.map(point => point[1]))],
+      [Math.max(...points.map(point => point[0])), Math.max(...points.map(point => point[1]))],
+    ];
+  }
   let w = 180, so = 90, e = -180, n = -90;
   for (const v of list)
     for (const [x, y] of (v.ring ? v.ring.concat([v.c]) : [v.c])){
@@ -877,11 +907,24 @@ function refreshPlates(){
   if (map.getSource("vplate")) map.getSource("vplate").setData(villaPlateFeatures());
 }
 
+function refreshNetworkVisibility(){
+  const visibility = selectedZone === "Zone_VS" ? "none" : "visible";
+  for (const layer of ["svc-line", "asset-line", "main-case", "main-core", "main-flow"]){
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", visibility);
+  }
+}
+
 function networkFeatures(kinds){
   return { type:"FeatureCollection", features: (window.NETWORK||[])
     .filter(f => kinds.includes(f.k))
     .map(f => ({ type:"Feature",
-                 properties:{ d: f.d || 90, m: f.m || "HDPE", k: f.k },
+                 properties:{ d: f.d || 90, m: f.m || "HDPE", k: f.k,
+                              source:f.source || "coo87-surveyed",
+                              zoneId:f.zoneId || "",
+                              drawing:f.drawing || "COO87 PW-01 to PW-08",
+                              segment:f.segment || "",
+                              floor:f.floor || "",
+                              accuracy:f.accuracy || "surveyed" },
                  geometry:{ type:"LineString", coordinates:f.c } })) };
 }
 
@@ -902,7 +945,10 @@ function netStats(){
   return s;
 }
 
-const NET_KM = 13.7;   // recomputed from geometry at load
+const NET_KM = (() => {
+  const stats = netStats();
+  return (stats.main + stats.service + stats.other) / 1000;
+})();
 
 let markers = [];
 let hoverMarker = null, hoverId = null;
@@ -958,12 +1004,33 @@ map.on("load", () => {
               13,["*",["get","d"],0.005], 16,["*",["get","d"],0.010], 19,["*",["get","d"],0.022]],
             "line-dasharray":[0,3.5,1.6] } });
 
-  map.on("click","main-core", e => {
+  // Approved as-built additions use a teal overlay. Zone FM is controlled by
+  // its printed UTM flow-meter coordinate and eleven matching points.
+  map.addLayer({ id:"asbuilt-controlled-case", type:"line", source:"main",
+    filter:["==",["get","accuracy"],"as-built-controlled"],
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":"#063B35", "line-opacity":0.9,
+            "line-width":["interpolate",["linear"],["zoom"],14,3.4,19,8.2] } });
+  map.addLayer({ id:"asbuilt-aligned", type:"line", source:"main",
+    filter:["in",["get","accuracy"],["literal",[
+      "as-built-aligned","as-built-controlled"
+    ]]],
+    layout:{ "line-cap":"round", "line-join":"round" },
+    paint:{ "line-color":"#00D2B3", "line-opacity":0.95,
+            "line-width":["interpolate",["linear"],["zoom"],
+              14,["case",["==",["get","accuracy"],"as-built-controlled"],2.0,1.4],
+              19,["case",["==",["get","accuracy"],"as-built-controlled"],5.2,4.2]],
+            "line-dasharray":[2.2,1.4] } });
+
+  const openPipe = e => {
     const f = e.features[0]; if (!f) return;
     showPipe(f.properties);
-  });
-  map.on("mouseenter","main-core", () => map.getCanvas().style.cursor="pointer");
-  map.on("mouseleave","main-core", () => map.getCanvas().style.cursor="");
+  };
+  for (const layer of ["main-core", "asbuilt-aligned"]){
+    map.on("click", layer, openPipe);
+    map.on("mouseenter", layer, () => map.getCanvas().style.cursor="pointer");
+    map.on("mouseleave", layer, () => map.getCanvas().style.cursor="");
+  }
 
   // Ground plates — the anchor each floating card is tethered to. Plates in a
   // non-selected zone fall back (`dim:1`) so the chosen zone owns the eye.
@@ -1179,6 +1246,7 @@ function buildMarkers(){
     m.__alt = ALT_POINT;
     m.__kind = "point";
     m.__ptype = p.t;
+    m.__id = p.id;
     m.addTo(map);
     markers.push(m);
   }
@@ -1247,17 +1315,22 @@ function refreshVillaCards(){
     el.classList.toggle("dimz", !!selectedZone && show && !mine);
   }
 
-  // The named points are almost all Zone FM buildings packed into one corner —
-  // twenty labels over about 150 m. They stay hidden until you are either in
-  // Zone FM or close enough for them to separate.
+  // The named points are almost all Zone FM buildings packed into one corner.
+  // "Zones only" now means exactly that: the pipe and zone card lead, with no
+  // building-label wall. Top 10 and All reveal details progressively.
   const z = map.getZoom();
+  const fmPoints = POINTS.filter(p => p.t === "l3")
+    .sort((a,b) => (mVal(METER[b.id] || {}) ?? -1) - (mVal(METER[a.id] || {}) ?? -1));
+  const fmTop = new Set(fmPoints.slice(0, TOP_N).map(p => p.id));
   for (const m of markers){
     if (m.__kind !== "point") continue;
     const t = m.__ptype;
     const on = phoneView() ? t === "l1"
              : t === "l1" ? true
              : t === "dc" ? !selectedZone
-             : (selectedZone === "Zone_FM" || z >= 16.8);
+             : selectedZone === "Zone_FM"
+               ? cardMode === "all" || (cardMode === "top" && fmTop.has(m.__id))
+               : !selectedZone && cardMode === "all" && z >= 16.8;
     m.getElement().style.display = on ? "" : "none";
   }
   applyAltitudes();
@@ -1439,6 +1512,28 @@ $("#vProv").onclick = () => {
   if (map.getLayer("svc-line"))
     map.setLayoutProperty("svc-line","visibility", showService ? "visible" : "none");
 };
+function setMapFocus(on, refit = true){
+  const focused = Boolean(on);
+  $("#main").classList.toggle("focus-map", focused);
+  if (focused){
+    setFilters(false);
+    setView(false);
+    $("#cardSel").value = "zone";
+    cardMode = "zone";
+    $("#camSel").value = "top";
+    stopSpin();
+    if (selectedZone) zoneCardState.set(selectedZone, "min");
+    setRight(true);
+  } else {
+    if (selectedZone) zoneCardState.delete(selectedZone);
+    buildMarkers();
+  }
+  map.resize();
+  const zone = ZONES.find(z => z.id === selectedZone);
+  if (refit && zone) flyToZone(zone);
+}
+$("#focusMap").onclick = () => setMapFocus(true);
+$("#focusExit").onclick = () => setMapFocus(false);
 $("#cardSel").onchange = () => {
   cardMode = $("#cardSel").value;
   buildMarkers();         // the zone card's pill/expanded default depends on the mode
@@ -1590,6 +1685,7 @@ $("#viewSel").onchange = () => {
     renderChips();
     renderZoneList();
     refreshPlates();
+    refreshNetworkVisibility();
     buildMarkers();
     renderDailySel();
     setTl(false);            // the timeline is where the day's readings live
@@ -1628,7 +1724,10 @@ function setRight(min){
                           // panel is collapsed, so a toggle re-renders cards
   queueLayout();          // cards hidden under the open panel come back
 }
-function expandRight(){ setRight(false); }
+function expandRight(){
+  if ($("#main").classList.contains("focus-map")) setMapFocus(false, false);
+  setRight(false);
+}
 $("#rhead").onclick = () => setRight(!$("#rwrap").classList.contains("min"));
 new MutationObserver(() => {
   const h = $("#right").querySelector("h2");
@@ -1879,6 +1978,7 @@ function showOverview(){
   renderZoneList();
   buildMarkers();
   refreshPlates();
+  refreshNetworkVisibility();
   const s1 = pct(STAGE1, SUPPLY.total), s2 = pct(STAGE2, L2_TOTAL), tot = pct(TOTALLOSS, SUPPLY.total);
   $("#right").innerHTML = `
     <h2>Network overview</h2>
@@ -1972,9 +2072,11 @@ function showOverview(){
       </table>
     </div>
     <div class="okbox">
-      <b>Geometry is from the source AutoCAD files.</b> ${NET_KM.toFixed(1)} km read directly
-      out of the COO87 DWGs (PW-01 to PW-08), whose model space is already
-      <b>UTM 40N</b> — so these are survey coordinates, not a fitted approximation.
+      <b>Geometry is from the source AutoCAD files.</b> ${NET_KM.toFixed(1)} km is shown.
+      The COO87 DWGs (PW-01 to PW-08) are direct <b>UTM 40N survey coordinates</b>.
+      Zone FM adds its approved 63 mm external network, controlled by the drawing's printed
+      UTM flow-meter coordinate and eleven matching site/building positions. Village Square
+      currently shows only its owner-confirmed bulk-meter cabinet; no unverified route is drawn.
       Pipes come off their own layers, named by bore and material, so every main
       carries its real diameter: <b>250 &amp; 200 DI</b> trunk, <b>225 / 160 / 110 HDPE</b>
       distribution, <b>25 / 32 mm</b> house connections.
@@ -2000,11 +2102,19 @@ function showOverview(){
       number: <b>D-44 … D-75</b> in the register are plots <b>Z3-44 … Z3-75</b> on the drawing.
     </div>
     <div class="warnbox">
-      <b>Elsewhere, meter positions remain unresolved.</b> Outside these four zones only
-      22 meters carry coordinates, all in Zone FM. Zone FM and Village Square are still
-      shown on the surveyed trunk alignment and tagged indicative. The drawings also
-      carry <b>85 plots in Zone 2 and 9 in Zone 3 with no meter at all</b> in the register —
-      worth confirming against the billing list.
+      <b>Village Square route withheld pending geographic control.</b> The bulk-meter cabinet
+      is placed at the owner-confirmed location. The CAD sheets document the plumbing topology,
+      but their unit lines are not displayed until their geographic alignment is verified.
+    </div>
+    <div class="okbox">
+      <b>Zone FM now has its external as-built network.</b> The 63 mm underground HDPE
+      spine and its named FM, Nursery, MEP, B1–B8 and CIF branches come from the approved
+      external-site CAD. The zone bulk marker remains on the pipe corridor. Click a teal
+      line to see the exact drawing and control method.
+    </div>
+    <div class="warnbox">
+      The master drawings carry <b>85 plots in Zone 2 and 9 in Zone 3
+      with no meter at all</b> in the register — worth confirming against the billing list.
     </div>`;
   setRight(true);
 }
@@ -2021,6 +2131,7 @@ function selectZone(id){
   renderZoneList();
   buildMarkers();
   refreshPlates();
+  refreshNetworkVisibility();
   stopSpin();
   flyToZone(z);
 
@@ -2033,31 +2144,45 @@ function selectZone(id){
    that mode lands closer than the plain bounds fit, and switching card modes
    re-frames the zone to match. */
 function flyToZone(z){
+  const cameraMode = $("#camSel").value;
+  const topSelection = z.id === "Zone_VS" || cameraMode === "top";
+  const selectionPitch = topSelection ? 0 : cameraMode === "ground" ? 82 : 62;
+  const selectionBearing = topSelection ? 0 : map.getBearing();
   if (phoneView()){
     const h = map.getCanvas().clientHeight;
-    map.easeTo({ center:[z.lon, z.lat], zoom:cardMode === "all" ? 17.2 : 16.3, pitch:54,
-                 bearing:map.getBearing(), duration:1200, offset:[0, Math.round(h * 0.18)] });
+    const zoom = z.id === "Zone_VS" ? 18.7 : cardMode === "all" ? 17.2 : 16.3;
+    map.easeTo({ center:[z.lon, z.lat], zoom,
+                 pitch:selectionPitch, bearing:selectionBearing, duration:1200,
+                 offset:[0, Math.round(h * 0.18)] });
     return;
   }
   const bb = zoneBounds(z);
   let cam = null;
   if (bb){
     const tablet = compactView();
-    const padding = tablet
+    const padding = $("#main").classList.contains("focus-map")
+      ? { top:56, bottom:56, left:56, right:56 }
+      : tablet
       ? { top:100, bottom:140, left:320, right:40 }
       : { top:110, bottom:150, left:370, right:390 };
     try { cam = map.cameraForBounds(bb, { padding }); }
     catch (err){ cam = null; }
   }
   if (cam){
-    const zoom = cardMode === "all"
-      ? Math.min(Math.max(cam.zoom, 17.2), 17.8)
-      : Math.min(cam.zoom, 17.4);
-    map.easeTo({ center:cam.center, zoom, pitch:62,
-                 bearing:map.getBearing(), duration:1400 });
+    const zoom = z.id === "Zone_VS"
+      ? Math.min(Math.max(cam.zoom, 18.7), 18.9)
+      : z.id === "Zone_FM"
+        ? Math.min(Math.max(cam.zoom, 17.8), 18.2)
+      : cardMode === "all"
+        ? Math.min(Math.max(cam.zoom, 17.2), 17.8)
+        : Math.min(cam.zoom, 17.4);
+    map.easeTo({ center:cam.center, zoom, pitch:selectionPitch,
+                 bearing:selectionBearing, duration:1400 });
   } else {
-    map.easeTo({ center:[z.lon, z.lat], zoom: cardMode === "all" ? 17.2 : 16.3, pitch:62,
-                 bearing:map.getBearing(), duration:1400, offset:[0,90] });
+    const zoom = z.id === "Zone_VS" ? 18.7 : cardMode === "all" ? 17.2 : 16.3;
+    map.easeTo({ center:[z.lon, z.lat], zoom,
+                 pitch:selectionPitch, bearing:selectionBearing,
+                 duration:1400, offset:[0,90] });
   }
 }
 
@@ -2086,8 +2211,13 @@ function renderZonePanel(){
       : { label:"Monitor", title:"Check meter accuracy and reading dates",
           text:"The full-period balance does not yet point to urgent physical leakage.", colour:"#84B59F" };
   const posTag = z.verified ? `<span class="tag ver">Position verified</span>`
+             : z.ownerConfirmed ? `<span class="tag ver">Owner-confirmed position</span>`
              : z.anchored ? `<span class="tag ver">Position from plot survey</span>`
              : `<span class="tag apx">Position indicative</span>`;
+  const networkTag = z.id === "Zone_VS"
+    ? ` · <span class="tag ver">Bulk-meter cabinet owner-confirmed</span>`
+    : z.id === "Zone_FM"
+      ? ` · <span class="tag ver">As-built network controlled</span>` : "";
 
   $("#right").innerHTML = `
     <h2>${esc(z.name)}</h2>
@@ -2126,9 +2256,15 @@ function renderZonePanel(){
       </table>
     </div>
     <div class="mini"><div class="mh">Loss trend (m³/month)</div>${sparkline(lossSeries, lossColour(h1lp), 290, 44)}</div>
-    <div class="sub" style="margin-top:12px">Zone bulk meter ${esc(z.acct)} · ${posTag}</div>
+    <div class="sub" style="margin-top:12px">Zone bulk meter ${esc(z.acct)} · ${posTag}${networkTag}</div>
+    ${z.id === "Zone_FM" || z.id === "Zone_VS" ? `
+      <button class="zrow back" id="focusNetwork" style="width:100%;margin-top:10px;border-color:var(--teal);color:var(--ink)">
+        ${z.id === "Zone_VS" ? "Focus bulk-meter cabinet" : "Focus pipe layout"}
+      </button>` : ""}
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+  const focusNetwork = $("#focusNetwork");
+  if (focusNetwork) focusNetwork.onclick = () => setMapFocus(true);
   // Stage 2 (owner-approved): the panel no longer carries its own period chips
   // — the left sidebar's Month control is the ONE period selector, and
   // zonePeriod follows it (set on zone select and on every figure refresh).
@@ -2280,6 +2416,7 @@ function showTopMeter(m, level){
   selectedVilla = null;
   renderChips();
   refreshPlates();
+  refreshNetworkVisibility();
   buildMarkers();
 
   const point = POINTS.find(p => p.id === m.acct);
@@ -2339,18 +2476,28 @@ function showMeter(p){
 function showPipe(p){
   expandRight();
   const dia = p.d, mat = p.m;
-  const role = dia >= 200 ? "Trunk main" : dia >= 110 ? "Distribution main" : "House connection";
+  const zoneFm = p.source === "zone-fm-external-as-built";
+  const role = zoneFm ? "Zone distribution network"
+    : dia >= 200 ? "Trunk main" : dia >= 110 ? "Distribution main" : "House connection";
+  const sourceTag = zoneFm
+      ? `<span class="tag ver">As-built route controlled</span>`
+      : `<span class="tag ver">Survey coordinates</span>`;
+  const sourceNote = zoneFm
+      ? `Taken from approved external-site drawing <b>${esc(p.drawing)}</b>. Its printed
+        UTM Zone 40N flow-meter coordinate controls the upstream end; eleven matching FM
+        site/building points control the drawing alignment. The fit residual is about 4.7 m.`
+    : `Read from AutoCAD layer <b>${dia >= 110 && mat === "DI" ? "DIA " + dia + "-DI"
+      : dia >= 110 ? "DIA " + dia + "-OD HDPE" : "HC PIPE" + dia + "mm"}</b>
+      in the COO87 as-built set. Model space is UTM 40N, so this alignment is survey
+      coordinates rather than a fit to the plotted sheet.`;
   $("#right").innerHTML = `
     <h2>${dia} mm ${esc(mat)}</h2>
-    <div class="sub">${role} · <span class="tag ver">From DWG layer</span></div>
+    <div class="sub">${role}${p.floor ? ` · ${esc(p.floor)}` : ""}${p.segment ? ` · ${esc(p.segment)}` : ""} · ${sourceTag}</div>
     <div class="kpis">
       <div class="kpi"><div class="k">Nominal bore</div><div class="v">${dia} <small>mm</small></div></div>
       <div class="kpi"><div class="k">Material</div><div class="v">${esc(mat)}</div></div>
     </div>
-    <div class="okbox">Read from AutoCAD layer <b>${dia >= 110 && mat === "DI" ? "DIA " + dia + "-DI"
-      : dia >= 110 ? "DIA " + dia + "-OD HDPE" : "HC PIPE" + dia + "mm"}</b>
-      in the COO87 as-built set. Model space is UTM 40N, so this alignment is survey
-      coordinates rather than a fit to the plotted sheet.</div>
+    <div class="okbox">${sourceNote}</div>
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
 }
