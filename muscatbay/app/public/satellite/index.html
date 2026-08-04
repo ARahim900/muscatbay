@@ -313,6 +313,8 @@ td.n{text-align:right;}
 #spark{flex:1;height:44px;display:block;min-width:0;}
 
 #viewctl{left:var(--s-2);bottom:var(--s-2);padding:0;display:flex;flex-direction:column;overflow:hidden;}
+@media (min-width:1101px){#viewctl.open{left:312px;}}
+@media (min-width:861px) and (max-width:1100px){#viewctl.open{left:304px;}}
 #viewToggle{display:flex;align-items:center;gap:var(--s-1);min-height:var(--ctl-h);
   padding:0 var(--s-2);font-size:14px;font-weight:600;color:var(--ink);border-radius:var(--r-panel);}
 #viewToggle:hover{background:var(--hov-bg);}
@@ -331,6 +333,16 @@ td.n{text-align:right;}
 }
 #viewctl button:hover{background:var(--hov-bg);color:var(--ink);}
 #viewctl button.on{border-color:var(--teal);background:var(--sel-bg);color:var(--ink);}
+.vlegend{display:grid;grid-template-columns:1fr 1fr;gap:var(--s-1);padding-top:var(--s-1);
+  border-top:1px solid var(--border);font-size:var(--t-help-size);color:var(--ink2);}
+.vlegend span{display:flex;align-items:center;gap:var(--s-1);min-width:0;}
+.vlegend i{display:block;width:20px;height:4px;border-radius:4px;flex:0 0 20px;}
+.vlegend .di{background:#9A742E;box-shadow:0 0 0 2px rgba(246,239,217,.45);}
+.vlegend .hdpe{background:#24507E;box-shadow:0 0 0 2px rgba(237,243,249,.45);}
+.vlegend .service{height:2px;background:#557E6F;}
+.vlegend .asset{width:9px;height:9px;flex-basis:9px;border:2px solid #F5F4F6;
+  border-radius:50%;background:#E8C064;}
+.vmeta{font-size:11px;line-height:1.45;color:var(--ink3);}
 
 #focusExit{left:var(--s-2);top:var(--s-2);z-index:28;display:none;align-items:center;
   gap:var(--s-1);min-height:var(--ctl-h);padding:0 var(--s-2);
@@ -379,6 +391,7 @@ td.n{text-align:right;}
   #rwrap{left:var(--s-2);right:var(--s-2);top:auto;bottom:var(--s-2);width:auto;max-height:60%;}
   #rwrap:not(.min) ~ #viewctl{display:none;}
   #viewbody{width:auto;min-width:240px;}
+  #hint{display:none;}
   .ccol{flex-basis:var(--ctl-h);width:var(--ctl-h);height:var(--ctl-h);}
   .zcard .ccol{top:4px;right:4px;}
   .mlabel{display:flex;align-items:center;min-height:var(--ctl-h);}
@@ -415,8 +428,8 @@ td.n{text-align:right;}
     <div class="panel" id="left">
       <div class="hd">
         <h2 id="explorerTitle">Meter explorer</h2>
-        <input id="search" type="search" placeholder="Search name or account…"
-               aria-label="Search meters by name or account number">
+        <input id="search" type="search" placeholder="Search meter, account or asset…"
+               aria-label="Search meters, account numbers or network assets">
         <div class="selrow2">
           <div class="selcol">
             <span class="lbl">Data view</span>
@@ -477,12 +490,28 @@ td.n{text-align:right;}
             <option value="ground">Ground level</option>
           </select>
         </div>
+        <div class="vrow">
+          <span class="lbl">Main pipes</span>
+          <select id="pipeSel" aria-label="Main pipe material filter">
+            <option value="all" selected>All materials</option>
+            <option value="di">DI trunk</option>
+            <option value="hdpe">HDPE distribution</option>
+          </select>
+        </div>
         <div class="vbtns">
-          <button id="vSpin">Orbit</button>
-          <button id="vTerr" class="on">Terrain</button>
-          <button id="vProv">House connections</button>
+          <button id="vSpin" aria-pressed="false">Orbit</button>
+          <button id="vTerr" class="on" aria-pressed="true">Terrain</button>
+          <button id="vProv" class="on" aria-pressed="true">House connections</button>
+          <button id="vAssets" class="on" aria-pressed="true">Network assets</button>
           <button id="focusMap">Focus map</button>
         </div>
+        <div class="vlegend" aria-label="Water network legend">
+          <span><i class="di"></i>DI trunk</span>
+          <span><i class="hdpe"></i>HDPE main</span>
+          <span><i class="service"></i>House connection</span>
+          <span><i class="asset"></i>Valve / hydrant</span>
+        </div>
+        <p class="vmeta" id="networkMeta"></p>
         <div class="vrow">
           <span class="lbl">Map cards</span>
           <select id="cardSel" aria-label="Which cards to show on the map">
@@ -516,8 +545,11 @@ td.n{text-align:right;}
 
 <script src="vendor/maplibre-gl.js"></script>
 <script src="data/network.js?v=3"></script>
+<script src="data/network-road-corrections.js?v=2"></script>
 <script src="data/zone-fm-network.js?v=1"></script>
+<script src="data/network-assets.js?v=1"></script>
 <script src="data/plots-geo.js?v=2"></script>
+<script src="data/network-service-zones.js?v=1"></script>
 <script src="data/assets.js?v=1"></script>
 <script>
 "use strict";
@@ -583,6 +615,23 @@ window.__satvizBoot = function () {
    master view by 18,972 m³ on L1 and 4,878 m³ on Zone 8. */
 const C = window.CONSUMPTION;
 const MONTHS = C.months;
+const NETWORK_SOURCE = window.NETWORK_SOURCE || {
+  drawingSet:"COO87-CA-AB-PL-PW-01 through PW-23C", sheetCount:24,
+  crs:"EPSG:32640", lineFeatures:(window.NETWORK || []).length,
+  lineVertices:0, assetPoints:0, roadAlignedFeatures:0,
+  accuracy:"surveyed-as-built"
+};
+const NETWORK_ASSETS = Array.isArray(window.NETWORK_ASSETS) ? window.NETWORK_ASSETS : [];
+const NETWORK_ASSET_COLOUR = {
+  "air-valve":"#A4C5BB", "gate-valve":"#E8C064",
+  "isolation-valve":"#E8C064", "fire-hydrant":"#D67A7A",
+  "flow-meter":"#00D2B3", "washout":"#6B9AC4",
+  "pressure-reducing-valve":"#C49BD8", "water-tank":"#4E4456"
+};
+const NETWORK_ASSET_COUNTS = NETWORK_ASSETS.reduce((counts, asset) => {
+  counts[asset.type] = (counts[asset.type] || 0) + 1;
+  return counts;
+}, {});
 // Period comes from the payload now — never hardcode a month range here.
 const PERIOD = { label: C.period_label || "", short: C.period_short || "Total",
                  derived: C.derived_idx || [] };
@@ -663,6 +712,11 @@ const esc = v => String(v).replace(/[&<>"']/g, c =>
 const fmt = n => (n === null || n === undefined) ? "—" : Math.round(n).toLocaleString("en-GB");
 const pct = (a,b) => b > 0 ? (a/b*100) : 0;
 
+$("#networkMeta").textContent = `${NETWORK_SOURCE.lineFeatures.toLocaleString("en-GB")} pipe features · ` +
+  `${NETWORK_SOURCE.lineVertices.toLocaleString("en-GB")} vertices · ` +
+  `${NETWORK_SOURCE.assetPoints.toLocaleString("en-GB")} surveyed assets · ` +
+  `${NETWORK_SOURCE.roadAlignedFeatures || 0} road-aligned segments · UTM 40N`;
+
 const ICON = {
   play:  '<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 3.5v17l14-8.5z"/></svg>',
   pause: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="4" x2="15" y2="20"/></svg>',
@@ -691,7 +745,8 @@ const map = new maplibregl.Map({
   attributionControl: { compact: true },
   preserveDrawingBuffer: true,      // lets the view be exported as an image
   maxPitch: 85,
-  center: CENTRE, zoom: 14.75, pitch: 58, bearing: -38,
+  center: CENTRE, zoom: phoneView() ? 14.2 : 14.75,
+  pitch: phoneView() ? 0 : 58, bearing: phoneView() ? 0 : -38,
   style: {
     version: 8,
     sources: {
@@ -719,6 +774,7 @@ const map = new maplibregl.Map({
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
 map.dragRotate.enable();
 map.touchZoomRotate.enableRotation();
+if (phoneView()) $("#camSel").value = "top";
 
 /* ---- geometry helpers ---- */
 function circle(lon, lat, radiusM, steps){
@@ -908,9 +964,25 @@ function refreshPlates(){
 }
 
 function refreshNetworkVisibility(){
-  const visibility = selectedZone === "Zone_VS" ? "none" : "visible";
-  for (const layer of ["svc-line", "asset-line", "main-case", "main-core", "main-flow"]){
-    if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", visibility);
+  const hiddenForVillageSquare = selectedZone === "Zone_VS";
+  const mainVisibility = hiddenForVillageSquare ? "none" : "visible";
+  const serviceVisibility = hiddenForVillageSquare || !showService ? "none" : "visible";
+  const assetVisibility = hiddenForVillageSquare || !showNetworkAssets ? "none" : "visible";
+  for (const layer of ["asset-line", "main-case", "main-core", "main-flow",
+                       "asbuilt-controlled-case", "asbuilt-aligned"]){
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", mainVisibility);
+  }
+  const serviceZoneIds = ["Zone_03A", "Zone_03B", "Zone_05", "Zone_08"];
+  const serviceZoneFilter = serviceZoneIds.includes(selectedZone)
+    ? ["==", ["get", "zoneId"], selectedZone]
+    : ["in", ["get", "zoneId"], ["literal", serviceZoneIds]];
+  for (const layer of ["svc-case", "svc-line"]){
+    if (!map.getLayer(layer)) continue;
+    map.setLayoutProperty(layer, "visibility", serviceVisibility);
+    map.setFilter(layer, serviceZoneFilter);
+  }
+  for (const layer of ["network-asset-halo", "network-asset-point"]){
+    if (map.getLayer(layer)) map.setLayoutProperty(layer, "visibility", assetVisibility);
   }
 }
 
@@ -921,11 +993,21 @@ function networkFeatures(kinds){
                  properties:{ d: f.d || 90, m: f.m || "HDPE", k: f.k,
                               source:f.source || "coo87-surveyed",
                               zoneId:f.zoneId || "",
-                              drawing:f.drawing || "COO87 PW-01 to PW-08",
+                              drawing:f.drawing || NETWORK_SOURCE.drawingSet,
                               segment:f.segment || "",
                               floor:f.floor || "",
                               accuracy:f.accuracy || "surveyed" },
                  geometry:{ type:"LineString", coordinates:f.c } })) };
+}
+
+function networkAssetFeatures(){
+  return { type:"FeatureCollection", features:NETWORK_ASSETS.map(asset => ({
+    type:"Feature",
+    properties:{ id:asset.id, type:asset.type, label:asset.label, layer:asset.layer,
+                 e:asset.e, n:asset.n, lon:asset.c[0], lat:asset.c[1],
+                 colour:NETWORK_ASSET_COLOUR[asset.type] || "#E8C064" },
+    geometry:{ type:"Point", coordinates:asset.c }
+  })) };
 }
 
 // Totals straight from the extracted geometry, so the header can't drift.
@@ -956,7 +1038,8 @@ function hideHover(){ if (hoverMarker){ hoverMarker.remove(); hoverMarker = null
 let selectedZone = null;
 let selectedVilla = null;
 let zonePeriod = "H1";     // "H1" or a month index 0-5 — the zone panel's period
-let showService = false;
+let showService = true;
+let showNetworkAssets = true;
 
 map.on("load", () => {
   map.setTerrain({ source:"dem", exaggeration:1.0 });   // true elevation — 1.35x pushed draped imagery off the surveyed lines on Zone 3's slope
@@ -964,15 +1047,22 @@ map.on("load", () => {
   map.addSource("main",    { type:"geojson", data:networkFeatures([0]) });
   map.addSource("service", { type:"geojson", data:networkFeatures([1]) });
   map.addSource("assets",  { type:"geojson", data:networkFeatures([2,3,4]) });
+  map.addSource("network-asset-points", { type:"geojson", data:networkAssetFeatures() });
   map.addSource("zplate",  { type:"geojson", data:zonePlateFeatures() });
   map.addSource("vplate",  { type:"geojson", data:villaPlateFeatures() });
 
   // trunk / distribution main — wide soft glow under a bright animated core
-  // House connections — thin, under the mains.
+  // CAD house connections — a dark casing keeps every branch readable over
+  // roofs and pale roads, with the same teal language used for Zone FM.
+  map.addLayer({ id:"svc-case", type:"line", source:"service", minzoom:15.2,
+    layout:{ "line-cap":"round", "line-join":"round", "visibility":"visible" },
+    paint:{ "line-color":"#063B35", "line-opacity":0.88,
+            "line-width":["interpolate",["linear"],["zoom"],15.2,2.4,19,6.2] } });
   map.addLayer({ id:"svc-line", type:"line", source:"service",
-    layout:{ "line-cap":"round", "line-join":"round", "visibility":"none" },
-    paint:{ "line-color":"#557E6F", "line-opacity":0.9,
-            "line-width":["interpolate",["linear"],["zoom"],14,0.8,19,2.8] } });
+    minzoom:15.2,
+    layout:{ "line-cap":"round", "line-join":"round", "visibility":"visible" },
+    paint:{ "line-color":"#00D2B3", "line-opacity":0.98,
+            "line-width":["interpolate",["linear"],["zoom"],15.2,1.2,19,3.5] } });
 
   // Hydrant branches, washouts and isolation valves.
   map.addLayer({ id:"asset-line", type:"line", source:"assets",
@@ -1022,6 +1112,18 @@ map.on("load", () => {
               19,["case",["==",["get","accuracy"],"as-built-controlled"],5.2,4.2]],
             "line-dasharray":[2.2,1.4] } });
 
+  // Surveyed valves, hydrants, flow meters, washouts and tanks. These points
+  // are circle centres from the CAD asset layers, not inferred map positions.
+  map.addLayer({ id:"network-asset-halo", type:"circle", source:"network-asset-points",
+    minzoom:15,
+    paint:{ "circle-color":"rgba(10,9,12,.72)",
+            "circle-radius":["interpolate",["linear"],["zoom"],15,5,19,9] } });
+  map.addLayer({ id:"network-asset-point", type:"circle", source:"network-asset-points",
+    minzoom:15,
+    paint:{ "circle-color":["get","colour"], "circle-opacity":0.98,
+            "circle-radius":["interpolate",["linear"],["zoom"],15,3,19,6],
+            "circle-stroke-color":"#F5F4F6", "circle-stroke-width":1.2 } });
+
   const openPipe = e => {
     const f = e.features[0]; if (!f) return;
     showPipe(f.properties);
@@ -1031,6 +1133,14 @@ map.on("load", () => {
     map.on("mouseenter", layer, () => map.getCanvas().style.cursor="pointer");
     map.on("mouseleave", layer, () => map.getCanvas().style.cursor="");
   }
+  map.on("click", "network-asset-point", e => {
+    const feature = e.features && e.features[0];
+    if (feature) showNetworkAsset(feature.properties);
+  });
+  map.on("mouseenter", "network-asset-point", () => map.getCanvas().style.cursor="pointer");
+  map.on("mouseleave", "network-asset-point", () => map.getCanvas().style.cursor="");
+  applyPipeFilter();
+  refreshNetworkVisibility();
 
   // Ground plates — the anchor each floating card is tethered to. Plates in a
   // non-selected zone fall back (`dim:1`) so the chosen zone owns the eye.
@@ -1296,7 +1406,7 @@ function refreshVillaCards(){
         const ap = pct(zIn(a) - zOut(a), zIn(a));
         const bp = pct(zIn(b) - zOut(b), zIn(b));
         return bp - ap || (zIn(b) || 0) - (zIn(a) || 0);
-      }).slice(0, 4).map(z => z.id))
+      }).slice(0, 2).map(z => z.id))
     : null;
   for (const m of markers){
     if (m.__kind !== "zone") continue;
@@ -1483,12 +1593,33 @@ function animateFlow(ts){
 
 /* ============================================================ VIEW CONTROLS */
 let spinning = false, spinRAF = null;
-function stopSpin(){ spinning = false; $("#vSpin").classList.remove("on"); if (spinRAF) cancelAnimationFrame(spinRAF); }
+function stopSpin(){
+  spinning = false;
+  $("#vSpin").classList.remove("on");
+  $("#vSpin").setAttribute("aria-pressed", "false");
+  if (spinRAF) cancelAnimationFrame(spinRAF);
+}
 function spin(){
   if (!spinning) return;
   map.setBearing(map.getBearing() + 0.09);
   spinRAF = requestAnimationFrame(spin);
 }
+function applyPipeFilter(){
+  const value = $("#pipeSel").value;
+  const materialFilter = value === "di" ? ["==",["get","m"],"DI"]
+    : value === "hdpe" ? ["==",["get","m"],"HDPE"] : null;
+  const controlled = ["==",["get","accuracy"],"as-built-controlled"];
+  const aligned = ["in",["get","accuracy"],["literal",[
+    "as-built-aligned","as-built-controlled"
+  ]]];
+  for (const layer of ["main-case","main-core","main-flow"])
+    if (map.getLayer(layer)) map.setFilter(layer, materialFilter);
+  if (map.getLayer("asbuilt-controlled-case"))
+    map.setFilter("asbuilt-controlled-case", materialFilter ? ["all",controlled,materialFilter] : controlled);
+  if (map.getLayer("asbuilt-aligned"))
+    map.setFilter("asbuilt-aligned", materialFilter ? ["all",aligned,materialFilter] : aligned);
+}
+$("#pipeSel").onchange = applyPipeFilter;
 $("#camSel").onchange = () => {
   stopSpin();
   const cam = $("#camSel").value;
@@ -1499,18 +1630,26 @@ $("#camSel").onchange = () => {
 $("#vSpin").onclick   = () => {
   spinning = !spinning;
   $("#vSpin").classList.toggle("on", spinning);
+  $("#vSpin").setAttribute("aria-pressed", String(spinning));
   if (spinning){ if (map.getPitch() < 30) map.easeTo({ pitch:62, duration:900 }); spin(); }
 };
 $("#vTerr").onclick = () => {
   const on = !$("#vTerr").classList.contains("on");
   $("#vTerr").classList.toggle("on", on);
+  $("#vTerr").setAttribute("aria-pressed", String(on));
   map.setTerrain(on ? { source:"dem", exaggeration:1.0 } : null);
 };
 $("#vProv").onclick = () => {
   showService = !showService;
   $("#vProv").classList.toggle("on", showService);
-  if (map.getLayer("svc-line"))
-    map.setLayoutProperty("svc-line","visibility", showService ? "visible" : "none");
+  $("#vProv").setAttribute("aria-pressed", String(showService));
+  refreshNetworkVisibility();
+};
+$("#vAssets").onclick = () => {
+  showNetworkAssets = !showNetworkAssets;
+  $("#vAssets").classList.toggle("on", showNetworkAssets);
+  $("#vAssets").setAttribute("aria-pressed", String(showNetworkAssets));
+  refreshNetworkVisibility();
 };
 function setMapFocus(on, refit = true){
   const focused = Boolean(on);
@@ -1844,6 +1983,20 @@ function renderZoneList(){
     appendTopResults("Main supply", "L1", matchesText(main.name, main.acct) ? [main] : []);
     appendTopResults("Direct connections", "DC", DIRECT.list.filter(m => matchesText(m.name, m.acct)));
     appendTopResults("Outside potable hierarchy", "NA", UNASSIGNED.filter(m => matchesText(m.name, m.acct)));
+    const assetMatches = NETWORK_ASSETS.filter(asset =>
+      matchesText(asset.id, asset.label, asset.type, asset.layer));
+    if (assetMatches.length){
+      appendSection("Network assets");
+      for (const asset of assetMatches){
+        shown++;
+        wrap.appendChild(row("search-result", 2, {
+          html:`<span class="tw"></span>
+                <span class="dot" style="background:${NETWORK_ASSET_COLOUR[asset.type] || "#E8C064"}"></span>
+                <span class="tn">${esc(asset.label)}<span class="tsub">${esc(asset.id)}</span></span>`,
+          onclick:() => focusNetworkAsset(asset)
+        }));
+      }
+    }
   }
 
   for (const z of ZONES){
@@ -2071,9 +2224,22 @@ function showOverview(){
         <tr><td>Unassigned (TSE irrigation)</td><td class="n" style="color:#E8C064">${METER_COUNTS.NA}</td></tr>
       </table>
     </div>
+    <div class="mini">
+      <div class="mh">CAD network assets — ${NETWORK_ASSETS.length} surveyed points</div>
+      <table>
+        <tr><td>Isolation / gate valves</td><td class="n">${(NETWORK_ASSET_COUNTS["isolation-valve"] || 0) + (NETWORK_ASSET_COUNTS["gate-valve"] || 0)}</td></tr>
+        <tr><td>Fire hydrants</td><td class="n">${NETWORK_ASSET_COUNTS["fire-hydrant"] || 0}</td></tr>
+        <tr><td>Flow meters</td><td class="n">${NETWORK_ASSET_COUNTS["flow-meter"] || 0}</td></tr>
+        <tr><td>Washouts / air valves / PRVs</td><td class="n">${(NETWORK_ASSET_COUNTS.washout || 0) + (NETWORK_ASSET_COUNTS["air-valve"] || 0) + (NETWORK_ASSET_COUNTS["pressure-reducing-valve"] || 0)}</td></tr>
+        <tr><td>Water tanks</td><td class="n">${NETWORK_ASSET_COUNTS["water-tank"] || 0}</td></tr>
+      </table>
+    </div>
     <div class="okbox">
       <b>Geometry is from the source AutoCAD files.</b> ${NET_KM.toFixed(1)} km is shown.
-      The COO87 DWGs (PW-01 to PW-08) are direct <b>UTM 40N survey coordinates</b>.
+      The ${NETWORK_SOURCE.sheetCount} COO87 DWGs (${esc(NETWORK_SOURCE.drawingSet)}) use direct
+      <b>UTM 40N survey coordinates</b>. The map includes ${NETWORK_SOURCE.lineFeatures}
+      pipe features, ${NETWORK_SOURCE.lineVertices.toLocaleString("en-GB")} vertices and
+      ${NETWORK_SOURCE.assetPoints} surveyed asset points.
       Zone FM adds its approved 63 mm external network, controlled by the drawing's printed
       UTM flow-meter coordinate and eleven matching site/building positions. Village Square
       currently shows only its owner-confirmed bulk-meter cabinet; no unverified route is drawn.
@@ -2144,8 +2310,10 @@ function selectZone(id){
    that mode lands closer than the plain bounds fit, and switching card modes
    re-frames the zone to match. */
 function flyToZone(z){
+  const utilitySelection = z.id === "Zone_VS" || z.id === "Zone_03A" || z.id === "Zone_03B";
+  if (utilitySelection) $("#camSel").value = "top";
   const cameraMode = $("#camSel").value;
-  const topSelection = z.id === "Zone_VS" || cameraMode === "top";
+  const topSelection = cameraMode === "top";
   const selectionPitch = topSelection ? 0 : cameraMode === "ground" ? 82 : 62;
   const selectionBearing = topSelection ? 0 : map.getBearing();
   if (phoneView()){
@@ -2473,16 +2641,62 @@ function showMeter(p){
     <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
             onclick="showOverview()">${ICON.back} Back to network overview</button>`;
 }
+function focusNetworkAsset(asset){
+  if ($("#main").classList.contains("focus-map")) setMapFocus(false, false);
+  selectedZone = null;
+  selectedVilla = null;
+  showNetworkAssets = true;
+  $("#vAssets").classList.add("on");
+  $("#vAssets").setAttribute("aria-pressed", "true");
+  refreshPlates();
+  refreshNetworkVisibility();
+  map.easeTo({ center:asset.c, zoom:18, pitch:0, bearing:0, duration:1200 });
+  showNetworkAsset(Object.assign({}, asset, { lon:asset.c[0], lat:asset.c[1] }));
+}
+function showNetworkAsset(p){
+  expandRight();
+  const easting = Number(p.e), northing = Number(p.n);
+  const longitude = Number(p.lon), latitude = Number(p.lat);
+  const colour = NETWORK_ASSET_COLOUR[p.type] || "#E8C064";
+  $("#right").innerHTML = `
+    <h2>${esc(p.id)}</h2>
+    <div class="sub">${esc(p.label)} · <span class="tag ver">Surveyed CAD point</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Easting</div><div class="v">${easting.toFixed(2)} <small>m</small></div></div>
+      <div class="kpi"><div class="k">Northing</div><div class="v">${northing.toFixed(2)} <small>m</small></div></div>
+    </div>
+    <div class="mini">
+      <div class="mh">Location and source</div>
+      <table>
+        <tr><td>Latitude</td><td class="n">${latitude.toFixed(7)}</td></tr>
+        <tr><td>Longitude</td><td class="n">${longitude.toFixed(7)}</td></tr>
+        <tr><td>AutoCAD layer</td><td class="n" style="color:${colour}">${esc(p.layer)}</td></tr>
+        <tr><td>Coordinate system</td><td class="n">UTM 40N</td></tr>
+      </table>
+    </div>
+    <div class="okbox"><b>Direct as-built position.</b> This marker is the circle centre
+      from layer <b>${esc(p.layer)}</b> in ${esc(NETWORK_SOURCE.drawingSet)}. The ID comes
+      from the matching ASSET-ID annotation; no satellite-image fitting was used.</div>
+    <button class="zrow back" style="width:100%;margin-top:10px;border-color:#2A2731"
+            onclick="showOverview()">${ICON.back} Back to network overview</button>`;
+}
 function showPipe(p){
   expandRight();
   const dia = p.d, mat = p.m;
   const zoneFm = p.source === "zone-fm-external-as-built";
+  const roadAligned = p.source === "owner-confirmed-road-alignment";
   const role = zoneFm ? "Zone distribution network"
     : dia >= 200 ? "Trunk main" : dia >= 110 ? "Distribution main" : "House connection";
-  const sourceTag = zoneFm
+  const sourceTag = roadAligned
+      ? `<span class="tag ver">Road corridor aligned</span>`
+    : zoneFm
       ? `<span class="tag ver">As-built route controlled</span>`
       : `<span class="tag ver">Survey coordinates</span>`;
-  const sourceNote = zoneFm
+  const sourceNote = roadAligned
+      ? `This buried ${dia} mm main follows the road corridor through <b>${esc(p.segment)}</b>.
+        The junctions remain tied to the CAD network; the intermediate bends follow the
+        owner-confirmed site road corridor dated 04 August 2026.`
+    : zoneFm
       ? `Taken from approved external-site drawing <b>${esc(p.drawing)}</b>. Its printed
         UTM Zone 40N flow-meter coordinate controls the upstream end; eleven matching FM
         site/building points control the drawing alignment. The fit residual is about 4.7 m.`
