@@ -35,4 +35,10 @@ The existing iframe message contract must remain unchanged:
 5. Run the satellite asset test, lint, the complete test suite and the production build.
 6. Verify desktop and mobile map views, pipe filtering, asset search and asset click details in the browser.
 
-Village Square routes remain withheld until their CAD model has verified geographic control. The owner-confirmed bulk-meter cabinet may be shown, but unverified pipeline geometry must not be published as surveyed.
+## Village Square
+
+Village Square internal routes remain withheld until their CAD model has verified geographic control. The owner-confirmed bulk-meter cabinet is shown, the surveyed 225 HDPE trunk and FM Road 3 / 2A junction fronting the crescent are part of the COO87 network (the tapping between trunk and cabinet is not surveyed), and the zone panel lists the building-connection schedule transcribed from the OSCO as-built set (AB-MB-VS-0173-PL-WS-001/002 and WSS-003, Rev C). Unverified pipeline geometry must not be published as surveyed.
+
+The 2026-08-04 georeferencing attempt is documented for the next person: the three OSCO DWGs model in local Revit paste-up frames with no UTM anywhere (no coordinate text, no georeferenced site block, architecture xrefs unbound), the approved PDFs are raster scans without a survey grid, and the COO87 sheet covering the crescent (PW-03, georeferenced from its printed grid with a passing scale check) predates the building — its context stops at the parking, so no shared vector geometry exists to fit against. Curve-matching the 110Ø filling line was scale-degenerate and matching site context was ambiguous; neither meets the accuracy bar. What unlocks the overlay: GPS capture of two or three features identifiable on sheet WS-001 — the MWMC-01 meter-chamber cover, valve chamber VC-01 at the north-east end, and any hose bib — then a similarity fit with reported residuals.
+
+House-connection (k=1) lines render gold (#E8C064) with a dark casing so sub-connections to villas and buildings read distinctly in every zone; hydrant/washout/valve legs are soft red (#D67A7A), matching hydrant points; teal remains reserved for the Zone FM and approved as-built overlays.

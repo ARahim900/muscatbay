@@ -339,7 +339,8 @@ td.n{text-align:right;}
 .vlegend i{display:block;width:20px;height:4px;border-radius:4px;flex:0 0 20px;}
 .vlegend .di{background:#9A742E;box-shadow:0 0 0 2px rgba(246,239,217,.45);}
 .vlegend .hdpe{background:#24507E;box-shadow:0 0 0 2px rgba(237,243,249,.45);}
-.vlegend .service{height:2px;background:#557E6F;}
+.vlegend .service{height:2px;background:#E8C064;}
+.vlegend .branch{height:2px;background:#D67A7A;}
 .vlegend .asset{width:9px;height:9px;flex-basis:9px;border:2px solid #F5F4F6;
   border-radius:50%;background:#E8C064;}
 .vlegend .bldg{width:14px;height:9px;flex-basis:14px;background:transparent;
@@ -511,7 +512,8 @@ td.n{text-align:right;}
         <div class="vlegend" aria-label="Water network legend">
           <span><i class="di"></i>DI trunk</span>
           <span><i class="hdpe"></i>HDPE main</span>
-          <span><i class="service"></i>House connection</span>
+          <span><i class="service"></i>Building connection</span>
+          <span><i class="branch"></i>Hydrant / washout leg</span>
           <span><i class="asset"></i>Valve / hydrant</span>
           <span><i class="bldg"></i>Building outline</span>
         </div>
@@ -1104,22 +1106,24 @@ map.on("load", () => {
             "line-width":["interpolate",["linear"],["zoom"],15,0.8,19,2.2] } });
 
   // trunk / distribution main — wide soft glow under a bright animated core
-  // CAD house connections — a dark casing keeps every branch readable over
-  // roofs and pale roads, with the same teal language used for Zone FM.
+  // CAD building/villa sub-connections — golden with a dark casing so every
+  // service branch reads distinctly from the mains (navy/amber), the Zone FM
+  // and as-built teal overlays, and the white building outlines.
   map.addLayer({ id:"svc-case", type:"line", source:"service", minzoom:15.2,
     layout:{ "line-cap":"round", "line-join":"round", "visibility":"visible" },
-    paint:{ "line-color":"#063B35", "line-opacity":0.88,
+    paint:{ "line-color":"#3A2E10", "line-opacity":0.88,
             "line-width":["interpolate",["linear"],["zoom"],15.2,2.4,19,6.2] } });
   map.addLayer({ id:"svc-line", type:"line", source:"service",
     minzoom:15.2,
     layout:{ "line-cap":"round", "line-join":"round", "visibility":"visible" },
-    paint:{ "line-color":"#00D2B3", "line-opacity":0.98,
+    paint:{ "line-color":"#E8C064", "line-opacity":0.98,
             "line-width":["interpolate",["linear"],["zoom"],15.2,1.2,19,3.5] } });
 
-  // Hydrant branches, washouts and isolation valves.
+  // Hydrant branches, washouts and isolation-valve legs — soft red, matching
+  // the hydrant point colour, now that gold belongs to the sub-connections.
   map.addLayer({ id:"asset-line", type:"line", source:"assets",
     layout:{ "line-cap":"round", "line-join":"round" },
-    paint:{ "line-color":"#E8C064", "line-opacity":0.9,
+    paint:{ "line-color":"#D67A7A", "line-opacity":0.9,
             "line-width":["interpolate",["linear"],["zoom"],14,1.2,19,3.4] } });
 
   // Mains — width scales with real bore, colour by material.
@@ -2298,7 +2302,8 @@ function showOverview(){
       ${NETWORK_SOURCE.assetPoints} surveyed asset points.
       Zone FM adds its approved 63 mm external network, controlled by the drawing's printed
       UTM flow-meter coordinate and eleven matching site/building positions. Village Square
-      currently shows only its owner-confirmed bulk-meter cabinet; no unverified route is drawn.
+      shows its owner-confirmed bulk-meter cabinet and the surveyed trunk that serves it;
+      no unverified internal route is drawn.
       Pipes come off their own layers, named by bore and material, so every main
       carries its real diameter: <b>250 &amp; 200 DI</b> trunk, <b>225 / 160 / 110 HDPE</b>
       distribution, <b>25 / 32 mm</b> house connections.
@@ -2324,9 +2329,14 @@ function showOverview(){
       number: <b>D-44 … D-75</b> in the register are plots <b>Z3-44 … Z3-75</b> on the drawing.
     </div>
     <div class="warnbox">
-      <b>Village Square route withheld pending geographic control.</b> The bulk-meter cabinet
-      is placed at the owner-confirmed location. The CAD sheets document the plumbing topology,
-      but their unit lines are not displayed until their geographic alignment is verified.
+      <b>Village Square internal routes withheld pending geographic control.</b> The bulk-meter
+      cabinet is at the owner-confirmed location, and the surveyed 225&nbsp;HDPE trunk with the
+      FM Road&nbsp;3&nbsp;/&nbsp;2A junction (IV-25/26/27) fronting the crescent is drawn from COO87;
+      the tapping between that trunk and the cabinet is not surveyed.
+      The OSCO as-built set (AB-MB-VS-0173-PL-WS-001/002, WSS-003) documents the building's
+      connection schedule — see the Village Square zone panel — but its sheets carry no UTM frame
+      and the 2018 COO87 survey predates the crescent, so the 110Ø filling line and unit runs are
+      not drawn until field control points (MWMC-01 chamber, VC-01, one hose bib) are captured.
     </div>
     <div class="okbox">
       <b>Zone FM now has its external as-built network.</b> The 63 mm underground HDPE
@@ -2481,6 +2491,26 @@ function renderZonePanel(){
     </div>
     <div class="mini"><div class="mh">Loss trend (m³/month)</div>${sparkline(lossSeries, lossColour(h1lp), 290, 44)}</div>
     <div class="sub" style="margin-top:12px">Zone bulk meter ${esc(z.acct)} · ${posTag}${networkTag}</div>
+    ${z.id === "Zone_VS" ? `
+    <div class="mini">
+      <div class="mh">Building connections — OSCO as-built AB-MB-VS-0173 (Rev C)</div>
+      <table>
+        <tr><td>MWMC-01 main meter chamber</td><td class="n">110Ø</td><td>1200×600, GV·STR·WM·NRV</td></tr>
+        <tr><td>Main building meter</td><td class="n">110Ø</td><td>Green area (GF)</td></tr>
+        <tr><td>Shop-05 (restaurant)</td><td class="n">50Ø</td><td>Near Stair-01 (GF)</td></tr>
+        <tr><td>Shops-03 &amp; 04</td><td class="n">2× 40Ø</td><td>Near Elec Room (GF)</td></tr>
+        <tr><td>Supermarket</td><td class="n">40Ø</td><td>Near gas shelter (FF)</td></tr>
+        <tr><td>Shops-01, 02 &amp; Gym</td><td class="n">40Ø + 2× 50Ø</td><td>Near Stair-02 (FF)</td></tr>
+        <tr><td>VCWM-01…04 meter chambers</td><td class="n">40–50Ø</td><td>Green areas, 800×600</td></tr>
+        <tr><td>VC-01…08 valve chambers</td><td class="n">—</td><td>600×600×740</td></tr>
+        <tr><td>Roof-tank filling line</td><td class="n">110Ø</td><td>DCWS HDPE, 1.0 m below FFL</td></tr>
+      </table>
+    </div>
+    <div class="warnbox" style="margin-top:6px">
+      The schedule above is transcribed from the OSCO as-built sheets; the drawings carry no
+      survey frame, so these runs are listed here rather than drawn on the map. Field-locating
+      MWMC-01, VC-01 and one hose bib unlocks the full internal overlay.
+    </div>` : ""}
     ${z.id === "Zone_FM" || z.id === "Zone_VS" ? `
       <button class="zrow back" id="focusNetwork" style="width:100%;margin-top:10px;border-color:var(--teal);color:var(--ink)">
         ${z.id === "Zone_VS" ? "Focus bulk-meter cabinet" : "Focus pipe layout"}
