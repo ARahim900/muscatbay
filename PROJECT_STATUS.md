@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-04 — fix(water/satellite): curve-true DWG extraction, reconciled with owner road marks
 - 2026-08-04 — feat(water): improve Satellite View network accuracy
 - 2026-08-04 — fix(water): version monthly initializer (#66)
 - 2026-08-03 — fix(water): correct Satellite View zone mapping
