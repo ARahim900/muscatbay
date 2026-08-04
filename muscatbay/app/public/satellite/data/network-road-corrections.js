@@ -1,6 +1,23 @@
 /* Owner-confirmed road alignment for buried potable-water mains.
-   Original CAD junctions are retained while long drawing chords are replaced
-   by vertices that follow the visible road corridors marked on 04 Aug 2026. */
+   Original CAD junctions are retained while the marked spans are replaced by
+   vertices that follow the visible road corridors confirmed on 04 Aug 2026.
+
+   Since network.js was re-extracted with DWG curves tessellated (bulged
+   polylines no longer collapse to chords), the drawing itself now follows
+   most bends. Each owner mark was measured against that curve-true geometry:
+
+     Zone 5 DI trunk beside AV-01    1.0 m from the DWG curve  -> superseded
+     Zone 5 HDPE road beside AV-01   4.5 m from the DWG curve  -> superseded
+     Zone 3 inner road curve        23.6 m from the DWG curve  -> KEPT
+     Zone 8 IV-10 to FH-29/30       11.4 m from the DWG curve  -> KEPT
+     Zone 8 FH-29/30 to IV-21       11.3 m from the DWG curve  -> KEPT
+
+   Within ~5 m the mark and the survey describe the same corridor and the
+   surveyed curve wins; beyond that the owner's field knowledge overrides
+   what the drawing shows. Runs are matched by bore, material and junction
+   endpoints — never by vertex count, which changes with every re-extraction —
+   and the marked span is spliced in between the nearest surviving vertices,
+   so both CAD junctions stay exactly where the survey puts them. */
 (function applyOwnerConfirmedRoadAlignments() {
   const network = window.NETWORK;
   if (!Array.isArray(network)) {
@@ -8,63 +25,76 @@
     return;
   }
 
-  const samePoint = (point, expected) =>
-    Array.isArray(point) &&
-    Math.abs(point[0] - expected[0]) < 0.000001 &&
-    Math.abs(point[1] - expected[1]) < 0.000001;
+  // Squared local-metre distance — fine for spans this short.
+  const metresSq = (a, b) => {
+    const dx = (a[0] - b[0]) * 102000;
+    const dy = (a[1] - b[1]) * 110540;
+    return dx * dx + dy * dy;
+  };
+  const ENDPOINT_TOLERANCE_SQ = 1.5 * 1.5;
 
-  const findMain = ({ diameter, material, length, start, end }) =>
-    network.find((feature) =>
-      feature.k === 0 &&
-      feature.d === diameter &&
-      feature.m === material &&
-      feature.c.length === length &&
-      samePoint(feature.c[0], start) &&
-      samePoint(feature.c.at(-1), end),
+  const findMain = ({ diameter, material, start, end }) =>
+    network.find(
+      (feature) =>
+        feature.k === 0 &&
+        feature.d === diameter &&
+        feature.m === material &&
+        ((metresSq(feature.c[0], start) < ENDPOINT_TOLERANCE_SQ &&
+          metresSq(feature.c.at(-1), end) < ENDPOINT_TOLERANCE_SQ) ||
+          (metresSq(feature.c[0], end) < ENDPOINT_TOLERANCE_SQ &&
+            metresSq(feature.c.at(-1), start) < ENDPOINT_TOLERANCE_SQ)),
     );
+
+  const nearestIndex = (points, target) => {
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    points.forEach((point, index) => {
+      const d = metresSq(point, target);
+      if (d < bestDistance) {
+        bestDistance = d;
+        bestIndex = index;
+      }
+    });
+    return bestIndex;
+  };
+
+  // Replace the span between the vertices nearest the marked path's ends.
+  // Handles either run orientation; the junction vertices survive untouched.
+  const spliceRoadPath = (feature, roadPath) => {
+    const c = feature.c;
+    const i0 = nearestIndex(c, roadPath[0]);
+    const i1 = nearestIndex(c, roadPath.at(-1));
+    feature.c =
+      i0 <= i1
+        ? c.slice(0, i0).concat(roadPath, c.slice(i1 + 1))
+        : c.slice(0, i1).concat([...roadPath].reverse(), c.slice(i0 + 1));
+  };
 
   const zone8Upper = findMain({
     diameter: 110,
     material: "HDPE",
-    length: 6,
     start: [58.644324, 23.549489],
     end: [58.643795, 23.54825],
   });
   const zone8Lower = findMain({
     diameter: 110,
     material: "HDPE",
-    length: 16,
     start: [58.646767, 23.549411],
     end: [58.643795, 23.54825],
-  });
-  const zone5East = findMain({
-    diameter: 200,
-    material: "DI",
-    length: 21,
-    start: [58.638814, 23.547466],
-    end: [58.634697, 23.54348],
-  });
-  const zone5West = findMain({
-    diameter: 160,
-    material: "HDPE",
-    length: 9,
-    start: [58.634954, 23.545728],
-    end: [58.634609, 23.54331],
   });
   const zone3Curve = findMain({
     diameter: 160,
     material: "HDPE",
-    length: 23,
     start: [58.633948, 23.548216],
     end: [58.640441, 23.551963],
   });
 
-  if (!zone8Upper || !zone8Lower || !zone5East || !zone5West || !zone3Curve) {
+  if (!zone8Upper || !zone8Lower || !zone3Curve) {
     console.error("Road alignments could not load: source segments changed.");
     return;
   }
 
-  zone3Curve.c = zone3Curve.c.slice(0, 11).concat([
+  spliceRoadPath(zone3Curve, [
     [58.6352831, 23.5495005],
     [58.6354065, 23.5494883],
     [58.6355272, 23.5494637],
@@ -84,9 +114,9 @@
     [58.6372519, 23.548867],
     [58.6373753, 23.5488875],
     [58.637472, 23.548906],
-  ], zone3Curve.c.slice(14));
+  ]);
 
-  zone8Upper.c = [
+  spliceRoadPath(zone8Upper, [
     [58.644324, 23.549489],
     [58.64429, 23.549416],
     [58.6443, 23.549353],
@@ -107,69 +137,34 @@
     [58.643831, 23.54838],
     [58.643805, 23.548309],
     [58.643795, 23.54825],
-  ];
-
-  const zone8LowerRoad = [
-    [58.643795, 23.54825],
-    [58.643755, 23.54816],
-    [58.643716, 23.548084],
-    [58.643678, 23.548008],
-    [58.64364, 23.547933],
-    [58.643605, 23.547848],
-    [58.643574, 23.547756],
-    [58.643553, 23.547664],
-    [58.64354, 23.547572],
-    [58.64354, 23.547489],
-    [58.643558, 23.547406],
-    [58.643595, 23.547332],
-    [58.64365, 23.547284],
-    [58.643718, 23.547256],
-    [58.643793, 23.54725],
-    [58.64387, 23.547274],
-    [58.643944, 23.547321],
-    [58.644012, 23.547378],
-    [58.644084, 23.547469],
-  ];
-  zone8Lower.c = zone8Lower.c.slice(0, 11).concat(zone8LowerRoad.reverse());
-
-  zone5East.c = zone5East.c.slice(0, 13).concat([
-    [58.635571, 23.545225],
-    [58.63549, 23.54509],
-    [58.635424, 23.54494],
-    [58.63534, 23.54477],
-    [58.635276, 23.54461],
-    [58.635203, 23.54448],
-    [58.63512, 23.54436],
-    [58.635032, 23.54424],
-    [58.634955, 23.54412],
-    [58.634892, 23.54399],
-    [58.634838, 23.54386],
-    [58.63479, 23.54373],
-    [58.634744, 23.5436],
-    [58.634697, 23.54348],
   ]);
 
-  zone5West.c = [
-    [58.634954, 23.545728],
-    [58.63484, 23.54552],
-    [58.63473, 23.5452],
-    [58.63461, 23.54488],
-    [58.63455, 23.54462],
-    [58.63452, 23.54434],
-    [58.63449, 23.54412],
-    [58.63443, 23.54391],
-    [58.63435, 23.54372],
-    [58.634411, 23.543493],
-    [58.634558, 23.543434],
-    [58.634609, 23.54331],
-  ];
+  spliceRoadPath(zone8Lower, [
+    [58.644084, 23.547469],
+    [58.644012, 23.547378],
+    [58.643944, 23.547321],
+    [58.64387, 23.547274],
+    [58.643793, 23.54725],
+    [58.643718, 23.547256],
+    [58.64365, 23.547284],
+    [58.643595, 23.547332],
+    [58.643558, 23.547406],
+    [58.64354, 23.547489],
+    [58.64354, 23.547572],
+    [58.643553, 23.547664],
+    [58.643574, 23.547756],
+    [58.643605, 23.547848],
+    [58.64364, 23.547933],
+    [58.643678, 23.548008],
+    [58.643716, 23.548084],
+    [58.643755, 23.54816],
+    [58.643795, 23.54825],
+  ]);
 
   const corrected = [
     [zone3Curve, "Zone 3", "owner-marked inner road curve"],
     [zone8Upper, "Zone 8", "IV-10 to FH-29/30"],
     [zone8Lower, "Zone 8", "FH-29/30 to IV-21"],
-    [zone5East, "Zone 5", "DI trunk beside AV-01"],
-    [zone5West, "Zone 5", "HDPE distribution road beside AV-01"],
   ];
 
   for (const [feature, zone, segment] of corrected) {
@@ -180,9 +175,10 @@
   }
 
   window.NETWORK_ROAD_ALIGNMENT = {
-    zones: ["Zone 3", "Zone 5", "Zone 8"],
+    zones: ["Zone 3", "Zone 8"],
     featureCount: corrected.length,
     effectiveDate: "2026-08-04",
     basis: "owner-confirmed buried pipe follows road corridor",
+    superseded: "Zone 5 marks retired — the curve-true DWG geometry matches them",
   };
 })();

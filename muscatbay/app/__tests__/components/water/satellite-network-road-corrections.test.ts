@@ -18,6 +18,7 @@ interface AlignmentMetadata {
   featureCount: number;
   effectiveDate: string;
   basis: string;
+  superseded: string;
 }
 
 interface SatelliteWindow {
@@ -26,8 +27,9 @@ interface SatelliteWindow {
   NETWORK_ROAD_ALIGNMENT?: AlignmentMetadata;
 }
 
+const consoleError = vi.fn();
 const satelliteWindow: SatelliteWindow = {};
-const context = { window: satelliteWindow, console: { error: vi.fn() } };
+const context = { window: satelliteWindow, console: { error: consoleError } };
 runInNewContext(
   readFileSync(join(process.cwd(), "public/satellite/data/network.js"), "utf8"),
   context,
@@ -40,72 +42,73 @@ runInNewContext(
   context,
 );
 
-describe("owner-confirmed road-aligned water mains", () => {
-  it("replaces only the five confirmed Zone 3, Zone 5 and Zone 8 road corridors", () => {
-    const corrected = (satelliteWindow.NETWORK ?? []).filter(
-      (feature) => feature.source === "owner-confirmed-road-alignment",
-    );
+const corrected = () =>
+  (satelliteWindow.NETWORK ?? []).filter(
+    (feature) => feature.source === "owner-confirmed-road-alignment",
+  );
 
-    expect(corrected).toHaveLength(5);
-    expect(corrected.map((feature) => feature.c.length).sort((a, b) => a - b)).toEqual(
-      [12, 20, 27, 30, 39],
-    );
-    expect(corrected.every((feature) => feature.accuracy === "site-aligned")).toBe(
+const containsPoint = (feature: NetworkFeature | undefined, point: [number, number]) =>
+  (feature?.c ?? []).some(([lon, lat]) => lon === point[0] && lat === point[1]);
+
+describe("owner-confirmed road-aligned water mains", () => {
+  it("matches every targeted run in the curve-true network (no silent no-op)", () => {
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
+  it("replaces only the Zone 3 and Zone 8 corridors the DWG curve does not cover", () => {
+    expect(corrected()).toHaveLength(3);
+    expect(corrected().every((feature) => feature.accuracy === "site-aligned")).toBe(
       true,
     );
+    expect(corrected().map((feature) => feature.segment).sort()).toEqual([
+      "Zone 3 · owner-marked inner road curve",
+      "Zone 8 · FH-29/30 to IV-21",
+      "Zone 8 · IV-10 to FH-29/30",
+    ]);
   });
 
   it("keeps the CAD junctions connected while following the road bends", () => {
-    const corrected = (satelliteWindow.NETWORK ?? []).filter(
-      (feature) => feature.source === "owner-confirmed-road-alignment",
-    );
-    const upper = corrected.find((feature) => feature.segment?.startsWith("Zone 8 · IV-10"));
-    const lower = corrected.find((feature) => feature.segment?.startsWith("Zone 8 · FH-29"));
-    const zone5Di = corrected.find((feature) => feature.segment?.includes("DI trunk"));
-    const zone3 = corrected.find((feature) => feature.segment?.startsWith("Zone 3 ·"));
+    const upper = corrected().find((feature) => feature.segment?.startsWith("Zone 8 · IV-10"));
+    const lower = corrected().find((feature) => feature.segment?.startsWith("Zone 8 · FH-29"));
+    const zone3 = corrected().find((feature) => feature.segment?.startsWith("Zone 3 ·"));
 
+    // Junction endpoints are survey vertices and must never move.
     expect(upper?.c[0]).toEqual([58.644324, 23.549489]);
     expect(upper?.c.at(-1)).toEqual([58.643795, 23.54825]);
-    expect(lower?.c[11]).toEqual([58.644084, 23.547469]);
+    expect(lower?.c[0]).toEqual([58.646767, 23.549411]);
     expect(lower?.c.at(-1)).toEqual([58.643795, 23.54825]);
-    expect(upper?.segment).toBe("Zone 8 · IV-10 to FH-29/30");
-    expect(lower?.segment).toBe("Zone 8 · FH-29/30 to IV-21");
-    expect(zone5Di?.c[0]).toEqual([58.638814, 23.547466]);
-    expect(zone5Di?.c.at(-1)).toEqual([58.634697, 23.54348]);
     expect(zone3?.c[0]).toEqual([58.633948, 23.548216]);
-    expect(zone3?.c[10]).toEqual([58.635179, 23.549494]);
-    expect(zone3?.c[16]).toEqual([58.6358973, 23.5493211]);
-    expect(zone3?.c[22]).toEqual([58.6366296, 23.5488613]);
-    expect(zone3?.c[29]).toEqual([58.637472, 23.548906]);
     expect(zone3?.c.at(-1)).toEqual([58.640441, 23.551963]);
+
+    // Owner-marked road vertices are present in the spliced runs.
+    expect(containsPoint(zone3, [58.6352831, 23.5495005])).toBe(true);
+    expect(containsPoint(zone3, [58.6366296, 23.5488613])).toBe(true);
+    expect(containsPoint(zone3, [58.637472, 23.548906])).toBe(true);
+    expect(containsPoint(upper, [58.644356, 23.549226])).toBe(true);
+    expect(containsPoint(lower, [58.64354, 23.547489])).toBe(true);
+    expect(containsPoint(lower, [58.644084, 23.547469])).toBe(true);
+  });
+
+  it("leaves the Zone 5 corridors on surveyed DWG geometry (marks superseded)", () => {
+    const zone5Trunk = (satelliteWindow.NETWORK ?? []).find(
+      (feature) =>
+        feature.k === 0 &&
+        feature.d === 200 &&
+        feature.m === "DI" &&
+        feature.c.some(([lon, lat]) => lon === 58.634697 && lat === 23.54348),
+    );
+
+    expect(zone5Trunk).toBeDefined();
+    expect(zone5Trunk?.source).toBeUndefined();
   });
 
   it("publishes the correction provenance", () => {
     expect(satelliteWindow.NETWORK_ROAD_ALIGNMENT).toEqual({
-      zones: ["Zone 3", "Zone 5", "Zone 8"],
-      featureCount: 5,
+      zones: ["Zone 3", "Zone 8"],
+      featureCount: 3,
       effectiveDate: "2026-08-04",
       basis: "owner-confirmed buried pipe follows road corridor",
+      superseded: "Zone 5 marks retired — the curve-true DWG geometry matches them",
     });
-  });
-
-  it("replaces the diagonal Zone 3 chord without moving its network endpoints", () => {
-    const zone3 = (satelliteWindow.NETWORK ?? []).find(
-      (feature) =>
-        feature.k === 0 &&
-        feature.d === 160 &&
-        feature.m === "HDPE" &&
-        feature.c[0]?.[0] === 58.633948 &&
-        feature.c[0]?.[1] === 23.548216,
-    );
-
-    expect(zone3?.source).toBe("owner-confirmed-road-alignment");
-    expect(zone3?.c).toHaveLength(39);
-    expect(zone3?.c[11]).toEqual([58.6352831, 23.5495005]);
-    expect(zone3?.c[21]).toEqual([58.6364982, 23.5489129]);
-    expect(zone3?.c[22]).toEqual([58.6366296, 23.5488613]);
-    expect(zone3?.c[28]).toEqual([58.6373753, 23.5488875]);
-    expect(zone3?.c[29]).toEqual([58.637472, 23.548906]);
-    expect(zone3?.c[30]).toEqual([58.637677, 23.548972]);
   });
 });
