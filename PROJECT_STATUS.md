@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-04 — feat(water/satellite): Village Square zone detail + distinct sub-connection colour
 - 2026-08-04 — feat(water/satellite): building-footprint overlay — as-built outlines under the network
 - 2026-08-04 — fix(water/satellite): retire the Zone 3 road mark — it cut through two buildings
 - 2026-08-04 — fix(water/satellite): curve-true DWG extraction, reconciled with owner road marks
