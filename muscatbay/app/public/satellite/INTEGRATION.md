@@ -10,6 +10,7 @@ The Water page embeds `public/satellite/index.html` in a same-origin iframe. The
 - `network-service-zones.js`: groups 121 unchanged CAD service branches for selected-zone display: 31 in Zone 3A, 33 in Zone 3B, 34 in Zone 5 and 23 in Zone 8.
 - `zone-fm-network.js`: the separately controlled Zone FM external as-built network.
 - `plots-geo.js`: surveyed plot geometry joined to the meter register.
+- `building-footprints.js`: 251 building outlines from the as-built package — true rings where the drawings carry one, minimum-area oriented rectangles (indicative) elsewhere. UTM 40N → WGS84 via the same EPSG transform as the pipes; rebuild with `_build/footprints_to_wgs.py` in the Water Network Viz folder. Rendered as a quiet white outline layer beneath the network with a "Buildings" toggle.
 - `assets.js`: metered physical assets that are not normal plots.
 
 The COO87 model-space coordinate system is UTM Zone 40N (`EPSG:32640`). Runtime map coordinates are WGS84 longitude/latitude.

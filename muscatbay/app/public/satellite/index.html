@@ -342,6 +342,8 @@ td.n{text-align:right;}
 .vlegend .service{height:2px;background:#557E6F;}
 .vlegend .asset{width:9px;height:9px;flex-basis:9px;border:2px solid #F5F4F6;
   border-radius:50%;background:#E8C064;}
+.vlegend .bldg{width:14px;height:9px;flex-basis:14px;background:transparent;
+  border:1.5px solid rgba(245,244,246,.85);border-radius:1px;}
 .vmeta{font-size:11px;line-height:1.45;color:var(--ink3);}
 
 #focusExit{left:var(--s-2);top:var(--s-2);z-index:28;display:none;align-items:center;
@@ -503,6 +505,7 @@ td.n{text-align:right;}
           <button id="vTerr" class="on" aria-pressed="true">Terrain</button>
           <button id="vProv" class="on" aria-pressed="true">House connections</button>
           <button id="vAssets" class="on" aria-pressed="true">Network assets</button>
+          <button id="vBld" class="on" aria-pressed="true">Buildings</button>
           <button id="focusMap">Focus map</button>
         </div>
         <div class="vlegend" aria-label="Water network legend">
@@ -510,6 +513,7 @@ td.n{text-align:right;}
           <span><i class="hdpe"></i>HDPE main</span>
           <span><i class="service"></i>House connection</span>
           <span><i class="asset"></i>Valve / hydrant</span>
+          <span><i class="bldg"></i>Building outline</span>
         </div>
         <p class="vmeta" id="networkMeta"></p>
         <div class="vrow">
@@ -549,6 +553,7 @@ td.n{text-align:right;}
 <script src="data/zone-fm-network.js?v=1"></script>
 <script src="data/network-assets.js?v=1"></script>
 <script src="data/plots-geo.js?v=2"></script>
+<script src="data/building-footprints.js?v=1"></script>
 <script src="data/network-service-zones.js?v=1"></script>
 <script src="data/assets.js?v=1"></script>
 <script>
@@ -956,6 +961,16 @@ function villaPlateFeatures(){
   })};
 }
 
+/* Building outlines — the as-built package's 251 footprints (true rings
+   where the drawings carry one, oriented rectangles labelled indicative
+   elsewhere), transformed with the same EPSG pipeline as the pipes. */
+function buildingFootprintFeatures(){
+  return { type:"FeatureCollection",
+           features: (window.BUILDING_FOOTPRINTS || []).map((ring, i) => ({
+             type:"Feature", properties:{ id:i },
+             geometry:{ type:"Polygon", coordinates:[ring] } })) };
+}
+
 /* Push the current selection into the plate sources (called on zone select /
    clear and on figure changes — the colours track the figures too). */
 function refreshPlates(){
@@ -1074,6 +1089,19 @@ map.on("load", () => {
   map.addSource("network-asset-points", { type:"geojson", data:networkAssetFeatures() });
   map.addSource("zplate",  { type:"geojson", data:zonePlateFeatures() });
   map.addSource("vplate",  { type:"geojson", data:villaPlateFeatures() });
+  map.addSource("bfoot",   { type:"geojson", data:buildingFootprintFeatures() });
+
+  // Building outlines from the as-built package — the quiet white frame that
+  // makes "the pipe follows the road, not the buildings" readable at a
+  // glance. Drawn FIRST so every pipe, plate and card stacks above them.
+  map.addLayer({ id:"bfoot-line", type:"line", source:"bfoot",
+    // The button is the source of truth — a toggle clicked before the map
+    // finished loading must not leave the layer out of sync.
+    layout:{ "line-join":"round",
+             "visibility": $("#vBld").classList.contains("on") ? "visible" : "none" },
+    paint:{ "line-color":"#F5F4F6",
+            "line-opacity":["interpolate",["linear"],["zoom"],14.6,0,15.4,0.75],
+            "line-width":["interpolate",["linear"],["zoom"],15,0.8,19,2.2] } });
 
   // trunk / distribution main — wide soft glow under a bright animated core
   // CAD house connections — a dark casing keeps every branch readable over
@@ -1671,6 +1699,13 @@ $("#vAssets").onclick = () => {
   $("#vAssets").classList.toggle("on", showNetworkAssets);
   $("#vAssets").setAttribute("aria-pressed", String(showNetworkAssets));
   refreshNetworkVisibility();
+};
+$("#vBld").onclick = () => {
+  const on = !$("#vBld").classList.contains("on");
+  $("#vBld").classList.toggle("on", on);
+  $("#vBld").setAttribute("aria-pressed", String(on));
+  if (map.getLayer("bfoot-line"))
+    map.setLayoutProperty("bfoot-line", "visibility", on ? "visible" : "none");
 };
 function setMapFocus(on, refit = true){
   const focused = Boolean(on);
