@@ -4,20 +4,32 @@
 
    Since network.js was re-extracted with DWG curves tessellated (bulged
    polylines no longer collapse to chords), the drawing itself now follows
-   most bends. Each owner mark was measured against that curve-true geometry:
+   most bends. Each owner mark was measured against that curve-true geometry
+   and against the surveyed building footprints:
 
      Zone 5 DI trunk beside AV-01    1.0 m from the DWG curve  -> superseded
      Zone 5 HDPE road beside AV-01   4.5 m from the DWG curve  -> superseded
-     Zone 3 inner road curve        23.6 m from the DWG curve  -> KEPT
-     Zone 8 IV-10 to FH-29/30       11.4 m from the DWG curve  -> KEPT
-     Zone 8 FH-29/30 to IV-21       11.3 m from the DWG curve  -> KEPT
+     Zone 3 inner road curve         RETIRED: the digitised mark ran 39.5 m
+                                     and 32.3 m THROUGH two Zone 3B building
+                                     footprints that the surveyed curve
+                                     clears by 4-10 m — the mark traced the
+                                     wrong side of the corridor
+     Zone 8 IV-10 to FH-29/30       11.4 m from the DWG curve, crosses no
+                                     building                  -> KEPT
+     Zone 8 FH-29/30 to IV-21       11.3 m from the DWG curve, crosses no
+                                     building                  -> KEPT
 
-   Within ~5 m the mark and the survey describe the same corridor and the
-   surveyed curve wins; beyond that the owner's field knowledge overrides
-   what the drawing shows. Runs are matched by bore, material and junction
+   Where the mark and the survey describe the same corridor the surveyed
+   curve wins; an owner mark earns its splice only when it stays clear of
+   the surveyed footprints. Runs are matched by bore, material and junction
    endpoints — never by vertex count, which changes with every re-extraction —
    and the marked span is spliced in between the nearest surviving vertices,
-   so both CAD junctions stay exactly where the survey puts them. */
+   so both CAD junctions stay exactly where the survey puts them.
+
+   Matcher caveat: four pairs of short two-vertex stub twins (110 HDPE x2,
+   200 DI, 250 DI) sit within the 1.5 m endpoint tolerance of each other.
+   Neither current target touches them, but a future splice aimed at a stub
+   must first verify its match is unique. */
 (function applyOwnerConfirmedRoadAlignments() {
   const network = window.NETWORK;
   if (!Array.isArray(network)) {
@@ -82,39 +94,10 @@
     start: [58.646767, 23.549411],
     end: [58.643795, 23.54825],
   });
-  const zone3Curve = findMain({
-    diameter: 160,
-    material: "HDPE",
-    start: [58.633948, 23.548216],
-    end: [58.640441, 23.551963],
-  });
-
-  if (!zone8Upper || !zone8Lower || !zone3Curve) {
+  if (!zone8Upper || !zone8Lower) {
     console.error("Road alignments could not load: source segments changed.");
     return;
   }
-
-  spliceRoadPath(zone3Curve, [
-    [58.6352831, 23.5495005],
-    [58.6354065, 23.5494883],
-    [58.6355272, 23.5494637],
-    [58.6356506, 23.5494243],
-    [58.635774, 23.5493801],
-    [58.6358973, 23.5493211],
-    [58.636018, 23.5492522],
-    [58.6361387, 23.5491735],
-    [58.6362541, 23.5490825],
-    [58.6363748, 23.5489916],
-    [58.6364982, 23.5489129],
-    [58.6366296, 23.5488613],
-    [58.6367583, 23.5488342],
-    [58.6368817, 23.5488301],
-    [58.6370051, 23.5488383],
-    [58.6371285, 23.5488506],
-    [58.6372519, 23.548867],
-    [58.6373753, 23.5488875],
-    [58.637472, 23.548906],
-  ]);
 
   spliceRoadPath(zone8Upper, [
     [58.644324, 23.549489],
@@ -162,7 +145,6 @@
   ]);
 
   const corrected = [
-    [zone3Curve, "Zone 3", "owner-marked inner road curve"],
     [zone8Upper, "Zone 8", "IV-10 to FH-29/30"],
     [zone8Lower, "Zone 8", "FH-29/30 to IV-21"],
   ];
@@ -175,10 +157,11 @@
   }
 
   window.NETWORK_ROAD_ALIGNMENT = {
-    zones: ["Zone 3", "Zone 8"],
+    zones: ["Zone 8"],
     featureCount: corrected.length,
     effectiveDate: "2026-08-04",
     basis: "owner-confirmed buried pipe follows road corridor",
-    superseded: "Zone 5 marks retired — the curve-true DWG geometry matches them",
+    superseded:
+      "Zone 5 marks retired (curve-true DWG matches them); Zone 3 mark retired (it cut through two surveyed building footprints the DWG curve clears)",
   };
 })();

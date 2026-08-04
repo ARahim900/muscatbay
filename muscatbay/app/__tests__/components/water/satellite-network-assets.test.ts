@@ -45,10 +45,10 @@ describe("satellite network CAD assets", () => {
       sheetCount: 24,
       crs: "EPSG:32640",
       lineFeatures: 423,
-      // Curve-true re-extraction (bulges tessellated) + 3 owner-marked splices.
-      lineVertices: 1257,
+      // Curve-true re-extraction (bulges tessellated) + 2 owner-marked splices.
+      lineVertices: 1252,
       assetPoints: 101,
-      roadAlignedFeatures: 3,
+      roadAlignedFeatures: 2,
       accuracy: "surveyed-as-built + owner-confirmed road alignment",
     });
   });
