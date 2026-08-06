@@ -24,7 +24,7 @@ interface LedgerRow {
     label: string;
     type: string;
     values: DayValues;
-    mtd: number;
+    mtd: number | null;
     dayValue: number | null;
     flags: string[];
 }
@@ -79,7 +79,8 @@ export function DailyDatabase({
 
     const rows = useMemo<LedgerRow[]>(() => monthData.map((r) => {
         const values = grid.values.get(r.account_number) ?? [];
-        const mtd = r2(values.reduce<number>((s, v) => s + (v ?? 0), 0));
+        const hasReading = values.some((value) => value !== null);
+        const mtd = hasReading ? r2(values.reduce<number>((s, v) => s + (v ?? 0), 0)) : null;
         return {
             meterName: r.meter_name || r.account_number,
             account: r.account_number,
@@ -105,7 +106,7 @@ export function DailyDatabase({
             const q = search.toLowerCase();
             return r.meterName.toLowerCase().includes(q) || r.account.includes(q);
         })
-        .sort((a, b) => b.mtd - a.mtd), [rows, zone, level, issuesOnly, search]);
+        .sort((a, b) => (b.mtd ?? Number.NEGATIVE_INFINITY) - (a.mtd ?? Number.NEGATIVE_INFINITY)), [rows, zone, level, issuesOnly, search]);
 
     const exportRows = filtered.map((r) => ({
         Meter: r.meterName,
@@ -114,7 +115,7 @@ export function DailyDatabase({
         Level: r.label,
         Type: r.type,
         [`Day_${selectedDay}_m3`]: r.dayValue ?? "",
-        MTD_m3: r.mtd,
+        MTD_m3: r.mtd ?? "",
         Flags: r.flags.join(" | ") || "Normal",
         ...Object.fromEntries(days.map((d) => [`D${d}`, r.values[d - 1] ?? ""])),
     }));

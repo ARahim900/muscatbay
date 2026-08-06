@@ -286,11 +286,13 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
             const dailyValues: (number | null)[] = [];
             const rawValues: (number | null)[] = [];
             let total = 0;
+            let hasReading = false;
             for (let d = 1; d <= latestDay; d++) {
                 const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
                 rawValues.push(raw != null ? Number(raw) : null);
                 const val = raw != null ? r2(Number(raw)) : null;
                 dailyValues.push(val);
+                if (val !== null) hasReading = true;
                 total += val ?? 0;
             }
 
@@ -300,7 +302,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 isIrr: dc.isIrr,
                 dailyValues,
                 rawValues,
-                total: r2(total),
+                total: hasReading ? r2(total) : null,
             };
         });
     }, [accountMap, latestDay]);
@@ -326,7 +328,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
             result.sort((a, b) => {
                 let va: number | string, vb: number | string;
                 if (sort.key === 'label') { va = a.label; vb = b.label; }
-                else if (sort.key === 'total') { va = a.total; vb = b.total; }
+                else if (sort.key === 'total') { va = a.total ?? Number.NEGATIVE_INFINITY; vb = b.total ?? Number.NEGATIVE_INFINITY; }
                 else { va = a.account; vb = b.account; }
                 const cmp = va < vb ? -1 : va > vb ? 1 : 0;
                 return sort.dir === 'desc' ? -cmp : cmp;
