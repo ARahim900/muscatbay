@@ -13,7 +13,7 @@ import { ArrowUpDown, ChevronUp, ChevronDown, Search, ArrowRight, ArrowDown } fr
 import { cn } from "@/lib/utils";
 import { CHART_PALETTE } from "@/lib/tokens";
 import {
-    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, NULL_AS_ZERO_ACCOUNTS,
+    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
     BUILDING_CHILD_METERS,
 } from "@/lib/water-accounts";
 
@@ -127,7 +127,7 @@ export interface DCRow {
     account: string;
     isIrr: boolean;
     rawValue: number | null;
-    /** The value displayed — 0 for null-as-zero, null for truly missing non-irr meters */
+    /** The source value rounded for display; null remains missing. */
     displayValue: number | null;
     isNullFlag: boolean;
 }
@@ -199,16 +199,14 @@ export function processReport(readings: Record<string, number | null>): ReportDa
     // TABLE 3 — DC rows
     const dcRows: DCRow[] = DC_METERS.map(dc => {
         const rawValue = get(dc.account);
-        const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
-        const displayValue = rawValue !== null ? r2(rawValue)
-            : isNullAsZero ? 0 : null;
+        const displayValue = rawValue !== null ? r2(rawValue) : null;
         return {
             meterName: dc.meterName,
             account: dc.account,
             isIrr: dc.isIrr,
             rawValue,
             displayValue,
-            isNullFlag: rawValue === null && !isNullAsZero,
+            isNullFlag: rawValue === null,
         };
     });
 

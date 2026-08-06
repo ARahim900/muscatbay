@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Download, Filter, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { NULL_AS_ZERO_ACCOUNTS } from "@/lib/water-accounts";
 import { downloadRows } from "@/lib/water-monthly-data";
 import { TableSearch, StatusChip, thBase, tdBase, n } from "./inline-shared";
 import { buildDailyGrid, detectSpike, zeroStreak, wasActiveBefore, type DayValues } from "./daily-metrics";
@@ -32,14 +31,13 @@ interface LedgerRow {
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
-function rowFlags(values: DayValues, day: number, account: string): string[] {
+function rowFlags(values: DayValues, day: number): string[] {
     const flags: string[] = [];
-    const nullOk = NULL_AS_ZERO_ACCOUNTS.has(account);
-    if (values[day - 1] == null && !nullOk) flags.push("Missing");
+    if (values[day - 1] == null) flags.push("Missing");
     const spike = detectSpike(values, day);
     if (spike) flags.push(`Spike ×${spike.ratio.toFixed(1)}`);
     const streak = zeroStreak(values, day);
-    if (streak >= 3 && !nullOk && wasActiveBefore(values, day, streak)) flags.push(`Zero ${streak}d`);
+    if (streak >= 3 && wasActiveBefore(values, day, streak)) flags.push(`Zero ${streak}d`);
     return flags;
 }
 
@@ -91,7 +89,7 @@ export function DailyDatabase({
             values,
             mtd,
             dayValue: values[selectedDay - 1] ?? null,
-            flags: rowFlags(values, selectedDay, r.account_number),
+            flags: rowFlags(values, selectedDay),
         };
     }), [monthData, grid, selectedDay]);
 

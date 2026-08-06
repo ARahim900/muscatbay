@@ -13,7 +13,7 @@ import {
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";
-import { DC_METERS, NULL_AS_ZERO_ACCOUNTS, MAIN_BULK_ACCOUNT, ZONE_BULK_CONFIG } from "@/lib/water-accounts";
+import { DC_METERS, MAIN_BULK_ACCOUNT, ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/utils";
 import {
@@ -277,13 +277,11 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
 
     const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
 
-    // Build DC meter list with all daily readings.
-    // `rawValues` preserves the pre-normalization null so "active today" logic
-    // can distinguish a real 0 reading from an IRR/null-as-zero placeholder.
+    // Build DC meter list with all daily readings. Missing readings stay null;
+    // only an explicit source zero is displayed as 0.00.
     const dcMeters = useMemo(() => {
         return DC_METERS.map(dc => {
             const dbRow = accountMap.get(dc.account);
-            const isNullAsZero = dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account);
 
             const dailyValues: (number | null)[] = [];
             const rawValues: (number | null)[] = [];
@@ -291,7 +289,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
             for (let d = 1; d <= latestDay; d++) {
                 const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
                 rawValues.push(raw != null ? Number(raw) : null);
-                const val = raw != null ? r2(Number(raw)) : isNullAsZero ? 0 : null;
+                const val = raw != null ? r2(Number(raw)) : null;
                 dailyValues.push(val);
                 total += val ?? 0;
             }
@@ -300,7 +298,6 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 account: dc.account,
                 label: dc.meterName,
                 isIrr: dc.isIrr,
-                isNullAsZero,
                 dailyValues,
                 rawValues,
                 total: r2(total),
@@ -314,8 +311,8 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
     }, [days, dcMeters]);
     const grandTotal = r2(dayTotals.reduce((s, v) => s + v, 0));
 
-    // Active meters today (latest day) — measured from rawValues so IRR
-    // meters that were normalized null→0 aren't mistakenly counted as active.
+    // Active meters today are those with an actual stored reading, including
+    // an explicit zero.
     const activeMeters = dcMeters.filter(m => m.rawValues[latestDay - 1] !== null).length;
 
     // Filter & sort

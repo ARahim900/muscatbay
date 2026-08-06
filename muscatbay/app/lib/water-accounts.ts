@@ -237,18 +237,6 @@ export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'Sales Center',              account: '4300295', isIrr: false },
 ];
 
-// ─── NULL-as-zero accounts ────────────────────────────────────────────────────
-// These accounts show NULL readings in Grafana under normal operating conditions.
-// They should be displayed as 0 and NOT flagged as issues.
-
-export const NULL_AS_ZERO_ACCOUNTS = new Set([
-    '4300308', // Irrigation Tank (Zone FM)
-    '4300320', // Irrigation (Zone 3B)
-    '4300321', // Irrigation (Zone 5)
-    '4300326', // Village Square IRR
-    '4300294', // IRR Tank Z08
-]);
-
 // ─── Building Child Meter Details ─────────────────────────────────────────────
 // Maps each D-Building to its child meters with labels and types.
 // Used by the expanded building detail view in the Daily Report.

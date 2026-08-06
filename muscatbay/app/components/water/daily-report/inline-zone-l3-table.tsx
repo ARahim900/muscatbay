@@ -12,7 +12,7 @@ import {
     ChevronDown, ChevronRight, ArrowUpDown,
 } from "lucide-react";
 import {
-    BUILDING_CONFIG, BUILDING_CHILD_METERS, NULL_AS_ZERO_ACCOUNTS,
+    BUILDING_CONFIG, BUILDING_CHILD_METERS,
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
@@ -115,21 +115,20 @@ function ZoneL3Table({
         return zoneConfig.l3Accounts.map(account => {
             const building = buildingMap.get(account) ?? null;
             const dbRow = accountMap.get(account);
-            const isNullAsZero = NULL_AS_ZERO_ACCOUNTS.has(account);
 
             const dailyValues: (number | null)[] = [];
             let total = 0;
             for (let d = 1; d <= latestDay; d++) {
                 const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
-                const val = raw != null ? r2(Number(raw)) : isNullAsZero ? 0 : null;
+                const val = raw != null ? r2(Number(raw)) : null;
                 dailyValues.push(val);
                 total += val ?? 0;
             }
 
             return {
                 account,
-                isNullAsZero,
                 building,
+                isIrrigation: String(dbRow?.type ?? "").toLowerCase().includes("irr"),
                 // Meter column shows the meter NAME. Buildings use their curated
                 // config name; individual meters use the DB `meter_name` (e.g.
                 // "Building FM", "Irrigation Tank (Z01_FM)"), falling back to the
@@ -437,7 +436,7 @@ function ZoneL3Table({
                                                 <>
                                                     <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                                     {meter.label}
-                                                    {meter.isNullAsZero && <StatusChip label="IRR" color="primary" />}
+                                                    {meter.isIrrigation && <StatusChip label="IRR" color="primary" />}
                                                 </>
                                             )}
                                         </span>

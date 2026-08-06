@@ -15,7 +15,7 @@
  */
 
 import {
-    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS, NULL_AS_ZERO_ACCOUNTS,
+    ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 
@@ -358,19 +358,19 @@ export interface DailyExceptionRow {
     [key: string]: string;
 }
 
-/** Meter accounts eligible for spike / zero-streak scans (irrigation + null-as-zero excluded). */
+/** Meter accounts eligible for spike / zero-streak scans. */
 function scannableMeters(grid: DailyGrid): { account: string; name: string; context: string }[] {
     const out: { account: string; name: string; context: string }[] = [];
     const seen = new Set<string>();
     for (const z of ZONE_BULK_CONFIG) {
         for (const a of z.l3Accounts) {
-            if (NULL_AS_ZERO_ACCOUNTS.has(a) || seen.has(a)) continue;
+            if (seen.has(a)) continue;
             seen.add(a);
             out.push({ account: a, name: grid.names.get(a) ?? a, context: z.zoneName });
         }
     }
     for (const dc of DC_METERS) {
-        if (dc.isIrr || NULL_AS_ZERO_ACCOUNTS.has(dc.account) || seen.has(dc.account)) continue;
+        if (dc.isIrr || seen.has(dc.account)) continue;
         seen.add(dc.account);
         out.push({ account: dc.account, name: grid.names.get(dc.account) ?? dc.meterName, context: "Direct Connection" });
     }
