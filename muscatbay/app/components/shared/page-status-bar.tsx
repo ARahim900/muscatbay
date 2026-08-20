@@ -82,8 +82,8 @@ export function PageStatusBar({
 }: PageStatusBarProps) {
     if (loading) {
         return (
-            <div className="flex flex-col items-end gap-1.5" role="status" aria-label="Connecting to live data">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+            <div className="rounded-xl border border-border/70 bg-card px-3 py-2 shadow-sm" role="status" aria-label="Connecting to live data">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <Loader2 className="h-3 w-3 motion-safe:animate-spin" aria-hidden="true" />
                     Connecting…
                 </div>
@@ -107,24 +107,23 @@ export function PageStatusBar({
     const behindLabel = behind === 0 ? "today" : behind === 1 ? "1 day behind" : `${behind} days behind`;
 
     return (
-        <div className="flex flex-col items-end gap-1.5">
-            <div
-                className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium",
-                    isConnected
-                        ? "bg-mb-success-light text-[var(--mb-success-text)] dark:bg-mb-success-light/20"
-                        : "bg-mb-warning-light text-[var(--mb-warning-text)] dark:bg-mb-warning-light/20"
-                )}
-            >
-                {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
-                {isConnected ? connectedLabel : disconnectedLabel}
-            </div>
-            <div className="flex items-center gap-2 flex-wrap justify-end">
+        <div className="flex max-w-full flex-col items-stretch gap-1.5 sm:items-end">
+            <div className="flex max-w-full flex-wrap items-center justify-start gap-x-2.5 gap-y-1.5 rounded-xl border border-border/70 bg-card px-3 py-2 text-xs shadow-sm sm:justify-end">
+                <span
+                    className={cn(
+                        "inline-flex items-center gap-1.5 font-semibold",
+                        isConnected ? "text-[var(--mb-success-text)]" : "text-[var(--mb-warning-text)]"
+                    )}
+                >
+                    {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                    {isConnected ? connectedLabel : disconnectedLabel}
+                </span>
+                <span aria-hidden="true" className="hidden h-3 w-px bg-border sm:block" />
                 {children}
                 {isLive !== undefined && (
                     <span
                         className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
+                            "inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                             isLive
                                 ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--mb-success-text)]"
                                 : "bg-muted text-muted-foreground"
@@ -148,8 +147,8 @@ export function PageStatusBar({
                         suppressHydrationWarning
                         title={fetchedAt ? `Fetched at ${fetchedAt}` : undefined}
                         className={cn(
-                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium",
-                            FRESHNESS_STYLE[freshness].chip
+                            "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium",
+                            FRESHNESS_STYLE[freshness].chip,
                         )}
                     >
                         <FreshnessIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -188,7 +187,7 @@ export function PageStatusBar({
                 )}
             </div>
             {error && (
-                <span role="alert" className="text-[var(--mb-warning-text)] flex items-center gap-1 text-xs">
+                <span role="alert" className="flex items-center gap-1 text-xs text-[var(--mb-warning-text)] sm:justify-end">
                     <AlertTriangle className="h-3 w-3 shrink-0" aria-hidden="true" />
                     {error}
                 </span>

@@ -8,7 +8,7 @@ import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
-import { Card, CardContent } from "@/components/ui/card";
+import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Zap, DollarSign, MapPin, TrendingUp, Database, Search, Download, X, Filter, Gauge } from "lucide-react";
 import { MultiSelectDropdown, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
@@ -801,10 +801,15 @@ export default function ElectricityPage() {
                 ]}
             />
 
-            {/* Unified Date/Filter Control Card — shared by both tabs */}
+            <StatsGrid stats={stats} />
+
+            {/* Period controls stay available, but no longer push the current
+                operational summary below the first phone viewport. */}
             {allMonths.length > 0 && (
-                <Card className="card-elevated">
-                    <CardContent className="p-4 sm:p-5 md:p-6">
+                <PeriodFilterPanel
+                    periodLabel={analysisData.dateRangeLabel.replace(" - ", " – ")}
+                    metaLabel={`${analysisData.selectedMonths.length} months`}
+                >
                         <div className="flex flex-col gap-4">
                             {/* Year Selector Row */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -908,12 +913,10 @@ export default function ElectricityPage() {
                                 onReset={handleResetRange}
                             />
                         </div>
-                    </CardContent>
-                </Card>
+                </PeriodFilterPanel>
             )}
 
-            {/* Load Watch — inspection-first: category cards, load heatmap, exceptions,
-                with the KPI grid and trend charts kept below as supporting context. */}
+            {/* Load Watch — inspection-first: category cards, load heatmap and exceptions. */}
             {activeTab === 'watch' && (
                 <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     <LoadWatch
@@ -924,9 +927,6 @@ export default function ElectricityPage() {
                         onInspectType={(type) => { setAnalysisType(type); setSelectedMeter("All"); setActiveTab('data'); }}
                         onInspectCell={handleInspectCell}
                     />
-                    <SectionBoundary title="Consumption KPIs">
-                        <StatsGrid stats={stats} />
-                    </SectionBoundary>
                     <SectionBoundary title="Consumption trends">
                         <ElectricityOverviewCharts
                             filteredMonthlyData={filteredMonthlyData}

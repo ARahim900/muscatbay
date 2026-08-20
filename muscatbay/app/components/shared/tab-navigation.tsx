@@ -1,8 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { ChevronDown, LucideIcon } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 
@@ -90,21 +90,54 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
         return () => resizeObserver.disconnect();
     }, [activeIndex, tabKeys, variant]);
 
+    // On narrow screens, keep the selected tab visible after click, keyboard
+    // navigation, or a route-driven tab change. This also makes the remaining
+    // horizontally scrollable choices discoverable without truncating labels.
+    useEffect(() => {
+        const button = tabRefs.current[activeIndex];
+        if (!button) return;
+        button.scrollIntoView({
+            block: "nearest",
+            inline: "center",
+            behavior: prefersReducedMotion() ? "auto" : "smooth",
+        });
+    }, [activeIndex]);
+
     const pillClassName = variant === "secondary"
         ? "bg-card border border-border/80 shadow-md"
         : "bg-primary dark:bg-primary/80 shadow-md shadow-primary/20";
+    const useMobileSelect = tabs.length > 3;
 
     return (
         <div className={cn("w-full max-w-full", className)}>
+            {useMobileSelect && (
+                <label className="relative block sm:hidden">
+                    <span className="sr-only">{ariaLabel}</span>
+                    <select
+                        value={activeTab}
+                        onChange={(event) => onTabChange(event.target.value)}
+                        aria-label={ariaLabel}
+                        className="min-h-11 w-full appearance-none rounded-xl border border-border bg-card px-3 pe-10 text-sm font-semibold text-foreground shadow-sm outline-none transition-colors focus:border-secondary focus:ring-2 focus:ring-secondary/30"
+                    >
+                        {tabs.map((tab) => (
+                            <option key={tab.key} value={tab.key}>{tab.label}</option>
+                        ))}
+                    </select>
+                    <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-3 flex items-center text-muted-foreground">
+                        <ChevronDown className="h-4 w-4" />
+                    </span>
+                </label>
+            )}
             {/* role="tablist" must be on a div, not nav — nav's landmark role
                 would be overridden by tablist, removing it from AT navigation */}
             <div
                 ref={listRef}
                 className={cn(
-                    "relative inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full",
+                    "relative inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full scroll-px-4",
                     "bg-muted/80",
                     "border border-border/60",
-                    "shadow-sm"
+                    "shadow-sm",
+                    useMobileSelect && "hidden sm:inline-flex"
                 )}
                 role="tablist"
                 aria-label={ariaLabel}

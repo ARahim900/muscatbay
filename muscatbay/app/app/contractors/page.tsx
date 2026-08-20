@@ -507,6 +507,10 @@ export default function ContractorsPage() {
     const revenueContracts = contracts.filter(c => c.flow === 'Revenue');
     const totalContractValue = expenseContracts.reduce((s, c) => s + (c.total_value_omr ?? 0), 0);
     const currentYearExpense = matrix.rows.length > 0 ? matrix.rows[0].total : 0;
+    const compactContractValue = new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 2,
+    }).format(totalContractValue);
 
     // Counted from the SAME parsed end dates the Renewals tab renders, so the
     // KPI and the list can never disagree.
@@ -548,8 +552,9 @@ export default function ContractorsPage() {
         },
         {
             label: "TOTAL CONTRACT VALUE",
-            value: totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 }),
+            value: compactContractValue,
             unit: "OMR",
+            accessibleValue: `${totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
             subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
             icon: DollarSign,
             variant: "warning" as const,
@@ -1116,10 +1121,10 @@ export default function ContractorsPage() {
                                                 <FileText className="w-4 h-4" />
                                             </button>
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground hidden xl:table-cell">
-                                            {c["Renewal Plan"] ? <span className="flex items-center gap-1"><RefreshCw className="h-3 w-3 text-[var(--status-info)]" aria-hidden="true" />{c["Renewal Plan"]}</span> : '-'}
+                                        <TableCell className="text-muted-foreground hidden xl:table-cell max-w-[240px]" title={c["Renewal Plan"] || ''}>
+                                            {c["Renewal Plan"] ? <span className="flex items-start gap-1"><RefreshCw className="mt-0.5 h-3 w-3 shrink-0 text-[var(--status-info)]" aria-hidden="true" /><span className="line-clamp-2 break-words">{c["Renewal Plan"]}</span></span> : '-'}
                                         </TableCell>
-                                        <TableCell className="text-muted-foreground max-w-[200px] truncate hidden xl:table-cell" title={c.Note || ''}>{c.Note || '-'}</TableCell>
+                                        <TableCell className="text-muted-foreground max-w-[220px] hidden xl:table-cell" title={c.Note || ''}><span className="line-clamp-2 break-words">{c.Note || '-'}</span></TableCell>
                                     </TableRow>
                                     );
                                 })}

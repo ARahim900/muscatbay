@@ -124,7 +124,10 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
     const lattice =
         count <= 4 ? "grid-cols-2 xl:grid-cols-4" :
         count === 5 ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" :
-        count <= 6 ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6" :
+        // With the 220px sidebar, a six-column lattice at the 1280px `xl`
+        // breakpoint leaves KPI values too narrow and truncates OMR figures.
+        // Keep a readable 3×2 board until the 1536px `2xl` breakpoint.
+        count <= 6 ? "grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6" :
         "grid-cols-2 sm:grid-cols-3 xl:grid-cols-4";
 
     return (
@@ -139,13 +142,13 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                 className
             )}
         >
-            <div className="relative z-10 p-4 sm:p-6 md:p-8">
+            <div className="relative z-10 p-3 sm:p-5 md:p-6">
                 {/* Briefing header */}
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div className="min-w-0">
                         <div
                             data-deck-item
-                            className="mb-2 print:hidden [&_a]:text-white/55 [&_a:hover]:text-white [&_svg]:text-white/45 [&_span]:text-white/80"
+                            className="mb-2 hidden print:hidden sm:block [&_a]:text-white/55 [&_a:hover]:text-white [&_svg]:text-white/45 [&_span]:text-white/80"
                         >
                             <Breadcrumbs />
                         </div>
@@ -168,7 +171,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                         md+, beside them on small screens. row-reverse keeps the
                         mark on the right edge in both arrangements. */}
                     <div className="flex flex-row-reverse items-end justify-between gap-4 md:flex-col md:items-end md:flex-shrink-0 print:hidden">
-                        <DeckBrandMark className="h-14 sm:h-20 md:h-24 xl:h-28" />
+                        <DeckBrandMark className="h-10 sm:h-16 md:h-20 xl:h-24" />
                         {actions && (
                             <div data-deck-item className="flex items-center gap-2 md:pb-1">
                                 {actions}
@@ -180,7 +183,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                 {/* KPI lattice — one board, hairline-divided cells */}
                 <div
                     className={cn(
-                        "mt-5 sm:mt-6 grid gap-px rounded-xl overflow-hidden",
+                        "mt-4 grid gap-px overflow-hidden rounded-xl sm:mt-5",
                         "border border-white/10 bg-white/10",
                         "print:border-border print:bg-border",
                         lattice
@@ -211,7 +214,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                                         {stat.label}
                                     </p>
                                 </div>
-                                <p className="mt-2 sm:mt-2.5 text-xl font-semibold tabular-nums leading-tight truncate text-white print:text-(--primary)">
+                                <p className="mt-2 break-words text-lg font-semibold tabular-nums leading-tight text-white sm:mt-2.5 sm:text-xl print:text-(--primary)">
                                     <CountUp value={stat.value} delay={0.3 + index * 0.06} />
                                 </p>
                                 {/* The period label is ALWAYS rendered. It used to be
@@ -221,7 +224,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                                     "latest month" by a different rule. An unlabelled
                                     number from an unknown month is not a KPI. */}
                                 {stat.subtitle && (
-                                    <p className="mt-1.5 text-[11px] sm:text-xs text-white/55 truncate">{stat.subtitle}</p>
+                                    <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-white/55 sm:text-xs">{stat.subtitle}</p>
                                 )}
                                 {stat.trend && stat.trendValue && (
                                     <div className="mt-2 sm:mt-2.5 flex items-center text-[11px] sm:text-xs min-w-0">
@@ -259,7 +262,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                         );
 
                         const cellClassName = cn(
-                            "block min-w-0 p-3 sm:p-4",
+                            "block min-w-0 p-2.5 sm:p-3.5",
                             "bg-[color-mix(in_srgb,var(--sidebar)_78%,transparent)]",
                             "print:bg-transparent"
                         );
@@ -291,9 +294,12 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                 {/* Why the period labels above can differ between KPIs — disclosed
                     rather than left for the reader to notice. */}
                 {periodNote && (
-                    <p className="mt-2.5 text-[11px] leading-snug text-white/45 print:text-(--muted-foreground)">
-                        {periodNote}
-                    </p>
+                    <details className="group mt-2.5 text-[11px] leading-snug text-white/50 print:text-(--muted-foreground)">
+                        <summary className="w-fit cursor-pointer list-none font-semibold text-white/65 marker:content-none">
+                            How periods are calculated
+                        </summary>
+                        <p className="mt-1 max-w-4xl">{periodNote}</p>
+                    </details>
                 )}
             </div>
         </section>

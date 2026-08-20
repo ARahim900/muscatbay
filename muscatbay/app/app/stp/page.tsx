@@ -35,12 +35,12 @@ import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useAppNotifications } from "@/components/providers/notification-provider";
-import { useToast } from "@/components/ui/toast-provider";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";
 import { STP_THRESHOLDS } from "@/lib/thresholds";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { PlantWatch } from "@/components/stp/plant-watch";
+import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import {
     ChartViewToggle, STPVolumeChart, STPEconomicChart, STPTankerChart,
     type ChartView, type STPChartDataPoint,
@@ -193,46 +193,53 @@ export default function STPPage() {
     });
 
     // ── Notifications: alert when STP data changes exceed thresholds ────
-    // useAppNotifications → browser push + notification history
-    // useToast → in-app floating toast (visible immediately)
     const pushNotifications = useAppNotifications();
-    const toast = useToast();
 
-    // Stable refs for notification functions to avoid re-running the threshold effect
-    const toastRef = useRef(toast);
-    toastRef.current = toast;
+    // Stable ref avoids re-running the threshold effect when provider methods change.
     const pushRef = useRef(pushNotifications);
     pushRef.current = pushNotifications;
 
     // Track which alerts have already been shown to avoid repeats on re-renders
     const alertedRef = useRef<string | null>(null);
 
-    // Check latest data for threshold breaches when operations update
-    useEffect(() => {
-        if (allOperations.length === 0) return;
-        const latest = allOperations[0]; // Most recent record
+    const latestThresholdAlerts = useMemo(() => {
+        const latest = allOperations[0];
+        if (!latest) return [];
 
-        // Unique key for this record so we don't alert the same data twice
-        const alertKey = `${latest.date}-${latest.inlet_sewage}-${latest.tanker_trips}`;
+        const alerts: Array<{ key: string; title: string; message: string; tone: "warning" | "info" }> = [];
+        if (latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
+            alerts.push({
+                key: "high-inlet",
+                title: "High inlet sewage",
+                message: `${latest.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³ exceeds the ${STP_THRESHOLDS.INLET_TOAST_M3.toLocaleString('en-US')} m³ operating threshold.`,
+                tone: "warning",
+            });
+        }
+        if (latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
+            alerts.push({
+                key: "high-tanker-activity",
+                title: "High tanker activity",
+                message: `${latest.tanker_trips} tanker trips were recorded on ${format(new Date(latest.date), "dd MMM yyyy")}.`,
+                tone: "info",
+            });
+        }
+        return alerts;
+    }, [allOperations]);
+
+    // Keep browser notification history, while presenting active alerts inside
+    // the page so they cannot cover the title or status controls on phones.
+    useEffect(() => {
+        const latest = allOperations[0];
+        if (!latest || latestThresholdAlerts.length === 0) return;
+
+        const alertKey = `${latest.date}-${latest.inlet_sewage}-${latest.tanker_trips}-${latestThresholdAlerts.map((alert) => alert.key).join("-")}`;
         if (alertedRef.current === alertKey) return;
         alertedRef.current = alertKey;
 
-        // Gates come from lib/thresholds.ts — the same file Plant Watch, the
-        // heatmap and the findings register read, so a toast can never claim a
-        // different story from the surface below it.
-        if (latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
-            const msg = `Inlet sewage is ${latest.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³ — exceeds the ${STP_THRESHOLDS.INLET_TOAST_M3.toLocaleString('en-US')} m³ threshold`;
-            toastRef.current.warning("STP Alert: High Inlet", msg);
-            pushRef.current.warning("STP Alert: High Inlet", msg);
-        }
-
-        // Alert if tanker trips are unusually high for a single day
-        if (latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
-            const msg = `${latest.tanker_trips} tanker trips recorded today`;
-            toastRef.current.info("STP: High Tanker Activity", msg);
-            pushRef.current.info("STP: High Tanker Activity", msg);
-        }
-    }, [allOperations]);
+        latestThresholdAlerts.forEach((alert) => {
+            pushRef.current[alert.tone](`STP: ${alert.title}`, alert.message);
+        });
+    }, [allOperations, latestThresholdAlerts]);
 
     useEffect(() => {
         // Cache hit → already rendering last data; refresh silently in background.
@@ -743,11 +750,45 @@ export default function STPPage() {
                 </div>
             )}
 
+            {latestThresholdAlerts.length > 0 && (
+                <div className="grid gap-2" aria-label="Current STP threshold alerts">
+                    {latestThresholdAlerts.map((alert) => (
+                        <div
+                            key={alert.key}
+                            role="status"
+                            className="flex items-start gap-2 rounded-[10.5px] border border-[var(--status-warning)]/35 bg-[var(--status-warning-bg)] px-4 py-3 text-[var(--mb-warning-text)]"
+                        >
+                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+                            <div>
+                                <p className="text-sm font-semibold">{alert.title}</p>
+                                <p className="mt-0.5 text-xs leading-relaxed">{alert.message}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            <TabNavigation
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                variant="secondary"
+                tabs={[
+                    { key: "watch", label: "Plant Watch", icon: Gauge },
+                    { key: "dashboard", label: "Operations & Trends", icon: Activity },
+                ]}
+            />
+
+            <StatsGrid stats={stats} />
+
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}
             {allMonths.length > 0 && (
-                <Card className="card-elevated">
-                    <CardContent className="p-4 sm:p-5 md:p-6">
+                <PeriodFilterPanel
+                    periodLabel={selectedDateRange.start && selectedDateRange.end
+                        ? `${selectedDateRange.start} – ${selectedDateRange.end}`
+                        : "Select a period"}
+                    metaLabel={`${operations.length} days`}
+                >
                         <div className="flex flex-col gap-4">
                             {/* Year Selector Row */}
                             <div className="flex items-center justify-between flex-wrap gap-3">
@@ -790,20 +831,8 @@ export default function STPPage() {
                                 onReset={handleResetRange}
                             />
                         </div>
-                    </CardContent>
-                </Card>
+                </PeriodFilterPanel>
             )}
-
-            {/* Tabs — inspection-first: Plant Watch leads, analytics/records follow */}
-            <TabNavigation
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                variant="secondary"
-                tabs={[
-                    { key: "watch", label: "Plant Watch", icon: Gauge },
-                    { key: "dashboard", label: "Operations & Trends", icon: Activity },
-                ]}
-            />
 
             {/* Plant Watch — process-health cards, day heatmap, exceptions & actions */}
             {activeTab === "watch" && (
@@ -814,11 +843,6 @@ export default function STPPage() {
 
             {activeTab === "dashboard" && (
                 <div id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                    {/* Unified Stats Grid */}
-                    <SectionBoundary title="Operations KPIs">
-                        <StatsGrid stats={stats} />
-                    </SectionBoundary>
-
                     {/* Water Treatment Volumes Chart */}
                     <SectionBoundary title="Water treatment volumes">
                     <Card className="card-elevated">

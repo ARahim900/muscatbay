@@ -29,10 +29,11 @@ import {
     BarChart3, Database, List, ChevronRight, CalendarClock, type LucideIcon,
 } from "lucide-react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { SectionBoundary } from "@/components/shared/section-boundary";
+import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
+import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
 import type { WaterMeter } from "@/lib/water-data";
@@ -347,12 +348,12 @@ interface PeriodFilterProps {
 }
 /**
  * Year selector + date-range picker, built from the app's shared
- * `DateRangePicker` and `Card` so it matches every other section's filter bar.
+ * `DateRangePicker` and the shared compact disclosure used by other modules.
  */
 function PeriodFilter({ data, year, nMonths, startMonth, endMonth, onRangeChange, onYear, onReset }: PeriodFilterProps) {
+    const periodLabel = startMonth === endMonth ? startMonth : `${startMonth} – ${endMonth}`;
     return (
-        <Card className="card-elevated">
-            <CardContent className="p-4 sm:p-5 md:p-6">
+        <PeriodFilterPanel periodLabel={periodLabel} metaLabel={`${nMonths} ${nMonths === 1 ? "month" : "months"}`}>
                 <div className="flex flex-col gap-4">
                     {/* Year selector */}
                     <div className="flex items-center justify-between flex-wrap gap-3">
@@ -391,9 +392,36 @@ function PeriodFilter({ data, year, nMonths, startMonth, endMonth, onRangeChange
                         onReset={onReset}
                     />
                 </div>
-            </CardContent>
-        </Card>
+        </PeriodFilterPanel>
     );
+}
+
+function WaterSummary({ period, lossDelta, periodLabel }: Pick<OverviewProps, "period" | "lossDelta" | "periodLabel">) {
+    const efficiency = pct(period.A3, period.A1);
+    const lossCost = Math.max(0, period.loss) * LOSS_RATE_OMR;
+    const stats: StatItem[] = [
+        { label: "Total Supply (A1)", value: fmt(period.A1), unit: "m³", subtitle: periodLabel, icon: Droplet, variant: "water" },
+        { label: "Distribution (A2)", value: fmt(period.A2), unit: "m³", subtitle: "Zone bulk + direct", icon: Droplet, variant: "info" },
+        { label: "Consumption (A3)", value: fmt(period.A3), unit: "m³", subtitle: "Billed at end-user", icon: CheckCircle2, variant: "success" },
+        { label: "Efficiency", value: efficiency.toFixed(1), unit: "%", subtitle: `Target ≥ ${100 - TARGET_LOSS_PCT}%`, icon: Gauge, variant: "success" },
+        {
+            label: "Total Loss",
+            value: fmt(period.loss),
+            unit: "m³",
+            subtitle: `${period.lossPct}% of supply`,
+            icon: AlertTriangle,
+            variant: "danger",
+            ...(lossDelta && {
+                trend: lossDelta.up ? "up" as const : "down" as const,
+                trendValue: lossDelta.text,
+                trendContext: "",
+                invertTrend: true,
+            }),
+        },
+        { label: "Loss Cost Estimate", value: fmt(lossCost), unit: "OMR", subtitle: `${LOSS_RATE_OMR} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
+    ];
+
+    return <StatsGrid stats={stats} />;
 }
 
 /* ================= OVERVIEW ================= */
@@ -407,7 +435,7 @@ interface OverviewProps {
     lossDelta: { up: boolean; text: string } | null;
     periodLabel: string;
 }
-function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewProps) {
+function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
     const chartMotion = useChartMotion();
     const a2f = pct(t.A2, t.A1) / 100, a3f = pct(t.A3, t.A1) / 100;
     const typePie = t.types.map((x) => ({ name: x.type.replace("Residential ", "").replace("(", "").replace(")", ""), value: x.total, pct: x.pct }));
@@ -416,20 +444,9 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
     const trend = monthly.map((p, i) => ({ m: MONTHS[i], A1: p.A1, A3: p.A3, loss: p.loss, lossPct: p.lossPct, target: TARGET_LOSS_PCT }));
     const selM = isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]}` : sel != null ? MONTHS[sel] : null;
     const selectedLineMonths = isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : [];
-    const efficiency = pct(t.A3, t.A1);
-    const lossCost = Math.max(0, t.loss) * LOSS_RATE_OMR;
 
     return (
         <div className="space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-                <Kpi icon={Droplet} label="Total Supply (A1)" value={fmt(t.A1)} unit="m³" bg="var(--chart-bg-blue)" ic="var(--module-water)" sub={periodLabel} />
-                <Kpi icon={Droplet} label="Distribution (A2)" value={fmt(t.A2)} unit="m³" bg="var(--chart-bg-cyan)" ic="var(--chart-1)" sub="Zone bulk + direct" />
-                <Kpi icon={CheckCircle2} label="Consumption (A3)" value={fmt(t.A3)} unit="m³" bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub="Billed at end-user" />
-                <Kpi icon={Gauge} label="Efficiency" value={`${efficiency}%`} bg="var(--chart-bg-green)" ic="var(--mb-success-text)" sub={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
-                <Kpi icon={AlertTriangle} label="Total Loss" value={fmt(t.loss)} unit="m³" bg="var(--chart-bg-red)" ic="var(--mb-danger-text)" sub={`${t.lossPct}% of supply`} delta={lossDelta} />
-                <Kpi icon={FileSpreadsheet} label="Loss Cost Estimate" value={fmt(lossCost)} unit="OMR" bg="var(--chart-bg-orange)" ic="var(--mb-warning-text)" sub={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
-            </div>
-
             {(t.missingMeters > 0 || t.negativeMeters > 0) && (
                 <p className="flex items-start gap-2 px-3 py-2 text-[11px] rounded-lg" style={{ background: "var(--mb-warning-light)", color: "var(--mb-warning-text)" }}>
                     <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-px" aria-hidden="true" />
@@ -470,7 +487,7 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                 <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Monthly Supply, Consumption &amp; Loss" icon={Activity}
                     note={`Bars are volumes (m³, left axis); lines are loss as a share of supply against the ${TARGET_LOSS_PCT}% target (%, right axis).${selM ? ` Highlighted: ${selM}.` : ""}`}>
                     <div className="flex-1 min-h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <ComposedChart data={trend} margin={{ top: 6, right: 4, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
@@ -488,7 +505,7 @@ function Overview({ period: t, monthly, sel, lossDelta, periodLabel }: OverviewP
                     </div>
                 </Panel>
                 <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Consumption by Type" icon={Layers} note={`Share of A3 — ${periodLabel}.`}>
-                    <ResponsiveContainer width="100%" height={210}>
+                    <ResponsiveContainer width="100%" height={210} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <PieChart>
                             <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={80} paddingAngle={2} {...chartMotion}>
                                 {typePie.map((e, i) => <Cell key={i} fill={TYPECOL[i % TYPECOL.length]} />)}
@@ -601,7 +618,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <Panel title="Monthly — Main Bulk vs Reached Distribution" icon={Activity} note="Gap between the bars each month is the trunk-main loss (A1 − A2). A wildly swinging or negative gap points to meter-reading timing, not real leakage.">
-                        <ResponsiveContainer width="100%" height={260}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <ComposedChart data={tmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
@@ -616,7 +633,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                         </ResponsiveContainer>
                     </Panel>
                     <Panel title="What makes up A2" icon={Layers} note="Every zone-bulk & direct-connection meter A1 must reconcile against. A missing or under-reading meter here shows up as trunk loss.">
-                        <ResponsiveContainer width="100%" height={260}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <BarChart data={comp.slice(0, 10).map((c) => ({ name: c.name.length > 18 ? c.name.slice(0, 18) + "…" : c.name, val: c.val }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
@@ -744,7 +761,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     <Panel title="Monthly — Supply vs Consumption" icon={Activity} note="Gap between the bars each month is the loss.">
-                        <ResponsiveContainer width="100%" height={260}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <ComposedChart data={zmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                                 <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
@@ -759,7 +776,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                         </ResponsiveContainer>
                     </Panel>
                     <Panel title="Top Individual Consumers" icon={Layers} note="Largest end-user meters in this zone for the period. Meters with no reading are excluded rather than plotted as zero.">
-                        <ResponsiveContainer width="100%" height={260}>
+                        <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <BarChart data={meters.filter((m) => m.val != null).slice(0, 10).map((m) => ({ name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name, val: m.val as number }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
@@ -888,7 +905,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <Panel title="Loss % by Zone" icon={AlertTriangle} note="Higher = more water lost inside the zone. Pick a zone above to drill in.">
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <BarChart data={bar} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                             <XAxis type="number" tick={{ fontSize: 11, fill: C.muted }} unit="%" />
@@ -899,7 +916,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                     </ResponsiveContainer>
                 </Panel>
                 <Panel title="Supply vs Consumption by Zone" icon={Droplet} note="The gap between the two bars is the loss.">
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <BarChart data={real.map((z) => ({ name: z.name, bulk: z.bulk, end: z.end }))} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
                             <XAxis dataKey="name" tick={{ fontSize: 10, fill: C.muted }} interval={0} angle={-15} textAnchor="end" height={50} />
@@ -1022,7 +1039,7 @@ function AssetsView({ period }: { period: PeriodResult }) {
                 <SeverityLegend caption="Loss band:" />
             </Panel>
             <Panel title="Direct Connections" icon={Plug} note="Meters fed straight from the main inlet, bypassing the zones.">
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                     <BarChart data={dcs.slice(0, 10).map((d) => ({ name: d.name.length > 24 ? d.name.slice(0, 24) + "…" : d.name, total: d.total }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                         <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
@@ -1439,6 +1456,8 @@ export function WaterMonthlyDashboard({
     return (
         <div className="water-monthly space-y-5">
             <TabNavigation activeTab={tab} onTabChange={setTab} tabs={SECTION_TABS} ariaLabel="Water monthly sections" />
+
+            {tab === "overview" && <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />}
 
             <PeriodFilter
                 data={data}

@@ -15,6 +15,8 @@ export type StatVariant = "primary" | "secondary" | "success" | "warning" | "dan
 export interface StatItem {
     label: string;
     value: string;
+    /** Full, unabridged value announced to assistive technology. */
+    accessibleValue?: string;
     /** Optional unit rendered small + static after the value (e.g. "m³", "OMR",
      *  "MWh") — matches the monthly Kpi tiles and keeps long numbers from
      *  truncating. Prefer this over baking the unit into `value`. */
@@ -26,6 +28,7 @@ export interface StatItem {
     bgColor?: string;
     trend?: 'up' | 'down' | 'neutral';
     trendValue?: string;
+    trendContext?: string;
     href?: string;
     /**
      * Invert the good/bad meaning of the trend direction.
@@ -90,7 +93,8 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
     const gridCols =
         count === 3 ? "grid-cols-2 sm:grid-cols-3" :
         count <= 4 ? "grid-cols-2 sm:grid-cols-2 lg:grid-cols-4" :
-        count <= 6 ? "grid-cols-2 sm:grid-cols-3" :
+        count === 5 ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" :
+        count === 6 ? "grid-cols-2 sm:grid-cols-3 2xl:grid-cols-6" :
         "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
     return (
@@ -137,13 +141,13 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                 <>
                     {/* Icon tile on the left + label/value to its right — mirrors the
                         water/monthly Kpi tiles (the app-wide reference). */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5">
                         <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
                             style={{ background: tileBg }}
                         >
                             <stat.icon
-                                className={cn("w-5 h-5", !stat.color && iconClass)}
+                                className={cn("h-4 w-4", !stat.color && iconClass)}
                                 style={stat.color ? { color: stat.color } : undefined}
                             />
                         </div>
@@ -154,7 +158,7 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                                 {stat.label}
                             </p>
                             <h3 className={cn(
-                                "text-xl font-semibold tabular-nums truncate text-foreground leading-tight tracking-tight",
+                                "break-words text-lg font-semibold tabular-nums leading-tight tracking-tight text-foreground sm:text-xl",
                                 justChanged && "mb-value-changed-ink"
                             )}>
                                 <CountUp value={stat.value} delay={index * 0.06} />
@@ -164,7 +168,7 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                     </div>
 
                     {/* Trend indicator — small text below, colored green/red */}
-                    {stat.trend && stat.trendValue && (
+                    {stat.trend && stat.trendValue && stat.trendValue !== "—" && (
                         <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
                             <span className={cn(
                                 "flex items-center font-medium",
@@ -177,12 +181,14 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                                 {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
                                 {stat.trendValue}
                             </span>
-                            <span className="text-muted-foreground ms-1.5 text-xs">vs last month</span>
+                            {(stat.trendContext ?? "vs last month") && (
+                                <span className="ms-1.5 text-xs text-muted-foreground">{stat.trendContext ?? "vs last month"}</span>
+                            )}
                         </div>
                     )}
 
-                    {stat.subtitle && !stat.trendValue && (
-                        <p className="text-[11px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2 truncate">{stat.subtitle}</p>
+                    {stat.subtitle && (!stat.trendValue || stat.trendValue === "—") && (
+                        <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground sm:text-xs">{stat.subtitle}</p>
                     )}
 
                     {stat.status && (() => {
@@ -205,7 +211,7 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
             );
 
             const baseCardClassName = cn(
-        "mb-glow bg-card p-4 rounded-lg border border-border shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] group/stat overflow-hidden hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] hover:border-secondary/40 transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) motion-safe:active:scale-[0.99]",
+        "mb-glow group/stat min-h-24 overflow-hidden rounded-lg border border-border bg-card p-3 shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) hover:border-secondary/40 hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] motion-safe:active:scale-[0.99] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]",
         // Only present for the ~1.4s after this figure actually moved.
         justChanged && "mb-value-changed"
     );
@@ -215,13 +221,19 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                     key={stat.label}
                     href={stat.href}
                     data-glow
-                    aria-label={`${stat.label}: ${stat.value}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
                     className={cn(baseCardClassName, "block cursor-pointer")}
                 >
                     {cardContent}
                 </Link>
             ) : (
-                <div key={stat.label} data-glow className={baseCardClassName}>
+                <div
+                    key={stat.label}
+                    data-glow
+                    role="group"
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}`}
+                    className={baseCardClassName}
+                >
                     {cardContent}
                 </div>
             );

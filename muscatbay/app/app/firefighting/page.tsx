@@ -283,7 +283,7 @@ export default function FirefightingPage() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <PageHeader
                     title="Fire Safety Management"
-                    description="BEC Annual Maintenance Contract (MIS-SBJ-25-077) · PPM 3× per year across 4 zones · Nov 2025 – Oct 2027"
+                    description="Fire-safety assets, preventive maintenance compliance and open issues"
                 />
                 <PageStatusBar isConnected={connected} isLive={isLive} lastUpdated={lastUpdated} error={error} />
             </div>
@@ -314,7 +314,7 @@ export default function FirefightingPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="h-[260px]">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                                                 <BarChart data={equipByZoneChart} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                                                     <XAxis dataKey="zone" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
@@ -333,7 +333,7 @@ export default function FirefightingPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <div className="h-[260px]">
-                                            <ResponsiveContainer width="100%" height="100%">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                                                 <PieChart>
                                                     <Pie
                                                         data={equipByStatusChart}
