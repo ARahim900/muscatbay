@@ -24,6 +24,7 @@ import {
   Loader2,
   Waves,
   Wrench,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface NavigationItem {
@@ -48,6 +49,9 @@ const navGroups: NavGroup[] = [
     id: "overview",
     items: [
       { id: "dashboard", name: "Dashboard", icon: LayoutDashboard, href: "/", module: "dashboard" },
+      // Cross-module oversight sits beside the dashboard rather than inside a
+      // domain group — it reports on every module, it is not one of them.
+      { id: "monitoring", name: "Monitoring", icon: ClipboardCheck, href: "/monitoring", module: "monitoring" },
     ],
   },
   {

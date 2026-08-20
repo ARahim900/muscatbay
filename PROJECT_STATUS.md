@@ -110,6 +110,7 @@ and `next build` were all green before and after.
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
 | Fire Safety | `/firefighting` | ✅ Live (redesigned 2026-06-30) | `fire_safety_equipment`, `fire_ppm_activities`, `fire_issues_register`, `fire_ppm_contacts` | BEC AMC: 3 PPM cycles × 4 zones; aligned with HVAC layout (PRs #26/#27) |
 | Pest Control | `/pest-control` | ✅ Live | pest tables | **2026-07-10:** the AITable embed (cross-origin iframe — internals can't be restyled) now follows the app's light/dark theme via its `theme` param, sits behind a card-surface loading cover until it finishes loading, and gains an "Open full view" header action |
+| Monitoring | `/monitoring` | ✅ Live, added 2026-08-20 | `water_daily_consumption`, `stp_operations`, `electricity_meters`/`electricity_readings`, `water_meters`/`water_monthly_consumption`, `Contractor_Tracker` | Data-completeness agent. Three tabs: **Daily report** (water daily readings vs the `lib/water-accounts.ts` register × the last 7 *due* days, STP daily log, and the STP-vs-water cross-check), **Monthly report** (electricity + water billing reads for the newest *due* month, trended over 6), **Expiry & renewals** (the 90/60/30/7-day contract ladder). Rules are pure and live in `lib/monitoring/`; the reader is `functions/api/monitoring.ts`. Key idea is **due**, not elapsed: today's readings are still being uploaded and the month that just closed is inside its import window, so neither is ever reported as missing (`DAILY_DUE_AFTER_DAYS = 1`, `MONTHLY_DUE_AFTER_DAYS = 5`). Every finding separates a **confirmed issue** (a fact with the figures quoted) from a **recommended check**, and lists the affected account numbers / dates / contracts. Carries no owner, status, due date or close-out — see §4b |
 | Firefighting quotes, settings, auth pages | various | ✅ Live | | |
 
 **2026-07-10 — cross-module UX/perf pass** (applies to Dashboard, Water,
@@ -379,6 +380,21 @@ stops at last month" problem is structurally closed:
   which is exactly why these months carry the provenance label.
 
 ## 4. Known gaps & data debt
+
+- **Two contract-date parsers disagree — found 2026-08-20, UNRESOLVED (owner
+  decision needed).** `parseTrackerDate` in `lib/operational-alerts.ts` reads
+  `3/4/2026` as **4 March** (US, month-first); `parseContractDate` in
+  `components/contractors/contract-dates.tsx` reads the same string as
+  **3 April** (day-first, "Oman convention"). Where both components are ≤ 12 the
+  two are up to eleven months apart, so one contract can show different expiry
+  status on `/contractors` than in the alert bell. Neither was changed, because
+  which convention `Contractor_Tracker` actually uses is a question about the
+  data, not the code. Instead `/monitoring` **reports every ambiguous string it
+  finds** as a data-integrity finding naming the contractor and the raw value,
+  and the renewals table tags those rows `ambiguous`. Fix path: decide the
+  register's convention, re-enter the flagged dates as `yyyy-mm-dd` (both
+  parsers agree on ISO), then collapse the two parsers into one.
+
 
 - **Ticker always scrolls + STP down to four cards — 2026-07-29 (owner follow-up).**
   - **The "static when everything fits" ticker rule is retired.** The
@@ -776,7 +792,35 @@ Genuinely useful data that exists but is unsurfaced, if ever wanted:
 `fire_quotations` (4 rows) + `fire_quotation_items` (7 rows) are real, modelled
 tables that no screen reads.
 
+**Where `/monitoring` sits against this boundary (2026-08-20).** The module
+reports *whether an entry exists* and *whether what exists can be true* — both
+facts about data already in the database — and, for contracts, the end date the
+register already holds plus the horizon it has crossed. That is reporting, which
+§1's rule explicitly wants. It deliberately does **not** carry an owner, a
+status, a due date, an SLA, an assignment or a close-out on any finding, and
+`__tests__/lib/monitoring/renewals.test.ts` asserts those fields are absent so a
+later change cannot quietly add them. Its "recommended check" column is a
+suggestion of what to go and look at, in the same shape as the existing
+findings register's suggested-action column — not a work order.
+
 ## 5. In-flight work (open PRs)
+
+- **Monitoring agent (`/monitoring`) — 2026-08-20, draft.** New module described
+  in §2. Three owner questions are answered with defaults that live in exactly
+  one place, `lib/monitoring/config.ts`, and can be changed there:
+  *which sections are monitored monthly* (electricity + water billing reads
+  today; every unmonitored module is **named in every report** so silence is
+  never mistaken for health), *how reports are delivered* (in-app dashboard +
+  CSV export + the existing notification bell — **email is not implemented**
+  and needs an SMTP/edge-function decision; the composers return plain objects
+  so a digest can be serialised later without re-deriving anything), and
+  *renewal notification frequency* (90/60/30/7 days, then a standing critical
+  item once the end date passes). Side effect worth knowing: the alert bell's
+  contract rule now buckets by horizon, which fixes a real gap — the old
+  fingerprint was the contract *set*, so a contract that entered the window at
+  59 days notified once and then slid silently to 7 days with nothing further
+  raised.
+
 
 - **#49 Front-end & O&M review remediation + Expo mobile foundation** — draft,
   active. Contents described in §2 (2026-07-25). Also introduces `mobile/`, an

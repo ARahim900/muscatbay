@@ -31,13 +31,14 @@ export type ModuleKey =
     | "assets"
     | "pest-control"
     | "firefighting"
+    | "monitoring"
     | "settings";
 
 /** Every module in the app, in sidebar order. */
 const ALL_MODULES: ModuleKey[] = [
     "dashboard", "water", "electricity", "stp",
     "contractors", "hvac", "assets", "pest-control", "firefighting",
-    "settings",
+    "monitoring", "settings",
 ];
 
 /**
@@ -82,6 +83,7 @@ export const MODULE_ROUTE: Record<ModuleKey, string> = {
     "assets": "/assets",
     "pest-control": "/pest-control",
     "firefighting": "/firefighting",
+    "monitoring": "/monitoring",
     "settings": "/settings",
 };
 

@@ -202,6 +202,31 @@ describe('evaluateContractAlerts', () => {
         expect(alerts).toHaveLength(0);
     });
 
+    it('re-raises at each renewal horizon instead of once at 60 days', () => {
+        // One contract per horizon: 5d → 7, 20d → 30, 45d → 60, 80d → 90.
+        const alerts = evaluateContractAlerts(
+            [
+                contractor({ Contractor: 'Week Co', 'End Date': '7/18/2026' }),
+                contractor({ Contractor: 'Month Co', 'End Date': '8/2/2026' }),
+                contractor({ Contractor: 'Quarter Co', 'End Date': '8/27/2026' }),
+                contractor({ Contractor: 'Season Co', 'End Date': '10/1/2026' }),
+            ],
+            NOW,
+        );
+        expect(alerts.map((a) => a.id)).toEqual([
+            'contracts-expiring-7:Week Co',
+            'contracts-expiring-30:Month Co',
+            'contracts-expiring-60:Quarter Co',
+            'contracts-expiring-90:Season Co',
+        ]);
+        // The fingerprint carries the horizon, so a contract counting down from
+        // 59 to 7 days produces a fresh alert at each crossing rather than
+        // going quiet after the first one.
+        const at59 = evaluateContractAlerts([contractor({ Contractor: 'X Co', 'End Date': '9/10/2026' })], NOW);
+        const at7 = evaluateContractAlerts([contractor({ Contractor: 'X Co', 'End Date': '7/20/2026' })], NOW);
+        expect(at59[0].id).not.toBe(at7[0].id);
+    });
+
     it('aggregates multiple expired contracts into one alert, oldest first', () => {
         const alerts = evaluateContractAlerts(
             [

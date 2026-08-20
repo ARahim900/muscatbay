@@ -30,3 +30,4 @@ export * from './water';
 export * from './csv-upload';
 export * from './fire-safety';
 export * from './gulf-expert';
+export * from './monitoring';
