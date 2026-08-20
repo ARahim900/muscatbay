@@ -66,6 +66,20 @@ describe('renewal bands', () => {
         expect(item.horizon).toBeNull();
     });
 
+    it('does not claim a lapsed contract is "marked active" when the register says otherwise', () => {
+        // Status is free text: the register holds "Retaining" alongside Active
+        // and Expired. The band only tests "past end date and not closed", so
+        // neither the label nor the headline may assert more than that.
+        const { section, items } = evaluateRenewals(
+            [contract({ Contractor: 'Retained Co', Status: 'Retaining', 'End Date': '2026-07-01' })],
+            NOW,
+        );
+        expect(items[0].band).toBe('expired');
+        expect(section.headline).not.toContain('marked active');
+        expect(section.headline).toContain('1 past their end date and not closed');
+        expect(section.breakdown.find((r) => r.key === 'expired')!.label).not.toContain('marked active');
+    });
+
     it('reports an unreadable end date as unreadable, never as far-future', () => {
         const [item] = buildRenewalItems([contract({ 'End Date': 'when the job is done' })], NOW);
         expect(item.band).toBe('unreadable');

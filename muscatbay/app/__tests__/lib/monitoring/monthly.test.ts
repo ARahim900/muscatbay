@@ -77,7 +77,7 @@ describe('electricity monthly coverage', () => {
         const missing = findings.find((f) => f.id.startsWith('electricity-monthly-missing'))!;
         expect(missing.severity).toBe('critical');
         expect(missing.confirmed).toContain('2 meters have no reading row');
-        expect(missing.confirmed).toContain('understated by an unknown amount');
+        expect(missing.confirmed).toContain('without them');
         expect(missing.affected.map((a) => a.id)).toEqual(['R53705', 'R54672']);
     });
 

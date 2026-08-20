@@ -180,7 +180,9 @@ describe('evaluateContractAlerts', () => {
         );
         expect(alerts).toHaveLength(1);
         expect(alerts[0].level).toBe('warning');
-        expect(alerts[0].message).toContain('19 days');
+        expect(alerts[0].title).toContain('19 days');
+        expect(alerts[0].message).toContain('1 Aug 2026');
+        expect(alerts[0].message).toContain('30-day renewal horizon');
     });
 
     it('ignores rows already marked Expired (administratively closed)', () => {
@@ -225,6 +227,34 @@ describe('evaluateContractAlerts', () => {
         const at59 = evaluateContractAlerts([contractor({ Contractor: 'X Co', 'End Date': '9/10/2026' })], NOW);
         const at7 = evaluateContractAlerts([contractor({ Contractor: 'X Co', 'End Date': '7/20/2026' })], NOW);
         expect(at59[0].id).not.toBe(at7[0].id);
+    });
+
+    it('fingerprints an expiry warning on the contract, so a neighbour moving horizon cannot re-raise it', () => {
+        // Both inside the 90-day horizon; A is about to drop into the 60-day one.
+        const together = evaluateContractAlerts(
+            [
+                contractor({ Contractor: 'A Co', 'End Date': '10/5/2026' }),
+                contractor({ Contractor: 'B Co', 'End Date': '10/9/2026' }),
+            ],
+            NOW,
+        );
+        expect(together.map((a) => a.id)).toEqual([
+            'contracts-expiring-90:A Co',
+            'contracts-expiring-90:B Co',
+        ]);
+
+        // A has crossed into 60. B crossed nothing, so its fingerprint — the
+        // ack and push de-duplication key — must be byte-identical.
+        const afterAMoves = evaluateContractAlerts(
+            [
+                contractor({ Contractor: 'A Co', 'End Date': '9/5/2026' }),
+                contractor({ Contractor: 'B Co', 'End Date': '10/9/2026' }),
+            ],
+            NOW,
+        );
+        const b = afterAMoves.find((a) => a.id.endsWith('B Co'))!;
+        expect(b.id).toBe('contracts-expiring-90:B Co');
+        expect(b.title).toContain('B Co');
     });
 
     it('aggregates multiple expired contracts into one alert, oldest first', () => {

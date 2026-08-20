@@ -207,9 +207,11 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
  * entered the window at 59 days produced exactly one notification and then
  * slid silently to 7 days with nothing further raised — the opposite of what
  * a renewal warning is for. Bucketing by `RENEWAL_HORIZON_DAYS` puts the
- * horizon in the fingerprint, so each crossing (90 → 60 → 30 → 7) raises once
- * and only once. `lib/monitoring/renewals.ts` owns the ladder; the register
- * on /monitoring and this feed therefore read the same horizons.
+ * horizon in the fingerprint — alongside the contract, not the bucket's
+ * membership — so each contract's crossings (90 → 60 → 30 → 7) raise once and
+ * only once each, and one contract moving down a horizon cannot re-raise its
+ * neighbours. `lib/monitoring/renewals.ts` owns the ladder; the register on
+ * /monitoring and this feed therefore read the same horizons.
  */
 export function evaluateContractAlerts(
     contractors: ContractorTracker[] | null | undefined,
@@ -258,18 +260,24 @@ export function evaluateContractAlerts(
         });
     }
 
-    // Tightest horizon first — the most urgent group leads the feed.
+    // Tightest horizon first — the most urgent contracts lead the feed.
     for (const horizon of [...expiring.keys()].sort((a, b) => a - b)) {
         const group = (expiring.get(horizon) ?? []).sort((a, b) => a.days - b.days);
-        const setKey = group.map((e) => e.name).sort().join("|");
-        alerts.push({
-            id: `contracts-expiring-${horizon}:${setKey}`,
-            level: "warning",
-            module: "contractors",
-            title: `${group.length} contract${group.length > 1 ? "s" : ""} expiring within ${horizon} days`,
-            message: `${capList(group.map((e) => `${e.name} in ${e.days} day${e.days === 1 ? "" : "s"} (${fmtDateUTC(e.end)})`))}.`,
-            href: "/contractors",
-        });
+        // One alert per contract, not one per bucket: the id is the ack and
+        // push de-duplication key, so a fingerprint built from the bucket's
+        // membership re-raised every contract in it the moment a neighbour
+        // moved down a horizon — a second push for a contract that crossed
+        // nothing. Keyed on the contract, a crossing raises exactly once.
+        for (const e of group) {
+            alerts.push({
+                id: `contracts-expiring-${horizon}:${e.name}`,
+                level: "warning",
+                module: "contractors",
+                title: `${e.name} — contract expires in ${e.days} day${e.days === 1 ? "" : "s"}`,
+                message: `${e.service ? `${e.service} ` : ""}ends ${fmtDateUTC(e.end)} — inside the ${horizon}-day renewal horizon.`,
+                href: "/contractors",
+            });
+        }
     }
 
     return alerts;

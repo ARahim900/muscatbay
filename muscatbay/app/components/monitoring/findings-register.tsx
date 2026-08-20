@@ -86,7 +86,10 @@ function AffectedCell({ finding }: { finding: MonitoringFinding }) {
                 <button
                     type="button"
                     onClick={() => setExpanded((v) => !v)}
-                    className="self-start text-[11px] font-medium text-secondary underline-offset-2 hover:underline"
+                    // text-secondary on card is 1.67:1 in light theme. Tokens that clear AA in
+                    // both: primary in light, secondary in dark (9.19:1 / 10.95:1). The
+                    // underline is permanent because a control-room tablet has no hover.
+                    className="self-start text-[11px] font-medium text-primary underline underline-offset-2 dark:text-secondary"
                 >
                     {expanded ? "Show fewer" : `Show all ${finding.affected.length}`}
                 </button>

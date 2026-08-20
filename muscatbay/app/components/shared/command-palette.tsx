@@ -9,7 +9,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { canAccessModule, MODULE_ROUTE, type ModuleKey } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
 import {
-    LayoutDashboard, Droplets, Zap, Waves, Users, Wrench, Package, Bug, Flame, Settings as SettingsIcon,
+    LayoutDashboard, Droplets, Zap, Waves, Users, Wrench, Package, Bug, Flame,
+    ClipboardCheck, Settings as SettingsIcon,
 } from "lucide-react";
 
 type CommandItem = {
@@ -37,6 +38,7 @@ const NAV_ITEMS: Array<{
     { module: "assets", label: "Assets", icon: Package },
     { module: "pest-control", label: "Pest Control", icon: Bug },
     { module: "firefighting", label: "Fire Safety", icon: Flame },
+    { module: "monitoring", label: "Monitoring", icon: ClipboardCheck },
     { module: "settings", label: "Settings", icon: SettingsIcon },
 ];
 

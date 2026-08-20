@@ -395,7 +395,11 @@ function stpSection(perDay: StpDayCoverage[]): ReportSection {
         key: "stp-daily",
         title: "STP — Daily log",
         href: "/stp",
-        severity: classifyCoverage(stat),
+        // The worst day, not the window average — the same way the water
+        // section derives its severity. A day of plant log lost is not a thing
+        // that averages away across a good week, which is why the per-day row
+        // and `stp-daily-missing` both hardcode critical.
+        severity: worstSeverity(perDay.map((d) => d.severity)),
         coverage: stat,
         headline: `${formatCoverage(stat)} operating days logged across the window`,
         breakdown: perDay.map((d) => ({
@@ -487,13 +491,19 @@ function stpFindings(
         });
     }
 
+    // Asia/Muscat is UTC+4 year-round. This is the calendar the write-side
+    // trigger `stp_reject_future_dates` uses, so a row the database
+    // deliberately accepted can never be reported here as impossible.
+    const MUSCAT_UTC_OFFSET_MS = 4 * 60 * 60 * 1000;
+    const plantToday = utcMidnight(new Date(now.getTime() + MUSCAT_UTC_OFFSET_MS));
+
     // Stale log — the plant may be fine, but nobody can tell.
     const newest = parsed
-        .filter((p) => utcMidnight(p.date) <= utcMidnight(now))
+        .filter((p) => utcMidnight(p.date) <= plantToday)
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .slice(-1)[0];
     if (newest) {
-        const behind = Math.round((utcMidnight(now) - utcMidnight(newest.date)) / 86_400_000);
+        const behind = Math.round((plantToday - utcMidnight(newest.date)) / 86_400_000);
         if (behind > STP_STALE_DAYS) {
             findings.push({
                 id: `stp-daily-stale:${newest.iso}`,
@@ -510,7 +520,7 @@ function stpFindings(
     }
 
     // Integrity — the sync's known failure modes, reported rather than filtered.
-    const future = parsed.filter((p) => utcMidnight(p.date) > utcMidnight(now));
+    const future = parsed.filter((p) => utcMidnight(p.date) > plantToday);
     if (future.length > 0) {
         findings.push({
             id: `stp-future-dated:${future.map((f) => f.iso).sort().join("|")}`,

@@ -117,7 +117,14 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
     const [refreshing, setRefreshing] = useState(false);
     const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
 
+    // Monotonic pass counter. Realtime bursts, the 30-minute tick and the manual
+    // refresh can all overlap, and the passes do not finish in the order they
+    // start — without this an older snapshot (and an older `fetchedAt`) lands
+    // on top of a newer one and the page silently shows stale completeness.
+    const seqRef = useRef(0);
+
     const gather = useCallback(async (silent = false) => {
+        const seq = ++seqRef.current;
         if (silent) setRefreshing(true);
         // The clock the fetch is scoped against — read once so the daily and
         // monthly windows below cannot straddle a midnight rollover.
@@ -133,6 +140,10 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
             getMonitoringWaterMonthly(),
             getMonitoringContractors(),
         ]);
+
+        // A superseded pass drops everything, including the spinner: clearing
+        // `refreshing` here would end the newer pass's loading state early.
+        if (seq !== seqRef.current) return;
 
         setGathered({
             at,

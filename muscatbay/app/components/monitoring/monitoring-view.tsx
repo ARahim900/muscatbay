@@ -24,6 +24,7 @@ import { StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { Button } from "@/components/ui/button";
 import { useMonitoringAgent } from "@/hooks/useMonitoringAgent";
 import { MonitoringReportView } from "./report-view";
+import { SectionCard } from "./monitoring-shared";
 import { RenewalsPanel } from "./renewals-panel";
 import { summarise } from "@/lib/monitoring/report";
 import { formatDay } from "@/lib/monitoring/calendar";
@@ -47,6 +48,11 @@ const TABS = [
  */
 function summaryStats(report: MonitoringReport): StatItem[] {
     const summary = summarise(report);
+    // While any section is blind, a zero means "none found in what could be
+    // read" — not the all-clear a green tile asserts. The findings register one
+    // component down already makes this distinction in words; the tiles have to
+    // make it in colour too, or they contradict it.
+    const blind = summary.blindSections.length > 0;
     return [
         {
             label: "Entries recorded",
@@ -58,16 +64,16 @@ function summaryStats(report: MonitoringReport): StatItem[] {
         {
             label: "Confirmed issues",
             value: summary.confirmedIssues.toLocaleString("en-GB"),
-            subtitle: "facts read from the data, not predictions",
+            subtitle: blind ? "facts read from the sections that could be assessed" : "facts read from the data, not predictions",
             icon: ClipboardList,
-            variant: summary.confirmedIssues === 0 ? "success" : "warning",
+            variant: summary.confirmedIssues === 0 && !blind ? "success" : "warning",
         },
         {
             label: "Critical",
             value: summary.critical.toLocaleString("en-GB"),
             subtitle: "a balance or a log that cannot be reconstructed",
             icon: AlertTriangle,
-            variant: summary.critical === 0 ? "success" : "danger",
+            variant: summary.critical > 0 ? "danger" : blind ? "warning" : "success",
         },
         {
             label: "Sections not assessed",
@@ -85,6 +91,11 @@ export function MonitoringView() {
 
     const report = tab === "monthly" ? monthly : daily;
     const loading = status === "loading" || !daily || !monthly;
+
+    // The renewals tab renders a panel rather than a whole report, so it has to
+    // carry the blind-section treatment itself: a contractor register that could
+    // not be read must say so, not fall through to "No contracts to track".
+    const renewalSection = daily?.sections.find((s) => s.key === "contractor-renewals");
 
     const dailyColumns: HeatColumn[] =
         daily?.days.map((day) => ({
@@ -141,7 +152,9 @@ export function MonitoringView() {
                             Contract end dates exactly as the register holds them, with the horizon each has crossed.
                             Reporting a recorded date — no renewal task, owner or close-out is tracked anywhere in this app.
                         </p>
-                        <RenewalsPanel items={daily.renewals} />
+                        {renewalSection?.unavailable
+                            ? <SectionCard section={renewalSection} />
+                            : <RenewalsPanel items={daily.renewals} />}
                     </div>
                 </SectionBoundary>
             ) : report ? (

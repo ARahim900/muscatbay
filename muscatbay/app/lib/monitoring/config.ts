@@ -15,9 +15,10 @@
  * one screen and red on the one below it.
  *
  * `lib/operational-alerts.ts` — the app-wide alert feed — imports
- * {@link CONTRACT_WARN_DAYS} and {@link STP_STALE_DAYS} from here rather than
- * redeclaring them, so the notification bell and the monitoring reports can
- * never disagree about when something is late.
+ * {@link STP_STALE_DAYS} from here rather than redeclaring it, and gets its
+ * contract-expiry gate from {@link RENEWAL_HORIZON_DAYS} via `horizonFor()`,
+ * so the notification bell and the monitoring reports can never disagree about
+ * when something is late.
  *
  * Contract
  * --------
@@ -101,13 +102,6 @@ export const BLOCKING_METER_ESCALATES = true;
  * Change the cadence here and every surface (reports, register, bell) follows.
  */
 export const RENEWAL_HORIZON_DAYS = [90, 60, 30, 7] as const;
-
-/**
- * The horizon the app-wide alert feed warns at. Kept as its own export because
- * `lib/operational-alerts.ts` imports it — the feed's single warning gate must
- * be one of the ladder's horizons, never a fifth number.
- */
-export const CONTRACT_WARN_DAYS = 60;
 
 /** Days remaining at or below this = `high`; expired = `critical`. Mirrors `components/contractors/contract-dates.tsx`. */
 export const RENEWAL_SOON_DAYS = 30;

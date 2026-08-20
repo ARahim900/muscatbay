@@ -13,9 +13,9 @@
  *   components/monitoring/
  *                    → the surfaces that render a report.
  *
- * Two numbers in `./config` (`CONTRACT_WARN_DAYS`, `STP_STALE_DAYS`) are also
- * imported by `lib/operational-alerts.ts`, so the app-wide alert feed and these
- * reports can never disagree about when an entry is late.
+ * `lib/operational-alerts.ts` imports `STP_STALE_DAYS` from `./config` and the
+ * contract-expiry ladder from `./renewals` (`horizonFor`), so the app-wide
+ * alert feed and these reports can never disagree about when an entry is late.
  *
  * @module lib/monitoring
  */

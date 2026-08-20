@@ -43,7 +43,10 @@ function heatRowFor(section: ReportSection, columns: HeatColumn[]): HeatRow {
                 severity: row.severity,
                 label: formatPct(row.coverage.pct),
                 title: [
-                    `${section.title} · ${column.label}`,
+                    // The row's own label, not the column's: the header strip
+                    // is a bare day number for space, but a hovered or
+                    // screen-read cell has to name the period in full.
+                    `${section.title} · ${row.label}`,
                     `${row.coverage.recorded} of ${row.coverage.expected} recorded`,
                     row.note,
                 ].filter(Boolean).join(" — "),
@@ -65,7 +68,14 @@ export function MonitoringReportView({
     heatmapNote: string;
 }) {
     const cards = [...report.sections].sort((a, b) => RANK[a.severity] - RANK[b.severity]);
-    const plottable = report.sections.filter((s) => !s.unavailable && s.breakdown.length > 0);
+    // Only sections whose breakdown is keyed by the report's periods can be
+    // plotted. A section counting something else (`excludeFromCompleteness` —
+    // the renewal ladder counts contracts, not days) matches no column, so it
+    // would draw a full row of "not assessed" dashes for a section the card
+    // above it just reported on.
+    const plottable = report.sections.filter(
+        (s) => !s.unavailable && !s.excludeFromCompleteness && s.breakdown.length > 0,
+    );
 
     return (
         <div className="space-y-5">

@@ -147,7 +147,9 @@ export function buildRenewalItems(contractors: ContractorTracker[], now: Date): 
     return contractors.map((contract) => {
         const statusRaw = (contract.Status ?? "").trim();
         // A row the register has already closed is documented history, not a
-        // live gap — the same rule the alert feed applies.
+        // live gap — the same rule the alert feed applies. Anything else is
+        // "not closed", which is not the same as "marked Active": Status is
+        // free text and the register also holds e.g. "Retaining".
         const closed = statusRaw.toLowerCase().includes("expired");
         const endDateRaw = (contract["End Date"] ?? "").trim();
         const endDate = parseTrackerDate(endDateRaw);
@@ -172,7 +174,7 @@ export function buildRenewalItems(contractors: ContractorTracker[], now: Date): 
 const BAND_ORDER: RenewalBand[] = ["expired", "soon", "window", "active", "unreadable", "closed"];
 
 const BAND_LABEL: Record<RenewalBand, string> = {
-    expired: "Expired, still marked active",
+    expired: "Past end date, not closed in the register",
     soon: `Expiring within ${RENEWAL_SOON_DAYS} days`,
     window: `Renewal window (${RENEWAL_SOON_DAYS + 1}–${RENEWAL_HORIZON_MAX_DAYS} days)`,
     active: `Beyond ${RENEWAL_HORIZON_MAX_DAYS} days`,
@@ -228,7 +230,7 @@ function renewalSection(items: RenewalItem[]): ReportSection {
         excludeFromCompleteness: true,
         headline: items.length === 0
             ? "No contracts in the register"
-            : `${items.length} contracts · ${expired.length} expired while still marked active · ${soon.length} within ${RENEWAL_SOON_DAYS} days${unreadable.length ? ` · ${unreadable.length} with an unreadable end date` : ""}`,
+            : `${items.length} contracts · ${expired.length} past their end date and not closed · ${soon.length} within ${RENEWAL_SOON_DAYS} days${unreadable.length ? ` · ${unreadable.length} with an unreadable end date` : ""}`,
         breakdown,
         gateNote: describeRenewalCadence(),
     };

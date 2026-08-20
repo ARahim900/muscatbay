@@ -207,7 +207,7 @@ function electricityFindings(results: ElectricityMonthResult[]): MonitoringFindi
             ),
             section: "Electricity — Monthly readings",
             period: latest.month.key,
-            confirmed: `${latest.month.label}: ${latest.missing.length} meter${latest.missing.length === 1 ? "" : "s"} have no reading row at all — ${nameList([...byType.entries()].map(([type, count]) => `${count} × ${type}`))}. Missing meters are excluded from every total and cost figure on the Electricity page, so the month's consumption is understated by an unknown amount.`,
+            confirmed: `${latest.month.label}: ${latest.missing.length} meter${latest.missing.length === 1 ? "" : "s"} have no reading row at all — ${nameList([...byType.entries()].map(([type, count]) => `${count} × ${type}`))}. The Electricity page computes every total and cost figure for the month without them.`,
             affected: latest.missing.map<AffectedRef>((meter) => ({
                 label: meter.name,
                 id: meter.accountNumber || meter.id,

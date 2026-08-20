@@ -360,7 +360,7 @@ const EMPTY_CONTRACTORS: ContractorsSummary = {
   error: null,
 };
 
-/** Mirrors CONTRACT_WARN_DAYS in `lib/operational-alerts.ts`. */
+/** One of the renewal horizons in `lib/monitoring/config.ts` (RENEWAL_HORIZON_DAYS). */
 const CONTRACT_WARN_DAYS = 60;
 
 export function toContractorsSummary(tracker: ContractorTracker[], now: Date): ContractorsSummary {

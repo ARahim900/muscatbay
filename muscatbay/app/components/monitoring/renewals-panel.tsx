@@ -65,7 +65,7 @@ export function RenewalsPanel({ items }: { items: RenewalItem[] }) {
                             <th scope="col" className={thBase}>End date (as recorded)</th>
                             <th scope="col" className={thBase}>End date (as read)</th>
                             <th scope="col" className={thBase}>Countdown</th>
-                            <th scope="col" className={thBase}>Next notification</th>
+                            <th scope="col" className={thBase}>Horizon crossed</th>
                             <th scope="col" className={thBase}>Register status</th>
                         </TableRow>
                     </TableHeader>
