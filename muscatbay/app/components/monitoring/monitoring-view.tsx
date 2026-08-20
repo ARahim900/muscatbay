@@ -70,9 +70,9 @@ function summaryStats(report: MonitoringReport): StatItem[] {
             variant: summary.critical === 0 ? "success" : "danger",
         },
         {
-            label: "Sections not readable",
+            label: "Sections not assessed",
             value: summary.blindSections.length.toLocaleString("en-GB"),
-            subtitle: summary.blindSections.length ? summary.blindSections.join(", ") : "every source responded",
+            subtitle: summary.blindSections.length ? summary.blindSections.join(", ") : "every section returned a result",
             icon: EyeOff,
             variant: summary.blindSections.length === 0 ? "success" : "warning",
         },

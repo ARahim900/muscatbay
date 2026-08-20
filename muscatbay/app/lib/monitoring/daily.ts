@@ -5,7 +5,8 @@
  * Two sections and one cross-check:
  *  1. **Water — Daily**: every meter in the daily reading register
  *     (`./expectations`) for every due day.
- *  2. **STP — Daily log**: one `stp_operations` row per due day.
+ *  2. **STP — Daily log**: one `stp_operations` row carrying at least one plant
+ *     figure per due day.
  *  3. **Cross-check**: the case the owner named explicitly — the STP report was
  *     submitted for a day but some water meters were not recorded for that same
  *     day. Either source alone looks fine; only comparing them shows the gap.
@@ -18,7 +19,9 @@
  *    quietly clamped.
  *  - A month with no rows at all for a meter is reported differently from a
  *    month whose row exists with a blank day — the first is an upload that
- *    never happened, the second is a meter that was not read.
+ *    never happened, the second is a meter that was not read. The STP log makes
+ *    the same distinction: a row carrying a date and nothing else records
+ *    nothing, so it counts as not logged and is reported on its own.
  *
  * @module lib/monitoring/daily
  */
@@ -348,20 +351,40 @@ function parseStpRows(rows: StpDayRecord[]): { parsed: StpParsed[]; invalid: Stp
     return { parsed, invalid };
 }
 
+/** How many of the day's three plant figures actually arrived. */
+function figureCount(record: StpDayRecord): number {
+    return [record.inlet, record.tse, record.tankers].filter((v) => v !== null).length;
+}
+
 export interface StpDayCoverage {
     day: Date;
     iso: string;
     logged: boolean;
+    /** A row exists for the date but every plant figure in it is blank. */
+    blankRow: boolean;
     severity: Severity;
 }
 
 export function evaluateStpDailyCoverage(rows: StpDayRecord[], days: Date[]): StpDayCoverage[] {
     const { parsed } = parseStpRows(rows);
-    const logged = new Set(parsed.map((p) => p.iso));
+    // A row that carries a date but no inlet, no TSE and no tanker figure
+    // records nothing about the day it names, so it cannot count as logged:
+    // otherwise a week in which not one plant figure was written reads as fully
+    // complete, while `transformSTPOperation` renders those same blanks as 0 m³
+    // on /stp. Same call `waterMonthlyFindings` makes — a row that arrived
+    // empty is a delivery failure, not an answer.
+    const withFigures = new Set(parsed.filter((p) => figureCount(p.record) > 0).map((p) => p.iso));
+    const blankOnly = new Set(parsed.filter((p) => figureCount(p.record) === 0).map((p) => p.iso));
     return days.map((day) => {
         const iso = isoDay(day);
-        const isLogged = logged.has(iso);
-        return { day, iso, logged: isLogged, severity: isLogged ? "good" : "critical" };
+        const isLogged = withFigures.has(iso);
+        return {
+            day,
+            iso,
+            logged: isLogged,
+            blankRow: !isLogged && blankOnly.has(iso),
+            severity: isLogged ? "good" : "critical",
+        };
     });
 }
 
@@ -380,9 +403,13 @@ function stpSection(perDay: StpDayCoverage[]): ReportSection {
             label: formatDay(d.day),
             severity: d.severity,
             coverage: coverage(1, d.logged ? 1 : 0),
-            note: d.logged ? undefined : "no operations row for this date",
+            note: d.logged
+                ? undefined
+                : d.blankRow
+                    ? "row present for this date, but no inlet, TSE or tanker figure in it"
+                    : "no operations row for this date",
         })),
-        gateNote: `One operations row is expected per operating day. A log more than ${STP_STALE_DAYS} days behind is reported as stale — at that point plant monitoring is blind, not merely behind.`,
+        gateNote: `One operations row carrying at least one plant figure is expected per operating day — a row that arrives with inlet, TSE and tanker trips all blank records nothing and counts as not logged. A log more than ${STP_STALE_DAYS} days behind is reported as stale — at that point plant monitoring is blind, not merely behind.`,
     };
 }
 
@@ -394,7 +421,7 @@ function stpFindings(
     const findings: MonitoringFinding[] = [];
     const { parsed, invalid } = parseStpRows(rows);
 
-    const missing = perDay.filter((d) => !d.logged);
+    const missing = perDay.filter((d) => !d.logged && !d.blankRow);
     if (missing.length > 0) {
         findings.push({
             id: `stp-daily-missing:${missing.map((m) => m.iso).join("|")}`,
@@ -406,6 +433,56 @@ function stpFindings(
             affected: missing.map((m) => ({ label: formatDay(m.day), id: m.iso, kind: "day" })),
             recommendation:
                 "Confirm the OWATCO daily sheet was filed for those dates and re-run the AITable → Supabase sync; inlet, TSE and tanker figures for a day the plant ran cannot be reconstructed later.",
+            href: "/stp",
+        });
+    }
+
+    // A row landed for the day but carried no figures — reported separately from
+    // "no row at all" because the two point at different halves of the pipeline:
+    // the sync ran, the readings did not come through.
+    const blankDays = perDay.filter((d) => d.blankRow);
+    if (blankDays.length > 0) {
+        findings.push({
+            id: `stp-daily-blank:${blankDays.map((b) => b.iso).join("|")}`,
+            kind: "integrity",
+            severity: "high",
+            section: "STP — Daily log",
+            period: `${blankDays[0].iso} – ${blankDays[blankDays.length - 1].iso}`,
+            confirmed: `${blankDays.length} due day${blankDays.length === 1 ? " has" : "s have"} an STP operations row that arrived with inlet, TSE and tanker trips all blank (${nameList(blankDays.map((b) => formatDay(b.day)))}), so nothing about ${blankDays.length === 1 ? "that day" : "those days"} was actually recorded — and the STP page renders each blank as 0 m³.`,
+            affected: blankDays.map((b) => ({ label: formatDay(b.day), id: b.iso, kind: "day" })),
+            recommendation:
+                "Re-run the AITable → Supabase sync for those dates and check the OWATCO sheet was filled in; a blank figure is a delivery failure, not a day the plant treated nothing.",
+            href: "/stp",
+        });
+    }
+
+    // Rows that landed with some figures but not all. The day counts as logged —
+    // something was recorded — but a blank figure still reads as 0 m³ downstream.
+    // Scoped to the window: the fetch spans the whole log, so an unscoped scan
+    // would attach a row from months ago to a finding labelled with these dates.
+    const windowIso = new Set(perDay.map((d) => d.iso));
+    const partial = parsed.filter(
+        (p) => windowIso.has(p.iso) && figureCount(p.record) > 0 && figureCount(p.record) < 3,
+    );
+    if (partial.length > 0) {
+        const describe = (p: StpParsed) => {
+            const blanks = [
+                p.record.inlet === null ? "inlet" : null,
+                p.record.tse === null ? "TSE" : null,
+                p.record.tankers === null ? "tanker trips" : null,
+            ].filter((f): f is string => f !== null);
+            return `${formatDay(p.date)} · no ${blanks.join(", ")}`;
+        };
+        findings.push({
+            id: `stp-daily-partial:${partial.map((p) => p.iso).sort().join("|")}`,
+            kind: "integrity",
+            severity: "watch",
+            section: "STP — Daily log",
+            period: partial.map((p) => p.iso).sort().slice(-1)[0],
+            confirmed: `${partial.length} STP row${partial.length === 1 ? " is" : "s are"} missing part of the day's figures (${nameList(partial.map(describe))}). A blank figure is rendered as 0 m³ on the STP page, so the day reads lower than the plant actually ran.`,
+            affected: partial.map((p) => ({ label: describe(p), id: p.iso, kind: "day" })),
+            recommendation:
+                "Recover the missing figure(s) from the OWATCO daily sheet and re-run the sync — a blank is not a zero.",
             href: "/stp",
         });
     }

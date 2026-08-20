@@ -5,13 +5,19 @@
  *
  * Gathers the five sources the completeness rules need, composes the daily and
  * monthly reports from them, and keeps both current: re-fetching when any
- * source table changes, and re-evaluating on a clock tick so day- and
- * month-based rules roll over without a reload.
+ * source table changes, and again on a clock tick so day- and month-based rules
+ * roll over without a reload.
  *
  * The fetch is deliberately **scoped**: daily water rows are limited to the
  * months the due-day window touches, and electricity readings to the trend
  * months. Both queries are therefore bounded by the report's shape, not by how
  * old the database is.
+ *
+ * That scoping is why the reports are composed with `gathered.at` — the clock
+ * the fetch itself used — rather than with a fresh `new Date()`. Evaluating
+ * newer-calendar rules over the rows an older window asked for is how a monitor
+ * ends up confirming that an upload "never landed" for a month it never
+ * queried.
  *
  * Nothing here substitutes for a source it could not read. Each reader returns
  * a `SourceStatus`, those statuses ride into the report, and every surface says
@@ -59,12 +65,22 @@ const MONITORING_REALTIME_TABLES = [
     "Contractor_Tracker",
 ];
 
-/** Re-evaluate on the same data so day/month rollovers happen without a reload. */
-const REEVALUATE_MS = 30 * 60 * 1000;
+/**
+ * Re-read the sources on a clock so day/month rollovers happen without a
+ * reload.
+ *
+ * It has to re-**fetch**, not merely re-evaluate: both month-filtered queries
+ * are scoped to the window the clock produced, so re-running the rules against
+ * a newer calendar over the same rows would report a month that was never
+ * queried as an upload that never landed.
+ */
+const REFRESH_MS = 30 * 60 * 1000;
 
 export type MonitoringStatus = "loading" | "ready";
 
 interface Gathered {
+    /** The clock the fetch was scoped with — the only clock the rules may use. */
+    at: Date;
     waterDaily: DailyMeterMonth[] | null;
     stp: StpDayRecord[] | null;
     electricityMeters: ElectricityMeterRef[] | null;
@@ -100,7 +116,6 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
     const [status, setStatus] = useState<MonitoringStatus>("loading");
     const [refreshing, setRefreshing] = useState(false);
     const [fetchedAt, setFetchedAt] = useState<Date | null>(null);
-    const [evalTick, setEvalTick] = useState(0);
 
     const gather = useCallback(async (silent = false) => {
         if (silent) setRefreshing(true);
@@ -120,6 +135,7 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
         ]);
 
         setGathered({
+            at,
             waterDaily: waterDaily.data,
             stp: stp.data,
             electricityMeters: electricity.data?.meters ?? null,
@@ -166,25 +182,26 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
 
     // Clock tick — "due" moves with the calendar even when nothing was written.
     useEffect(() => {
-        const timer = setInterval(() => setEvalTick((n) => n + 1), REEVALUATE_MS);
+        const timer = setInterval(() => { gather(true); }, REFRESH_MS);
         return () => clearInterval(timer);
-    }, []);
+    }, [gather]);
 
+    // Both reports are evaluated against `gathered.at`, never against a fresh
+    // clock: the rules must not assess a period the fetch beside them never
+    // asked for, or they report never-queried rows as a missing upload.
     const daily = useMemo<DailyMonitoringReport | null>(() => {
         if (!gathered) return null;
-        void evalTick;
         return composeDailyReport({
             waterRows: gathered.waterDaily,
             stpRows: gathered.stp,
             contractors: gathered.contractors,
             sources: gathered.sources,
-            now: new Date(),
+            now: gathered.at,
         });
-    }, [gathered, evalTick]);
+    }, [gathered]);
 
     const monthly = useMemo<MonthlyMonitoringReport | null>(() => {
         if (!gathered) return null;
-        void evalTick;
         return composeMonthlyReport({
             electricityMeters: gathered.electricityMeters,
             electricityReadings: gathered.electricityReadings,
@@ -192,9 +209,9 @@ export function useMonitoringAgent(): UseMonitoringAgentReturn {
             derivedMonths: gathered.derivedMonths,
             contractors: gathered.contractors,
             sources: gathered.sources,
-            now: new Date(),
+            now: gathered.at,
         });
-    }, [gathered, evalTick]);
+    }, [gathered]);
 
     const refresh = useCallback(() => { gather(true); }, [gather]);
 

@@ -17,6 +17,8 @@ const NOW = at('2026-08-20');
 const okSource = (key: string, rows = 10): SourceStatus => ({ key, label: key, state: 'ok', rows });
 const brokenSource = (key: string): SourceStatus =>
     ({ key, label: key, state: 'error', rows: null, message: 'connection reset' });
+const emptySource = (key: string): SourceStatus =>
+    ({ key, label: key, state: 'empty', rows: 0, message: 'No rows for the period requested.' });
 
 const everyMeterRead = (): DailyMeterMonth[] =>
     waterDailyExpectations().map((e) => ({
@@ -163,6 +165,36 @@ describe('daily report', () => {
 });
 
 describe('monthly report', () => {
+    it('names a register that came back empty as unassessed rather than covering it with an all-clear', () => {
+        // What an RLS policy that filters every row looks like: a 200 with an
+        // empty array, not an error. The electricity section's expectation comes
+        // from that same register, so it collapses to "0 of 0 expected" and
+        // drops out of the completeness figure — it must not also drop out of
+        // the report.
+        const report = composeMonthlyReport({
+            electricityMeters: [],
+            electricityReadings: [],
+            waterMeters: [{
+                account: '4300001', label: 'Villa 1', level: 'L3',
+                consumption: { 'Jul-26': 12 },
+            }],
+            derivedMonths: [],
+            contractors: [],
+            sources: [emptySource('electricity-monthly'), okSource('water-monthly')],
+            now: NOW,
+            trendMonths: 1,
+        });
+
+        // An empty read is not a failed read, so the report is not partial…
+        expect(report.partial).toBe(false);
+        expect(report.completeness).toBe(100);   // water, the only section assessed
+        // …but the section nobody could measure is named, not silently rolled up.
+        expect(summarise(report).blindSections).toEqual(['Electricity — Monthly readings']);
+        // The renewal ladder counts contracts, not entries per period, so an
+        // empty contractor register is not an unassessed month.
+        expect(summarise(report).blindSections).not.toContain('Contractors — Expiry & renewals');
+    });
+
     it('reports on the newest month whose entries are due, not the current one', () => {
         const report = composeMonthlyReport({
             electricityMeters: [], electricityReadings: [],

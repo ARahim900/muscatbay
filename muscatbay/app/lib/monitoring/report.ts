@@ -222,6 +222,27 @@ export interface ReportSummary {
     blindSections: string[];
 }
 
+/**
+ * The sections this report could not actually assess.
+ *
+ * A source that failed to read is the obvious case. The subtler one is a
+ * section whose expectation is defined by the very register the query came back
+ * empty from: it collapses to "0 of 0 expected", which `overallCompleteness`
+ * drops — so without counting it here the report would put a headline
+ * percentage over a register nobody read and print an all-clear beneath it.
+ * Sections that count something other than entries per period are excluded: an
+ * empty contractor register is not an unassessed month.
+ *
+ * Note this is deliberately *not* the same thing as a failed read — the reader
+ * still reports an empty table as `empty`, never `error`, because inventing a
+ * failure that did not happen is its own kind of dishonesty.
+ */
+export function unassessedSections(report: MonitoringReport): ReportSection[] {
+    return report.sections.filter(
+        (s) => Boolean(s.unavailable) || (!s.excludeFromCompleteness && s.coverage.pct === null),
+    );
+}
+
 /** The three numbers a reader needs before deciding whether to read further. */
 export function summarise(report: MonitoringReport): ReportSummary {
     return {
@@ -229,7 +250,7 @@ export function summarise(report: MonitoringReport): ReportSummary {
         severity: worstSeverity(report.sections.map((s) => s.severity)),
         confirmedIssues: report.findings.length,
         critical: report.findings.filter((f) => f.severity === "critical").length,
-        blindSections: report.sections.filter((s) => s.unavailable).map((s) => s.title),
+        blindSections: unassessedSections(report).map((s) => s.title),
     };
 }
 

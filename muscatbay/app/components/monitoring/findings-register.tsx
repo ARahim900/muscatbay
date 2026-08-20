@@ -36,7 +36,7 @@ import { SEVERITY_LABEL, SeverityChip } from "@/components/shared/inspection";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { SEVERITY_ORDER } from "@/lib/monitoring/coverage";
 import type { MonitoringFinding } from "@/lib/monitoring/types";
-import { reportToCsvRows } from "@/lib/monitoring/report";
+import { reportToCsvRows, unassessedSections } from "@/lib/monitoring/report";
 import type { MonitoringReport } from "@/lib/monitoring/types";
 
 const KIND_LABEL: Record<MonitoringFinding["kind"], string> = {
@@ -132,14 +132,16 @@ export function MonitoringFindingsRegister({ report }: { report: MonitoringRepor
     }, [report.findings]);
 
     if (report.findings.length === 0) {
-        const blind = report.sections.filter((s) => s.unavailable);
+        // A section nobody could read, and a section whose register came back
+        // empty, are both unassessed — neither may be covered by an all-clear.
+        const blind = unassessedSections(report);
         return (
             <div className="flex flex-col items-center gap-2 rounded-[10.5px] border border-border bg-card px-4 py-12 text-center">
                 <ClipboardCheck className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
                 <h3 className="text-base font-semibold text-foreground">No confirmed issues for this period</h3>
                 <p className="max-w-lg text-xs leading-relaxed text-muted-foreground">
                     {blind.length > 0
-                        ? `Every section the agent could read is complete. ${blind.length} section${blind.length === 1 ? " was" : "s were"} not readable this pass (${blind.map((s) => s.title).join(", ")}), so this is not a clean bill of health for ${blind.length === 1 ? "it" : "them"}.`
+                        ? `Every section the agent could assess is complete. ${blind.length} section${blind.length === 1 ? " could" : "s could"} not be assessed this pass (${blind.map((s) => s.title).join(", ")}), so this is not a clean bill of health for ${blind.length === 1 ? "it" : "them"}.`
                         : "Every expected entry for this period was recorded, and no integrity problem was found in what was recorded."}
                 </p>
             </div>

@@ -154,6 +154,53 @@ describe('STP daily log coverage', () => {
         expect(duplicate.confirmed).toContain('2026-08-19 ×2');
     });
 
+    it('does not count a row that arrived with no figures at all as a logged day', () => {
+        // `stp_operations.inlet_sewage`, `tse_for_irrigation` and `tanker_trips`
+        // are all nullable and the reader preserves the NULLs. A week of rows
+        // carrying nothing but a date must not read as a fully recorded week —
+        // the STP page renders those same blanks as 0 m³.
+        const blank: StpDayRecord[] = ['2026-08-17', '2026-08-18', '2026-08-19']
+            .map((d) => ({ date: d, inlet: null, tse: null, tankers: null }));
+        const perDay = evaluateStpDailyCoverage(blank, DAYS);
+        expect(perDay.map((d) => d.logged)).toEqual([false, false, false]);
+        expect(perDay.map((d) => d.blankRow)).toEqual([true, true, true]);
+
+        const result = evaluateDailyRules({ days: DAYS, waterRows: [], stpRows: blank, now: NOW });
+        expect(result.stpSection.coverage.recorded).toBe(0);
+        expect(result.stpSection.severity).toBe('critical');
+
+        const blankFinding = result.findings.find((f) => f.id.startsWith('stp-daily-blank'))!;
+        expect(blankFinding.confirmed).toContain('inlet, TSE and tanker trips all blank');
+        expect(blankFinding.affected.map((a) => a.id)).toEqual(['2026-08-17', '2026-08-18', '2026-08-19']);
+        // …and it is not reported as "no row", which would send the operator to
+        // the wrong half of the pipeline.
+        expect(result.findings.some((f) => f.id.startsWith('stp-daily-missing'))).toBe(false);
+    });
+
+    it('reports a row that landed with only some of the day’s figures', () => {
+        const rows: StpDayRecord[] = [
+            { date: '2026-08-17', inlet: 500, tse: 480, tankers: 2 },
+            { date: '2026-08-18', inlet: 500, tse: null, tankers: 2 },
+            { date: '2026-08-19', inlet: 500, tse: 480, tankers: 2 },
+        ];
+        const { findings } = evaluateDailyRules({ days: DAYS, waterRows: [], stpRows: rows, now: NOW });
+        const partial = findings.find((f) => f.id.startsWith('stp-daily-partial'))!;
+        expect(partial.severity).toBe('watch');
+        expect(partial.confirmed).toContain('18 Aug 2026 · no TSE');
+        expect(partial.confirmed).toContain('rendered as 0 m³');
+        // The day still counts as recorded — something was written for it.
+        expect(evaluateStpDailyCoverage(rows, DAYS).every((d) => d.logged)).toBe(true);
+    });
+
+    it('does not attach a partially-blank row from outside the window to this window', () => {
+        const rows: StpDayRecord[] = [
+            { date: '2026-07-02', inlet: 500, tse: null, tankers: 2 },
+            ...logged(['2026-08-17', '2026-08-18', '2026-08-19']),
+        ];
+        const { findings } = evaluateDailyRules({ days: DAYS, waterRows: [], stpRows: rows, now: NOW });
+        expect(findings.some((f) => f.id.startsWith('stp-daily-partial'))).toBe(false);
+    });
+
     it('reports rows whose date cannot be read at all', () => {
         const { findings } = evaluateDailyRules({
             days: DAYS,
@@ -189,6 +236,17 @@ describe('cross-check — STP filed, water meters not', () => {
         rows[0].days[17] = null;
         const { perDay } = evaluateWaterDailyCoverage(rows, DAYS);
         const stp = evaluateStpDailyCoverage([], DAYS);
+        expect(evaluateDailyCrossChecks(perDay, stp, rows)).toHaveLength(0);
+    });
+
+    it('never asserts the plant was reporting from a row that arrived blank', () => {
+        const rows = everyMeterRead();
+        rows[0].days[17] = null; // 18 Aug, one meter unread
+        const { perDay } = evaluateWaterDailyCoverage(rows, DAYS);
+        const stp = evaluateStpDailyCoverage(
+            [{ date: '2026-08-18', inlet: null, tse: null, tankers: null }],
+            DAYS,
+        );
         expect(evaluateDailyCrossChecks(perDay, stp, rows)).toHaveLength(0);
     });
 
