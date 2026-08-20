@@ -813,6 +813,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-21 — feat(ui): refine responsive dashboard layouts
 - 2026-08-06 — fix(water): show missing daily totals clearly
 - 2026-08-06 — fix(water): preserve missing daily readings
 - 2026-08-04 — feat(water/satellite): Village Square zone detail + distinct sub-connection colour
