@@ -33,7 +33,7 @@ in one Next.js app backed by Supabase.
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Auth | Supabase email/password; client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (156 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-10 |
+| Tests / checks | Vitest (421 tests), ESLint, `tsc --noEmit`, `next build`, and `mobile/` `tsc --noEmit` — all green as of 2026-08-21 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -381,20 +381,29 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
-- **Two contract-date parsers disagree — found 2026-08-20, UNRESOLVED (owner
-  decision needed).** `parseTrackerDate` in `lib/operational-alerts.ts` reads
-  `3/4/2026` as **4 March** (US, month-first); `parseContractDate` in
-  `components/contractors/contract-dates.tsx` reads the same string as
-  **3 April** (day-first, "Oman convention"). Where both components are ≤ 12 the
-  two are up to eleven months apart, so one contract can show different expiry
-  status on `/contractors` than in the alert bell. Neither was changed, because
-  which convention `Contractor_Tracker` actually uses is a question about the
-  data, not the code. Instead `/monitoring` **reports every ambiguous string it
-  finds** as a data-integrity finding naming the contractor and the raw value,
-  and the renewals table tags those rows `ambiguous`. Fix path: decide the
-  register's convention, re-enter the flagged dates as `yyyy-mm-dd` (both
-  parsers agree on ISO), then collapse the two parsers into one.
-
+- **Contract dates: convention settled, one parser — RESOLVED 2026-08-21.**
+  The app held two parsers with opposite conventions. `parseTrackerDate`
+  (alert bell) read `6/2/2026` month-first; `parseContractDate` (/contractors)
+  read it day-first. A read-only query over `Contractor_Tracker` settled it: of
+  34 all-numeric slash dates, **18 have a second component above 12**
+  (impossible as a day under day-first) and **zero** have a first component
+  above 12; month-first also gives an exact whole-year term for every contract
+  and matches both the free-text `Note` on five rows and
+  `amc_contractor_summary`'s unambiguous `dd-MMM-yyyy` values.
+  The impact was larger than a divergence: the day-first parser did not
+  mis-read those dates, it **failed** on them (date-fns rejects month > 12), so
+  `/contractors` rendered "Unreadable date" for **11 of 17** dated contracts
+  while the bell counted the same contracts down correctly — National Marine
+  showed EXPIRED on the page and 76 days remaining in the bell.
+  There is now one parser, `muscatbay/app/lib/contract-dates.ts` — pure,
+  dependency-free, UTC, bundled by web and Expo alike. Dotted dates
+  (`31.12.2027`) are deliberately rejected rather than guessed. Verified live:
+  unreadable rows 11 → 0. **Still open (owner):** `"Start Date"` / `"End Date"`
+  are `text` in Postgres; storing them as `date` would end this class of bug,
+  but that is a migration decision, not a PR fix. Two end dates (Kalhat
+  `5/6/2030`, National Marine `11/5/2026`) rest on the column convention alone
+  with no corroborating note — `/monitoring` names them as worth checking
+  against the paper contract.
 
 - **Ticker always scrolls + STP down to four cards — 2026-07-29 (owner follow-up).**
   - **The "static when everything fits" ticker rule is retired.** The
@@ -805,13 +814,26 @@ findings register's suggested-action column — not a work order.
 
 ## 5. In-flight work (open PRs)
 
-- **Monitoring agent (`/monitoring`) — 2026-08-20, draft.** New module described
-  in §2. Three owner questions are answered with defaults that live in exactly
+- **Monitoring agent (`/monitoring`) — PR #67, draft, reviewed 2026-08-21.** New
+  module described in §2. Three rounds of orchestrated multi-agent review
+  (manager → parallel review workers → adversarial checkers → fixers →
+  gatekeeper) ran over it and **17 verified defects were fixed**, most of them
+  the module committing the very failure it exists to catch: a blank STP row
+  certifying a day as fully recorded; the 30-minute tick re-evaluating on a
+  fresh clock against month-scoped rows it never fetched, so an unqueried month
+  was reported as an upload that never landed; an empty register (what
+  PostgREST returns when RLS filters every row) reading as 100% coverage; a
+  failed contractor read rendering as a calm "No contracts to track"; and
+  summary tiles painting green zeros when nothing could be read. Each was
+  reproduced by running the real code before being fixed, and each carries a
+  test written to fail against the old behaviour. Test count 354 → 421. Three owner questions are answered with defaults that live in exactly
   one place, `lib/monitoring/config.ts`, and can be changed there:
   *which sections are monitored monthly* (electricity + water billing reads
   today; every unmonitored module is **named in every report** so silence is
   never mistaken for health), *how reports are delivered* (in-app dashboard +
-  CSV export + the existing notification bell — **email is not implemented**
+  CSV export; the existing notification bell carries the contract-expiry
+  ladder only, **not** the daily/monthly completeness findings — **email is not
+  implemented**
   and needs an SMTP/edge-function decision; the composers return plain objects
   so a digest can be serialised later without re-deriving anything), and
   *renewal notification frequency* (90/60/30/7 days, then a standing critical
