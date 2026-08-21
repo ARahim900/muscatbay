@@ -11,9 +11,11 @@
  * -------------------------------------------
  *  1. **Partial is labelled partial.** A source that failed to read produces a
  *     `nodata` section and sets `partial`; it never contributes a clean zero.
- *  2. **Unmonitored is named.** `unmonitored` lists the modules that have no
- *     periodic-entry contract at all. Silence about a module would read as
- *     "that one is fine" — which is a lie by omission in a completeness report.
+ *  2. **Unmonitored is named, per report.** `unmonitored` lists what THIS
+ *     report does not assess — both the modules with no periodic-entry
+ *     contract at all and the obligations carried by the other report kind.
+ *     Silence about a module would read as "that one is fine" — which is a lie
+ *     by omission in a completeness report.
  *  3. **Completeness excludes what could not be assessed.** The headline
  *     percentage is computed only over sections that actually returned a
  *     result, and is `null` when none did.
@@ -41,6 +43,7 @@ import type { ContractorTracker } from "@/entities/contractor";
 import type {
     MonitoringFinding,
     MonitoringReport,
+    ReportKind,
     ReportSection,
     Severity,
     SourceStatus,
@@ -61,6 +64,53 @@ export const UNMONITORED_SECTIONS = [
     "Fire Safety — PPM (cycle-driven, not periodic)",
     "Pest Control — service log (held in AITable, not readable from here)",
 ] as const;
+
+/**
+ * Every periodic-entry obligation this monitor *does* check, and which report
+ * kind checks it.
+ *
+ * Declared once because each report has to derive what it does not cover from
+ * the same table. Without it the two reports drift: the monthly report carried
+ * no STP section and never named the STP daily log either, so on that tab a
+ * plant log a week behind looked exactly like a plant log that was up to date.
+ * A completeness report that stays silent about an obligation is asserting
+ * nothing — and a reader takes nothing for fine.
+ *
+ * Add a section to `composeDailyReport` / `composeMonthlyReport` and add its
+ * row here in the same change; the other report then names its absence for
+ * free. The renewal ladder is absent on purpose: it rides both reports, so
+ * neither one omits it.
+ */
+const MONITORED_OBLIGATIONS: { kind: ReportKind; title: string }[] = [
+    { kind: "daily", title: "Water — Daily readings" },
+    { kind: "daily", title: "STP — Daily log" },
+    { kind: "monthly", title: "Electricity — Monthly readings" },
+    { kind: "monthly", title: "Water — Monthly billing reads" },
+];
+
+/**
+ * What a report of this kind does not assess — named, never left silent.
+ *
+ * Two different statements, deliberately kept in one list because a reader
+ * scanning "not covered here" needs both, and each entry carries its own
+ * reason:
+ *  - the modules this monitor checks nowhere ({@link UNMONITORED_SECTIONS});
+ *  - the obligations it checks on the *other* report. Electricity is a monthly
+ *    obligation, so a daily report is right not to assess it — but "right not
+ *    to" still has to be said, or its absence reads as an all-clear. The
+ *    wording points at the report that does cover it, so neither module is
+ *    ever implied to be unmonitored overall.
+ */
+export function unmonitoredFor(kind: ReportKind): string[] {
+    return [
+        ...UNMONITORED_SECTIONS,
+        ...MONITORED_OBLIGATIONS
+            .filter((obligation) => obligation.kind !== kind)
+            .map((obligation) =>
+                `${obligation.title} (a ${obligation.kind} obligation, assessed on the ${obligation.kind} report)`,
+            ),
+    ];
+}
 
 /* ------------------------------------------------------------------ */
 /*  Shared                                                             */
@@ -140,7 +190,7 @@ export function composeDailyReport(inputs: DailyReportInputs): DailyMonitoringRe
         sections,
         findings,
         sources: inputs.sources,
-        unmonitored: [...UNMONITORED_SECTIONS],
+        unmonitored: unmonitoredFor("daily"),
         completeness: overallCompleteness(sections),
         partial: inputs.sources.some((s) => s.state === "error" || s.state === "not-configured"),
         days,
@@ -200,7 +250,7 @@ export function composeMonthlyReport(inputs: MonthlyReportInputs): MonthlyMonito
         sections,
         findings,
         sources: inputs.sources,
-        unmonitored: [...UNMONITORED_SECTIONS],
+        unmonitored: unmonitoredFor("monthly"),
         completeness: overallCompleteness(sections),
         partial: inputs.sources.some((s) => s.state === "error" || s.state === "not-configured"),
         trend: months.map((m) => ({ key: m.key, label: m.label })),

@@ -4,7 +4,6 @@ import {
     evaluateContractAlerts,
     evaluateSTPAlerts,
     evaluateOperationalAlerts,
-    parseTrackerDate,
 } from '@/lib/operational-alerts';
 import type { WaterMeter } from '@/lib/water-data';
 import type { ContractorTracker } from '@/entities/contractor';
@@ -144,20 +143,6 @@ describe('evaluateWaterLossAlerts', () => {
 });
 
 /* ── contracts ────────────────────────────────────────────────────────── */
-
-describe('parseTrackerDate', () => {
-    it('parses the tracker US format and ISO', () => {
-        expect(parseTrackerDate('6/30/2026')?.toISOString().slice(0, 10)).toBe('2026-06-30');
-        expect(parseTrackerDate('2026-06-30')?.toISOString().slice(0, 10)).toBe('2026-06-30');
-    });
-
-    it('rejects garbage and rolled-over components', () => {
-        expect(parseTrackerDate(null)).toBeNull();
-        expect(parseTrackerDate('')).toBeNull();
-        expect(parseTrackerDate('Schedule of rates')).toBeNull();
-        expect(parseTrackerDate('13/40/2026')).toBeNull(); // month 13, day 40
-    });
-});
 
 describe('evaluateContractAlerts', () => {
     it('raises an ERROR for contracts past End Date but still marked Active', () => {

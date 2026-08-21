@@ -17,27 +17,24 @@
  * `components/contractors/contract-dates.tsx`, so the register, the report and
  * the notification bell colour a contract identically.
  *
- * The date-parsing trap
- * ---------------------
- * The app holds two contract-date parsers with **different conventions**:
- * `parseTrackerDate` in `lib/operational-alerts.ts` reads `3/4/2026` as
- * 4 March (US, month-first), while `parseContractDate` in
- * `components/contractors/contract-dates.tsx` reads it as 3 April (day-first,
- * "Oman convention"). For dates where both components are ≤ 12 the two
- * disagree by up to eleven months.
- *
- * This module reuses `parseTrackerDate` — the same parser the alert feed
- * already applies to this same table, so the monitor and the bell can never
- * contradict each other — and separately **reports every ambiguous string it
- * finds as a data-integrity finding**. That is a fact derived from the data,
- * not a guess about which parser is right; resolving the convention is an
- * owner decision, and until it is made the monitor names the affected rows
- * rather than silently picking a side.
+ * Dates
+ * -----
+ * Every surface now reads contract dates through `lib/contract-dates`, whose
+ * month-first convention is established from the register itself (18 values
+ * are impossible day-first, none month-first). The monitor still **reports the
+ * end dates that a human could not have read from the string alone** — both
+ * slash components 12 or under — because the convention being settled at the
+ * column level does not prove any individual value was typed under it. Where
+ * the row's own note writes the date out unambiguously, that value is
+ * corroborated and needs no attention; where it does not, the string rests on
+ * the convention alone and is worth one check against the signed contract.
+ * The register keeps its strings either way: this module parses on read and
+ * never writes a normalised value back.
  *
  * @module lib/monitoring/renewals
  */
 
-import { parseTrackerDate } from "@/lib/operational-alerts";
+import { parseContractDate, textConfirmsDate } from "@/lib/contract-dates";
 import type { ContractorTracker } from "@/entities/contractor";
 import { daysBetween, formatDay } from "./calendar";
 import { coverage } from "./coverage";
@@ -73,8 +70,18 @@ export interface RenewalItem {
     severity: Severity;
     /** The horizon this contract has just crossed into, if any. */
     horizon: number | null;
-    /** True when the raw string is `d/m/yyyy` with both parts ≤ 12 — see the module note. */
+    /**
+     * True when both slash components are ≤ 12, so the string alone does not
+     * show which is the month — see the module note.
+     */
     ambiguousDate: boolean;
+    /**
+     * True when the row's own note writes this end date out unambiguously
+     * (`2 Jun 2028` beside a stored `6/2/2028`), which pins the value
+     * independently of the column convention. Only meaningful when
+     * {@link ambiguousDate} is true.
+     */
+    dateConfirmedByNote: boolean;
     /** Status as recorded, verbatim. */
     statusRaw: string;
 }
@@ -92,9 +99,11 @@ export interface RenewalResult {
 const AMBIGUOUS_SLASH_DATE = /^(\d{1,2})\/(\d{1,2})\/\d{4}$/;
 
 /**
- * True when a slash date could be read two ways — `3/4/2026` is 4 March to one
- * of the app's parsers and 3 April to the other. `13/4/2026` is unambiguous
- * (13 cannot be a month) and so is `3/3/2026` (both readings agree).
+ * True when a slash date could be read two ways *from the string alone* —
+ * `3/4/2026` is 4 March month-first and 3 April day-first. `13/4/2026` is
+ * unambiguous (13 cannot be a month) and so is `3/3/2026` (both readings
+ * agree). The app reads every such value month-first; this flags the values
+ * whose typing a human cannot verify by eye.
  */
 export function isAmbiguousSlashDate(raw: string | null | undefined): boolean {
     const match = AMBIGUOUS_SLASH_DATE.exec((raw ?? "").trim());
@@ -152,7 +161,7 @@ export function buildRenewalItems(contractors: ContractorTracker[], now: Date): 
         // free text and the register also holds e.g. "Retaining".
         const closed = statusRaw.toLowerCase().includes("expired");
         const endDateRaw = (contract["End Date"] ?? "").trim();
-        const endDate = parseTrackerDate(endDateRaw);
+        const endDate = parseContractDate(endDateRaw);
         const days = endDate ? daysBetween(now, endDate) : null;
         const { band, severity } = bandFor(days, closed);
 
@@ -166,6 +175,7 @@ export function buildRenewalItems(contractors: ContractorTracker[], now: Date): 
             severity,
             horizon: days === null || closed ? null : horizonFor(days),
             ambiguousDate: isAmbiguousSlashDate(endDateRaw),
+            dateConfirmedByNote: endDate !== null && textConfirmsDate(contract.Note, endDate),
             statusRaw,
         };
     });
@@ -318,18 +328,31 @@ function renewalFindings(items: RenewalItem[]): MonitoringFinding[] {
         });
     }
 
-    // ── Integrity: dates that two parts of the app read differently ──────────
+    // ── Integrity: end dates the string alone does not pin down ──────────────
+    // The column convention is settled — month-first, evidenced in
+    // lib/contract-dates — so this is no longer "two screens disagree". What
+    // remains is narrower and still worth saying: a value with both slash
+    // components 12 or under cannot be checked by eye, so a row typed under the
+    // other convention would read wrong everywhere, consistently. Rows whose own
+    // note writes the date out are already pinned by it; only the rest are worth
+    // a human's time, and only those raise a finding.
     const ambiguous = items.filter((i) => i.ambiguousDate);
-    if (ambiguous.length > 0) {
+    const unconfirmed = ambiguous.filter((i) => !i.dateConfirmedByNote);
+    if (unconfirmed.length > 0) {
+        const scope = `${ambiguous.length} of the register's ${items.length} end date${items.length === 1 ? "" : "s"} ${ambiguous.length === 1 ? "has" : "have"} both slash components 12 or under (${nameList(ambiguous.map((i) => `${i.contractor}: "${i.endDateRaw}"`))}), so the string alone does not show which part is the month.`;
+        const settled = "The register's convention is established as month-first and the app reads every date that way, so these are not read one way here and another way on the Contractors page.";
+        const check = `${unconfirmed.length === 1 ? "One of them is" : `${unconfirmed.length} of them are`} not written out anywhere else in the row, so ${unconfirmed.length === 1 ? "it rests" : "they rest"} on that convention alone: ${nameList(unconfirmed.map((i) => `${i.contractor} "${i.endDateRaw}" read as ${i.endDate ? formatDay(i.endDate) : "unreadable"}`))}.`;
         findings.push({
-            id: `renewal-ambiguous-date:${ambiguous.map((i) => i.contractor).sort().join("|")}`,
+            id: `renewal-ambiguous-date:${unconfirmed.map((i) => i.contractor).sort().join("|")}`,
             kind: "integrity",
-            severity: "high",
+            // Watch, not high: every surface reads these identically now, so the
+            // residual risk is one mistyped row, not a live contradiction.
+            severity: "watch",
             section: "Contractors — Expiry & renewals",
             period: "",
-            confirmed: `${ambiguous.length} end date${ambiguous.length === 1 ? " is" : "s are"} written as d/m/yyyy with both parts 12 or under (${nameList(ambiguous.map((i) => `${i.contractor}: "${i.endDateRaw}"`))}). The alert feed reads these month-first and the Contractors page reads them day-first, so the same contract can be up to eleven months apart on two screens.`,
-            affected: ambiguous.map(toRef),
-            recommendation: "Re-enter these dates in ISO form (yyyy-mm-dd), which both readers agree on, and decide the register's convention so future entries cannot be ambiguous.",
+            confirmed: `${scope} ${settled} ${check}`,
+            affected: unconfirmed.map(toRef),
+            recommendation: "Confirm these end dates against the signed contract, then re-enter them in ISO form (yyyy-mm-dd) so no future reader has to rely on the column convention.",
             href: "/contractors",
         });
     }

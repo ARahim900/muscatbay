@@ -103,7 +103,7 @@ export const BLOCKING_METER_ESCALATES = true;
  */
 export const RENEWAL_HORIZON_DAYS = [90, 60, 30, 7] as const;
 
-/** Days remaining at or below this = `high`; expired = `critical`. Mirrors `components/contractors/contract-dates.tsx`. */
+/** Days remaining at or below this = `high`; expired = `critical`. Mirrors `EXPIRY_SOON_DAYS` in `components/contractors/contract-dates.tsx`. */
 export const RENEWAL_SOON_DAYS = 30;
 /** Days remaining at or below this (but above SOON) = `watch`. */
 export const RENEWAL_HORIZON_MAX_DAYS = 90;

@@ -115,15 +115,60 @@ describe('renewal findings', () => {
         expect(findings.every((f) => !f.confirmed.includes('D Co'))).toBe(true);
     });
 
-    it('flags an end date the app’s two parsers read differently', () => {
-        const { findings } = evaluateRenewals(
+    it('names an end date that rests on the column convention alone', () => {
+        const { findings, items } = evaluateRenewals(
             [contract({ Contractor: 'Ambiguous Co', 'End Date': '3/4/2027' })],
             NOW,
         );
+        // Read month-first, the register's established convention.
+        expect(items[0].endDate?.toISOString().slice(0, 10)).toBe('2027-03-04');
+
         const ambiguous = findings.find((f) => f.id.startsWith('renewal-ambiguous-date'))!;
-        expect(ambiguous.severity).toBe('high');
-        expect(ambiguous.confirmed).toContain('up to eleven months apart');
+        // Watch, not high: every surface reads it the same way now, so what is
+        // left is one unverifiable string, not a live contradiction.
+        expect(ambiguous.severity).toBe('watch');
+        expect(ambiguous.confirmed).toContain('established as month-first');
+        expect(ambiguous.confirmed).toContain('read as 4 Mar 2027');
+        // It must no longer imply the app reads the value two different ways.
+        expect(ambiguous.confirmed).not.toContain('eleven months');
+        expect(ambiguous.confirmed).not.toContain('day-first');
         expect(ambiguous.recommendation).toContain('ISO form');
+        expect(ambiguous.recommendation).toContain('signed contract');
+    });
+
+    it('says nothing when the row\u2019s own note already writes the date out', () => {
+        // Gulf Expert's real shape: "6/2/2028" is ambiguous in isolation, but
+        // the note pins it independently of the convention.
+        const { findings, items } = evaluateRenewals(
+            [contract({
+                Contractor: 'Gulf Expert',
+                'End Date': '6/2/2028',
+                Note: 'Third consecutive annual renewal; latest term 3 Jun 2026 \u2013 2 Jun 2028.',
+            })],
+            NOW,
+        );
+        expect(items[0].ambiguousDate).toBe(true);
+        expect(items[0].dateConfirmedByNote).toBe(true);
+        expect(findings.find((f) => f.id.startsWith('renewal-ambiguous-date'))).toBeUndefined();
+    });
+
+    it('counts every ambiguous date in scope while naming only the unconfirmed ones', () => {
+        const { findings } = evaluateRenewals([
+            contract({
+                Contractor: 'Pinned Co',
+                'End Date': '6/2/2028',
+                Note: 'term ends 2 Jun 2028',
+            }),
+            contract({ Contractor: 'Unpinned Co', 'End Date': '11/5/2026' }),
+            contract({ Contractor: 'Plain Co', 'End Date': '12/31/2027' }),
+        ], NOW);
+        const ambiguous = findings.find((f) => f.id.startsWith('renewal-ambiguous-date'))!;
+        expect(ambiguous.confirmed).toContain("2 of the register's 3 end dates");
+        expect(ambiguous.confirmed).toContain('Pinned Co');
+        expect(ambiguous.confirmed).toContain('Unpinned Co');
+        expect(ambiguous.confirmed).not.toContain('Plain Co');
+        // Only the row a human still has to check is attached to the finding.
+        expect(ambiguous.affected.map((a) => a.label)).toEqual(['Unpinned Co \u2014 Testing']);
     });
 
     it('does not call an unambiguous slash date ambiguous', () => {

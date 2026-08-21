@@ -79,12 +79,12 @@ export function RenewalsPanel({ items }: { items: RenewalItem[] }) {
                                 <TableCell className={`${tdBase} text-muted-foreground`}>{item.service || "—"}</TableCell>
                                 <TableCell className={`${tdBase} meter text-muted-foreground`}>
                                     {item.endDateRaw || "—"}
-                                    {item.ambiguousDate && (
+                                    {item.ambiguousDate && !item.dateConfirmedByNote && (
                                         <span
                                             className="ml-1.5 rounded-[5px] bg-mb-warning-light px-1.5 py-0.5 text-[10px] font-semibold text-mb-warning-text"
-                                            title="d/m/yyyy with both parts 12 or under — the alert feed reads this month-first and the Contractors page day-first"
+                                            title="Both slash components are 12 or under, so the string alone does not show which is the month. The app reads it month-first, the register's established convention, but nothing else in the row confirms this value — worth one check against the signed contract."
                                         >
-                                            ambiguous
+                                            unconfirmed
                                         </span>
                                     )}
                                 </TableCell>

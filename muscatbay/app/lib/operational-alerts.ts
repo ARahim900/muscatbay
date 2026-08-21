@@ -35,6 +35,9 @@ import { buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT } from "@/lib/
 // never disagree about when something is late — see lib/monitoring/config.ts.
 import { STP_STALE_DAYS } from "@/lib/monitoring/config";
 import { horizonFor } from "@/lib/monitoring/renewals";
+// One contract-date parser, app-wide. The bell used to hold its own month-first
+// reader while /contractors held a day-first one; see lib/contract-dates.
+import { parseContractDate } from "@/lib/contract-dates";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -77,31 +80,6 @@ function fmtDateUTC(d: Date): string {
 /** UTC midnight for day-difference arithmetic. */
 function utcMidnight(d: Date): number {
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-}
-
-/**
- * Parse the date strings the backend actually holds: ISO `yyyy-mm-dd` or the
- * tracker's US `m/d/yyyy`. Returns a UTC-midnight Date, or null when the
- * string is missing/unparseable (rows without dates never alert).
- */
-export function parseTrackerDate(s: string | null | undefined): Date | null {
-    if (!s) return null;
-    const t = s.trim();
-
-    let y = 0, m = 0, day = 0;
-    let match = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t);
-    if (match) {
-        y = +match[1]; m = +match[2]; day = +match[3];
-    } else {
-        match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
-        if (!match) return null;
-        m = +match[1]; day = +match[2]; y = +match[3];
-    }
-
-    const d = new Date(Date.UTC(y, m - 1, day));
-    // Reject rolled-over components (e.g. month 13 / day 40)
-    if (d.getUTCFullYear() !== y || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== day) return null;
-    return d;
 }
 
 /** "A, B, C +2 more" — keeps alert messages scannable when the list is long. */
@@ -227,7 +205,7 @@ export function evaluateContractAlerts(
     for (const c of contractors) {
         const status = (c.Status ?? "").toLowerCase();
         if (status.includes("expired")) continue; // administratively closed
-        const end = parseTrackerDate(c["End Date"]);
+        const end = parseContractDate(c["End Date"]);
         if (!end) continue;
 
         const days = Math.floor((end.getTime() - today) / 86_400_000);

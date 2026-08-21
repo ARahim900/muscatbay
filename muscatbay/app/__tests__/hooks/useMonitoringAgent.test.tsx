@@ -154,3 +154,75 @@ describe('monitoring agent — fetch scope and evaluation clock', () => {
         expect(result.current.monthly?.findings.filter((f) => f.id.startsWith('electricity-monthly-missing'))).toEqual([]);
     });
 });
+
+describe('monitoring agent — overlapping passes', () => {
+    /**
+     * Realtime bursts, the 30-minute tick and the manual refresh all call
+     * `gather()`, and the passes do not finish in the order they start. Every
+     * assertion below is about what a *superseded* pass must not do when its
+     * five reads finally land.
+     */
+    it('drops a superseded pass rather than letting it overwrite a newer snapshot', async () => {
+        vi.setSystemTime(new Date('2026-09-10T08:00:00.000Z'));
+
+        // The daily water read is the gate: each call parks until the test
+        // releases it, so passes can be made to land in any order.
+        const gates: Array<() => void> = [];
+        readers.waterDaily.mockImplementation((months: string[]) => {
+            const rows = months.flatMap((month) =>
+                waterDailyExpectations().map((e) => ({
+                    account: e.account,
+                    meterName: e.label,
+                    month,
+                    days: Array.from({ length: 31 }, () => 10),
+                })),
+            );
+            return new Promise((resolve) => {
+                gates.push(() => resolve({ data: rows, status: status('water-daily', rows.length) }));
+            });
+        });
+
+        const release = async (pass: number) => {
+            gates[pass - 1]();
+            await settle();
+        };
+        // Move the wall clock WITHOUT firing timers, so each pass stamps a
+        // distinguishable `at` and no tick sneaks an extra pass in.
+        const jumpMinutes = (n: number) =>
+            vi.setSystemTime(new Date(Date.now() + n * 60 * 1000));
+
+        const { result } = renderHook(() => useMonitoringAgent());
+        await settle();
+        await release(1);                       // the mount pass lands normally
+        expect(result.current.status).toBe('ready');
+        const firstSnapshot = result.current.fetchedAt?.toISOString();
+
+        jumpMinutes(1);
+        await act(async () => { result.current.refresh(); });   // pass 2 — slow
+        jumpMinutes(1);
+        await act(async () => { result.current.refresh(); });   // pass 3 — fast
+        expect(result.current.refreshing).toBe(true);
+
+        await release(3);
+        const thirdSnapshot = result.current.fetchedAt?.toISOString();
+        expect(thirdSnapshot).not.toBe(firstSnapshot);
+        expect(result.current.refreshing).toBe(false);
+
+        // A fourth pass is now in flight — its spinner is showing.
+        jumpMinutes(1);
+        await act(async () => { result.current.refresh(); });
+        expect(result.current.refreshing).toBe(true);
+
+        // …and only now does pass 2 come back, two passes out of date.
+        await release(2);
+        expect(result.current.fetchedAt?.toISOString()).toBe(thirdSnapshot);
+        expect(result.current.daily?.generatedAt).toBe(thirdSnapshot);
+        expect(result.current.monthly?.generatedAt).toBe(thirdSnapshot);
+        // The stale pass must not end the live pass's loading state either.
+        expect(result.current.refreshing).toBe(true);
+
+        await release(4);
+        expect(result.current.refreshing).toBe(false);
+        expect(result.current.fetchedAt?.toISOString()).not.toBe(thirdSnapshot);
+    });
+});

@@ -178,9 +178,12 @@ export interface MonitoringReport {
     findings: MonitoringFinding[];
     sources: SourceStatus[];
     /**
-     * Modules with no periodic-entry contract defined, listed by name so the
-     * report never implies coverage it does not have. Silence about a module
-     * would read as "that one is fine".
+     * What THIS report does not assess, listed by name so it never implies
+     * coverage it does not have — silence about a module would read as "that
+     * one is fine". Two kinds of entry, each carrying its own reason: modules
+     * with no periodic-entry contract anywhere, and obligations assessed on
+     * the other report kind (electricity is monthly, the STP log is daily).
+     * Built by `unmonitoredFor()` in `./report`.
      */
     unmonitored: string[];
     /**

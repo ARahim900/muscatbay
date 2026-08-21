@@ -142,11 +142,17 @@ export function SourcePanel({ sources }: { sources: SourceStatus[] }) {
 /* ── Unmonitored notice ───────────────────────────────────────────────────── */
 
 /**
- * Names the modules this report does not cover.
+ * Names what this report does not cover.
  *
  * In a completeness report, saying nothing about a module reads as "that one is
  * fine". Listing them is the difference between a report that is silent and one
  * that is honest about its own scope.
+ *
+ * The list is per report kind and each entry carries its own reason (see
+ * `unmonitoredFor` in `lib/monitoring/report.ts`), so the copy below must not
+ * assert one reason for all of them: "no periodic-entry obligation defined" is
+ * true of Assets, and false of the STP daily log, which is assessed — on the
+ * daily report rather than this one.
  */
 export function UnmonitoredNotice({ sections }: { sections: string[] }) {
     if (sections.length === 0) return null;
@@ -157,8 +163,9 @@ export function UnmonitoredNotice({ sections }: { sections: string[] }) {
                 Not covered by this report
             </h3>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                These modules have no periodic-entry obligation defined, so nothing above says anything
-                about them either way. Give one a cadence and it moves into the report.
+                Nothing above says anything about these, either way. Each line says why: some have no
+                periodic-entry obligation defined at all, and some are assessed on the report for their
+                own cadence rather than this one.
             </p>
             <ul className="mt-2 flex flex-wrap gap-1.5">
                 {sections.map((name) => (

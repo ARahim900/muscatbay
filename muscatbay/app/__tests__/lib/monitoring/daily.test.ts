@@ -8,6 +8,7 @@ import {
     type StpDayRecord,
 } from '@/lib/monitoring/daily';
 import { dueDayWindow } from '@/lib/monitoring/calendar';
+import { classifyCoverage } from '@/lib/monitoring/coverage';
 import { waterDailyExpectations } from '@/lib/monitoring/expectations';
 import { MAIN_BULK_ACCOUNT } from '@/lib/water-accounts';
 
@@ -117,6 +118,66 @@ describe('STP daily log coverage', () => {
         const missing = findings.find((f) => f.id.startsWith('stp-daily-missing'))!;
         expect(missing.severity).toBe('critical');
         expect(missing.affected.map((a) => a.id)).toEqual(['2026-08-18', '2026-08-19']);
+    });
+
+    it('takes the worst day as the section severity, so one lost plant day cannot average away', () => {
+        // A twenty-day window with a single unlogged day is 95% complete, which
+        // the shared coverage gates call `watch`. But a day of inlet, TSE and
+        // tanker figures that was never written cannot be reconstructed later,
+        // and the per-day row and `stp-daily-missing` both call that critical —
+        // so the section that sits above them has to as well.
+        const window20 = dueDayWindow(NOW, 20);
+        const missingDay = window20[7];
+        const rows = logged(
+            window20.filter((d) => d !== missingDay).map((d) => d.toISOString().slice(0, 10)),
+        );
+
+        const { stpSection } = evaluateDailyRules({
+            days: window20, waterRows: [], stpRows: rows, now: NOW,
+        });
+
+        expect(stpSection.coverage.recorded).toBe(19);
+        expect(stpSection.coverage.expected).toBe(20);
+        // What averaging the window would have concluded…
+        expect(classifyCoverage(stpSection.coverage)).toBe('watch');
+        // …and what the section actually reports.
+        expect(stpSection.severity).toBe('critical');
+        expect(stpSection.breakdown.filter((b) => b.severity === 'critical')).toHaveLength(1);
+    });
+
+    it('judges "future-dated" on the Muscat calendar the database itself writes by', () => {
+        // Asia/Muscat is UTC+4, so between 20:00 and 24:00 UTC the plant is
+        // already on the next calendar day. `stp_reject_future_dates`
+        // (sql/migrations/20260718_security_hardening_part2.sql) compares
+        // against `now() at time zone 'Asia/Muscat'`, so a row dated "today in
+        // Muscat" is one the database deliberately accepted — reporting it as
+        // impossible would be the monitor inventing a defect.
+        const evening = new Date('2026-08-20T21:00:00.000Z'); // 01:00 on 21 Aug in Muscat
+        const days = dueDayWindow(evening, 3);                // 17–19 Aug
+
+        const { findings } = evaluateDailyRules({
+            days,
+            waterRows: [],
+            stpRows: logged(['2026-08-17', '2026-08-18', '2026-08-19', '2026-08-21']),
+            now: evening,
+        });
+        expect(findings.some((f) => f.id.startsWith('stp-future-dated'))).toBe(false);
+        // …and the accepted row still counts as the newest entry, so the log is
+        // not simultaneously reported as stale.
+        expect(findings.some((f) => f.id.startsWith('stp-daily-stale'))).toBe(false);
+
+        // A row genuinely beyond the Muscat day is still reported, at that same
+        // instant — the gate moved by four hours, it did not switch off.
+        const withFuture = evaluateDailyRules({
+            days,
+            waterRows: [],
+            stpRows: logged(['2026-08-17', '2026-08-18', '2026-08-19', '2026-08-21', '2026-08-22']),
+            now: evening,
+        });
+        const future = withFuture.findings.find((f) => f.id.startsWith('stp-future-dated'))!;
+        expect(future.affected.map((a) => a.id)).toEqual(['2026-08-22']);
+        expect(future.confirmed).toContain('22 Aug 2026');
+        expect(future.confirmed).not.toContain('21 Aug 2026');
     });
 
     it('reports a stale log past the staleness gate', () => {

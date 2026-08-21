@@ -54,8 +54,28 @@ describe('daily report', () => {
             waterRows: everyMeterRead(), stpRows: [], contractors,
             sources: [okSource('water-daily')], now: NOW,
         });
-        expect(report.unmonitored).toEqual([...UNMONITORED_SECTIONS]);
-        expect(report.unmonitored.length).toBeGreaterThan(0);
+        // The modules nothing assesses still lead the list, in order and
+        // unchanged; the entries specific to this report kind follow them.
+        expect(report.unmonitored.slice(0, UNMONITORED_SECTIONS.length)).toEqual([...UNMONITORED_SECTIONS]);
+        expect(report.unmonitored.length).toBeGreaterThan(UNMONITORED_SECTIONS.length);
+    });
+
+    it('states that it does not assess electricity, and says where electricity is assessed', () => {
+        // Electricity is a monthly obligation, so a daily report is right not to
+        // measure it — but "right not to" still has to be said out loud, or the
+        // absence of an electricity section reads as an electricity all-clear.
+        const report = composeDailyReport({
+            waterRows: everyMeterRead(), stpRows: [], contractors,
+            sources: [okSource('water-daily')], now: NOW,
+        });
+        const electricity = report.unmonitored.find((s) => s.startsWith('Electricity'))!;
+        expect(electricity).toBeDefined();
+        expect(electricity).toContain('assessed on the monthly report');
+        // …and it must not be filed alongside the modules nothing assesses.
+        expect(electricity).not.toContain('no periodic-entry obligation');
+        // The daily obligations it DOES assess are never listed as uncovered.
+        expect(report.unmonitored.some((s) => s.startsWith('STP — Daily log'))).toBe(false);
+        expect(report.unmonitored.some((s) => s.startsWith('Water — Daily readings'))).toBe(false);
     });
 
     it('marks the report partial and excludes unreadable sections from the completeness figure', () => {
@@ -205,6 +225,24 @@ describe('monthly report', () => {
         expect(report.periodLabel).toBe('July 2026');
     });
 
+    it('states that it does not assess the STP daily log, and says where it is assessed', () => {
+        // The gap this closes: the monthly report has no STP section, and used
+        // to list only Assets/HVAC/Fire/Pest as uncovered — so a plant log a
+        // week behind looked, on this tab, exactly like one that was current.
+        const report = composeMonthlyReport({
+            electricityMeters: [], electricityReadings: [],
+            waterMeters: [], derivedMonths: [], contractors,
+            sources: [okSource('electricity-monthly')], now: NOW,
+        });
+        const stp = report.unmonitored.find((s) => s.startsWith('STP — Daily log'))!;
+        expect(stp).toBeDefined();
+        expect(stp).toContain('assessed on the daily report');
+        expect(stp).not.toContain('no periodic-entry obligation');
+        // The monthly obligations it DOES assess are never listed as uncovered.
+        expect(report.unmonitored.some((s) => s.startsWith('Electricity'))).toBe(false);
+        expect(report.unmonitored.some((s) => s.startsWith('Water — Monthly'))).toBe(false);
+    });
+
     it('trends over the requested number of due months, oldest first', () => {
         const report = composeMonthlyReport({
             electricityMeters: [], electricityReadings: [],
@@ -212,6 +250,51 @@ describe('monthly report', () => {
             sources: [], now: NOW, trendMonths: 3,
         });
         expect(report.trend.map((t) => t.key)).toEqual(['May-26', 'Jun-26', 'Jul-26']);
+    });
+});
+
+describe('report scope — every obligation is either assessed or named', () => {
+    const daily = () => composeDailyReport({
+        waterRows: everyMeterRead(),
+        stpRows: [{ date: '2026-08-19', inlet: 500, tse: 480, tankers: 1 }],
+        contractors,
+        sources: [okSource('water-daily'), okSource('stp-daily'), okSource('contractors')],
+        now: NOW,
+    });
+    const monthly = () => composeMonthlyReport({
+        electricityMeters: [], electricityReadings: [],
+        waterMeters: [], derivedMonths: [], contractors,
+        sources: [okSource('electricity-monthly'), okSource('water-monthly')],
+        now: NOW,
+    });
+
+    it('leaves no section title of either report unaccounted for on the other', () => {
+        // The invariant behind the per-kind lists, asserted mechanically so a
+        // section added to one report cannot go silently missing from the
+        // other's scope note. Every obligation this monitor knows about must,
+        // on every report, be EITHER a section of that report OR named in what
+        // that report does not cover.
+        const everyTitle = [
+            ...daily().sections.map((s) => s.title),
+            ...monthly().sections.map((s) => s.title),
+        ];
+
+        for (const report of [daily(), monthly()]) {
+            const assessed = new Set(report.sections.map((s) => s.title));
+            for (const title of everyTitle) {
+                const accountedFor = assessed.has(title)
+                    || report.unmonitored.some((u) => u.startsWith(title));
+                expect(accountedFor, `${report.kind} report is silent about "${title}"`).toBe(true);
+            }
+        }
+    });
+
+    it('never names a section it is actually reporting on as uncovered', () => {
+        for (const report of [daily(), monthly()]) {
+            for (const section of report.sections) {
+                expect(report.unmonitored.some((u) => u.startsWith(section.title))).toBe(false);
+            }
+        }
     });
 });
 
