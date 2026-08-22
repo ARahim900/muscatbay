@@ -750,24 +750,6 @@ export default function STPPage() {
                 </div>
             )}
 
-            {latestThresholdAlerts.length > 0 && (
-                <div className="grid gap-2" aria-label="Current STP threshold alerts">
-                    {latestThresholdAlerts.map((alert) => (
-                        <div
-                            key={alert.key}
-                            role="status"
-                            className="flex items-start gap-2 rounded-[10.5px] border border-[var(--status-warning)]/35 bg-[var(--status-warning-bg)] px-4 py-3 text-[var(--mb-warning-text)]"
-                        >
-                            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                            <div>
-                                <p className="text-sm font-semibold">{alert.title}</p>
-                                <p className="mt-0.5 text-xs leading-relaxed">{alert.message}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}

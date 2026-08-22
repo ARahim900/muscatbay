@@ -3,7 +3,7 @@
 /**
  * Plant Watch — the STP section's inspection-first landing, modelled on the
  * Water Zone Watch. One screen answers "is the plant healthy, and if not, what
- * do I do?": a briefing strip, severity-first process cards (worst first,
+ * do I do?": a briefing strip, severity-first process table (worst first,
  * including data completeness), a consolidated load-vs-recovery chart, a
  * metric×day heatmap that pinpoints the day a problem started — and whose cells
  * drill through to that day in the operations log — and the auto-generated
@@ -12,19 +12,28 @@
  * Every band shown comes from lib/thresholds.ts and is printed in the UI.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
     ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { Activity, Gauge, Droplets, Recycle, Truck, DollarSign, AlertTriangle, CheckCircle2, CalendarCheck } from "lucide-react";
+import {
+    Activity, Gauge, Droplets, Recycle, Truck, DollarSign, AlertTriangle,
+    CheckCircle2, CalendarCheck, TrendingUp,
+} from "lucide-react";
 import type { STPOperation } from "@/lib/mock-data";
 import { STP_THRESHOLDS } from "@/lib/thresholds";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from "@/components/ui/table";
+import { TableToolbar } from "@/components/shared/data-table/table-toolbar";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    HealthCard, MetricHeatmap, InspectionTicker, worstFirst, type TickerStat,
+    MetricHeatmap, InspectionTicker, SeverityChip, Sparkline, SEV_UI, worstFirst,
+    type HealthMetric, type TickerStat,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
+import { cn } from "@/lib/utils";
 import {
     buildSTPModel, buildHealthMetrics, buildHeatmap, buildSTPFindings, effSeverity, STP_GATE_NOTE,
     type STPDay,
@@ -40,6 +49,156 @@ type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
+function ProcessHealthTable({
+    metrics,
+    totalMetrics,
+    attentionOnly,
+    onAttentionOnlyChange,
+}: {
+    metrics: HealthMetric[];
+    totalMetrics: number;
+    attentionOnly: boolean;
+    onAttentionOnlyChange: (active: boolean) => void;
+}) {
+    return (
+        <div className="space-y-2">
+            <div className="overflow-hidden rounded-[10.5px] border border-border bg-card shadow-card-standard [&_.ops-table-shell]:rounded-none [&_.ops-table-shell]:border-0 [&_.ops-table-shell]:shadow-none">
+                <TableToolbar
+                    title="Process health"
+                    count={metrics.length === totalMetrics ? `${totalMetrics} indicators` : `${metrics.length} of ${totalMetrics} indicators`}
+                >
+                    <button
+                        type="button"
+                        onClick={() => onAttentionOnlyChange(!attentionOnly)}
+                        aria-pressed={attentionOnly}
+                        className={cn(
+                            "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                            attentionOnly
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}
+                    >
+                        <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                        Attention only
+                    </button>
+                </TableToolbar>
+
+                <Table
+                    data-density="compact"
+                    className="min-w-0 table-fixed md:min-w-[860px] md:table-auto"
+                    aria-label="STP process health"
+                >
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="col-sticky w-[46%] md:w-auto md:min-w-[190px]">Process / status</TableHead>
+                            <TableHead className="num w-[54%] text-right md:w-auto md:min-w-[150px]">Current summary</TableHead>
+                            <TableHead className="hidden min-w-[260px] md:table-cell">Operating context</TableHead>
+                            <TableHead className="num hidden min-w-[165px] text-right md:table-cell">Supporting metrics</TableHead>
+                            <TableHead className="num hidden min-w-[145px] text-right md:table-cell">Recent trend</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {metrics.map((metric) => {
+                            const severityUi = SEV_UI[metric.severity];
+                            const isCalm = metric.severity === "good" || metric.severity === "nodata";
+                            const sparkPointCount = metric.spark?.filter((value) => value !== null && Number.isFinite(value)).length ?? 0;
+
+                            return (
+                                <TableRow key={metric.key}>
+                                    <TableCell
+                                        className="col-sticky strong"
+                                        style={{ boxShadow: `inset 3px 0 0 ${severityUi.base}` }}
+                                    >
+                                        <div className="flex min-h-11 flex-col items-start justify-center gap-1.5 md:flex-row md:items-center md:justify-between md:gap-3">
+                                            <span className="min-w-0 text-[13px] font-semibold leading-snug text-foreground">
+                                                {metric.title}
+                                            </span>
+                                            <SeverityChip severity={metric.severity} />
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="num">
+                                        <div className="ms-auto max-w-[190px] text-right">
+                                            <p
+                                                className="font-bold tabular-nums"
+                                                style={{ color: isCalm ? "var(--foreground)" : severityUi.text }}
+                                            >
+                                                {metric.headline}
+                                            </p>
+                                            {metric.headlineNote && (
+                                                <p className="mt-0.5 text-[10px] font-normal leading-snug text-muted-foreground md:hidden">
+                                                    {metric.headlineNote}
+                                                </p>
+                                            )}
+                                            {metric.facts && metric.facts.length > 0 && (
+                                                <p className="mt-1 text-[10px] font-normal text-muted-foreground md:hidden">
+                                                    {metric.facts.slice(0, 2).map((fact) => `${fact.label} ${fact.value}`).join(" · ")}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="hidden md:table-cell">
+                                        <p className="max-w-[300px] text-xs font-normal leading-snug text-muted-foreground">
+                                            {metric.headlineNote ?? "—"}
+                                        </p>
+                                        {metric.signal && (
+                                            <span className={cn(
+                                                "mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                                metric.signal.tone === "danger"
+                                                    ? "bg-mb-danger-light text-mb-danger-text"
+                                                    : "bg-mb-warning-light text-mb-warning-text",
+                                            )}>
+                                                <TrendingUp className="h-2.5 w-2.5" aria-hidden="true" />
+                                                {metric.signal.label}
+                                            </span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="num hidden md:table-cell">
+                                        {metric.facts && metric.facts.length > 0 ? (
+                                            <div className="space-y-0.5 text-right text-[11px] font-normal text-muted-foreground">
+                                                {metric.facts.slice(0, 2).map((fact) => (
+                                                    <p key={fact.label}>
+                                                        {fact.label} <span className="font-semibold text-foreground tabular-nums">{fact.value}</span>
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        ) : "—"}
+                                    </TableCell>
+                                    <TableCell className="num hidden md:table-cell">
+                                        <div className="ms-auto flex w-[120px] items-center justify-end">
+                                            {metric.spark && sparkPointCount >= 2 ? (
+                                                <Sparkline
+                                                    values={metric.spark}
+                                                    stroke={isCalm ? "var(--chart-success)" : "var(--chart-loss)"}
+                                                    className="w-24"
+                                                />
+                                            ) : (
+                                                <span className="text-muted-foreground" title="Not enough trend data">—</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                        {metrics.length === 0 && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                                    No STP process indicators need attention in this period.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+                <p className="sr-only" aria-live="polite">
+                    Showing {metrics.length} of {totalMetrics} STP process indicators.
+                </p>
+            </div>
+            <p className="text-[11px] leading-snug text-muted-foreground">
+                <span className="font-semibold uppercase tracking-wide">Thresholds in force · </span>{STP_GATE_NOTE}
+            </p>
+        </div>
+    );
+}
+
 export function PlantWatch({
     operations, onInspectDay,
 }: {
@@ -48,8 +207,13 @@ export function PlantWatch({
     onInspectDay?: (day: { iso: string; ym: string; dayLabel: string; date: Date }) => void;
 }) {
     const chartMotion = useChartMotion();
+    const [attentionOnly, setAttentionOnly] = useState(false);
     const model = useMemo(() => buildSTPModel(operations), [operations]);
     const metrics = useMemo(() => worstFirst(buildHealthMetrics(model)), [model]);
+    const visibleMetrics = useMemo(
+        () => attentionOnly ? metrics.filter((metric) => metric.severity !== "good") : metrics,
+        [attentionOnly, metrics],
+    );
     const heat = useMemo(
         () => buildHeatmap(model, onInspectDay ? (d: STPDay) => onInspectDay(d) : undefined),
         [model, onInspectDay],
@@ -109,16 +273,14 @@ export function PlantWatch({
                 <InspectionTicker caption={`Plant briefing · ${summary.periodLabel}`} items={tickerItems} />
             </SectionBoundary>
 
-            {/* Process-health cards — worst first */}
+            {/* Process health — same compact table language as Water and Electricity */}
             <SectionBoundary title="Process health">
-                <div className="space-y-2">
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                        {metrics.map((m) => <HealthCard key={m.key} metric={m} />)}
-                    </div>
-                    <p className="text-[11px] leading-snug text-muted-foreground">
-                        <span className="font-semibold uppercase tracking-wide">Thresholds in force · </span>{STP_GATE_NOTE}
-                    </p>
-                </div>
+                <ProcessHealthTable
+                    metrics={visibleMetrics}
+                    totalMetrics={metrics.length}
+                    attentionOnly={attentionOnly}
+                    onAttentionOnlyChange={setAttentionOnly}
+                />
             </SectionBoundary>
 
             {/* Consolidated load vs recovery */}
