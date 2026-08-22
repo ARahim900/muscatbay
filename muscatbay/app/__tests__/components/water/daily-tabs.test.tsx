@@ -37,18 +37,19 @@ const monthData: SupabaseDailyWaterConsumption[] = [
 // ─── Zone Watch ───────────────────────────────────────────────────────────────
 
 describe('ZoneWatch', () => {
-    it('renders a card per zone and flags the high-loss zone', () => {
+    it('renders a table row per zone and flags the high-loss zone', () => {
         render(
             <ZoneWatch briefing={null} monthData={monthData} selectedDay={2} month="Mar-26" onInspectZone={() => {}} />,
         );
+        expect(screen.getByRole('table', { name: 'Water zone performance' })).toBeInTheDocument();
         for (const z of ZONE_BULK_CONFIG) {
             expect(screen.getAllByText(z.zoneName).length).toBeGreaterThan(0);
         }
-        // Day 2: loss 40 m³ / 40% → "High" severity chip on the Zone FM card.
+        // Day 2: loss 40 m³ / 40% → "High" severity chip on the Zone FM row.
         expect(screen.getAllByText('High').length).toBeGreaterThan(0);
     });
 
-    it('navigates to the zone analysis when a card is clicked', () => {
+    it('navigates to the zone analysis when a zone row is clicked', () => {
         const onInspect = vi.fn();
         render(
             <ZoneWatch briefing={null} monthData={monthData} selectedDay={2} month="Mar-26" onInspectZone={onInspect} />,
