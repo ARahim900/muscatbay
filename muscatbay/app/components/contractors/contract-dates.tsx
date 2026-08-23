@@ -1,72 +1,27 @@
 "use client";
 
 /**
- * Contract date parsing + expiry reporting.
+ * Contract expiry reporting — the severity/badge layer.
  *
- * Contract start/end dates arrive as free-text strings from several source
- * sheets, so nothing downstream could compare them to today — an expired
- * contract rendered exactly like a live one. These helpers parse the common
- * formats, and anything unparseable is reported as unparseable rather than
- * silently guessed.
+ * The parsing itself lives in `@/lib/contract-dates`, which is the app's single
+ * contract-date parser: this file used to carry a second, day-first one, so the
+ * notification bell and this page disagreed about the same contract by up to
+ * eleven months — and, because no day-first reading of `12/31/2027` exists,
+ * this page rendered "Unreadable date" for most of the register while the bell
+ * counted those contracts down correctly. That parser is gone; the register's
+ * month-first convention and the evidence for it are documented in the lib
+ * module.
  *
  * Scope note: this is REPORTING on a date that already exists in the database.
  * There is deliberately no assignment, due-date, or close-out behaviour here.
  */
 
-import { differenceInCalendarDays, isValid, parse, parseISO, format } from "date-fns";
 import {
     AlertTriangle, CalendarClock, CalendarX2, CheckCircle2, HelpCircle, type LucideIcon,
 } from "lucide-react";
 import { SeverityChip, type Severity } from "@/components/shared/inspection";
+import { daysUntil, formatContractDate, parseContractDate } from "@/lib/contract-dates";
 import { cn } from "@/lib/utils";
-
-/**
- * Accepted input formats, most specific first. Day-first ordering is assumed
- * for all-numeric dates (Oman convention) — `03/04/2026` is 3 April 2026.
- */
-const DATE_FORMATS = [
-    "yyyy-MM-dd",
-    "dd/MM/yyyy",
-    "d/M/yyyy",
-    "dd-MM-yyyy",
-    "d-M-yyyy",
-    "dd-MMM-yyyy",
-    "d-MMM-yyyy",
-    "dd MMM yyyy",
-    "d MMM yyyy",
-    "dd MMMM yyyy",
-    "MMM d, yyyy",
-    "MMMM d, yyyy",
-    "dd.MM.yyyy",
-];
-
-/** Parse a contract date string. Returns null when the value cannot be read. */
-export function parseContractDate(raw: string | null | undefined): Date | null {
-    const value = (raw ?? "").trim();
-    if (!value) return null;
-
-    // ISO (with or without a time component) — the common Supabase shape.
-    if (/^\d{4}-\d{2}-\d{2}([T ]|$)/.test(value)) {
-        const iso = parseISO(value);
-        if (isValid(iso)) return iso;
-    }
-
-    const reference = new Date();
-    for (const fmt of DATE_FORMATS) {
-        const parsed = parse(value, fmt, reference);
-        if (isValid(parsed)) return parsed;
-    }
-    return null;
-}
-
-/** Whole calendar days from today to `date` (negative = already past). */
-export function daysUntil(date: Date, from: Date = new Date()): number {
-    return differenceInCalendarDays(date, from);
-}
-
-export function formatContractDate(date: Date): string {
-    return format(date, "dd MMM yyyy");
-}
 
 export interface ExpiryStatus {
     severity: Severity;

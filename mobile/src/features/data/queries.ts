@@ -29,10 +29,10 @@ import {
 import { getPpmFindings } from '@/functions/api/gulf-expert';
 import { getSTPOperationsFromSupabase } from '@/functions/api/stp';
 import { fetchWaterMeters, type WaterMetersResult } from '@/functions/api/water';
+import { parseContractDate } from '@/lib/contract-dates';
 import type { MeterReading, STPOperation } from '@/lib/mock-data';
 import {
   evaluateOperationalAlerts,
-  parseTrackerDate,
   type OperationalAlert,
 } from '@/lib/operational-alerts';
 import type { WaterMeter } from '@/lib/water-data';
@@ -360,7 +360,7 @@ const EMPTY_CONTRACTORS: ContractorsSummary = {
   error: null,
 };
 
-/** Mirrors CONTRACT_WARN_DAYS in `lib/operational-alerts.ts`. */
+/** One of the renewal horizons in `lib/monitoring/config.ts` (RENEWAL_HORIZON_DAYS). */
 const CONTRACT_WARN_DAYS = 60;
 
 export function toContractorsSummary(tracker: ContractorTracker[], now: Date): ContractorsSummary {
@@ -375,7 +375,7 @@ export function toContractorsSummary(tracker: ContractorTracker[], now: Date): C
   const rows: ContractRow[] = tracker.map((c) => {
     const status = (c.Status ?? '').trim();
     const isExpired = status.toLowerCase().includes('expired');
-    const end = parseTrackerDate(c['End Date']);
+    const end = parseContractDate(c['End Date']);
     const daysRemaining = end ? Math.floor((end.getTime() - today) / 86_400_000) : null;
 
     if (!isExpired) {

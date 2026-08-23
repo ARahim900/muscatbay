@@ -20,7 +20,8 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { TableSkeleton } from "@/components/shared/skeleton";
 import { SeverityChip } from "@/components/shared/inspection";
 import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
-import { expiryStatus, formatContractDate, parseContractDate, type ExpiryStatus } from "./contract-dates";
+import { formatContractDate, parseContractDate } from "@/lib/contract-dates";
+import { expiryStatus, type ExpiryStatus } from "./contract-dates";
 
 export interface RenewalRow {
     key: string;

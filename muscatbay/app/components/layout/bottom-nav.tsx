@@ -30,6 +30,7 @@ import {
   Sun,
   Moon,
   ChevronRight,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -67,6 +68,9 @@ const moduleItems: ModuleItem[] = [
   { id: "assets", name: "Assets", icon: Package, href: "/assets", module: "assets", accent: "text-module-assets" },
   { id: "pest-control", name: "Pest Control", icon: Bug, href: "/pest-control", module: "pest-control", accent: "text-module-pest" },
   { id: "firefighting", name: "Fire Safety", icon: Flame, href: "/firefighting", module: "firefighting", accent: "text-module-fire" },
+  // Monitoring reports ON the modules rather than being one of them, so it
+  // carries the app accent instead of claiming a ninth module colour.
+  { id: "monitoring", name: "Monitoring", icon: ClipboardCheck, href: "/monitoring", module: "monitoring", accent: "text-secondary" },
 ];
 
 type SheetKey = "modules" | "alerts" | "profile";

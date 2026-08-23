@@ -10,8 +10,9 @@
  * Alert classes (the three risk classes the operation tracks):
  *  1. Water loss exceedance   — latest computable month's system loss vs the
  *     TARGET_LOSS_PCT management target, plus critical zones.
- *  2. Contract expiry         — Contractor_Tracker rows past (or within 60
- *     days of) their End Date while still marked Active.
+ *  2. Contract expiry         — Contractor_Tracker rows past their End Date
+ *     while still marked Active, or inside one of the renewal horizons
+ *     (90 / 60 / 30 / 7 days) defined in lib/monitoring/config.
  *  3. Critical plant failures — STP: irrigation reuse stopped, recovery below
  *     the operating bands, or the daily log going stale.
  *
@@ -30,6 +31,13 @@ import type { WaterMeter } from "@/lib/water-data";
 import type { ContractorTracker } from "@/entities/contractor";
 import type { STPOperation } from "@/lib/mock-data";
 import { buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT } from "@/lib/water-monthly-data";
+// Cadence gates live in one place so the bell and the monitoring reports can
+// never disagree about when something is late — see lib/monitoring/config.ts.
+import { STP_STALE_DAYS } from "@/lib/monitoring/config";
+import { horizonFor } from "@/lib/monitoring/renewals";
+// One contract-date parser, app-wide. The bell used to hold its own month-first
+// reader while /contractors held a day-first one; see lib/contract-dates.
+import { parseContractDate } from "@/lib/contract-dates";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -72,31 +80,6 @@ function fmtDateUTC(d: Date): string {
 /** UTC midnight for day-difference arithmetic. */
 function utcMidnight(d: Date): number {
     return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-}
-
-/**
- * Parse the date strings the backend actually holds: ISO `yyyy-mm-dd` or the
- * tracker's US `m/d/yyyy`. Returns a UTC-midnight Date, or null when the
- * string is missing/unparseable (rows without dates never alert).
- */
-export function parseTrackerDate(s: string | null | undefined): Date | null {
-    if (!s) return null;
-    const t = s.trim();
-
-    let y = 0, m = 0, day = 0;
-    let match = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(t);
-    if (match) {
-        y = +match[1]; m = +match[2]; day = +match[3];
-    } else {
-        match = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
-        if (!match) return null;
-        m = +match[1]; day = +match[2]; y = +match[3];
-    }
-
-    const d = new Date(Date.UTC(y, m - 1, day));
-    // Reject rolled-over components (e.g. month 13 / day 40)
-    if (d.getUTCFullYear() !== y || d.getUTCMonth() !== m - 1 || d.getUTCDate() !== day) return null;
-    return d;
 }
 
 /** "A, B, C +2 more" — keeps alert messages scannable when the list is long. */
@@ -186,9 +169,6 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
 /*  2. Contract expiry                                                 */
 /* ------------------------------------------------------------------ */
 
-/** Contracts within this many days of their End Date raise a heads-up. */
-const CONTRACT_WARN_DAYS = 60;
-
 /**
  * Evaluate the contractor tracker for expiry risk.
  *
@@ -196,7 +176,20 @@ const CONTRACT_WARN_DAYS = 60;
  *   live service gaps (the register believes the service is running).
  *   Rows already marked Expired are administratively closed — documented
  *   history, not an active alert.
- * - End Date within the next 60 days on an active contract → warning.
+ * - End Date inside a renewal horizon on an active contract → warning, one
+ *   alert per horizon.
+ *
+ * Why per-horizon rather than one 60-day bucket: the alert id is the
+ * de-duplication key, and it used to be `contracts-expiring:<contract set>`.
+ * That set does not change as a contract counts down, so a contract that
+ * entered the window at 59 days produced exactly one notification and then
+ * slid silently to 7 days with nothing further raised — the opposite of what
+ * a renewal warning is for. Bucketing by `RENEWAL_HORIZON_DAYS` puts the
+ * horizon in the fingerprint — alongside the contract, not the bucket's
+ * membership — so each contract's crossings (90 → 60 → 30 → 7) raise once and
+ * only once each, and one contract moving down a horizon cannot re-raise its
+ * neighbours. `lib/monitoring/renewals.ts` owns the ladder; the register on
+ * /monitoring and this feed therefore read the same horizons.
  */
 export function evaluateContractAlerts(
     contractors: ContractorTracker[] | null | undefined,
@@ -206,20 +199,28 @@ export function evaluateContractAlerts(
 
     const today = utcMidnight(now);
     const expired: { name: string; service: string; end: Date }[] = [];
-    const expiring: { name: string; service: string; end: Date; days: number }[] = [];
+    /** horizon (days) → contracts that have just crossed into it. */
+    const expiring = new Map<number, { name: string; service: string; end: Date; days: number }[]>();
 
     for (const c of contractors) {
         const status = (c.Status ?? "").toLowerCase();
         if (status.includes("expired")) continue; // administratively closed
-        const end = parseTrackerDate(c["End Date"]);
+        const end = parseContractDate(c["End Date"]);
         if (!end) continue;
 
         const days = Math.floor((end.getTime() - today) / 86_400_000);
         const name = c.Contractor ?? "Unknown contractor";
         const service = c["Service Provided"] ?? "";
 
-        if (days < 0) expired.push({ name, service, end });
-        else if (days <= CONTRACT_WARN_DAYS) expiring.push({ name, service, end, days });
+        if (days < 0) {
+            expired.push({ name, service, end });
+            continue;
+        }
+        const horizon = horizonFor(days);
+        if (horizon === null) continue;
+        const bucket = expiring.get(horizon);
+        if (bucket) bucket.push({ name, service, end, days });
+        else expiring.set(horizon, [{ name, service, end, days }]);
     }
 
     const alerts: OperationalAlert[] = [];
@@ -237,17 +238,24 @@ export function evaluateContractAlerts(
         });
     }
 
-    if (expiring.length > 0) {
-        expiring.sort((a, b) => a.days - b.days);
-        const setKey = expiring.map((e) => e.name).sort().join("|");
-        alerts.push({
-            id: `contracts-expiring:${setKey}`,
-            level: "warning",
-            module: "contractors",
-            title: `${expiring.length} contract${expiring.length > 1 ? "s" : ""} expiring within ${CONTRACT_WARN_DAYS} days`,
-            message: `${capList(expiring.map((e) => `${e.name} in ${e.days} day${e.days === 1 ? "" : "s"} (${fmtDateUTC(e.end)})`))}.`,
-            href: "/contractors",
-        });
+    // Tightest horizon first — the most urgent contracts lead the feed.
+    for (const horizon of [...expiring.keys()].sort((a, b) => a - b)) {
+        const group = (expiring.get(horizon) ?? []).sort((a, b) => a.days - b.days);
+        // One alert per contract, not one per bucket: the id is the ack and
+        // push de-duplication key, so a fingerprint built from the bucket's
+        // membership re-raised every contract in it the moment a neighbour
+        // moved down a horizon — a second push for a contract that crossed
+        // nothing. Keyed on the contract, a crossing raises exactly once.
+        for (const e of group) {
+            alerts.push({
+                id: `contracts-expiring-${horizon}:${e.name}`,
+                level: "warning",
+                module: "contractors",
+                title: `${e.name} — contract expires in ${e.days} day${e.days === 1 ? "" : "s"}`,
+                message: `${e.service ? `${e.service} ` : ""}ends ${fmtDateUTC(e.end)} — inside the ${horizon}-day renewal horizon.`,
+                href: "/contractors",
+            });
+        }
     }
 
     return alerts;
@@ -262,8 +270,6 @@ const STP_RECOVERY_CRITICAL = 80;
 const STP_RECOVERY_WATCH = 90;
 /** Evaluation window over the most recent logged days. */
 const STP_WINDOW_DAYS = 14;
-/** Daily log older than this many days = the data pipeline itself failed. */
-const STP_STALE_DAYS = 3;
 
 /**
  * Evaluate the STP daily log for critical failures over the last 14 logged

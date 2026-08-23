@@ -17,6 +17,7 @@ const ROUTE_LABELS: Record<string, string> = {
     "/assets": "Assets",
     "/pest-control": "Pest Control",
     "/firefighting": "Fire Safety",
+    "/monitoring": "Monitoring",
     "/settings": "Settings",
 };
 

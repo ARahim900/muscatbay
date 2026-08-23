@@ -33,7 +33,7 @@ in one Next.js app backed by Supabase.
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Auth | Supabase email/password; client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (156 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-10 |
+| Tests / checks | Vitest (421 tests), ESLint, `tsc --noEmit`, `next build`, and `mobile/` `tsc --noEmit` — all green as of 2026-08-21 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -110,6 +110,7 @@ and `next build` were all green before and after.
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
 | Fire Safety | `/firefighting` | ✅ Live (redesigned 2026-06-30) | `fire_safety_equipment`, `fire_ppm_activities`, `fire_issues_register`, `fire_ppm_contacts` | BEC AMC: 3 PPM cycles × 4 zones; aligned with HVAC layout (PRs #26/#27) |
 | Pest Control | `/pest-control` | ✅ Live | pest tables | **2026-07-10:** the AITable embed (cross-origin iframe — internals can't be restyled) now follows the app's light/dark theme via its `theme` param, sits behind a card-surface loading cover until it finishes loading, and gains an "Open full view" header action |
+| Monitoring | `/monitoring` | ✅ Live, added 2026-08-20 | `water_daily_consumption`, `stp_operations`, `electricity_meters`/`electricity_readings`, `water_meters`/`water_monthly_consumption`, `Contractor_Tracker` | Data-completeness agent. Three tabs: **Daily report** (water daily readings vs the `lib/water-accounts.ts` register × the last 7 *due* days, STP daily log, and the STP-vs-water cross-check), **Monthly report** (electricity + water billing reads for the newest *due* month, trended over 6), **Expiry & renewals** (the 90/60/30/7-day contract ladder). Rules are pure and live in `lib/monitoring/`; the reader is `functions/api/monitoring.ts`. Key idea is **due**, not elapsed: today's readings are still being uploaded and the month that just closed is inside its import window, so neither is ever reported as missing (`DAILY_DUE_AFTER_DAYS = 1`, `MONTHLY_DUE_AFTER_DAYS = 5`). Every finding separates a **confirmed issue** (a fact with the figures quoted) from a **recommended check**, and lists the affected account numbers / dates / contracts. Carries no owner, status, due date or close-out — see §4b |
 | Firefighting quotes, settings, auth pages | various | ✅ Live | | |
 
 **2026-07-10 — cross-module UX/perf pass** (applies to Dashboard, Water,
@@ -379,6 +380,30 @@ stops at last month" problem is structurally closed:
   which is exactly why these months carry the provenance label.
 
 ## 4. Known gaps & data debt
+
+- **Contract dates: convention settled, one parser — RESOLVED 2026-08-21.**
+  The app held two parsers with opposite conventions. `parseTrackerDate`
+  (alert bell) read `6/2/2026` month-first; `parseContractDate` (/contractors)
+  read it day-first. A read-only query over `Contractor_Tracker` settled it: of
+  34 all-numeric slash dates, **18 have a second component above 12**
+  (impossible as a day under day-first) and **zero** have a first component
+  above 12; month-first also gives an exact whole-year term for every contract
+  and matches both the free-text `Note` on five rows and
+  `amc_contractor_summary`'s unambiguous `dd-MMM-yyyy` values.
+  The impact was larger than a divergence: the day-first parser did not
+  mis-read those dates, it **failed** on them (date-fns rejects month > 12), so
+  `/contractors` rendered "Unreadable date" for **11 of 17** dated contracts
+  while the bell counted the same contracts down correctly — National Marine
+  showed EXPIRED on the page and 76 days remaining in the bell.
+  There is now one parser, `muscatbay/app/lib/contract-dates.ts` — pure,
+  dependency-free, UTC, bundled by web and Expo alike. Dotted dates
+  (`31.12.2027`) are deliberately rejected rather than guessed. Verified live:
+  unreadable rows 11 → 0. **Still open (owner):** `"Start Date"` / `"End Date"`
+  are `text` in Postgres; storing them as `date` would end this class of bug,
+  but that is a migration decision, not a PR fix. Two end dates (Kalhat
+  `5/6/2030`, National Marine `11/5/2026`) rest on the column convention alone
+  with no corroborating note — `/monitoring` names them as worth checking
+  against the paper contract.
 
 - **Ticker always scrolls + STP down to four cards — 2026-07-29 (owner follow-up).**
   - **The "static when everything fits" ticker rule is retired.** The
@@ -776,7 +801,48 @@ Genuinely useful data that exists but is unsurfaced, if ever wanted:
 `fire_quotations` (4 rows) + `fire_quotation_items` (7 rows) are real, modelled
 tables that no screen reads.
 
+**Where `/monitoring` sits against this boundary (2026-08-20).** The module
+reports *whether an entry exists* and *whether what exists can be true* — both
+facts about data already in the database — and, for contracts, the end date the
+register already holds plus the horizon it has crossed. That is reporting, which
+§1's rule explicitly wants. It deliberately does **not** carry an owner, a
+status, a due date, an SLA, an assignment or a close-out on any finding, and
+`__tests__/lib/monitoring/renewals.test.ts` asserts those fields are absent so a
+later change cannot quietly add them. Its "recommended check" column is a
+suggestion of what to go and look at, in the same shape as the existing
+findings register's suggested-action column — not a work order.
+
 ## 5. In-flight work (open PRs)
+
+- **Monitoring agent (`/monitoring`) — PR #67, draft, reviewed 2026-08-21.** New
+  module described in §2. Three rounds of orchestrated multi-agent review
+  (manager → parallel review workers → adversarial checkers → fixers →
+  gatekeeper) ran over it and **17 verified defects were fixed**, most of them
+  the module committing the very failure it exists to catch: a blank STP row
+  certifying a day as fully recorded; the 30-minute tick re-evaluating on a
+  fresh clock against month-scoped rows it never fetched, so an unqueried month
+  was reported as an upload that never landed; an empty register (what
+  PostgREST returns when RLS filters every row) reading as 100% coverage; a
+  failed contractor read rendering as a calm "No contracts to track"; and
+  summary tiles painting green zeros when nothing could be read. Each was
+  reproduced by running the real code before being fixed, and each carries a
+  test written to fail against the old behaviour. Test count 354 → 421. Three owner questions are answered with defaults that live in exactly
+  one place, `lib/monitoring/config.ts`, and can be changed there:
+  *which sections are monitored monthly* (electricity + water billing reads
+  today; every unmonitored module is **named in every report** so silence is
+  never mistaken for health), *how reports are delivered* (in-app dashboard +
+  CSV export; the existing notification bell carries the contract-expiry
+  ladder only, **not** the daily/monthly completeness findings — **email is not
+  implemented**
+  and needs an SMTP/edge-function decision; the composers return plain objects
+  so a digest can be serialised later without re-deriving anything), and
+  *renewal notification frequency* (90/60/30/7 days, then a standing critical
+  item once the end date passes). Side effect worth knowing: the alert bell's
+  contract rule now buckets by horizon, which fixes a real gap — the old
+  fingerprint was the contract *set*, so a contract that entered the window at
+  59 days notified once and then slid silently to 7 days with nothing further
+  raised.
+
 
 - **#49 Front-end & O&M review remediation + Expo mobile foundation** — draft,
   active. Contents described in §2 (2026-07-25). Also introduces `mobile/`, an
