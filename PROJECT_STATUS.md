@@ -881,6 +881,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-25 — feat(water): surface ZEN project across dashboards
 - 2026-08-24 — feat(tables): unify all data tables on the ops-table contract
 - 2026-08-22 — feat(stp): streamline process health view
 - 2026-08-22 — feat(water): refine daily zone summary
