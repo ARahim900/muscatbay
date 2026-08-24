@@ -242,7 +242,6 @@ export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'Main Entrance Phase 02',     account: '4300338', isIrr: false },
     { meterName: 'Irrigation Controller UP',   account: '4300340', isIrr: true  },
     { meterName: 'Irrigation Controller DOWN', account: '4300341', isIrr: true  },
-    { meterName: 'Al Adrak Camp',              account: '4300348', isIrr: false },
     { meterName: 'Al Adrak Accommodation',     account: '4300349', isIrr: false },
     { meterName: 'Sales Center',              account: '4300295', isIrr: false },
 ];

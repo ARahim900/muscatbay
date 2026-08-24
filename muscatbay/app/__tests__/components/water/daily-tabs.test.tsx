@@ -5,7 +5,7 @@ import { DailyDatabase } from '@/components/water/daily-report/daily-database';
 import { DailyExceptions } from '@/components/water/daily-report/daily-exceptions';
 import { ZoneL3Table } from '@/components/water/daily-report/inline-zone-l3-table';
 import type { ZoneRow } from '@/components/water/daily-report/inline-shared';
-import { ZEN_APARTMENT_ACCOUNTS, ZONE_BULK_CONFIG } from '@/lib/water-accounts';
+import { DC_METERS, ZEN_APARTMENT_ACCOUNTS, ZONE_BULK_CONFIG } from '@/lib/water-accounts';
 import { ZONE_CONFIG } from '@/lib/water-data';
 import type { SupabaseDailyWaterConsumption } from '@/entities/water';
 
@@ -46,6 +46,8 @@ describe('ZEN Project configuration', () => {
             name: 'ZEN Project',
             bulkMeterAccount: '4300348',
         });
+        expect(DC_METERS.map(meter => meter.account)).not.toContain('4300348');
+        expect(DC_METERS.map(meter => meter.account)).toContain('4300349');
     });
 });
 
