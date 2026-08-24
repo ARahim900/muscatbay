@@ -19,16 +19,28 @@
  *  - grouping: repeated identical findings collapse into one row with an
  *    occurrence count and a date span, instead of hundreds of near-identical
  *    "No inlet recorded" rows burying the Critical ones;
- *  - filtering + progressive disclosure: severity chips, a category select, a
- *    free-text search, and a "show more" batch so the table never renders an
- *    unbounded list.
+ *  - filtering + pagination: severity chips, a category select, a free-text
+ *    search, and the shared rows-per-page pagination so the table never
+ *    renders an unbounded list.
+ *
+ * The table itself renders through the unified table system (`<Table>` →
+ * `.ops-table`), so it shares the app-wide look: sticky brand header,
+ * sortable columns, zebra rows, emphasized first column, CSV export.
  */
 
 import { useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, ClipboardList, Download, Search, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Search, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { exportToCSV } from "@/lib/export-utils";
 import { SeverityChip } from "@/components/shared/inspection";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import {
+    ExportButton,
+    SortableTableHead,
+    TablePagination,
+    TableToolbar,
+    type ExportColumn,
+    type PageSizeOption,
+} from "@/components/shared/data-table";
 
 // ─── Row model ────────────────────────────────────────────────────────────────
 
@@ -52,11 +64,12 @@ export interface Finding {
     occurrences?: number;
 }
 
-const PAGE_BATCH = 50;
+type SortField = "date" | "category" | "item" | "severity" | "value";
 
-const thBase =
-    "h-[2.875rem] px-4 py-3 text-left align-middle text-[11px] font-medium uppercase tracking-[0.04em] text-muted-foreground whitespace-nowrap";
-const tdBase = "px-4 py-3.5 align-middle text-[13px] font-medium text-card-foreground";
+const SEVERITY_RANK: Record<FindingSeverity, number> = { Critical: 0, Watch: 1 };
+
+const PAGE_SIZE_OPTIONS: PageSizeOption[] = [25, 50, 100, 'All'];
+const DEFAULT_PAGE_SIZE: PageSizeOption = 50;
 
 // ─── Grouping helper (exported — analytics modules collapse runs before render) ─
 
@@ -91,6 +104,27 @@ export function collapseConsecutive(rows: Finding[]): Finding[] {
         }
     }
     return out;
+}
+
+// ─── Sorting ──────────────────────────────────────────────────────────────────
+
+/** Numeric key where the display string parses to a number, else the string. */
+function sortKey(row: Finding, field: SortField): string | number {
+    switch (field) {
+        case "date":
+            // Sort on the run's opening date; ISO dates compare lexicographically.
+            return row.date?.split(" – ")[0] ?? "";
+        case "severity":
+            return SEVERITY_RANK[row.severity];
+        case "value": {
+            const numeric = parseFloat(row.value.replace(/[^0-9.eE+-]/g, ""));
+            return Number.isNaN(numeric) ? row.value.toLowerCase() : numeric;
+        }
+        case "category":
+            return row.category.toLowerCase();
+        case "item":
+            return row.item.toLowerCase();
+    }
 }
 
 // ─── Summary tiles ────────────────────────────────────────────────────────────
@@ -133,7 +167,10 @@ export function FindingsRegister({
     const [severityFilter, setSeverityFilter] = useState<"all" | FindingSeverity>("all");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [search, setSearch] = useState("");
-    const [visible, setVisible] = useState(PAGE_BATCH);
+    const [sortField, setSortField] = useState<SortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState<PageSizeOption>(DEFAULT_PAGE_SIZE);
 
     const categories = useMemo(
         () => Array.from(new Set(rows.map((r) => r.category))).sort(),
@@ -153,35 +190,68 @@ export function FindingsRegister({
         });
     }, [rows, severityFilter, categoryFilter, search]);
 
+    // Unsorted order is the analytics order (severity runs, chronological) —
+    // sorting only applies once a column header is clicked.
+    const sorted = useMemo(() => {
+        if (!sortField) return filtered;
+        const dir = sortDirection === "asc" ? 1 : -1;
+        return [...filtered].sort((a, b) => {
+            const ka = sortKey(a, sortField);
+            const kb = sortKey(b, sortField);
+            if (typeof ka === "number" && typeof kb === "number") return (ka - kb) * dir;
+            return String(ka).localeCompare(String(kb)) * dir;
+        });
+    }, [filtered, sortField, sortDirection]);
+
+    const effectivePageSize = pageSize === 'All' ? (sorted.length || 1) : pageSize;
+    const totalPages = Math.max(1, Math.ceil(sorted.length / effectivePageSize));
+    const safePage = Math.min(currentPage, totalPages);
+    const startIndex = (safePage - 1) * effectivePageSize;
+    const paginated = sorted.slice(startIndex, startIndex + effectivePageSize);
+
     const criticalTotal = rows.filter((r) => r.severity === "Critical").length;
     const watchTotal = rows.length - criticalTotal;
-    const shown = filtered.slice(0, visible);
     const hasFilters = severityFilter !== "all" || categoryFilter !== "all" || search.trim() !== "";
 
-    const handleExport = () => {
-        // Exports exactly what is on screen (the filtered set), identification
-        // fields only — no owner, no status, no due date.
-        const data = filtered.map((r) => ({
-            ...(showDate ? { Date: r.date ?? "" } : {}),
-            Category: r.category,
-            Item: r.item,
-            Severity: r.severity,
-            Value: r.value,
-            Occurrences: r.occurrences ?? 1,
-            Remarks: r.remarks ?? "",
-            "Suggested Action": r.action,
-        }));
-        exportToCSV(data, filename);
+    const handleSort = (field: string) => {
+        const f = field as SortField;
+        if (sortField === f) {
+            setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(f);
+            setSortDirection("asc");
+        }
+        setCurrentPage(1);
     };
+
+    const clearFilters = () => {
+        setSeverityFilter("all");
+        setCategoryFilter("all");
+        setSearch("");
+        setCurrentPage(1);
+    };
+
+    // Exports exactly what is on screen (the filtered, sorted set),
+    // identification fields only — no owner, no status, no due date.
+    const exportColumns = useMemo<ExportColumn<Finding>[]>(() => [
+        ...(showDate ? [{ key: "date", header: "Date", format: (r: Finding) => r.date ?? "" } as ExportColumn<Finding>] : []),
+        { key: "category", header: "Category" },
+        { key: "item", header: "Item" },
+        { key: "severity", header: "Severity" },
+        { key: "value", header: "Value" },
+        { key: "id", header: "Occurrences", format: (r) => r.occurrences ?? 1 },
+        { key: "remarks", header: "Remarks", format: (r) => r.remarks ?? "" },
+        { key: "action", header: "Suggested Action" },
+    ], [showDate]);
 
     const sevButton = (key: "all" | FindingSeverity, label: string, count: number) => (
         <button
             key={key}
             type="button"
-            onClick={() => { setSeverityFilter(key); setVisible(PAGE_BATCH); }}
+            onClick={() => { setSeverityFilter(key); setCurrentPage(1); }}
             aria-pressed={severityFilter === key}
             className={cn(
-                "rounded-[5px] px-2.5 py-1 text-[11px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                "rounded-[5px] px-2.5 py-1.5 text-[11px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                 severityFilter === key
                     ? "bg-primary text-primary-foreground"
                     : "bg-muted text-muted-foreground hover:text-foreground",
@@ -191,6 +261,8 @@ export function FindingsRegister({
         </button>
     );
 
+    const columnCount = showDate ? 7 : 6;
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
@@ -199,153 +271,180 @@ export function FindingsRegister({
                 <SummaryStat label="Watch" value={String(watchTotal)} icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />} color="var(--status-warning)" />
             </div>
 
-            <div className="card-elevated rounded-[10.5px] border border-border bg-card">
-                <div className="p-4 pb-2 sm:p-5 md:p-6">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                            <h3 className="flex items-center gap-2 text-base font-semibold text-foreground sm:text-lg">
-                                <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
-                                {title}
-                            </h3>
-                            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
-                            {gateNote && (
-                                <p className="mt-1.5 text-[11px] leading-snug text-muted-foreground/90">
-                                    <span className="font-semibold uppercase tracking-wide">Thresholds in force · </span>
-                                    {gateNote}
-                                </p>
-                            )}
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleExport}
-                            disabled={filtered.length === 0}
-                            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <Download className="h-4 w-4" aria-hidden="true" />
-                            Export findings
-                        </button>
+            <div className="space-y-4">
+                <TableToolbar className="flex-wrap">
+                    <div className="min-w-0">
+                        <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                            <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
+                            {title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">{subtitle}</p>
+                        {gateNote && (
+                            <p className="mt-1 text-[11px] leading-snug text-muted-foreground/90">
+                                <span className="font-semibold uppercase tracking-wide">Thresholds in force · </span>
+                                {gateNote}
+                            </p>
+                        )}
                     </div>
-                </div>
 
-                {rows.length > 0 && (
-                    <div className="flex flex-wrap items-center gap-2 px-4 pb-3 sm:px-5 md:px-6">
-                        {sevButton("all", "All", rows.length)}
-                        {sevButton("Critical", "Critical", criticalTotal)}
-                        {sevButton("Watch", "Watch", watchTotal)}
+                    {rows.length > 0 && (
+                        <>
+                            <div className="flex items-center gap-1.5 sm:ml-auto" role="group" aria-label="Filter findings by severity">
+                                {sevButton("all", "All", rows.length)}
+                                {sevButton("Critical", "Critical", criticalTotal)}
+                                {sevButton("Watch", "Watch", watchTotal)}
+                            </div>
 
-                        {categories.length > 1 && (
-                            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                                <span className="sr-only">Filter findings by category</span>
+                            {categories.length > 1 && (
                                 <select
                                     value={categoryFilter}
-                                    onChange={(e) => { setCategoryFilter(e.target.value); setVisible(PAGE_BATCH); }}
+                                    onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
                                     aria-label="Filter findings by category"
-                                    className="rounded-[5px] border border-border bg-card px-2 py-1 text-[11px] font-medium text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                                    className="rounded-lg border border-border/80 bg-card px-2.5 py-2 text-sm text-foreground shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
                                 >
                                     <option value="all">All categories</option>
                                     {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                                 </select>
-                            </label>
-                        )}
-
-                        <div className="relative ms-auto min-w-0 flex-1 sm:max-w-[240px]">
-                            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => { setSearch(e.target.value); setVisible(PAGE_BATCH); }}
-                                placeholder="Search findings…"
-                                aria-label="Search findings"
-                                className="w-full rounded-[5px] border border-border bg-card py-1 pe-2 ps-8 text-[11px] text-foreground placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
-                            />
-                        </div>
-
-                        <span className="whitespace-nowrap text-[11px] tabular-nums text-muted-foreground">
-                            {filtered.length === rows.length ? `${rows.length} shown` : `${filtered.length} of ${rows.length}`}
-                        </span>
-                    </div>
-                )}
-
-                <div className="p-4 pt-2 sm:p-5 md:p-6">
-                    {rows.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 py-10 text-center">
-                            <CheckCircle2 className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
-                            <p className="text-sm font-semibold text-foreground">No findings in this period</p>
-                            {emptyHint && <p className="max-w-md text-xs text-muted-foreground">{emptyHint}</p>}
-                        </div>
-                    ) : filtered.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 py-10 text-center">
-                            <Search className="h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
-                            <p className="text-sm font-semibold text-foreground">No findings match these filters</p>
-                            {hasFilters && (
-                                <button
-                                    type="button"
-                                    onClick={() => { setSeverityFilter("all"); setCategoryFilter("all"); setSearch(""); }}
-                                    className="text-xs font-semibold text-secondary underline underline-offset-2"
-                                >
-                                    Clear filters
-                                </button>
                             )}
-                        </div>
-                    ) : (
-                        <>
-                            <div className="overflow-hidden rounded-[10.5px] border border-border">
-                                <div className="overflow-auto" style={{ maxHeight: 560 }}>
-                                    <table className="w-full border-collapse text-[12px]" style={{ minWidth: 820 }}>
-                                        <thead>
-                                            <tr>
-                                                {showDate && <th scope="col" className={thBase}>Date</th>}
-                                                <th scope="col" className={thBase}>Category</th>
-                                                <th scope="col" className={thBase}>Item</th>
-                                                <th scope="col" className={thBase}>Severity</th>
-                                                <th scope="col" className={cn(thBase, "text-right")}>Value</th>
-                                                <th scope="col" className={thBase}>Remarks</th>
-                                                <th scope="col" className={thBase}>Suggested action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {shown.map((r, i) => (
-                                                <tr key={r.id} className={cn("border-b border-border/60", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}>
-                                                    {showDate && <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.date ?? "—"}</td>}
-                                                    <td className={cn(tdBase, "whitespace-nowrap font-semibold text-foreground")}>{r.category}</td>
-                                                    <td className={cn(tdBase, "text-foreground")}>
-                                                        {r.item}
-                                                        {r.occurrences && r.occurrences > 1 && (
-                                                            <span className="ms-2 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
-                                                                ×{r.occurrences}
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    <td className={tdBase}>
-                                                        <SeverityChip severity={r.severity === "Critical" ? "critical" : "watch"} label={r.severity} />
-                                                    </td>
-                                                    <td className={cn(tdBase, "whitespace-nowrap text-right tabular-nums text-foreground")}>{r.value}</td>
-                                                    <td className={cn(tdBase, "min-w-[160px] text-muted-foreground")}>{r.remarks ?? "—"}</td>
-                                                    <td className={cn(tdBase, "min-w-[240px] text-muted-foreground")}>{r.action}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
+
+                            <div className="relative flex-1 min-w-0 sm:min-w-[180px] max-w-md">
+                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                                <input
+                                    type="text"
+                                    value={search}
+                                    onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                                    placeholder="Search findings…"
+                                    aria-label="Search findings"
+                                    className="pl-10 pr-4 py-2 w-full rounded-lg border border-border/80 bg-card text-foreground text-sm placeholder:text-muted-foreground shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40"
+                                />
                             </div>
 
-                            {filtered.length > shown.length && (
-                                <div className="mt-3 flex items-center justify-center gap-3">
-                                    <p className="text-[11px] tabular-nums text-muted-foreground">
-                                        Showing {shown.length} of {filtered.length}
-                                    </p>
-                                    <button
-                                        type="button"
-                                        onClick={() => setVisible((v) => v + PAGE_BATCH)}
-                                        className="rounded-[5px] border border-border px-3 py-1 text-[11px] font-semibold text-foreground transition-colors hover:bg-muted"
-                                    >
-                                        Show {Math.min(PAGE_BATCH, filtered.length - shown.length)} more
-                                    </button>
-                                </div>
-                            )}
+                            <ExportButton rows={sorted} filename={filename} columns={exportColumns} />
+
+                            <div className="text-sm text-muted-foreground whitespace-nowrap">
+                                <span className="font-semibold text-foreground">{filtered.length === rows.length ? rows.length : `${filtered.length} of ${rows.length}`}</span> findings
+                            </div>
                         </>
                     )}
-                </div>
+                </TableToolbar>
+
+                {rows.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 rounded-[10.5px] border border-border bg-card py-10 text-center shadow-sm">
+                        <CheckCircle2 className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
+                        <p className="text-sm font-semibold text-foreground">No findings in this period</p>
+                        {emptyHint && <p className="max-w-md text-xs text-muted-foreground">{emptyHint}</p>}
+                    </div>
+                ) : (
+                    <>
+                        {/* Mobile card view */}
+                        <div className="md:hidden space-y-3">
+                            {paginated.map((r) => (
+                                <div key={r.id} className="rounded-xl border border-border/80 bg-card p-4 shadow-sm space-y-2">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-sm font-semibold text-foreground min-w-0 truncate">{r.category}</span>
+                                        <SeverityChip severity={r.severity === "Critical" ? "critical" : "watch"} label={r.severity} />
+                                    </div>
+                                    {showDate && r.date && (
+                                        <p className="text-xs tabular-nums text-muted-foreground">{r.date}</p>
+                                    )}
+                                    <p className="text-sm text-foreground">
+                                        {r.item}
+                                        {r.occurrences && r.occurrences > 1 && (
+                                            <span className="ms-2 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                                                ×{r.occurrences}
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p className="text-sm font-medium tabular-nums text-foreground">{r.value}</p>
+                                    {r.remarks && <p className="text-xs text-muted-foreground">{r.remarks}</p>}
+                                    <p className="text-xs text-muted-foreground"><span className="font-semibold">Check:</span> {r.action}</p>
+                                </div>
+                            ))}
+                            {filtered.length === 0 && (
+                                <div className="flex flex-col items-center gap-2 rounded-xl border border-border/80 bg-card py-10 text-center">
+                                    <Search className="h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
+                                    <p className="text-sm font-semibold text-foreground">No findings match these filters</p>
+                                    {hasFilters && (
+                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-secondary underline underline-offset-2">
+                                            Clear filters
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Desktop table */}
+                        <div className="hidden md:block">
+                            <Table data-density="compact" aria-label={title}>
+                                <TableHeader>
+                                    <TableRow>
+                                        {showDate && (
+                                            <SortableTableHead field="date" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Date</SortableTableHead>
+                                        )}
+                                        <SortableTableHead field="category" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Category</SortableTableHead>
+                                        <SortableTableHead field="item" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Item</SortableTableHead>
+                                        <SortableTableHead field="severity" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Severity</SortableTableHead>
+                                        <SortableTableHead field="value" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Value</SortableTableHead>
+                                        <TableHead>Remarks</TableHead>
+                                        <TableHead>Suggested action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {paginated.map((r) => (
+                                        <TableRow key={r.id}>
+                                            {showDate && <TableCell className="whitespace-nowrap tabular-nums">{r.date ?? "—"}</TableCell>}
+                                            <TableCell className="whitespace-nowrap">{r.category}</TableCell>
+                                            <TableCell className="min-w-[200px] text-foreground">
+                                                {r.item}
+                                                {r.occurrences && r.occurrences > 1 && (
+                                                    <span className="ms-2 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                                                        ×{r.occurrences}
+                                                    </span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell>
+                                                <SeverityChip severity={r.severity === "Critical" ? "critical" : "watch"} label={r.severity} />
+                                            </TableCell>
+                                            <TableCell className="num whitespace-nowrap text-foreground">{r.value}</TableCell>
+                                            <TableCell className="min-w-[160px] text-muted-foreground">{r.remarks ?? "—"}</TableCell>
+                                            <TableCell className="min-w-[240px] text-muted-foreground">{r.action}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {filtered.length === 0 && (
+                                        <TableRow>
+                                            <TableCell colSpan={columnCount} className="py-12 text-center">
+                                                <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                                    <Search className="h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
+                                                    <p className="text-sm font-medium text-foreground">No findings match these filters</p>
+                                                    {hasFilters && (
+                                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-secondary underline underline-offset-2">
+                                                            Clear filters
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </div>
+
+                        {/* Pagination */}
+                        {sorted.length > 0 && (
+                            <TablePagination
+                                currentPage={safePage}
+                                totalPages={totalPages}
+                                totalItems={sorted.length}
+                                pageSize={pageSize}
+                                pageSizeOptions={PAGE_SIZE_OPTIONS}
+                                startIndex={startIndex}
+                                endIndex={Math.min(startIndex + effectivePageSize, sorted.length)}
+                                onPageChange={setCurrentPage}
+                                onPageSizeChange={(size) => { setPageSize(size); setCurrentPage(1); }}
+                            />
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );

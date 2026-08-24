@@ -22,6 +22,7 @@ import {
     Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
     HierarchyStatCard,
 } from "./inline-shared";
+import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export { DCAnalyticsPanel, DCDailyTable };
@@ -247,6 +248,15 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
 
 // ─── DC Daily Meters Table (mirrors ZoneL3Table) ─────────────────────────────
 
+interface DcMeterRow {
+    account: string;
+    label: string;
+    isIrr: boolean;
+    dailyValues: (number | null)[];
+    rawValues: (number | null)[];
+    total: number | null;
+}
+
 function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[] }) {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
@@ -344,6 +354,20 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
     const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
 
+    // CSV mirrors the on-screen matrix; missing readings export as empty cells,
+    // never 0 — the no-fabrication rule.
+    const exportColumns = useMemo<ExportColumn<DcMeterRow>[]>(() => [
+        { key: 'label', header: 'Meter' },
+        { key: 'account', header: 'Account' },
+        { key: 'isIrr', header: 'Type', format: (m) => m.isIrr ? 'Irrigation' : 'Service' },
+        ...days.map((d) => ({
+            key: 'dailyValues',
+            header: `Day ${d}`,
+            format: (m: DcMeterRow) => m.dailyValues[d - 1] ?? '',
+        } as ExportColumn<DcMeterRow>)),
+        { key: 'total', header: 'Total (m³)', format: (m) => m.total ?? '' },
+    ], [days]);
+
     return (
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
@@ -381,7 +405,10 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                     />
                 </div>
 
-                <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+                <div className="flex flex-wrap items-center gap-2">
+                    <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+                    <ExportButton rows={filtered} filename="water-dc-daily" columns={exportColumns} className="ml-auto" />
+                </div>
 
                 {/* Horizontally scrollable table */}
                 <div className="relative -mx-4 sm:-mx-5 md:-mx-6">

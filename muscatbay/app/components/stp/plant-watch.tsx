@@ -26,10 +26,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { TableToolbar } from "@/components/shared/data-table/table-toolbar";
+import {
+    ExportButton, SortableTableHead, TableToolbar, type ExportColumn,
+} from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    MetricHeatmap, InspectionTicker, SeverityChip, Sparkline, SEV_UI, worstFirst,
+    MetricHeatmap, InspectionTicker, SeverityChip, Sparkline, SEV_UI, SEVERITY_LABEL, SEVERITY_RANK, worstFirst,
     type HealthMetric, type TickerStat,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
@@ -49,6 +51,17 @@ type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
+type ProcessSortField = "status" | "summary";
+
+/** CSV columns for the process-health export — identification fields only. */
+const PROCESS_EXPORT_COLUMNS: ExportColumn<HealthMetric>[] = [
+    { key: 'title', header: 'Process' },
+    { key: 'severity', header: 'Status', format: (m) => SEVERITY_LABEL[m.severity] },
+    { key: 'headline', header: 'Current Summary' },
+    { key: 'headlineNote', header: 'Operating Context', format: (m) => m.headlineNote ?? '' },
+    { key: 'facts', header: 'Supporting Metrics', format: (m) => (m.facts ?? []).map((f) => `${f.label} ${f.value}`).join(' · ') },
+];
+
 function ProcessHealthTable({
     metrics,
     totalMetrics,
@@ -60,6 +73,33 @@ function ProcessHealthTable({
     attentionOnly: boolean;
     onAttentionOnlyChange: (active: boolean) => void;
 }) {
+    const [sortField, setSortField] = useState<ProcessSortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+    const handleSort = (field: string) => {
+        const f = field as ProcessSortField;
+        if (sortField === f) {
+            setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(f);
+            setSortDirection("asc");
+        }
+    };
+
+    // Unsorted order is worst-first (the inspection default); clicking a header
+    // re-orders by that column instead.
+    const sortedMetrics = useMemo(() => {
+        if (!sortField) return metrics;
+        const dir = sortDirection === "asc" ? 1 : -1;
+        return [...metrics].sort((a, b) => {
+            if (sortField === "status") return (SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity]) * dir;
+            const na = parseFloat(a.headline.replace(/[^0-9.eE+-]/g, ""));
+            const nb = parseFloat(b.headline.replace(/[^0-9.eE+-]/g, ""));
+            if (Number.isNaN(na) || Number.isNaN(nb)) return a.headline.localeCompare(b.headline) * dir;
+            return (na - nb) * dir;
+        });
+    }, [metrics, sortField, sortDirection]);
+
     return (
         <div className="space-y-2">
             <div className="overflow-hidden rounded-[10.5px] border border-border bg-card shadow-card-standard [&_.ops-table-shell]:rounded-none [&_.ops-table-shell]:border-0 [&_.ops-table-shell]:shadow-none">
@@ -81,6 +121,7 @@ function ProcessHealthTable({
                         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                         Attention only
                     </button>
+                    <ExportButton rows={sortedMetrics} filename="stp-process-health" columns={PROCESS_EXPORT_COLUMNS} />
                 </TableToolbar>
 
                 <Table
@@ -90,15 +131,15 @@ function ProcessHealthTable({
                 >
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="col-sticky w-[46%] md:w-auto md:min-w-[190px]">Process / status</TableHead>
-                            <TableHead className="num w-[54%] text-right md:w-auto md:min-w-[150px]">Current summary</TableHead>
+                            <SortableTableHead field="status" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky w-[46%] md:w-auto md:min-w-[190px]">Process / status</SortableTableHead>
+                            <SortableTableHead field="summary" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="num w-[54%] text-right md:w-auto md:min-w-[150px]">Current summary</SortableTableHead>
                             <TableHead className="hidden min-w-[260px] md:table-cell">Operating context</TableHead>
                             <TableHead className="num hidden min-w-[165px] text-right md:table-cell">Supporting metrics</TableHead>
                             <TableHead className="num hidden min-w-[145px] text-right md:table-cell">Recent trend</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {metrics.map((metric) => {
+                        {sortedMetrics.map((metric) => {
                             const severityUi = SEV_UI[metric.severity];
                             const isCalm = metric.severity === "good" || metric.severity === "nodata";
                             const sparkPointCount = metric.spark?.filter((value) => value !== null && Number.isFinite(value)).length ?? 0;

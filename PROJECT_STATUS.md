@@ -334,6 +334,60 @@ now identification-only: severity, item, value, remarks, suggested action.
 **Verified:** `tsc --noEmit` 0 errors · ESLint clean · 203/203 tests ·
 `next build` succeeds (21 routes).
 
+**2026-08-24 — unified table conformance pass (cross-module).** Every data
+table was audited against the STP Daily Operations Log reference (the approved
+unified-table look: brand-purple sticky header with sort arrows, toolbar with
+title/search/filter/Export CSV/record count, zebra rows, emphasized first
+column, pagination, mobile handling) and the gaps were closed. No new
+dependencies — everything reuses `components/shared/data-table/` and
+`components/ui/table`.
+
+- **First-column emphasis is now a system default.** `.ops-table tbody
+  td:first-child` renders at weight 600 (base cells 500) via `globals.css`,
+  with a `data-plain-first-col` opt-out on `<Table>`. The base cell weight
+  moved off `<TableCell>`'s Tailwind class into the `.ops-table` rule so the
+  components-layer emphasis can win; per-cell weight utilities still override.
+  Redundant per-file `font-medium` first cells were dropped (fire equipment /
+  issues registers, HVAC PPM schedule).
+- **`components/shared/findings-register.tsx` rebuilt on the unified
+  primitives** (affects STP Plant Watch + Electricity Load Watch registers):
+  raw `<table>` → `<Table>` (fixes the non-sticky header inside its scroll
+  box), new column sorting, `TablePagination` (25/50/100/All) replacing the
+  "show 50 more" batching, `ExportButton`, a `md:hidden` card list (it had no
+  mobile variant), and the toolbar layout of the reference. Props API
+  unchanged; still identification-only.
+- **Sorting added** where header sorting was missing: STP Process health
+  (status + summary), Electricity meters table Total (kWh) + Cost (OMR)
+  columns, Contractors renewals (5 columns) and AMC pricing (contractor,
+  total).
+- **CSV export added** where absent: STP Process health, Electricity Category
+  performance, Water Zone performance (Daily → Zone Watch), Water DC daily
+  matrix, Water zone L3 day matrix (all via `ExportButton`, filtered rows,
+  nulls exported empty — never 0), and the Water Monthly Buildings
+  bulk-vs-apartments panel (compact `PanelExport`, matching its siblings).
+  Bespoke export buttons on Contractors → Contracts, Assets (all five tabs,
+  now per-tab column specs) and the Water daily database swapped to the shared
+  `ExportButton`.
+- **Raw-table migrations:** Contractors yearly cost matrix →
+  `<Table>`/`TableFooter` (was a hand-classed `ops-table`), Water daily
+  Exceptions & Actions → `<Table>` primitives.
+- **Toolbar titles/subtitles** added inside `TableToolbar` (matching the
+  reference) on: Electricity meters, HVAC PPM Findings + Recurring Issues,
+  Fire PPM Maintenance Tracker, Contractors Contracts/Yearly/AMC Tracker,
+  Contractors renewals/pricing/terms, Assets (tab-aware).
+- **Deliberately exempt** (visualization matrices, not data tables):
+  `MetricHeatmap` (`shared/inspection.tsx`), the zone×day heatmap in
+  `zone-watch.tsx`, and the zone-loss heatmap in the water monthly dashboard.
+  The water monthly dashboard's remaining bespoke tables (A1 reconciliation,
+  zone meters, meter database, exceptions register) already wear the reference
+  look — the CSS was originally modelled on them — and keep their internals;
+  migrating them onto the primitives stays on the known-gaps list (§4).
+
+**Verified:** `tsc --noEmit` 0 errors · ESLint clean · 284/284 tests ·
+`next build` succeeds (21 routes) · headless-Chromium pass over STP,
+Electricity, Contractors, Fire, Assets in mock/offline mode — zero console
+errors, first-column weight 600 confirmed computed.
+
 ## 3. Water monthly data — how it works now (important)
 
 Rebuilt 2026-07-03 (PRs #29/#30) so that **any monthly value present in the
@@ -379,6 +433,20 @@ stops at last month" problem is structurally closed:
   which is exactly why these months carry the provenance label.
 
 ## 4. Known gaps & data debt
+
+- **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
+  reconciliation, per-zone meters, meter database and exceptions register in
+  `components/water/monthly/water-monthly-dashboard.tsx` render raw `<table>`
+  markup with inline token styles that *visually* match the unified table
+  system (the `.ops-table` CSS was modelled on them) but bypass the `<Table>`
+  primitives, use the `RowsPicker` truncation instead of `TablePagination`,
+  have no column sorting, and export via `downloadRows` rather than
+  `ExportButton`. Same for the `inline-shared.tsx` mini-library (its `Th` /
+  `TableSearch` / `TablePagination` shadow the shared ones) used by the daily
+  DC/L3 matrices. Functional gaps were closed in the 2026-08-24 pass (all now
+  export; heavy tables keep their caps); the structural migration is deferred
+  — it is a large, behavior-sensitive refactor of the app's most bespoke
+  module.
 
 - **Ticker always scrolls + STP down to four cards — 2026-07-29 (owner follow-up).**
   - **The "static when everything fits" ticker rule is retired.** The

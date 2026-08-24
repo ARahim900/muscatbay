@@ -14,7 +14,7 @@ import { Search, ShieldCheck, Timer, Wallet } from "lucide-react";
 import type { AmcContractorDetails } from "@/entities/contractor";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/shared/skeleton";
-import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
+import { ExportButton, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 
 const EXPORT_COLUMNS: ExportColumn<AmcContractorDetails>[] = [
     { key: 'contractor', header: 'Contractor' },
@@ -128,7 +128,7 @@ export function TermsPanel({ details, loading }: { details: AmcContractorDetails
 
     return (
         <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
+            <TableToolbar className="flex-wrap">
                 <div className="relative min-w-0 max-w-md flex-1 sm:min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
                     <input
@@ -140,13 +140,13 @@ export function TermsPanel({ details, loading }: { details: AmcContractorDetails
                         className="w-full rounded-lg border border-border/80 bg-card py-2 pl-10 pr-4 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus:border-primary/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
                 </div>
-                <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <ExportButton rows={filtered} filename="contract-terms" columns={EXPORT_COLUMNS} className="sm:ml-auto" />
+                <span className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
                     <ShieldCheck className="h-4 w-4" aria-hidden="true" />
                     <span className="font-semibold text-foreground">{filtered.length}</span>
                     {filtered.length !== details.length && <span>of {details.length}</span>} contracts
                 </span>
-                <ExportButton rows={filtered} filename="contract-terms" columns={EXPORT_COLUMNS} className="ml-auto" />
-            </div>
+            </TableToolbar>
 
             {filtered.length === 0 ? (
                 <div className="rounded-xl border border-border bg-card">

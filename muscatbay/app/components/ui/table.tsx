@@ -78,10 +78,13 @@ function TableHead({ className, scope = "col", ...props }: React.ComponentProps<
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
+    // Base cell weight (500) comes from `.ops-table tbody td` in globals.css —
+    // a font utility here would sit in the Tailwind `utilities` layer and defeat
+    // the first-column emphasis rule, which lives in the `components` layer.
     <td
       data-slot="table-cell"
       className={cn(
-        "align-middle font-medium",
+        "align-middle",
         "[&:has([role=checkbox])]:pr-0",
         className
       )}

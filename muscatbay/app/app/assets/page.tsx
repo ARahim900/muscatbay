@@ -15,7 +15,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    Boxes, MapPin, Wrench, Search, Download, X, Layers,
+    Boxes, MapPin, Wrench, Search, X, Layers,
     ClipboardCheck, ShieldAlert, LayoutDashboard,
     Calendar, Clock, FileText, Settings, DollarSign, AlertTriangle,
 } from "lucide-react";
@@ -25,9 +25,9 @@ import {
 } from "@/components/ui/table";
 import {
     MultiSelectDropdown, SortableTableHead, TablePagination,
-    ActiveFilterPills, TableToolbar, StatusBadge, type PageSizeOption,
+    ActiveFilterPills, TableToolbar, StatusBadge, ExportButton,
+    type PageSizeOption, type ExportColumn,
 } from "@/components/shared/data-table";
-import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
@@ -45,6 +45,59 @@ const TABS = [
     { key: 'technical',    label: 'Technical',     icon: Settings },
     { key: 'financial',    label: 'Financial',     icon: DollarSign },
 ];
+
+// Per-tab CSV columns — the export always mirrors the columns of the tab on
+// screen. Column mapping runs lazily inside ExportButton's click handler.
+const ASSET_EXPORT_COLUMNS: Record<ActiveTab, ExportColumn<Asset>[]> = {
+    overview: [
+        { key: 'name', header: 'Asset Name' },
+        { key: 'discipline', header: 'Discipline' },
+        { key: 'type', header: 'Category' },
+        { key: 'zone', header: 'Zone', format: a => a.zone || '-' },
+        { key: 'buildingArea', header: 'Building', format: a => a.buildingArea || '-' },
+        { key: 'status', header: 'Status' },
+        { key: 'criticalityLevel', header: 'Criticality', format: a => a.criticalityLevel || '-' },
+    ],
+    lifecycle: [
+        { key: 'assetTag', header: 'Asset Tag', format: a => a.assetTag || a.serialNumber },
+        { key: 'name', header: 'Asset Name' },
+        { key: 'installYear', header: 'Install Year', format: a => a.installYear ?? '-' },
+        { key: 'currentAgeYears', header: 'Age (yrs)', format: a => a.currentAgeYears ?? '-' },
+        { key: 'lifeExpectancyYears', header: 'Exp. Life (yrs)', format: a => a.lifeExpectancyYears ?? '-' },
+        { key: 'erlYears', header: 'ERL (yrs)', format: a => a.erlYears ?? '-' },
+        { key: 'pctLifeUsed', header: '% Life Used', format: a => a.pctLifeUsed != null ? `${a.pctLifeUsed.toFixed(0)}%` : '-' },
+        { key: 'warrantyExpiryDate', header: 'Warranty Expiry', format: a => a.warrantyExpiryDate || '-' },
+        { key: 'condition', header: 'Condition', format: a => a.condition || '-' },
+        { key: 'criticalityLevel', header: 'Criticality', format: a => a.criticalityLevel || '-' },
+    ],
+    maintenance: [
+        { key: 'assetTag', header: 'Asset Tag', format: a => a.assetTag || a.serialNumber },
+        { key: 'name', header: 'Asset Name' },
+        { key: 'ppmFrequency', header: 'PPM Frequency', format: a => a.ppmFrequency || '-' },
+        { key: 'ppmIntervalMonths', header: 'PPM Interval (months)', format: a => a.ppmIntervalMonths ?? '-' },
+        { key: 'amcContractor', header: 'AMC Contractor', format: a => a.amcContractor || '-' },
+        { key: 'lastPpmDate', header: 'Last PPM', format: a => a.lastPpmDate || '-' },
+        { key: 'nextPpmDate', header: 'Next PPM', format: a => a.nextPpmDate || '-' },
+        { key: 'maintenanceRequirements', header: 'Maintenance Requirements', format: a => a.maintenanceRequirements || '-' },
+    ],
+    technical: [
+        { key: 'assetTag', header: 'Asset Tag', format: a => a.assetTag || a.serialNumber },
+        { key: 'name', header: 'Asset Name' },
+        { key: 'manufacturer', header: 'Manufacturer', format: a => a.manufacturer || '-' },
+        { key: 'model', header: 'Model', format: a => a.model || '-' },
+        { key: 'countryOfOrigin', header: 'Country of Origin', format: a => a.countryOfOrigin || '-' },
+        { key: 'powerCapacity', header: 'Power / Capacity', format: a => a.powerCapacity || '-' },
+        { key: 'serialNo', header: 'Serial No.', format: a => a.serialNo || '-' },
+    ],
+    financial: [
+        { key: 'assetTag', header: 'Asset Tag', format: a => a.assetTag || a.serialNumber },
+        { key: 'name', header: 'Asset Name' },
+        { key: 'boqUnitCost', header: 'Original Cost (OMR)', format: a => a.boqUnitCost ?? '-' },
+        { key: 'replacementCost', header: 'Replacement Cost (OMR)', format: a => a.replacementCost ?? '-' },
+        { key: 'boqProjectRef', header: 'BOQ Reference', format: a => a.boqProjectRef || '-' },
+        { key: 'boqDesignLife', header: 'BOQ Design Life (yrs)', format: a => a.boqDesignLife ?? '-' },
+    ],
+};
 
 const SORT_FIELD_MAP: Record<string, string> = {
     name:         'asset_name',
@@ -356,62 +409,6 @@ export default function AssetsPage() {
         setSelectedDisciplines([...DISCIPLINE_OPTIONS]); setCurrentPage(1);
     };
 
-    const handleExportCSV = () => {
-        const rows = filteredAssets.map(a => {
-            switch (activeTab) {
-                case 'lifecycle': return {
-                    'Asset Tag': a.assetTag || a.serialNumber,
-                    'Asset Name': a.name,
-                    'Install Year': a.installYear ?? '-',
-                    'Age (yrs)': a.currentAgeYears ?? '-',
-                    'Exp. Life (yrs)': a.lifeExpectancyYears ?? '-',
-                    'ERL (yrs)': a.erlYears ?? '-',
-                    '% Life Used': a.pctLifeUsed != null ? `${a.pctLifeUsed.toFixed(0)}%` : '-',
-                    'Warranty Expiry': a.warrantyExpiryDate || '-',
-                    'Condition': a.condition || '-',
-                    'Criticality': a.criticalityLevel || '-',
-                };
-                case 'maintenance': return {
-                    'Asset Tag': a.assetTag || a.serialNumber,
-                    'Asset Name': a.name,
-                    'PPM Frequency': a.ppmFrequency || '-',
-                    'PPM Interval (months)': a.ppmIntervalMonths ?? '-',
-                    'AMC Contractor': a.amcContractor || '-',
-                    'Last PPM': a.lastPpmDate || '-',
-                    'Next PPM': a.nextPpmDate || '-',
-                    'Maintenance Requirements': a.maintenanceRequirements || '-',
-                };
-                case 'technical': return {
-                    'Asset Tag': a.assetTag || a.serialNumber,
-                    'Asset Name': a.name,
-                    'Manufacturer': a.manufacturer || '-',
-                    'Model': a.model || '-',
-                    'Country of Origin': a.countryOfOrigin || '-',
-                    'Power / Capacity': a.powerCapacity || '-',
-                    'Serial No.': a.serialNo || '-',
-                };
-                case 'financial': return {
-                    'Asset Tag': a.assetTag || a.serialNumber,
-                    'Asset Name': a.name,
-                    'Original Cost (OMR)': a.boqUnitCost ?? '-',
-                    'Replacement Cost (OMR)': a.replacementCost ?? '-',
-                    'BOQ Reference': a.boqProjectRef || '-',
-                    'BOQ Design Life (yrs)': a.boqDesignLife ?? '-',
-                };
-                default: return {
-                    'Asset Name': a.name,
-                    'Discipline': a.discipline,
-                    'Category': a.type,
-                    'Zone': a.zone || '-',
-                    'Building': a.buildingArea || '-',
-                    'Status': a.status,
-                    'Criticality': a.criticalityLevel || '-',
-                };
-            }
-        });
-        exportToCSV(rows, `assets-${activeTab}-${getDateForFilename()}`);
-    };
-
     // Every KPI below is ONE query against ONE condition (see
     // functions/api/assets.ts) — the label and the predicate say the same thing.
     const stats = useMemo(() => {
@@ -550,9 +547,13 @@ export default function AssetsPage() {
                     </SectionBoundary>
                 )}
 
-                {/* Toolbar — search filter sits directly above the table */}
-                <TableToolbar>
-                    <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                {/* Toolbar — title + search filter sit directly above the table */}
+                <TableToolbar className="flex-wrap">
+                    <div className="min-w-0">
+                        <h2 className="text-lg font-semibold text-foreground">Asset Register</h2>
+                        <p className="text-sm text-muted-foreground">{TABS.find(t => t.key === activeTab)?.label ?? 'Overview'} view of the master assets register</p>
+                    </div>
+                    <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
@@ -570,10 +571,7 @@ export default function AssetsPage() {
                             <X className="w-3.5 h-3.5" /> Clear
                         </button>
                     )}
-                    <button onClick={handleExportCSV} aria-label="Export CSV" className="flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto">
-                        <Download className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Export CSV</span>
-                    </button>
+                    <ExportButton rows={filteredAssets} filename={`assets-${activeTab}`} columns={ASSET_EXPORT_COLUMNS[activeTab]} />
                     <div className="text-sm text-muted-foreground whitespace-nowrap">
                         <span className="font-semibold text-foreground">{firstLoad ? '—' : totalCount}</span> assets
                     </div>

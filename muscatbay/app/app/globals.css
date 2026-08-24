@@ -666,11 +666,20 @@
     vertical-align: middle;
     color: var(--card-foreground);
     font-size: 0.75rem; /* 12px — matches the water/monthly ledgers */
+    font-weight: 500; /* base cell weight lives here, not on <TableCell>, so the
+                         first-column rule below can outrank it in-layer */
     line-height: 1.4;
     transition: background-color 120ms ease-out;
   }
   .ops-table tbody td:last-child { border-right: 0; }
   .ops-table tbody tr:last-child td { border-bottom: 0; }
+
+  /* Leading-cell emphasis — every row's first cell (its identifier: date, meter,
+     contractor…) reads slightly bolder than the data cells, app-wide. Per-cell
+     Tailwind weight utilities still override (utilities layer wins). Opt out for
+     tables whose first column is not an identifier via data-plain-first-col. */
+  .ops-table tbody td:first-child { font-weight: 600; }
+  .ops-table[data-plain-first-col] tbody td:first-child { font-weight: inherit; }
 
   /* Native row-level virtualization (preserves the previous implementation) */
   .ops-table tbody tr {

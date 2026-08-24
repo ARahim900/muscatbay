@@ -9,7 +9,7 @@ import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { Zap, DollarSign, MapPin, TrendingUp, Database, Search, Download, X, Filter, Gauge } from "lucide-react";
 import { MultiSelectDropdown, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
@@ -335,6 +335,9 @@ export default function ElectricityPage() {
         }
 
         // Sort
+        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
+        const totalMonths = rangeMonths.length > 0 ? rangeMonths : allMonths.slice(-6);
+        const rangeTotalOf = (m: MeterReading) => totalMonths.reduce((s, month) => s + (m.readings[month] || 0), 0);
         result.sort((a, b) => {
             let aVal: string | number = '';
             let bVal: string | number = '';
@@ -343,6 +346,9 @@ export default function ElectricityPage() {
                 case 'label': aVal = a.name; bVal = b.name; break;
                 case 'account': aVal = a.account_number; bVal = b.account_number; break;
                 case 'type': aVal = a.type; bVal = b.type; break;
+                // Cost is the range total × a flat tariff, so both columns share one ordering.
+                case 'total':
+                case 'cost': aVal = rangeTotalOf(a); bVal = rangeTotalOf(b); break;
                 default:
                     // Check if it's a month column
                     if (allMonths.includes(dbSortField)) {
@@ -362,7 +368,7 @@ export default function ElectricityPage() {
         });
 
         return result;
-    }, [meters, dbSearchTerm, dbSelectedTypes, allMeterTypes, dbSortField, dbSortDirection, allMonths]);
+    }, [meters, dbSearchTerm, dbSelectedTypes, allMeterTypes, dbSortField, dbSortDirection, allMonths, startMonth, endMonth]);
 
     const dbEffectivePageSize = dbPageSize === 'All' ? dbFilteredMeters.length : dbPageSize;
     const dbTotalPages = Math.ceil(dbFilteredMeters.length / (dbEffectivePageSize || 1));
@@ -967,18 +973,18 @@ export default function ElectricityPage() {
                 return (
                     <SectionBoundary title="Meter consumption & anomalies">
                     <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
-                        {/* Section heading — this single table replaces the former
-                            "Monthly Breakdown" plus the separate anomaly table. */}
-                        <div className="flex flex-col gap-0.5">
-                            <h3 className="text-lg font-semibold text-foreground">Meter Consumption &amp; Anomalies</h3>
-                            <p className="text-xs text-muted-foreground">
-                                Per-meter usage for {displayMonths[0]}{displayMonths.length > 1 ? ` – ${displayMonths[displayMonths.length - 1]}` : ''} — search, filter and sort the full meter list; cells are flagged where a reading breaks from that meter&apos;s own baseline.
-                            </p>
-                        </div>
+                        {/* Toolbar — title + subtitle live inside it, matching the STP
+                            Daily Operations Log reference. This single table replaces the
+                            former "Monthly Breakdown" plus the separate anomaly table. */}
+                        <TableToolbar className="flex-wrap">
+                            <div className="min-w-0">
+                                <h3 className="text-lg font-semibold text-foreground">Meter Consumption &amp; Anomalies</h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Per-meter usage for {displayMonths[0]}{displayMonths.length > 1 ? ` – ${displayMonths[displayMonths.length - 1]}` : ''} — cells are flagged where a reading breaks from that meter&apos;s own baseline.
+                                </p>
+                            </div>
 
-                        {/* Toolbar */}
-                        <TableToolbar>
-                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
@@ -1010,7 +1016,7 @@ export default function ElectricityPage() {
 
                             <button
                                 onClick={handleDbExportCSV}
-                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto"
+                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span>Export CSV</span>
@@ -1112,8 +1118,8 @@ export default function ElectricityPage() {
                                     {displayMonths.map(month => (
                                         <SortableTableHead key={month} field={month} currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="text-right min-w-[90px]">{month}</SortableTableHead>
                                     ))}
-                                    <TableHead className="num min-w-[100px]">Total (kWh)</TableHead>
-                                    <TableHead className="num min-w-[90px]">Cost (OMR)</TableHead>
+                                    <SortableTableHead field="total" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="num min-w-[100px]">Total (kWh)</SortableTableHead>
+                                    <SortableTableHead field="cost" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} align="right" className="num min-w-[90px]">Cost (OMR)</SortableTableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

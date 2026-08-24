@@ -1009,7 +1009,10 @@ function AssetsView({ period }: { period: PeriodResult }) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <Panel title="Buildings — Bulk vs Apartment Meters" icon={Building2}
-                right={<RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />}
+                right={<>
+                    <PanelExport onClick={() => downloadRows(blds.map((b) => { const s = sev(b.lossPct); return { Building: b.name.replace(" Building Bulk Meter", ""), Zone: b.zone, "Bulk (m3)": b.bulk.toFixed(1), "Apartments (m3)": b.sub.toFixed(1), "Loss (m3)": b.loss.toFixed(1), "Loss %": b.lossPct, Band: s.label }; }), "water-building-balance.csv")} />
+                    <RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />
+                </>}
                 note="Building bulk meter minus the sum of its apartment meters. A positive gap points at in-building leakage or a meter problem.">
                 <div className="overflow-x-auto" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                     <table className="w-full text-[12px]">

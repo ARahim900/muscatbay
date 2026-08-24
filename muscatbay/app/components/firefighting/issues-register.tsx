@@ -209,7 +209,7 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
                             <TableRow key={it.id}>
                                 {/* Long values wrap — no truncate-with-title, which is
                                     unrecoverable on a touch device. */}
-                                <TableCell className="font-medium text-foreground max-w-[240px] whitespace-normal break-words">{it.issue_description}</TableCell>
+                                <TableCell className="text-foreground max-w-[240px] whitespace-normal break-words">{it.issue_description}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground max-w-[160px] whitespace-normal break-words">{it.location}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(it.date_reported)}</TableCell>
                                 <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", issueStatusCls(it.status))}>{it.status}</span></TableCell>

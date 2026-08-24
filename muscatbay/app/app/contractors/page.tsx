@@ -31,7 +31,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, TablePagination, ActiveFilterPills,
@@ -98,6 +98,19 @@ function buildYearlyMatrix(costs: ContractorYearlyCost[]): {
 
     return { contractors, rows, contractorTotals, grandTotal };
 }
+
+// Contracts register export — mirrors the on-screen columns
+const CONTRACT_EXPORT_COLUMNS: ExportColumn<ContractorContract>[] = [
+    { key: 'id', header: '#' },
+    { key: 'contractor', header: 'Contractor' },
+    { key: 'contract_ref', header: 'Contract Ref', format: (c) => c.contract_ref || '' },
+    { key: 'service', header: 'Service', format: (c) => c.service || '' },
+    { key: 'flow', header: 'Flow' },
+    { key: 'contract_years', header: 'Years', format: (c) => c.contract_years ?? '' },
+    { key: 'annual_value_omr', header: 'Annual (OMR)', format: (c) => c.annual_value_omr ?? 'Variable' },
+    { key: 'total_value_omr', header: 'Total Value (OMR)', format: (c) => c.total_value_omr ?? 'Variable' },
+    { key: 'note', header: 'Note', format: (c) => c.note || '' },
+];
 
 // Full Contractor_Tracker column set for the AMC Tracker database export
 const TRACKER_EXPORT_COLUMNS: ExportColumn<ContractorTracker>[] = [
@@ -444,23 +457,6 @@ export default function ContractorsPage() {
         return 'blue';
     };
 
-    const handleExportContracts = () => {
-        exportToCSV(
-            filteredContracts.map(c => ({
-                '#': c.id,
-                Contractor: c.contractor,
-                'Contract Ref': c.contract_ref || '',
-                Service: c.service || '',
-                Flow: c.flow,
-                Years: c.contract_years ?? '',
-                'Annual (OMR)': c.annual_value_omr ?? 'Variable',
-                'Total Value (OMR)': c.total_value_omr ?? 'Variable',
-                Note: c.note || '',
-            })),
-            `contractor-contracts-${getDateForFilename()}`
-        );
-    };
-
     const handleExportYearly = () => {
         const rows = matrix.rows.map(r => {
             const row: Record<string, string | number> = { Year: r.label };
@@ -656,8 +652,13 @@ export default function ContractorsPage() {
             {activeTab === 'contracts' && !firstLoad && (
                 <SectionBoundary title="Contracts">
                 <div className="space-y-4">
-                    <TableToolbar>
-                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                    <TableToolbar className="flex-wrap">
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-semibold text-foreground">Contracts</h2>
+                            <p className="text-sm text-muted-foreground">Live contract register with values and terms</p>
+                        </div>
+
+                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 type="text"
@@ -684,11 +685,7 @@ export default function ContractorsPage() {
                             </button>
                         )}
 
-                        <button onClick={handleExportContracts}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors ml-auto">
-                            <Download className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Export CSV</span>
-                        </button>
+                        <ExportButton rows={filteredContracts} filename="contractor-contracts" columns={CONTRACT_EXPORT_COLUMNS} />
 
                         <div className="text-sm text-muted-foreground whitespace-nowrap">
                             <span className="font-semibold text-foreground">{filteredContracts.length}</span>
@@ -774,7 +771,7 @@ export default function ContractorsPage() {
                                         <TableCell className="text-foreground">
                                             {/* Full name stays accessible: wraps to two lines before
                                                 clamping, with the complete name on hover (title). */}
-                                            <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words" title={c.contractor}>{c.contractor}</span>
+                                            <span className="block max-w-[240px] xl:max-w-[320px] line-clamp-2 break-words font-semibold" title={c.contractor}>{c.contractor}</span>
                                             {c.note && <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] truncate" title={c.note}>{c.note}</p>}
                                         </TableCell>
                                         <TableCell className="text-muted-foreground hidden lg:table-cell meter max-w-[180px] truncate" title={c.contract_ref || ''}>{c.contract_ref || '-'}</TableCell>
@@ -841,17 +838,20 @@ export default function ContractorsPage() {
             {activeTab === 'yearly' && !firstLoad && (
                 <SectionBoundary title="Yearly costs">
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-base font-semibold text-foreground">Year-by-Year Expense Breakdown</h2>
-                            <p className="text-xs text-muted-foreground mt-1">All values in OMR. Blank cells indicate no cost in that year.</p>
+                    <TableToolbar className="flex-wrap">
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-semibold text-foreground">Year-by-Year Expense Breakdown</h2>
+                            <p className="text-sm text-muted-foreground">All values in OMR. Blank cells indicate no cost in that year.</p>
                         </div>
                         <button onClick={handleExportYearly}
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+                            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors sm:ml-auto">
                             <Download className="w-3.5 h-3.5" />
                             <span className="hidden sm:inline">Export CSV</span>
                         </button>
-                    </div>
+                        <div className="text-sm text-muted-foreground whitespace-nowrap">
+                            <span className="font-semibold text-foreground">{matrix.rows.length}</span> contract years
+                        </div>
+                    </TableToolbar>
 
                     {/* Chart first: the shape of the spend before the detail matrix. */}
                     <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
@@ -889,58 +889,61 @@ export default function ContractorsPage() {
                                 ))}
                             </div>
 
-                            {/* Desktop: matrix table */}
-                            <div className="ops-table-shell hidden md:block">
-                                <table className="ops-table whitespace-nowrap">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" className="text-left py-3 px-4 font-semibold text-xs col-sticky z-10">Year</th>
+                            {/* Desktop: matrix table — the shared <Table> primitive supplies
+                                header band, zebra, hover and the sticky Year column */}
+                            <div className="hidden md:block">
+                                <Table className="whitespace-nowrap">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="col-sticky">Year</TableHead>
                                             {matrix.contractors.map(cn => (
-                                                <th key={cn} scope="col" className="text-right py-3 px-3 font-semibold text-xs" title={cn}>
+                                                <TableHead key={cn} className="num" title={cn}>
                                                     {shortName(cn)}
-                                                </th>
+                                                </TableHead>
                                             ))}
-                                            <th scope="col" className="text-right py-3 px-4 font-semibold text-xs">Year Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                                            <TableHead className="num">Year Total</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
                                         {matrix.rows.map(row => (
-                                            <tr key={row.year} className="border-b border-border/80 hover:bg-secondary/5 dark:hover:bg-muted/40 transition-colors even:bg-muted/40 dark:even:bg-muted/20">
-                                                <td className="py-4 px-4 font-semibold col-sticky z-10">
-                                                    <span className="text-xs text-muted-foreground mr-1.5">Y{row.year}</span>
+                                            <TableRow key={row.year}>
+                                                <TableCell className="col-sticky">
+                                                    <span className="text-xs font-normal text-muted-foreground mr-1.5">Y{row.year}</span>
                                                     {row.label}
-                                                </td>
+                                                </TableCell>
                                                 {matrix.contractors.map(cn => {
                                                     const val = row.costs[cn];
                                                     return (
-                                                        <td key={cn} className="py-4 px-3 num font-semibold text-sm">
+                                                        <TableCell key={cn} className="num">
                                                             {val != null ? (
                                                                 <span className="text-foreground">{fmtOMR(val)}</span>
                                                             ) : (
                                                                 <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
                                                             )}
-                                                        </td>
+                                                        </TableCell>
                                                     );
                                                 })}
-                                                <td className="py-4 px-4 num font-bold text-sm text-primary bg-muted/40 dark:bg-muted/20">
+                                                <TableCell className="num font-bold text-primary bg-muted/40 dark:bg-muted/20">
                                                     {fmtOMR(row.total)}
-                                                </td>
-                                            </tr>
+                                                </TableCell>
+                                            </TableRow>
                                         ))}
-                                        {/* Totals row */}
-                                        <tr className="bg-muted/80 dark:bg-muted/50 font-semibold border-t-2 border-border">
-                                            <td className="py-4 px-4 col-sticky z-10">Contract Total</td>
+                                    </TableBody>
+                                    {/* Totals footer — same token-only pattern as the STP daily log */}
+                                    <TableFooter>
+                                        <tr className="border-t-2 border-border bg-muted/80 dark:bg-muted/50">
+                                            <td className="col-sticky whitespace-nowrap px-4 py-3 align-middle text-xs font-semibold text-foreground">Contract Total</td>
                                             {matrix.contractors.map(cn => (
-                                                <td key={cn} className="py-4 px-3 num text-sm text-foreground">
+                                                <td key={cn} className="px-4 py-3 align-middle text-xs font-semibold text-right tabular-nums text-foreground">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
-                                            <td className="py-4 px-4 num font-bold text-sm text-primary bg-muted/60 dark:bg-muted/30">
+                                            <td className="px-4 py-3 align-middle text-xs font-bold text-right tabular-nums text-primary bg-muted/60 dark:bg-muted/30">
                                                 {fmtOMR(matrix.grandTotal)}
                                             </td>
                                         </tr>
-                                    </tbody>
-                                </table>
+                                    </TableFooter>
+                                </Table>
                             </div>
 
                             {/* Revenue note */}
@@ -977,8 +980,12 @@ export default function ContractorsPage() {
             {activeTab === 'tracker' && !firstLoad && (
                 <SectionBoundary title="AMC tracker">
                 <div className="space-y-4">
-                    <TableToolbar>
-                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                    <TableToolbar className="flex-wrap">
+                        <div className="min-w-0">
+                            <h2 className="text-lg font-semibold text-foreground">AMC Tracker</h2>
+                            <p className="text-sm text-muted-foreground">Legacy tracker with status, dates and renewal plans</p>
+                        </div>
+                        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
                             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input type="text" aria-label="Search tracker" placeholder="Search tracker..." value={trackerSearch}
                                 onChange={(e) => { setTrackerSearch(e.target.value); setTrackerPage(1); }}
@@ -995,7 +1002,7 @@ export default function ContractorsPage() {
                                 <X className="w-3.5 h-3.5" /> Clear
                             </button>
                         )}
-                        <ExportButton rows={filteredTracker} filename="contractor-tracker" columns={TRACKER_EXPORT_COLUMNS} className="ml-auto" />
+                        <ExportButton rows={filteredTracker} filename="contractor-tracker" columns={TRACKER_EXPORT_COLUMNS} />
                         <div className="text-sm text-muted-foreground whitespace-nowrap">
                             <span className="font-semibold text-foreground">{filteredTracker.length}</span>
                             {filteredTracker.length !== trackerData.length && <span> of {trackerData.length}</span>} entries

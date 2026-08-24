@@ -288,7 +288,8 @@ export function OverviewTab({ data }: OverviewTabProps) {
               <TableBody>
                 {(["hvac", "bms"] as const).map((system) => (
                   <TableRow key={system}>
-                    <TableCell className="font-medium text-foreground uppercase">
+                    {/* Weight comes from the ops-table first-column emphasis rule */}
+                    <TableCell className="text-foreground uppercase">
                       {system}
                     </TableCell>
                     {ppmSchedule[system].map((q, i) => (

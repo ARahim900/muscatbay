@@ -241,7 +241,7 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                             const zk = equipZoneKey(e.zone);
                             return (
                                 <TableRow key={e.id}>
-                                    <TableCell className="font-medium text-foreground">{e.name}</TableCell>
+                                    <TableCell className="text-foreground">{e.name}</TableCell>
                                     <TableCell className="text-muted-foreground">{e.type}</TableCell>
                                     <TableCell>{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</TableCell>
                                     {/* Wraps rather than truncating — a title tooltip is unreachable on touch. */}

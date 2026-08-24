@@ -10,11 +10,12 @@
  * total over free text would be a fabricated number.
  */
 
+import { useMemo, useState } from "react";
 import type { AmcContractorPricing } from "@/entities/contractor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TableSkeleton } from "@/components/shared/skeleton";
-import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
+import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 
 const EXPORT_COLUMNS: ExportColumn<AmcContractorPricing>[] = [
     { key: 'contractor', header: 'Contractor' },
@@ -37,7 +38,43 @@ function cell(value: string | null | undefined) {
     return text;
 }
 
+type PricingSortField = "contractor" | "total";
+
+/** Totals are stored as text ("1,234.5", "Variable") — numbers sort first, text after. */
+function pricingSortKey(row: AmcContractorPricing, field: PricingSortField): string | number {
+    if (field === "contractor") return row.contractor.toLowerCase();
+    const raw = (row.total_omr ?? "").trim();
+    const numeric = parseFloat(raw.replace(/[^0-9.eE+-]/g, ""));
+    return Number.isNaN(numeric) ? raw.toLowerCase() : numeric;
+}
+
 export function PricingPanel({ pricing, loading }: { pricing: AmcContractorPricing[]; loading: boolean }) {
+    const [sortField, setSortField] = useState<PricingSortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+    const sorted = useMemo(() => {
+        if (!sortField) return pricing;
+        const dir = sortDirection === "asc" ? 1 : -1;
+        return [...pricing].sort((a, b) => {
+            const ka = pricingSortKey(a, sortField);
+            const kb = pricingSortKey(b, sortField);
+            if (typeof ka === "number" && typeof kb === "number") return (ka - kb) * dir;
+            if (typeof ka === "number") return -1;
+            if (typeof kb === "number") return 1;
+            return String(ka).localeCompare(String(kb)) * dir;
+        });
+    }, [pricing, sortField, sortDirection]);
+
+    const handleSort = (field: string) => {
+        const f = field as PricingSortField;
+        if (sortField === f) {
+            setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(f);
+            setSortDirection("asc");
+        }
+    };
+
     if (loading) {
         return (
             <div className="rounded-[10.5px] border border-border bg-card p-4 sm:p-6">
@@ -60,16 +97,19 @@ export function PricingPanel({ pricing, loading }: { pricing: AmcContractorPrici
 
     return (
         <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
+            <TableToolbar className="flex-wrap">
+                <p className="min-w-0 text-sm text-muted-foreground">
                     Contracted rate per contract year, exactly as recorded in the pricing schedule.
                 </p>
-                <ExportButton rows={pricing} filename="contract-pricing" columns={EXPORT_COLUMNS} />
-            </div>
+                <ExportButton rows={sorted} filename="contract-pricing" columns={EXPORT_COLUMNS} className="sm:ml-auto" />
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="font-semibold text-foreground">{pricing.length}</span> contractors
+                </div>
+            </TableToolbar>
 
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
-                {pricing.map(p => (
+                {sorted.map(p => (
                     <div key={p.id} className="space-y-2 rounded-xl border border-border bg-card p-4">
                         <p className="break-words text-sm font-semibold text-foreground">{p.contractor}</p>
                         <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
@@ -94,16 +134,16 @@ export function PricingPanel({ pricing, loading }: { pricing: AmcContractorPrici
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead scope="col" className="col-sticky">Contractor</TableHead>
+                            <SortableTableHead field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Contractor</SortableTableHead>
                             {[1, 2, 3, 4, 5].map(y => (
                                 <TableHead key={y} scope="col" className="text-right">Year {y} (OMR)</TableHead>
                             ))}
-                            <TableHead scope="col" className="text-right">Total (OMR)</TableHead>
+                            <SortableTableHead field="total" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Total (OMR)</SortableTableHead>
                             <TableHead scope="col">Notes</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {pricing.map(p => (
+                        {sorted.map(p => (
                             <TableRow key={p.id}>
                                 <TableCell className="col-sticky font-semibold text-foreground">{p.contractor}</TableCell>
                                 {YEAR_KEYS.map(k => (

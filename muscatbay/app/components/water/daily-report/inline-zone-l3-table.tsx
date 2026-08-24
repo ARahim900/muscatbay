@@ -23,6 +23,7 @@ import {
     HierarchyStatCard, Th, TableSearch, StatusChip,
     TablePagination, thBase, tdBase,
 } from "./inline-shared";
+import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 
 export { ZoneL3Table };
 
@@ -270,6 +271,21 @@ function ZoneL3Table({
     const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
     const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
 
+    // CSV mirrors the on-screen matrix; missing readings export as empty cells,
+    // never 0 — the no-fabrication rule.
+    type L3MeterRow = (typeof l3Meters)[number];
+    const exportColumns = useMemo<ExportColumn<L3MeterRow>[]>(() => [
+        { key: 'label', header: 'Meter' },
+        { key: 'account', header: 'Account' },
+        { key: 'building', header: 'Type', format: (m) => m.building ? 'Building bulk' : m.isIrrigation ? 'Irrigation' : 'Individual' },
+        ...days.map((d) => ({
+            key: 'dailyValues',
+            header: `Day ${d}`,
+            format: (m: L3MeterRow) => m.dailyValues[d - 1] ?? '',
+        } as ExportColumn<L3MeterRow>)),
+        { key: 'total', header: 'Total (m³)' },
+    ], [days]);
+
     return (
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
@@ -307,7 +323,10 @@ function ZoneL3Table({
                     />
                 </div>
 
-                <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+                <div className="flex flex-wrap items-center gap-2">
+                    <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
+                    <ExportButton rows={filtered} filename={`water-zone-l3-${zoneRow.zoneName.replace(/\s+/g, '-').toLowerCase()}`} columns={exportColumns} className="ml-auto" />
+                </div>
 
                 {/* Horizontally scrollable table */}
                 <div className="relative -mx-4 sm:-mx-5 md:-mx-6">

@@ -26,7 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { SortableTableHead, TableToolbar } from "@/components/shared/data-table";
+import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
     MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst, type TickerStat,
@@ -131,6 +131,18 @@ function compareCategories(a: CategoryRow, b: CategoryRow, field: CategorySortFi
     }
 }
 
+/** CSV columns for the category-performance export — identification fields only. */
+const CATEGORY_EXPORT_COLUMNS: ExportColumn<CategoryRow>[] = [
+    { key: 'label', header: 'Category' },
+    { key: 'severity', header: 'Status' },
+    { key: 'total', header: 'Consumption (kWh)', format: (c) => Math.round(c.total) },
+    { key: 'total', header: 'Cost (OMR)', format: (c) => (c.total * RATE).toFixed(1) },
+    { key: 'trendPct', header: 'Trend vs prev month (%)', format: (c) => c.trendPct !== null ? c.trendPct.toFixed(1) : '' },
+    { key: 'meters', header: 'Meters', format: (c) => c.meters.length },
+    { key: 'flaggedCount', header: 'Flagged Meters' },
+    { key: 'meters', header: 'Findings', format: (c) => describeFindings(c) },
+];
+
 function CategoryTable({
     rows,
     totalRows,
@@ -173,6 +185,7 @@ function CategoryTable({
                         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                         Flagged only
                     </button>
+                    <ExportButton rows={rows} filename="electricity-category-performance" columns={CATEGORY_EXPORT_COLUMNS} />
                 </TableToolbar>
 
                 <Table

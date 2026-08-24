@@ -21,8 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { SeverityChip, Sparkline, type Severity } from "@/components/shared/inspection";
-import { SortableTableHead } from "@/components/shared/data-table/sortable-table-head";
-import { TableToolbar } from "@/components/shared/data-table/table-toolbar";
+import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { n } from "./inline-shared";
 import { DailyBriefing } from "./inline-briefing";
 import type { BriefingMetrics } from "./briefing-metrics";
@@ -133,6 +132,23 @@ function compareZones(a: ZoneWatchRow, b: ZoneWatchRow, field: ZoneSortField): n
     }
 }
 
+/** CSV columns for the zone-performance export. Missing readings stay empty —
+ *  never 0 — per the no-fabrication rule. */
+const ZONE_EXPORT_COLUMNS: ExportColumn<ZoneWatchRow>[] = [
+    { key: 'zoneName', header: 'Zone' },
+    { key: 'meterCount', header: 'Meters' },
+    { key: 'severity', header: 'Status', format: (z) => SEVERITY_LABEL[z.severity] },
+    { key: 'l2', header: 'Supply L2 (m³)', format: (z) => z.l2 ?? '' },
+    { key: 'l3Sum', header: 'Metered ΣL3 (m³)' },
+    { key: 'loss', header: 'Loss (m³)', format: (z) => z.loss ?? '' },
+    { key: 'lossPct', header: 'Loss (%)', format: (z) => z.lossPct !== null ? z.lossPct.toFixed(1) : '' },
+    { key: 'mtdL2', header: 'MTD Supply (m³)' },
+    { key: 'mtdL3', header: 'MTD Metered (m³)' },
+    { key: 'mtdLoss', header: 'MTD Loss (m³)' },
+    { key: 'mtdLossPct', header: 'MTD Loss (%)', format: (z) => z.mtdLossPct !== null ? z.mtdLossPct.toFixed(1) : '' },
+    { key: 'risingDays', header: 'Rising-loss Days' },
+];
+
 function ZonePerformanceTable({
     rows,
     totalRows,
@@ -174,6 +190,7 @@ function ZonePerformanceTable({
                     <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                     Attention only
                 </button>
+                <ExportButton rows={rows} filename={`water-zone-performance-day${selectedDay}`} columns={ZONE_EXPORT_COLUMNS} />
             </TableToolbar>
 
             <Table

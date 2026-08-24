@@ -10,11 +10,11 @@
 
 import { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Database, Download, Filter, MapPin } from "lucide-react";
+import { Database, Filter, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { downloadRows } from "@/lib/water-monthly-data";
 import { TableSearch, StatusChip, thBase, tdBase, n } from "./inline-shared";
+import { ExportButton } from "@/components/shared/data-table";
 import { buildDailyGrid, detectSpike, zeroStreak, wasActiveBefore, type DayValues } from "./daily-metrics";
 
 interface LedgerRow {
@@ -151,14 +151,7 @@ export function DailyDatabase({
                     >
                         Issues only
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => downloadRows(exportRows, `water-daily-database-${month}-day${selectedDay}.csv`)}
-                        className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
-                    >
-                        <Download className="h-4 w-4" aria-hidden="true" />
-                        Export CSV
-                    </button>
+                    <ExportButton rows={exportRows} filename={`water-daily-database-${month}-day${selectedDay}`} />
                     <span className="ml-auto text-[12px] font-medium text-muted-foreground tabular-nums">
                         {filtered.length} meters · Day {selectedDay} highlighted
                     </span>

@@ -485,9 +485,13 @@ export default function FirefightingPage() {
                             <span>{PPM_PROGRAMME_SOURCE}</span>
                         </div>
 
-                        {/* Toolbar — search + multi-select filters */}
-                        <TableToolbar>
-                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                        {/* Toolbar — title + search + multi-select filters */}
+                        <TableToolbar className="flex-wrap">
+                            <div className="min-w-0">
+                                <h2 className="text-lg font-semibold text-foreground">PPM Maintenance Tracker</h2>
+                                <p className="text-sm text-muted-foreground">BEC preventive maintenance programme — 3 cycles × 4 zones</p>
+                            </div>
+                            <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                 <input
                                     type="text"
@@ -509,7 +513,7 @@ export default function FirefightingPage() {
                                     <X className="w-3.5 h-3.5" /> Clear
                                 </button>
                             )}
-                            <ExportButton rows={filteredActivities} filename="fire-ppm-activities" columns={PPM_EXPORT_COLUMNS} className="ml-auto" />
+                            <ExportButton rows={filteredActivities} filename="fire-ppm-activities" columns={PPM_EXPORT_COLUMNS} />
                             <div className="text-sm text-muted-foreground whitespace-nowrap">
                                 <span className="font-semibold text-foreground">{filteredActivities.length}</span>
                                 {filteredActivities.length !== PPM_ACTIVITIES.length && <span> of {PPM_ACTIVITIES.length}</span>} activities
@@ -564,7 +568,9 @@ export default function FirefightingPage() {
                                         <TableRow key={a.id}>
                                             <TableCell><CycleBadge cycle={a.cycle} /></TableCell>
                                             <TableCell><ZoneBadge zone={a.zone} /></TableCell>
-                                            <TableCell className="text-foreground">{a.area}</TableCell>
+                                            {/* The area is the row's identifier — carries the same emphasis
+                                                the first-column rule gives identifier cells elsewhere. */}
+                                            <TableCell className="font-semibold text-foreground">{a.area}</TableCell>
                                             <TableCell><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></TableCell>
                                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</TableCell>
                                             <TableCell><PpmStatusBadge status={a.status} /></TableCell>

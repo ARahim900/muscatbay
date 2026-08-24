@@ -10,11 +10,11 @@
 
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertTriangle, CheckCircle2, ClipboardList, Download, XCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { AlertTriangle, CheckCircle2, ClipboardList, XCircle } from "lucide-react";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { downloadRows } from "@/lib/water-monthly-data";
-import { HierarchyStatCard, StatusChip, thBase, tdBase, PALETTE } from "./inline-shared";
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ExportButton } from "@/components/shared/data-table";
+import { HierarchyStatCard, StatusChip, PALETTE } from "./inline-shared";
 import { buildDailyGrid, buildZoneDaySeries, buildDailyExceptions } from "./daily-metrics";
 
 export function DailyExceptions({
@@ -70,15 +70,7 @@ export function DailyExceptions({
                                 This register identifies issues and suggests a next step — it does not assign or track them.
                             </p>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => downloadRows(rows, `water-daily-exceptions-${month}-day${selectedDay}.csv`)}
-                            disabled={rows.length === 0}
-                            className="flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
-                        >
-                            <Download className="h-4 w-4" aria-hidden="true" />
-                            Export Actions
-                        </button>
+                        <ExportButton rows={rows} filename={`water-daily-exceptions-${month}-day${selectedDay}`} />
                     </div>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-5 md:p-6 pt-2 sm:pt-2 md:pt-2">
@@ -92,41 +84,34 @@ export function DailyExceptions({
                             </p>
                         </div>
                     ) : (
-                        <div className="overflow-hidden rounded-[10.5px] border border-border">
-                            <div className="overflow-auto" style={{ maxHeight: 560 }}>
-                                <table className="w-full border-collapse text-[12px]" style={{ minWidth: 720 }}>
-                                    <caption className="sr-only">
-                                        {rows.length} exceptions detected on day {selectedDay} of {month}, each with its category,
-                                        the item affected, a severity band, the measured value and a suggested next step.
-                                    </caption>
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" className={thBase}>Category</th>
-                                            <th scope="col" className={thBase}>Item</th>
-                                            <th scope="col" className={thBase}>Severity</th>
-                                            <th scope="col" className={cn(thBase, "text-right")}>Value</th>
-                                            <th scope="col" className={thBase}>Suggested Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {rows.map((r, i) => (
-                                            <tr
-                                                key={`${r.Category}-${r.Item}-${i}`}
-                                                className={cn("border-b border-border/60", i % 2 === 1 && "bg-muted/40 dark:bg-muted/20")}
-                                            >
-                                                <td className={cn(tdBase, "whitespace-nowrap font-semibold text-foreground")}>{r.Category}</td>
-                                                <th scope="row" className={cn(tdBase, "text-left font-normal text-foreground")}>{r.Item}</th>
-                                                <td className={tdBase}>
-                                                    <StatusChip label={r.Severity} color={r.Severity === "Critical" ? "danger" : "warning"} />
-                                                </td>
-                                                <td className={cn(tdBase, "whitespace-nowrap text-right tabular-nums text-foreground")}>{r.Value}</td>
-                                                <td className={cn(tdBase, "min-w-[240px] text-muted-foreground")}>{r.Action}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <Table data-density="compact" aria-label={`Exceptions for day ${selectedDay}`}>
+                            <TableCaption className="sr-only mt-0">
+                                {rows.length} exceptions detected on day {selectedDay} of {month}, each with its category,
+                                the item affected, a severity band, the measured value and a suggested next step.
+                            </TableCaption>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Category</TableHead>
+                                    <TableHead>Item</TableHead>
+                                    <TableHead>Severity</TableHead>
+                                    <TableHead className="num">Value</TableHead>
+                                    <TableHead>Suggested Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {rows.map((r, i) => (
+                                    <TableRow key={`${r.Category}-${r.Item}-${i}`}>
+                                        <TableCell className="whitespace-nowrap">{r.Category}</TableCell>
+                                        <TableCell className="min-w-[200px] text-foreground">{r.Item}</TableCell>
+                                        <TableCell>
+                                            <StatusChip label={r.Severity} color={r.Severity === "Critical" ? "danger" : "warning"} />
+                                        </TableCell>
+                                        <TableCell className="num whitespace-nowrap text-foreground">{r.Value}</TableCell>
+                                        <TableCell className="min-w-[240px] text-muted-foreground">{r.Action}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     )}
                 </CardContent>
             </Card>

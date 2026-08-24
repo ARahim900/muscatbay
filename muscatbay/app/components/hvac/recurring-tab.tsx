@@ -172,8 +172,12 @@ export function RecurringTab({ issues }: RecurringTabProps) {
 
   return (
     <div className="space-y-4">
-      <TableToolbar>
-        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+      <TableToolbar className="flex-wrap">
+        <div className="min-w-0">
+          <h2 className="text-lg font-semibold text-foreground">Recurring Issues</h2>
+          <p className="text-sm text-muted-foreground">Equipment repeating the same finding across PPM visits</p>
+        </div>
+        <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
@@ -195,7 +199,7 @@ export function RecurringTab({ issues }: RecurringTabProps) {
             <X className="w-3.5 h-3.5" /> Clear
           </button>
         )}
-        <ExportButton rows={filtered} filename="hvac-recurring-issues" columns={RECURRING_EXPORT_COLUMNS} className="ml-auto" />
+        <ExportButton rows={filtered} filename="hvac-recurring-issues" columns={RECURRING_EXPORT_COLUMNS} />
         <div className="text-sm text-muted-foreground whitespace-nowrap">
           <span className="font-semibold text-foreground">{filtered.length}</span>
           {filtered.length !== issues.length && <span> of {issues.length}</span>} recurring issues

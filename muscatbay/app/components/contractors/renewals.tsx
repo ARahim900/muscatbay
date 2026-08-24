@@ -12,14 +12,14 @@
  * assignment, no close-out.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CalendarClock, CalendarX2, HelpCircle, AlertTriangle } from "lucide-react";
 import type { AmcContractorExpiry, ContractorTracker } from "@/entities/contractor";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TableSkeleton } from "@/components/shared/skeleton";
-import { SeverityChip } from "@/components/shared/inspection";
-import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
+import { SeverityChip, SEVERITY_RANK } from "@/components/shared/inspection";
+import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { expiryStatus, formatContractDate, parseContractDate, type ExpiryStatus } from "./contract-dates";
 
 export interface RenewalRow {
@@ -90,6 +90,19 @@ function sortRows(rows: RenewalRow[]): RenewalRow[] {
     });
 }
 
+type RenewalSortField = "contractor" | "days" | "severity" | "priority" | "renewalStatus";
+
+function renewalSortKey(row: RenewalRow, field: RenewalSortField): string | number {
+    switch (field) {
+        case "contractor": return row.contractor.toLowerCase();
+        // Unreadable dates sort last in either direction via a large sentinel.
+        case "days": return row.status.days ?? Number.MAX_SAFE_INTEGER;
+        case "severity": return SEVERITY_RANK[row.status.severity];
+        case "priority": return (row.priority ?? "").toLowerCase();
+        case "renewalStatus": return (row.renewalStatus ?? "").toLowerCase();
+    }
+}
+
 function Tile({ label, value, icon: Icon, color }: { label: string; value: number; icon: typeof CalendarX2; color: string }) {
     return (
         <div className="relative overflow-hidden rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard">
@@ -117,7 +130,31 @@ export function RenewalsPanel({
     loading: boolean;
 }) {
     const { rows, source } = useMemo(() => buildRows(expiry, tracker), [expiry, tracker]);
-    const sorted = useMemo(() => sortRows(rows), [rows]);
+    const [sortField, setSortField] = useState<RenewalSortField | null>(null);
+    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+    // Default order stays worst-first; clicking a header re-orders by that column.
+    const sorted = useMemo(() => {
+        const base = sortRows(rows);
+        if (!sortField) return base;
+        const dir = sortDirection === "asc" ? 1 : -1;
+        return [...base].sort((a, b) => {
+            const ka = renewalSortKey(a, sortField);
+            const kb = renewalSortKey(b, sortField);
+            if (typeof ka === "number" && typeof kb === "number") return (ka - kb) * dir;
+            return String(ka).localeCompare(String(kb)) * dir;
+        });
+    }, [rows, sortField, sortDirection]);
+
+    const handleSort = (field: string) => {
+        const f = field as RenewalSortField;
+        if (sortField === f) {
+            setSortDirection((d) => (d === "asc" ? "desc" : "asc"));
+        } else {
+            setSortField(f);
+            setSortDirection("asc");
+        }
+    };
 
     const counts = useMemo(() => ({
         expired: rows.filter(r => r.status.severity === 'critical').length,
@@ -155,14 +192,20 @@ export function RenewalsPanel({
                 <Tile label="Date unreadable" value={counts.unreadable} icon={HelpCircle} color="var(--status-missing)" />
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="text-xs text-muted-foreground">
-                    {source === 'expiry-table'
-                        ? 'Source: amc_contractor_expiry. Countdown recomputed from the recorded end date each time this page loads.'
-                        : 'Source: AMC tracker End Date column — the amc_contractor_expiry table holds no rows.'}
-                </p>
-                <ExportButton rows={sorted} filename="contract-renewals" columns={EXPORT_COLUMNS} />
-            </div>
+            <TableToolbar className="flex-wrap">
+                <div className="min-w-0">
+                    <h2 className="text-lg font-semibold text-foreground">Contract Expiry &amp; Renewal</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {source === 'expiry-table'
+                            ? 'Source: amc_contractor_expiry. Countdown recomputed from the recorded end date each time this page loads.'
+                            : 'Source: AMC tracker End Date column — the amc_contractor_expiry table holds no rows.'}
+                    </p>
+                </div>
+                <ExportButton rows={sorted} filename="contract-renewals" columns={EXPORT_COLUMNS} className="sm:ml-auto" />
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                    <span className="font-semibold text-foreground">{sorted.length}</span> contracts
+                </div>
+            </TableToolbar>
 
             {/* Mobile cards */}
             <div className="space-y-3 md:hidden">
@@ -190,13 +233,13 @@ export function RenewalsPanel({
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead scope="col" className="col-sticky">Contractor</TableHead>
+                            <SortableTableHead field="contractor" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Contractor</SortableTableHead>
                             <TableHead scope="col">End date</TableHead>
-                            <TableHead scope="col">Expiry status</TableHead>
-                            <TableHead scope="col" className="text-right">Days remaining</TableHead>
+                            <SortableTableHead field="severity" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Expiry status</SortableTableHead>
+                            <SortableTableHead field="days" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} align="right" className="text-right">Days remaining</SortableTableHead>
                             <TableHead scope="col">Action required by</TableHead>
-                            <TableHead scope="col">Priority</TableHead>
-                            <TableHead scope="col">Renewal status</TableHead>
+                            <SortableTableHead field="priority" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Priority</SortableTableHead>
+                            <SortableTableHead field="renewalStatus" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Renewal status</SortableTableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
