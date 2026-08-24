@@ -39,6 +39,11 @@ export const MAIN_BULK_ACCOUNT = 'C43659';
 
 // ─── Zone L2 vs L3 ────────────────────────────────────────────────────────────
 
+export const ZEN_APARTMENT_ACCOUNTS = Array.from(
+    { length: 4300431 - 4300351 + 1 },
+    (_, index) => String(4300351 + index),
+);
+
 export const ZONE_BULK_CONFIG: ZoneBulkConfig[] = [
     {
         zoneName: 'Zone FM',
@@ -72,6 +77,11 @@ export const ZONE_BULK_CONFIG: ZoneBulkConfig[] = [
             '4300311', '4300312', '4300313', '4300314', '4300315', '4300316',
             '4300317', '4300318', '4300319', '4300320',
         ],
+    },
+    {
+        zoneName: 'ZEN Project',
+        l2Account: '4300348',
+        l3Accounts: ZEN_APARTMENT_ACCOUNTS,
     },
     {
         zoneName: 'Zone 5',

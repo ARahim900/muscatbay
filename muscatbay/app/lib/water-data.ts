@@ -18,7 +18,8 @@
  * 
  * ## Zone Configuration
  * 
- * Zones include: Zone FM, Zone 3A, Zone 3B, Zone 5, Zone 8, and Village Square.
+ * Zones include: Zone FM, Zone 3A, Zone 3B, ZEN Project, Zone 5, Zone 8,
+ * and Village Square.
  * Each zone has a bulk meter account for loss calculation.
  * 
  * ## Analysis Functions
@@ -61,6 +62,7 @@ export const ZONE_CONFIG: ZoneConfig[] = [
   { code: 'Zone_01_(FM)', name: 'Zone FM', bulkMeterAccount: '4300346', hasBuildings: true },
   { code: 'Zone_03_(A)', name: 'Zone 3A', bulkMeterAccount: '4300343', hasBuildings: true },
   { code: 'Zone_03_(B)', name: 'Zone 3B', bulkMeterAccount: '4300344', hasBuildings: true },
+  { code: 'Zone_03C', name: 'ZEN Project', bulkMeterAccount: '4300348', hasBuildings: false },
   { code: 'Zone_05', name: 'Zone 5', bulkMeterAccount: '4300345', hasBuildings: false },
   { code: 'Zone_08', name: 'Zone 8', bulkMeterAccount: '4300342', hasBuildings: false },
   { code: 'Zone_VS', name: 'Village Square', bulkMeterAccount: '4300335', hasBuildings: false },

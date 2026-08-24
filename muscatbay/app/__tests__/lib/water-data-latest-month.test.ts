@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { findLatestMonthWithData } from '@/lib/water-data';
+import { findLatestMonthWithData, type WaterMeter } from '@/lib/water-data';
+import { buildMonthlyData, computePeriod } from '@/lib/water-monthly-data';
 
 // Chronological, oldest → newest (same shape getDynamicMonths() returns).
 const MONTHS = ['Jan-26', 'Feb-26', 'Mar-26', 'Apr-26', 'May-26', 'Jun-26'];
@@ -42,5 +43,40 @@ describe('findLatestMonthWithData', () => {
         expect(result).toBe('Mar-26');
         // Jun, May, Apr, Mar = 4 probes, then stop.
         expect(hasData).toHaveBeenCalledTimes(4);
+    });
+});
+
+describe('ZEN Project monthly integration', () => {
+    it('uses the friendly zone name and includes its bulk and apartment consumption', () => {
+        const meters: WaterMeter[] = [
+            {
+                label: 'Al Adrak Construction',
+                accountNumber: '4300348',
+                level: 'L2',
+                zone: 'Zone_03C',
+                parentMeter: 'Main Bulk (NAMA)',
+                type: 'Zone Bulk',
+                consumption: { 'Aug-26': 538.5 },
+            },
+            {
+                label: 'Z1 Flat No. 001',
+                accountNumber: '4300351',
+                level: 'L3',
+                zone: 'Zone_03C',
+                parentMeter: 'Al Adrak Construction',
+                type: 'Residential (Apartment)',
+                consumption: { 'Aug-26': 5.82 },
+            },
+        ];
+
+        const period = computePeriod(buildMonthlyData(meters), '2026', 7);
+
+        expect(period.zones).toContainEqual(expect.objectContaining({
+            zone: 'Zone_03C',
+            name: 'ZEN Project',
+            bulk: 538.5,
+            end: 5.82,
+            meters: 1,
+        }));
     });
 });

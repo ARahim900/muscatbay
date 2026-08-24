@@ -84,6 +84,7 @@ const DASHBOARD_REALTIME_TABLES = [
     // never emit postgres_changes events.
     'water_meters',
     'water_monthly_consumption',
+    'water_daily_consumption',
     'electricity_readings',
     'Contractor_Tracker',
 ];

@@ -48,6 +48,7 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 const ALERT_REALTIME_TABLES = [
     "water_meters",
     "water_monthly_consumption",
+    "water_daily_consumption",
     "Contractor_Tracker",
     "stp_operations",
 ];

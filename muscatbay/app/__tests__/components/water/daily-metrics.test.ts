@@ -28,6 +28,7 @@ function days(...vals: (number | null)[]): (number | null)[] {
 }
 
 const FM = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone FM')!;
+const ZEN = ZONE_BULK_CONFIG.find(z => z.zoneName === 'ZEN Project')!;
 
 // ─── buildDailyGrid ───────────────────────────────────────────────────────────
 
@@ -111,6 +112,22 @@ describe('buildZoneDaySeries / buildZoneWatch', () => {
         const empty = series.find(s => s.zoneName === 'Zone 8')!;
         expect(empty.points[0].hasData).toBe(false);
         expect(empty.points[0].severity).toBe('nodata');
+    });
+
+    it('calculates the ZEN Project bulk-to-apartment balance', () => {
+        const zenGrid = buildDailyGrid([
+            row(ZEN.l2Account, days(20)),
+            row(ZEN.l3Accounts[0], days(7)),
+            row(ZEN.l3Accounts[1], days(5)),
+        ]);
+        const zen = buildZoneDaySeries(zenGrid).find(s => s.zoneName === 'ZEN Project')!;
+
+        expect(zen.points[0]).toMatchObject({
+            l2: 20,
+            l3Sum: 12,
+            loss: 8,
+            lossPct: 40,
+        });
     });
 });
 

@@ -5,7 +5,8 @@ import { DailyDatabase } from '@/components/water/daily-report/daily-database';
 import { DailyExceptions } from '@/components/water/daily-report/daily-exceptions';
 import { ZoneL3Table } from '@/components/water/daily-report/inline-zone-l3-table';
 import type { ZoneRow } from '@/components/water/daily-report/inline-shared';
-import { ZONE_BULK_CONFIG } from '@/lib/water-accounts';
+import { ZEN_APARTMENT_ACCOUNTS, ZONE_BULK_CONFIG } from '@/lib/water-accounts';
+import { ZONE_CONFIG } from '@/lib/water-data';
 import type { SupabaseDailyWaterConsumption } from '@/entities/water';
 
 // ─── Fixtures ─────────────────────────────────────────────────────────────────
@@ -27,6 +28,26 @@ function row(
 }
 
 const FM = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone FM')!;
+
+describe('ZEN Project configuration', () => {
+    it('uses the same verified bulk meter and apartment set in Daily and Monthly views', () => {
+        const dailyZone = ZONE_BULK_CONFIG.find(z => z.zoneName === 'ZEN Project');
+        const monthlyZone = ZONE_CONFIG.find(z => z.code === 'Zone_03C');
+
+        expect(dailyZone).toMatchObject({
+            l2Account: '4300348',
+            l3Accounts: ZEN_APARTMENT_ACCOUNTS,
+        });
+        expect(ZEN_APARTMENT_ACCOUNTS).toHaveLength(81);
+        expect(ZEN_APARTMENT_ACCOUNTS[0]).toBe('4300351');
+        expect(ZEN_APARTMENT_ACCOUNTS.at(-1)).toBe('4300431');
+        expect(new Set(ZEN_APARTMENT_ACCOUNTS).size).toBe(81);
+        expect(monthlyZone).toMatchObject({
+            name: 'ZEN Project',
+            bulkMeterAccount: '4300348',
+        });
+    });
+});
 
 /** Zone FM with a 40% loss on day 2 (L2 100 vs ΣL3 60). */
 const monthData: SupabaseDailyWaterConsumption[] = [
