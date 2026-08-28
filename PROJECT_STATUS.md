@@ -490,8 +490,14 @@ stops at last month" problem is structurally closed:
   `getSession()` and, if one is live, routes to `next` instead of showing a
   failure. The same tolerance covers the `token_hash` email flows, and a
   `handledRef` guard keeps both single-use credentials from being redeemed
-  twice by a re-run effect. Regression tests:
-  `__tests__/pages/auth-callback.test.tsx`.
+  twice by a re-run effect. Two test layers:
+  `__tests__/pages/auth-callback.test.tsx` covers the page's logic
+  (with the auth client stubbed), and
+  `__tests__/functions/pkce-double-redemption.test.ts` pins the *library*
+  behaviour that logic exists to survive — it drives the real
+  `@supabase/ssr` + `@supabase/auth-js` with only the network mocked, so a
+  dependency bump that changes any of this fails there instead of
+  silently breaking sign-in in production again.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
