@@ -82,7 +82,7 @@ export function GoogleSignInButton({
         >
             {redirecting ? (
                 <>
-                    <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
                     <span>Redirecting to Google…</span>
                 </>
             ) : (

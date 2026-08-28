@@ -382,7 +382,7 @@ function AuthCallbackContent() {
                                 >
                                     {retrying ? (
                                         <>
-                                            <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                                            <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" />
                                             Redirecting to Google…
                                         </>
                                     ) : (
