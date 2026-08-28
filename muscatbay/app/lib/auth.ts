@@ -155,15 +155,19 @@ export async function signInWithGoogle() {
         throw new Error('Supabase not configured');
     }
 
-    // Use NEXT_PUBLIC_SITE_URL for production, fallback to window.location.origin
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-
+    // The callback MUST stay on the origin that starts the flow — never a
+    // canonical NEXT_PUBLIC_SITE_URL. The PKCE code verifier is stored
+    // host-scoped on THIS origin, so a sign-in started on an alias
+    // (www.muscatbay.work, muscatbay.vercel.app) or a preview deployment
+    // that lands back on the canonical host cannot find its verifier and
+    // every exchange fails. Each origin that serves the app needs to be in
+    // Supabase's redirect allow-list.
     const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
             // flow=oauth lets /auth/callback show Google-specific copy
             // (and a Google retry) instead of email-verification guidance.
-            redirectTo: `${siteUrl}/auth/callback?flow=oauth`,
+            redirectTo: `${window.location.origin}/auth/callback?flow=oauth`,
             queryParams: {
                 // Always show Google's account chooser: control-room tablets
                 // are shared devices, and silently reusing the last Google

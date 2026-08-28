@@ -467,7 +467,11 @@ stops at last month" problem is structurally closed:
   `PUBLIC_ROUTES` (they were login-gated — a signed-out visitor, including
   anyone checking the consent-screen links, bounced to `/login`) and to a new
   `OPEN_WHEN_AUTHENTICATED` list so signed-in users can read them too
-  instead of being bounced to `/`.
+  instead of being bounced to `/`. The OAuth callback is built from
+  `window.location.origin` (not `NEXT_PUBLIC_SITE_URL`): the PKCE verifier
+  is host-scoped, so the round-trip must stay on the origin that started it
+  — meaning every origin that should offer Google sign-in (canonical, www,
+  vercel alias, previews) must be in Supabase's redirect allow-list.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
