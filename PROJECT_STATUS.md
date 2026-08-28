@@ -32,7 +32,7 @@ in one Next.js app backed by Supabase.
 | Repo | `ARahim900/muscatbay`, default branch `main` |
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
-| Auth | Supabase email/password; client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
+| Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
 | Tests / checks | Vitest (156 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-10 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
@@ -433,6 +433,45 @@ stops at last month" problem is structurally closed:
   which is exactly why these months carry the provenance label.
 
 ## 4. Known gaps & data debt
+
+- **Google sign-in ships dark until its provider is enabled in Supabase
+  (2026-08-28).** `/login` and `/signup` now carry a "Continue with Google"
+  button (`components/auth/google-sign-in-button.tsx` →
+  `signInWithGoogle()` in `lib/auth.ts` → Supabase OAuth → the existing PKCE
+  exchange in `/auth/callback`, which gained an `oauth` flow variant with
+  Google-specific copy and an in-place retry). One flow covers sign-in AND
+  first-time sign-up: Google has already verified the address, so new users
+  skip the confirmation-email round-trip, and the DB-side
+  `on_auth_user_created` trigger creates their `profiles` row (default role
+  `user`, Google name/avatar from `raw_user_meta_data`) exactly as for email
+  signups — no schema change needed. The code path is live but INERT until a
+  one-time dashboard setup: (1) Google Cloud Console → create an OAuth 2.0
+  Web client with authorised redirect URI
+  `https://utnlgeuqajmwibqmdmgt.supabase.co/auth/v1/callback`; (2) Supabase →
+  Authentication → Sign In / Providers → Google → enable and paste the client
+  ID + secret; (3) Supabase → Authentication → URL Configuration → confirm
+  `https://muscatbay.work/auth/callback` (plus www/vercel aliases) sits in
+  the redirect allow-list (the email flows already use this URL). Until then
+  the button surfaces Supabase's "provider is not enabled" error, mapped to a
+  friendly "Google sign-in isn't switched on for this app yet" message —
+  nothing breaks, nothing is faked.
+  **Update 2026-08-28 (later):** the owner created the Google OAuth client
+  (project `muscat-bay-410005`, verified remotely: Google serves the sign-in
+  page for it with the Supabase callback) and enabled the provider in
+  Supabase — Google sign-in works on the PR preview. ONE step remains: the
+  Google consent screen is still in **Testing** (only listed test users can
+  sign in) until the owner publishes it, which needs the app's public URLs —
+  home `https://muscatbay.work`, privacy `https://muscatbay.work/privacy`,
+  terms `https://muscatbay.work/terms`. To make those last two genuinely
+  public, `/privacy` and `/terms` were added to the auth provider's
+  `PUBLIC_ROUTES` (they were login-gated — a signed-out visitor, including
+  anyone checking the consent-screen links, bounced to `/login`) and to a new
+  `OPEN_WHEN_AUTHENTICATED` list so signed-in users can read them too
+  instead of being bounced to `/`. The OAuth callback is built from
+  `window.location.origin` (not `NEXT_PUBLIC_SITE_URL`): the PKCE verifier
+  is host-scoped, so the round-trip must stay on the origin that started it
+  — meaning every origin that should offer Google sign-in (canonical, www,
+  vercel alias, previews) must be in Supabase's redirect allow-list.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in

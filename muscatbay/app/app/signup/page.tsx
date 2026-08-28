@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AuthBrandLockup } from "@/components/auth/brand-lockup";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Loader2, Mail, Lock, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
 
 type SignUpStatus =
@@ -318,6 +319,19 @@ export default function SignUpPage() {
                                         or
                                     </span>
                                 </div>
+                            </div>
+
+                            {/* Google OAuth — instant sign-up: Google has already
+                                verified the address, so there is no confirmation
+                                email to click and no return trip to finish here. */}
+                            <div className="w-full space-y-1.5">
+                                <GoogleSignInButton
+                                    label="Sign up with Google"
+                                    onError={setError}
+                                />
+                                <p className="text-xs text-center text-muted-foreground">
+                                    Instant — no verification email to wait for.
+                                </p>
                             </div>
 
                             <Link href="/signup/professional" className="block">

@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
+import { signInWithGoogle } from '@/lib/auth';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AuthBrandLockup } from '@/components/auth/brand-lockup';
@@ -18,6 +19,11 @@ const ERROR_MAP: Array<{ pattern: RegExp; message: string }> = [
     { pattern: /email.*not.confirmed/i, message: 'Your email hasn\'t been confirmed yet. Please check your inbox for a verification link.' },
     { pattern: /invalid.*credentials|invalid.*login/i, message: 'Your login credentials are invalid. Please try signing in again.' },
     { pattern: /rate.limit|too.many/i, message: 'Too many attempts. Please wait a moment and try again.' },
+    // OAuth (Google) failure modes
+    { pattern: /provider.*not.*enabled|unsupported.*provider/i, message: 'Google sign-in isn\'t switched on for this app yet. Please sign in with your email and password, or contact support.' },
+    { pattern: /flow.state|code.verifier/i, message: 'Your sign-in attempt expired or finished in a different browser. Please start again from this device.' },
+    { pattern: /access.denied|consent.*(denied|cancel)/i, message: 'Google sign-in was cancelled before finishing. Please try again.' },
+    { pattern: /error.getting.user.*(email|profile)|external.provider/i, message: 'Google didn\'t share your account details with us. Please try again.' },
 ];
 
 function friendlyError(raw: string): string {
@@ -29,13 +35,17 @@ function friendlyError(raw: string): string {
 }
 
 // ── Detect auth flow from params ────────────────────────────────────────
-type AuthFlow = 'recovery' | 'signup' | 'generic';
+type AuthFlow = 'recovery' | 'signup' | 'oauth' | 'generic';
 
 function detectFlow(
     type: string | null,
     next: string,
-    hashType: string | null
+    hashType: string | null,
+    flowParam: string | null
 ): AuthFlow {
+    // flow=oauth is set by signInWithGoogle()'s redirectTo and survives the
+    // Google → Supabase → app round-trip (GoTrue preserves redirect_to query).
+    if (flowParam === 'oauth') return 'oauth';
     if (type === 'recovery' || hashType === 'recovery' || next.includes('reset-password')) return 'recovery';
     if (type === 'signup' || type === 'email' || hashType === 'signup') return 'signup';
     return 'generic';
@@ -46,6 +56,8 @@ interface FlowConfig {
     description: string;
     secondaryLabel: string;
     secondaryHref: string;
+    /** 'google' makes the secondary button restart Google OAuth in place. */
+    retry?: 'google';
     tips: string[];
 }
 
@@ -70,6 +82,18 @@ const FLOW_CONFIG: Record<AuthFlow, FlowConfig> = {
             'Verification links expire after 24 hours',
             'Check your latest email — earlier links are deactivated',
             'Some corporate email filters may click links automatically',
+        ],
+    },
+    oauth: {
+        title: 'Google sign-in didn\'t work',
+        description: 'We couldn\'t complete your sign-in with Google',
+        secondaryLabel: 'Retry with Google',
+        secondaryHref: '/login',
+        retry: 'google',
+        tips: [
+            'If you cancelled on the Google screen, just try again',
+            'Make sure your browser allows redirects to accounts.google.com',
+            'You can always sign in with your email and password instead',
         ],
     },
     generic: {
@@ -141,7 +165,12 @@ function AuthCallbackContent() {
     const searchParams = useSearchParams();
     const [error, setError] = useState<string | null>(null);
     const [flow, setFlow] = useState<AuthFlow>('generic');
+    const [retrying, setRetrying] = useState(false);
     const primaryButtonRef = useRef<HTMLButtonElement>(null);
+
+    // Present from the first render when signInWithGoogle() started the trip,
+    // so both the spinner copy and the error state are Google-flavoured.
+    const isOAuthFlow = searchParams.get('flow') === 'oauth';
 
     // Auto-focus primary CTA when error state renders (keyboard users can press Enter)
     useEffect(() => {
@@ -166,9 +195,10 @@ function AuthCallbackContent() {
                 ? (rawType as typeof VALID_TYPES[number])
                 : null;
             const next = searchParams.get('next') || '/';
+            const flowParam = searchParams.get('flow');
             const errorParam = searchParams.get('error_description') || searchParams.get('error');
 
-            setFlow(detectFlow(type, next, null));
+            setFlow(detectFlow(type, next, null, flowParam));
 
             if (errorParam) {
                 setError(friendlyError(errorParam));
@@ -226,7 +256,7 @@ function AuthCallbackContent() {
                 const hashType = hashParams.get('type');
                 const hashError = hashParams.get('error_description');
 
-                setFlow(detectFlow(type, next, hashType));
+                setFlow(detectFlow(type, next, hashType, flowParam));
 
                 if (hashError) {
                     setError(friendlyError(hashError));
@@ -270,6 +300,8 @@ function AuthCallbackContent() {
             }
             if (user) {
                 router.push(next);
+            } else if (flowParam === 'oauth') {
+                setError('We didn\'t get a sign-in result back from Google. Please try again.');
             } else {
                 setError('Your verification link may have expired or is no longer valid. Please request a new one.');
             }
@@ -331,10 +363,31 @@ function AuthCallbackContent() {
                                 </Button>
                                 <Button
                                     variant="outline"
-                                    onClick={() => router.push(config.secondaryHref)}
+                                    disabled={retrying}
+                                    onClick={() => {
+                                        if (config.retry === 'google') {
+                                            // Restart OAuth in place — bouncing via /login
+                                            // just to press the same button again is a
+                                            // wasted step. On success the page unloads.
+                                            setRetrying(true);
+                                            signInWithGoogle().catch((err: unknown) => {
+                                                setRetrying(false);
+                                                setError(friendlyError(err instanceof Error ? err.message : 'Google sign-in failed'));
+                                            });
+                                        } else {
+                                            router.push(config.secondaryHref);
+                                        }
+                                    }}
                                     className="w-full h-12 border-mb-primary/30 text-mb-primary dark:text-secondary dark:border-secondary/30 hover:bg-mb-primary/5 dark:hover:bg-secondary/5 font-semibold rounded-xl transition-all duration-200"
                                 >
-                                    {config.secondaryLabel}
+                                    {retrying ? (
+                                        <>
+                                            <Loader2 className="me-2 h-4 w-4 motion-safe:animate-spin" />
+                                            Redirecting to Google…
+                                        </>
+                                    ) : (
+                                        config.secondaryLabel
+                                    )}
                                 </Button>
                             </div>
                         </CardContent>
@@ -365,5 +418,5 @@ function AuthCallbackContent() {
         );
     }
 
-    return <LoadingSpinner message="Verifying your account..." />;
+    return <LoadingSpinner message={isOAuthFlow ? 'Completing sign-in with Google...' : 'Verifying your account...'} />;
 }

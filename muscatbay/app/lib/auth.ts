@@ -142,6 +142,44 @@ export async function signIn(email: string, password: string) {
     return data;
 }
 
+// Sign in — or sign up — with Google (Supabase OAuth, PKCE flow).
+// One flow serves both: Google has already verified the address, so a
+// first-time user gets an account without the confirmation-email
+// round-trip, and an existing user simply signs in. The browser is
+// redirected to Google and returns to /auth/callback?code=..., where the
+// existing exchangeCodeForSession call completes the session. On success
+// this function never resolves for practical purposes — the page unloads.
+export async function signInWithGoogle() {
+    const supabase = getSupabaseClient();
+    if (!supabase) {
+        throw new Error('Supabase not configured');
+    }
+
+    // The callback MUST stay on the origin that starts the flow — never a
+    // canonical NEXT_PUBLIC_SITE_URL. The PKCE code verifier is stored
+    // host-scoped on THIS origin, so a sign-in started on an alias
+    // (www.muscatbay.work, muscatbay.vercel.app) or a preview deployment
+    // that lands back on the canonical host cannot find its verifier and
+    // every exchange fails. Each origin that serves the app needs to be in
+    // Supabase's redirect allow-list.
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            // flow=oauth lets /auth/callback show Google-specific copy
+            // (and a Google retry) instead of email-verification guidance.
+            redirectTo: `${window.location.origin}/auth/callback?flow=oauth`,
+            queryParams: {
+                // Always show Google's account chooser: control-room tablets
+                // are shared devices, and silently reusing the last Google
+                // session would sign the wrong operator in.
+                prompt: 'select_account',
+            },
+        },
+    });
+
+    if (error) throw error;
+}
+
 // Sign out
 export async function signOut() {
     const supabase = getSupabaseClient();
