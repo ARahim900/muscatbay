@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
+import { safeNext } from '@/lib/validation';
 import { signInWithGoogle } from '@/lib/auth';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -248,7 +249,9 @@ function AuthCallbackContent() {
             const type = rawType && VALID_TYPES.includes(rawType as typeof VALID_TYPES[number])
                 ? (rawType as typeof VALID_TYPES[number])
                 : null;
-            const next = searchParams.get('next') || '/';
+            // Sanitised once, here — every router.push(next) below
+            // and the /auth/reset-password branch all read this.
+            const next = safeNext(searchParams.get('next'));
             const flowParam = searchParams.get('flow');
             const errorParam = searchParams.get('error_description') || searchParams.get('error');
 

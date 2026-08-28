@@ -413,3 +413,31 @@ export function getSafeErrorMessage(error: unknown, context: 'login' | 'signup' 
 
     return messages[context] || 'An error occurred. Please try again.';
 }
+
+/**
+ * Reduce a `?next=` query value to an internal path, or `/`.
+ *
+ * `next` is attacker-controlled: anyone can send a user
+ * `/auth/callback?next=…`. It is then handed to `router.push()`,
+ * which follows an absolute URL straight off this origin — so
+ * without this an attacker gets an open redirect out of the app's
+ * own sign-in, landing the user on a lookalike at the moment they
+ * have just authenticated. A `javascript:` value is the same hole
+ * pointed at this origin.
+ *
+ * Only a plain absolute path is allowed through. Rejected:
+ *   - `https://evil.com`, `javascript:…`  — any scheme
+ *   - `//evil.com`                        — protocol-relative
+ *   - `evil`, `../x`                      — anything not rooted
+ *
+ * A rejected value is not an error worth a screen: sign-in
+ * succeeded, so land on the dashboard rather than stranding
+ * the user on a failure card over a destination they never chose.
+ */
+export function safeNext(raw: string | null): string {
+    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
+    // `\` is treated as `/` by some parsers, so `/\evil.com` can
+    // read as protocol-relative once normalised.
+    if (raw.startsWith('/\\')) return '/';
+    return raw;
+}
