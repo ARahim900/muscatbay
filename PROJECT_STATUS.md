@@ -506,6 +506,22 @@ stops at last month" problem is structurally closed:
   dependency bump that changes any of this fails there instead of
   silently breaking sign-in in production again.
 
+- **`?next=` on /auth/callback was an open redirect, now closed
+  (2026-08-28).** The post-auth destination was read straight from the
+  query string and handed to `router.push()`, so
+  `/auth/callback?next=https://evil.com` bounced a user off this origin
+  at the moment they had just authenticated — a phishing hand-off out
+  of the app's own sign-in, and the same hole pointed inward with a
+  `javascript:` value. Pre-existing, found by a review bot on #71.
+  `safeNext()` in `lib/validation.ts` now reduces the value to an
+  internal path or `/`, rejecting any scheme, protocol-relative `//`
+  or `/\`, and anything not rooted; `/auth/callback` sanitises once at
+  the single point it reads the param, so all five `router.push(next)`
+  sites are covered. A rejected value is not an error screen — sign-in
+  did succeed, so it lands on the dashboard rather than stranding the
+  user on a failure card over a destination they never chose. Tests:
+  `__tests__/lib/auth-next-redirect.test.ts`.
+
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
   `components/water/monthly/water-monthly-dashboard.tsx` render raw `<table>`
