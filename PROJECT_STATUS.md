@@ -472,6 +472,39 @@ stops at last month" problem is structurally closed:
   is host-scoped, so the round-trip must stay on the origin that started it
   — meaning every origin that should offer Google sign-in (canonical, www,
   vercel alias, previews) must be in Supabase's redirect allow-list.
+  **Update 2026-08-28 (later still): the double-redemption bug is fixed.**
+  With the provider live and the host canonicalised, sign-in still ended on
+  "Google sign-in didn't work" every time — and the session had in fact
+  been created. Two things redeemed the single-use PKCE code: GoTrue does
+  it itself from its own constructor (`detectSessionInUrl` is on, and the
+  browser client is built during the `/auth/callback` page load, while the
+  code is still in the URL), saving the session and DELETING the code
+  verifier; `/auth/callback`'s own `exchangeCodeForSession()` awaits that
+  same initialisation, so it always ran second, found no verifier, and
+  failed with "PKCE code verifier not found in storage" → the OAuth error
+  card. The flag **cannot** be turned off from app code: `@supabase/ssr`'s
+  `createBrowserClient` spreads `options.auth` first and then hardcodes
+  `detectSessionInUrl`, so passing it is silently discarded. So
+  on a failed PKCE exchange `/auth/callback` now forgives it **only
+  when both** are true: the error says the verifier was already spent
+  (`/code.verifier|flow.state/i`) **and** `getSession()` returns a live
+  session. Together those mean something else completed that exact
+  exchange. Any other failure still reports. Deliberately narrow — an
+  earlier cut forgave *any* failed exchange whenever a session existed
+  and also covered the `token_hash` email flows, which would have
+  silently carried a signed-in user on from a genuinely expired link
+  instead of telling them it expired. `detectSessionInUrl` never
+  inspects `token_hash` (only the implicit hash and PKCE `?code=`), so
+  there was no race to tolerate there; that branch reports as before.
+  A `handledRef` guard runs the handler once per mount, so a re-run
+  effect cannot re-spend a single-use credential. Two test layers:
+  `__tests__/pages/auth-callback.test.tsx` covers the page's logic
+  (with the auth client stubbed), and
+  `__tests__/functions/pkce-double-redemption.test.ts` pins the *library*
+  behaviour that logic exists to survive — it drives the real
+  `@supabase/ssr` + `@supabase/auth-js` with only the network mocked, so a
+  dependency bump that changes any of this fails there instead of
+  silently breaking sign-in in production again.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in

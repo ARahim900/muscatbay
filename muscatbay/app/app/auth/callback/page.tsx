@@ -167,6 +167,14 @@ function AuthCallbackContent() {
     const [flow, setFlow] = useState<AuthFlow>('generic');
     const [retrying, setRetrying] = useState(false);
     const primaryButtonRef = useRef<HTMLButtonElement>(null);
+    // Both credentials this page redeems — the PKCE `code` and the
+    // email `token_hash` — are single-use, and a second redemption of
+    // a spent one always fails. React runs an effect again whenever
+    // its deps change (and twice per mount under StrictMode), so run
+    // the handler once per mount: without this the retry raced the
+    // first attempt and could paint a failure over a sign-in that
+    // worked.
+    const handledRef = useRef(false);
 
     // Present from the first render when signInWithGoogle() started the trip,
     // so both the spinner copy and the error state are Google-flavoured.
@@ -180,12 +188,58 @@ function AuthCallbackContent() {
     }, [error]);
 
     useEffect(() => {
+        if (handledRef.current) return;
+        handledRef.current = true;
+
         const handleAuthCallback = async () => {
             const supabase = getSupabaseClient();
             if (!supabase) {
                 setError('Authentication service is not available. Please try again later.');
                 return;
             }
+
+            // ── Why a failed redemption is not a failed sign-in ──
+            //
+            // GoTrue redeems the PKCE `?code=` itself, from its own
+            // constructor: `detectSessionInUrl` is on, and the client
+            // is built during THIS page load, while the code is still
+            // in the URL. That exchange succeeds, saves the session —
+            // and deletes the stored code verifier.
+            //
+            // exchangeCodeForSession() below awaits that same
+            // initialisation (GoTrueClient awaits `initializePromise`
+            // before redeeming), so it always runs second, finds the
+            // verifier gone, and fails with "PKCE code verifier not
+            // found in storage". That is what put every Google sign-in
+            // on the "Google sign-in didn't work" card — over a session
+            // that had in fact just been created.
+            //
+            // The flag cannot be turned off from here: `@supabase/ssr`'s
+            // createBrowserClient spreads `options.auth` FIRST and then
+            // hardcodes `detectSessionInUrl`, so passing it is silently
+            // discarded. Don't spend time trying that again.
+            //
+            // So a failed exchange is forgiven ONLY when both are
+            // true: the error says the verifier was already spent,
+            // AND a session is live. Together those mean something
+            // else completed this very exchange — the sign-in worked.
+            //
+            // Deliberately narrow. Forgiving *any* failed exchange
+            // whenever some session exists would silently carry a
+            // signed-in user on from a genuinely expired link
+            // instead of telling them it expired, and an honest
+            // error is worth more than a smooth redirect.
+            const ALREADY_SPENT = /code.verifier|flow.state/i;
+
+            const spentButSignedIn = async (message: string): Promise<boolean> => {
+                if (!ALREADY_SPENT.test(message)) return false;
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    return !!session;
+                } catch {
+                    return false;
+                }
+            };
 
             const code = searchParams.get('code');
             const tokenHash = searchParams.get('token_hash');
@@ -210,6 +264,11 @@ function AuthCallbackContent() {
                 try {
                     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
                     if (exchangeError) {
+                        if (await spentButSignedIn(exchangeError.message)) {
+                            router.push(next);
+                            router.refresh();
+                            return;
+                        }
                         console.error('PKCE exchange error:', exchangeError.message);
                         setError(friendlyError(exchangeError.message));
                         return;
