@@ -59,7 +59,45 @@ function buildSatelliteCsp(): string {
     ].join('; ')
 }
 
+/**
+ * The single host the app is served from in production.
+ *
+ * This app answers on three domains (muscatbay.work, www.muscatbay.work,
+ * muscatbay.vercel.app), and that broke Google sign-in on the bare apex.
+ * Two host-scoped mechanisms are behind it:
+ *
+ * - Supabase matches OAuth redirect URLs exactly, and its allow-list holds the
+ *   **https www** callback, not the apex one.
+ * - The browser client stores the PKCE code verifier per host, so a sign-in
+ *   must finish on the host that started it.
+ *
+ * The result was two half-working front doors: a session made on one host is
+ * invisible on the other, and a sign-in begun on the apex could never
+ * complete. Canonicalising fixes both at once — one session domain, and every
+ * OAuth round-trip runs on the host Supabase already accepts.
+ *
+ * Preview deployments and localhost are deliberately untouched.
+ *
+ * To move the canonical host later (e.g. once the apex callback is added to
+ * the Supabase allow-list and the bare domain is preferred), swap the two
+ * constants below — nothing else depends on the choice.
+ */
+const CANONICAL_HOST = 'www.muscatbay.work'
+const HOSTS_REDIRECTED_TO_CANONICAL = new Set(['muscatbay.work'])
+
 export async function proxy(request: NextRequest) {
+    // Canonical-host redirect runs first: it must happen before any auth
+    // cookie is refreshed, so a session is never written against the host the
+    // user is about to leave.
+    const requestHost = (request.headers.get('host') ?? '').toLowerCase().split(':')[0]
+    if (HOSTS_REDIRECTED_TO_CANONICAL.has(requestHost)) {
+        const canonicalUrl = request.nextUrl.clone()
+        canonicalUrl.protocol = 'https:'
+        canonicalUrl.host = CANONICAL_HOST
+        canonicalUrl.port = ''
+        return NextResponse.redirect(canonicalUrl, 308)
+    }
+
     const requestHeaders = new Headers(request.headers)
 
     let response = NextResponse.next({
