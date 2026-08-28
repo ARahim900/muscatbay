@@ -434,21 +434,33 @@ export function getSafeErrorMessage(error: unknown, context: 'login' | 'signup' 
  * succeeded, so land on the dashboard rather than stranding
  * the user on a failure card over a destination they never chose.
  */
+/**
+ * Opaque base for resolving `next`. `.invalid` is reserved by
+ * RFC 2606 and can never be a real host, so a value that escapes
+ * to an authority lands on an origin that provably is not ours.
+ */
+const SAFE_NEXT_BASE = 'https://muscatbay.invalid';
+
 export function safeNext(raw: string | null): string {
-    if (!raw) return '/';
+    // Must be rooted. A bare `evil.com` or `../x` is not a
+    // destination this app ever produces, so don't puzzle over it.
+    if (!raw || !raw.startsWith('/')) return '/';
 
-    // Strip tab/CR/LF FIRST, and judge the stripped value. The URL
-    // parser removes them from anywhere in a URL, so the string a
-    // naive prefix check sees is not the one the browser resolves:
-    // `/\n//evil.com` reads as `/…` here but parses as `//evil.com`.
-    // Returning the stripped value keeps the two in agreement.
-    const url = raw.replace(/[\t\r\n]/g, '');
-
-    // Must be a rooted path...
-    if (!url.startsWith('/')) return '/';
-    // ...but not protocol-relative. `\` is treated as `/` by the URL
-    // parser, so `/\evil.com` normalises to an authority too.
-    if (url.startsWith('//') || url.startsWith('/\\')) return '/';
-
-    return url;
+    try {
+        // Resolve with the SAME parser the browser will use, then
+        // require that it stayed here.
+        //
+        // Hand-rolled prefix checks lose this race. The parser
+        // strips tab/CR/LF from anywhere, reads `\` as `/`, and
+        // trims control characters — so `/<tab>\evil.com`
+        // (`?next=/%09%5Cevil.com`) reads as an ordinary rooted
+        // path to a string check and still resolves to
+        // `https://evil.com/`. Delegating to the parser closes
+        // that whole class instead of enumerating its tricks.
+        const resolved = new URL(raw, SAFE_NEXT_BASE);
+        if (resolved.origin !== SAFE_NEXT_BASE) return '/';
+        return resolved.pathname + resolved.search + resolved.hash;
+    } catch {
+        return '/';
+    }
 }
