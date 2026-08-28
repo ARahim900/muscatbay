@@ -920,6 +920,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-28 — fix(auth): serve one canonical host so Google sign-in works on every domain (#70)
 - 2026-08-28 — feat(auth): Google sign-in on login & signup — instant, no verification email (#69)
 - 2026-08-25 — fix(water): remove ZEN bulk from direct connections
 - 2026-08-25 — feat(water): surface ZEN project across dashboards
