@@ -219,12 +219,20 @@ function AuthCallbackContent() {
             // hardcodes `detectSessionInUrl`, so passing it is silently
             // discarded. Don't spend time trying that again.
             //
-            // So this page treats redemption as best-effort and trusts
-            // the session, not the error: whoever spent the credential
-            // (GoTrue's own initialisation, or an earlier mount), a live
-            // session means the sign-in worked, and the honest outcome
-            // is to carry the user on rather than show them a failure.
-            const sessionEstablished = async (): Promise<boolean> => {
+            // So a failed exchange is forgiven ONLY when both are
+            // true: the error says the verifier was already spent,
+            // AND a session is live. Together those mean something
+            // else completed this very exchange — the sign-in worked.
+            //
+            // Deliberately narrow. Forgiving *any* failed exchange
+            // whenever some session exists would silently carry a
+            // signed-in user on from a genuinely expired link
+            // instead of telling them it expired, and an honest
+            // error is worth more than a smooth redirect.
+            const ALREADY_SPENT = /code.verifier|flow.state/i;
+
+            const spentButSignedIn = async (message: string): Promise<boolean> => {
+                if (!ALREADY_SPENT.test(message)) return false;
                 try {
                     const { data: { session } } = await supabase.auth.getSession();
                     return !!session;
@@ -256,7 +264,7 @@ function AuthCallbackContent() {
                 try {
                     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
                     if (exchangeError) {
-                        if (await sessionEstablished()) {
+                        if (await spentButSignedIn(exchangeError.message)) {
                             router.push(next);
                             router.refresh();
                             return;
@@ -281,11 +289,6 @@ function AuthCallbackContent() {
                         type,
                     });
                     if (verifyError) {
-                        if (await sessionEstablished()) {
-                            router.push(type === 'recovery' ? '/auth/reset-password' : next);
-                            router.refresh();
-                            return;
-                        }
                         console.error('Token hash verify error:', verifyError.message);
                         setError(friendlyError(verifyError.message));
                         return;

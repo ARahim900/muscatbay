@@ -75,6 +75,20 @@ describe('/auth/callback — Google (PKCE) return', () => {
         expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
 
+    it('does not forgive an unrelated exchange failure', async () => {
+        // Only "the verifier was already spent" is forgiven. Any
+        // other failure is a real one, session or not.
+        exchangeCodeForSession.mockResolvedValue({
+            error: { message: 'Token has expired or is invalid' },
+        });
+        getSession.mockResolvedValue(withSession);
+
+        renderCallback('flow=oauth&code=abc123');
+
+        expect(await screen.findByRole('alert')).toBeInTheDocument();
+        expect(push).not.toHaveBeenCalled();
+    });
+
     it('shows the Google error card when the exchange fails with no session', async () => {
         exchangeCodeForSession.mockResolvedValue({
             error: { message: VERIFIER_MISSING },
@@ -130,14 +144,19 @@ describe('/auth/callback — email token_hash return', () => {
         await waitFor(() => expect(push).toHaveBeenCalledWith('/auth/reset-password'));
     });
 
-    it('continues when the token was already spent but a session exists', async () => {
+    it('still reports an expired link even when a session is live', async () => {
+        // Deliberately NOT forgiven. A signed-in user clicking a
+        // genuinely expired link must be told it expired, not
+        // silently carried on to the dashboard.
         verifyOtp.mockResolvedValue({ error: { message: 'Token has expired or is invalid' } });
         getSession.mockResolvedValue(withSession);
 
         renderCallback('token_hash=hash123&type=recovery');
 
-        await waitFor(() => expect(push).toHaveBeenCalledWith('/auth/reset-password'));
-        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(await screen.findByRole('alert')).toHaveTextContent(
+            /verification link has expired/i,
+        );
+        expect(push).not.toHaveBeenCalled();
     });
 
     it('shows the recovery error card when verification genuinely fails', async () => {
