@@ -42,7 +42,13 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/callback", "/auth/reset-password"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/callback", "/auth/reset-password", "/privacy", "/terms"];
+
+// Public routes that stay reachable while signed in. The legal pages are
+// linked from the Google OAuth consent screen and from every auth page, so
+// bouncing a visitor to /login (signed out) or / (signed in) breaks them;
+// the recovery flow arrives carrying a session and must not be bounced.
+const OPEN_WHEN_AUTHENTICATED = ["/auth/reset-password", "/privacy", "/terms"];
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -143,9 +149,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Handle route protection
     useEffect(() => {
         if (!loading) {
+            const isOpenWhenAuthenticated = OPEN_WHEN_AUTHENTICATED.some((route) => pathname?.startsWith(route));
+
             // Skip route protection in DEV_MODE - user is always authenticated
             if (isDevMode()) {
-                if (isPublicRoute && pathname !== "/auth/reset-password") {
+                if (isPublicRoute && !isOpenWhenAuthenticated) {
                     // In DEV_MODE, redirect away from auth pages to dashboard
                     router.push("/");
                 }
@@ -155,7 +163,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (!user && !isPublicRoute) {
                 // Not authenticated and trying to access protected route
                 router.push("/login");
-            } else if (user && isPublicRoute && pathname !== "/auth/reset-password") {
+            } else if (user && isPublicRoute && !isOpenWhenAuthenticated) {
                 // Authenticated and trying to access auth pages
                 router.push("/");
             }

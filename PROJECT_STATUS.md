@@ -455,6 +455,19 @@ stops at last month" problem is structurally closed:
   the button surfaces Supabase's "provider is not enabled" error, mapped to a
   friendly "Google sign-in isn't switched on for this app yet" message —
   nothing breaks, nothing is faked.
+  **Update 2026-08-28 (later):** the owner created the Google OAuth client
+  (project `muscat-bay-410005`, verified remotely: Google serves the sign-in
+  page for it with the Supabase callback) and enabled the provider in
+  Supabase — Google sign-in works on the PR preview. ONE step remains: the
+  Google consent screen is still in **Testing** (only listed test users can
+  sign in) until the owner publishes it, which needs the app's public URLs —
+  home `https://muscatbay.work`, privacy `https://muscatbay.work/privacy`,
+  terms `https://muscatbay.work/terms`. To make those last two genuinely
+  public, `/privacy` and `/terms` were added to the auth provider's
+  `PUBLIC_ROUTES` (they were login-gated — a signed-out visitor, including
+  anyone checking the consent-screen links, bounced to `/login`) and to a new
+  `OPEN_WHEN_AUTHENTICATED` list so signed-in users can read them too
+  instead of being bounced to `/`.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
