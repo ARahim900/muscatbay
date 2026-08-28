@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthBrandLockup } from "@/components/auth/brand-lockup";
+import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
@@ -357,6 +358,31 @@ function LoginContent() {
                                     <span>Sign in to Dashboard</span>
                                 )}
                             </Button>
+
+                            {/* Divider — password sign-in vs Google OAuth */}
+                            <div className="relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-border" />
+                                </div>
+                                <div className="relative flex justify-center text-xs uppercase">
+                                    <span className="bg-card px-3 text-muted-foreground">
+                                        or
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* Google OAuth — one button covers sign-in AND first-time
+                                sign-up: Google has already verified the address, so new
+                                users skip the confirmation-email round-trip entirely. */}
+                            <div className="space-y-2">
+                                <GoogleSignInButton
+                                    onError={setError}
+                                    className="h-12 rounded-xl border-2 border-border hover:border-muted-foreground/40 transition-design"
+                                />
+                                <p className="text-xs text-center text-muted-foreground">
+                                    New here? Google creates your account instantly — no verification email needed.
+                                </p>
+                            </div>
 
                             {/* Divider */}
                             <div className="relative">
