@@ -969,6 +969,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-29 — fix(auth): close the open redirect on /auth/callback's ?next= (#72)
 - 2026-08-29 — fix(auth): stop the double PKCE redemption that failed every Google sign-in (#71)
 - 2026-08-28 — fix(auth): serve one canonical host so Google sign-in works on every domain (#70)
 - 2026-08-28 — feat(auth): Google sign-in on login & signup — instant, no verification email (#69)
