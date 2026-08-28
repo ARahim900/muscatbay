@@ -167,6 +167,14 @@ function AuthCallbackContent() {
     const [flow, setFlow] = useState<AuthFlow>('generic');
     const [retrying, setRetrying] = useState(false);
     const primaryButtonRef = useRef<HTMLButtonElement>(null);
+    // Both credentials this page redeems — the PKCE `code` and the
+    // email `token_hash` — are single-use, and a second redemption of
+    // a spent one always fails. React runs an effect again whenever
+    // its deps change (and twice per mount under StrictMode), so run
+    // the handler once per mount: without this the retry raced the
+    // first attempt and could paint a failure over a sign-in that
+    // worked.
+    const handledRef = useRef(false);
 
     // Present from the first render when signInWithGoogle() started the trip,
     // so both the spinner copy and the error state are Google-flavoured.
@@ -180,12 +188,50 @@ function AuthCallbackContent() {
     }, [error]);
 
     useEffect(() => {
+        if (handledRef.current) return;
+        handledRef.current = true;
+
         const handleAuthCallback = async () => {
             const supabase = getSupabaseClient();
             if (!supabase) {
                 setError('Authentication service is not available. Please try again later.');
                 return;
             }
+
+            // ── Why a failed redemption is not a failed sign-in ──
+            //
+            // GoTrue redeems the PKCE `?code=` itself, from its own
+            // constructor: `detectSessionInUrl` is on, and the client
+            // is built during THIS page load, while the code is still
+            // in the URL. That exchange succeeds, saves the session —
+            // and deletes the stored code verifier.
+            //
+            // exchangeCodeForSession() below awaits that same
+            // initialisation (GoTrueClient awaits `initializePromise`
+            // before redeeming), so it always runs second, finds the
+            // verifier gone, and fails with "PKCE code verifier not
+            // found in storage". That is what put every Google sign-in
+            // on the "Google sign-in didn't work" card — over a session
+            // that had in fact just been created.
+            //
+            // The flag cannot be turned off from here: `@supabase/ssr`'s
+            // createBrowserClient spreads `options.auth` FIRST and then
+            // hardcodes `detectSessionInUrl`, so passing it is silently
+            // discarded. Don't spend time trying that again.
+            //
+            // So this page treats redemption as best-effort and trusts
+            // the session, not the error: whoever spent the credential
+            // (GoTrue's own initialisation, or an earlier mount), a live
+            // session means the sign-in worked, and the honest outcome
+            // is to carry the user on rather than show them a failure.
+            const sessionEstablished = async (): Promise<boolean> => {
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    return !!session;
+                } catch {
+                    return false;
+                }
+            };
 
             const code = searchParams.get('code');
             const tokenHash = searchParams.get('token_hash');
@@ -210,6 +256,11 @@ function AuthCallbackContent() {
                 try {
                     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
                     if (exchangeError) {
+                        if (await sessionEstablished()) {
+                            router.push(next);
+                            router.refresh();
+                            return;
+                        }
                         console.error('PKCE exchange error:', exchangeError.message);
                         setError(friendlyError(exchangeError.message));
                         return;
@@ -230,6 +281,11 @@ function AuthCallbackContent() {
                         type,
                     });
                     if (verifyError) {
+                        if (await sessionEstablished()) {
+                            router.push(type === 'recovery' ? '/auth/reset-password' : next);
+                            router.refresh();
+                            return;
+                        }
                         console.error('Token hash verify error:', verifyError.message);
                         setError(friendlyError(verifyError.message));
                         return;

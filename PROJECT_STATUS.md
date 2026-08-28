@@ -472,6 +472,26 @@ stops at last month" problem is structurally closed:
   is host-scoped, so the round-trip must stay on the origin that started it
   — meaning every origin that should offer Google sign-in (canonical, www,
   vercel alias, previews) must be in Supabase's redirect allow-list.
+  **Update 2026-08-28 (later still): the double-redemption bug is fixed.**
+  With the provider live and the host canonicalised, sign-in still ended on
+  "Google sign-in didn't work" every time — and the session had in fact
+  been created. Two things redeemed the single-use PKCE code: GoTrue does
+  it itself from its own constructor (`detectSessionInUrl` is on, and the
+  browser client is built during the `/auth/callback` page load, while the
+  code is still in the URL), saving the session and DELETING the code
+  verifier; `/auth/callback`'s own `exchangeCodeForSession()` awaits that
+  same initialisation, so it always ran second, found no verifier, and
+  failed with "PKCE code verifier not found in storage" → the OAuth error
+  card. The flag **cannot** be turned off from app code: `@supabase/ssr`'s
+  `createBrowserClient` spreads `options.auth` first and then hardcodes
+  `detectSessionInUrl`, so passing it is silently discarded. So
+  `/auth/callback` now treats redemption as best-effort and trusts the
+  session rather than the error — on a failed exchange it checks
+  `getSession()` and, if one is live, routes to `next` instead of showing a
+  failure. The same tolerance covers the `token_hash` email flows, and a
+  `handledRef` guard keeps both single-use credentials from being redeemed
+  twice by a re-run effect. Regression tests:
+  `__tests__/pages/auth-callback.test.tsx`.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
