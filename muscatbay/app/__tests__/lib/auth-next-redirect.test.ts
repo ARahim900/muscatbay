@@ -16,6 +16,12 @@ describe('safeNext', () => {
         expect(safeNext('/assets#row-42')).toBe('/assets#row-42');
     });
 
+    it('strips control characters from a path it keeps', () => {
+        // Never hand router.push() a string the URL parser would
+        // read differently from what was validated.
+        expect(safeNext('/wa\nter')).toBe('/water');
+    });
+
     it('falls back to the dashboard when absent or empty', () => {
         expect(safeNext(null)).toBe('/');
         expect(safeNext('')).toBe('/');
@@ -31,6 +37,12 @@ describe('safeNext', () => {
         ['data scheme', 'data:text/html,<script>alert(1)</script>'],
         ['bare host', 'evil.com'],
         ['relative escape', '../../evil'],
+        // The URL parser strips tab/CR/LF from anywhere in a
+        // URL, so these parse as protocol-relative even though
+        // a naive prefix check reads them as rooted paths.
+        ['newline-split protocol-relative', '/\n//evil.com'],
+        ['tab-split protocol-relative', '/\t/\\evil.com'],
+        ['CR-split scheme', 'java\rscript:alert(1)'],
     ])('refuses %s', (_label, hostile) => {        expect(safeNext(hostile)).toBe('/');
     });
 });

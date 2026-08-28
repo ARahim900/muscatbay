@@ -435,9 +435,20 @@ export function getSafeErrorMessage(error: unknown, context: 'login' | 'signup' 
  * the user on a failure card over a destination they never chose.
  */
 export function safeNext(raw: string | null): string {
-    if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
-    // `\` is treated as `/` by some parsers, so `/\evil.com` can
-    // read as protocol-relative once normalised.
-    if (raw.startsWith('/\\')) return '/';
-    return raw;
+    if (!raw) return '/';
+
+    // Strip tab/CR/LF FIRST, and judge the stripped value. The URL
+    // parser removes them from anywhere in a URL, so the string a
+    // naive prefix check sees is not the one the browser resolves:
+    // `/\n//evil.com` reads as `/…` here but parses as `//evil.com`.
+    // Returning the stripped value keeps the two in agreement.
+    const url = raw.replace(/[\t\r\n]/g, '');
+
+    // Must be a rooted path...
+    if (!url.startsWith('/')) return '/';
+    // ...but not protocol-relative. `\` is treated as `/` by the URL
+    // parser, so `/\evil.com` normalises to an authority too.
+    if (url.startsWith('//') || url.startsWith('/\\')) return '/';
+
+    return url;
 }
