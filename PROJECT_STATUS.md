@@ -485,12 +485,19 @@ stops at last month" problem is structurally closed:
   card. The flag **cannot** be turned off from app code: `@supabase/ssr`'s
   `createBrowserClient` spreads `options.auth` first and then hardcodes
   `detectSessionInUrl`, so passing it is silently discarded. So
-  `/auth/callback` now treats redemption as best-effort and trusts the
-  session rather than the error — on a failed exchange it checks
-  `getSession()` and, if one is live, routes to `next` instead of showing a
-  failure. The same tolerance covers the `token_hash` email flows, and a
-  `handledRef` guard keeps both single-use credentials from being redeemed
-  twice by a re-run effect. Two test layers:
+  on a failed PKCE exchange `/auth/callback` now forgives it **only
+  when both** are true: the error says the verifier was already spent
+  (`/code.verifier|flow.state/i`) **and** `getSession()` returns a live
+  session. Together those mean something else completed that exact
+  exchange. Any other failure still reports. Deliberately narrow — an
+  earlier cut forgave *any* failed exchange whenever a session existed
+  and also covered the `token_hash` email flows, which would have
+  silently carried a signed-in user on from a genuinely expired link
+  instead of telling them it expired. `detectSessionInUrl` never
+  inspects `token_hash` (only the implicit hash and PKCE `?code=`), so
+  there was no race to tolerate there; that branch reports as before.
+  A `handledRef` guard runs the handler once per mount, so a re-run
+  effect cannot re-spend a single-use credential. Two test layers:
   `__tests__/pages/auth-callback.test.tsx` covers the page's logic
   (with the auth client stubbed), and
   `__tests__/functions/pkce-double-redemption.test.ts` pins the *library*
