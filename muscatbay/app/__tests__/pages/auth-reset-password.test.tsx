@@ -24,6 +24,19 @@ vi.mock('@/lib/auth', () => ({ updatePassword: vi.fn() }));
 const noSession = { data: { session: null } };
 const withSession = { data: { session: { user: { id: 'u1' } } } };
 
+type RecoverySession = typeof withSession.data.session;
+
+/**
+ * Stand in for Supabase raising PASSWORD_RECOVERY on subscribe, handing the
+ * callback the session it just established (or none, to pin that case).
+ */
+function fireRecovery(session: RecoverySession | null) {
+    return (cb: (event: string, session: RecoverySession | null) => void) => {
+        cb('PASSWORD_RECOVERY', session);
+        return { data: { subscription: { unsubscribe: vi.fn() } } };
+    };
+}
+
 /** The heading shown when the page refuses to open the form. */
 const REFUSED = /this reset link is missing or expired/i;
 /** The form's own heading, shown only once the gate is satisfied. */
@@ -91,14 +104,23 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
     // was set before the page loaded.
     it('opens the form when PASSWORD_RECOVERY fires on this page', async () => {
         getSession.mockResolvedValue(noSession);
-        onAuthStateChange.mockImplementation((cb: (event: string) => void) => {
-            cb('PASSWORD_RECOVERY');
-            return { data: { subscription: { unsubscribe: vi.fn() } } };
-        });
+        onAuthStateChange.mockImplementation(fireRecovery(withSession.data.session));
 
         render(<ResetPasswordPage />);
 
         expect(await screen.findByText(FORM)).toBeInTheDocument();
+    });
+
+    // Supabase hands the callback the session it just established. Without
+    // one there is nothing to update, so the event name alone is not enough.
+    it('refuses a PASSWORD_RECOVERY event that carries no session', async () => {
+        getSession.mockResolvedValue(noSession);
+        onAuthStateChange.mockImplementation(fireRecovery(null));
+
+        render(<ResetPasswordPage />);
+
+        expect(await screen.findByText(REFUSED)).toBeInTheDocument();
+        expect(screen.queryByText(FORM)).not.toBeInTheDocument();
     });
 
     // The event and the getSession() check race. The event settling first
@@ -110,10 +132,7 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
                 release = resolve;
             }),
         );
-        onAuthStateChange.mockImplementation((cb: (event: string) => void) => {
-            cb('PASSWORD_RECOVERY');
-            return { data: { subscription: { unsubscribe: vi.fn() } } };
-        });
+        onAuthStateChange.mockImplementation(fireRecovery(withSession.data.session));
 
         render(<ResetPasswordPage />);
         expect(await screen.findByText(FORM)).toBeInTheDocument();

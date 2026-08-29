@@ -66,8 +66,13 @@ export default function ResetPasswordPage() {
         // mounted (a link pointed straight here, or Supabase's own
         // detectSessionInUrl processing a recovery hash), that event is
         // first-hand evidence and is recorded as such.
-        const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-            if (event !== "PASSWORD_RECOVERY") return;
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+            // Supabase hands this callback the session it just established.
+            // Require it rather than trusting the event name alone: the
+            // check below demands a session too, so taking the event's word
+            // for one would be the single branch that opens the form on an
+            // assumption instead of on evidence.
+            if (event !== "PASSWORD_RECOVERY" || !session) return;
             markRecoveryHandoff();
             if (active) setGate({ status: "allowed" });
         });
