@@ -160,6 +160,21 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
         expect(screen.queryByText(REFUSED)).not.toBeInTheDocument();
     });
 
+    // A failed session lookup is not an expired link. Saying it was would
+    // be a plausible wrong answer over a real fault.
+    it('reports a session-check failure as its own fault, not an expired link', async () => {
+        getSession.mockResolvedValue({
+            data: { session: null },
+            error: { message: 'network unreachable' },
+        });
+
+        render(<ResetPasswordPage />);
+
+        expect(await screen.findByText(/could not check your reset link/i)).toBeInTheDocument();
+        expect(screen.queryByText(REFUSED)).not.toBeInTheDocument();
+        expect(screen.queryByText(FORM)).not.toBeInTheDocument();
+    });
+
     it('says so honestly when Supabase is not configured', async () => {
         supabaseClient = null;
 

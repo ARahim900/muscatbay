@@ -25,7 +25,7 @@ import {
 type Gate =
     | { status: "checking" }
     | { status: "allowed" }
-    | { status: "denied"; reason: "unconfigured" | "no-recovery" };
+    | { status: "denied"; reason: "unconfigured" | "no-recovery" | "session-error" };
 
 export default function ResetPasswordPage() {
     const router = useRouter();
@@ -79,8 +79,20 @@ export default function ResetPasswordPage() {
         });
 
         void (async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
             if (!active) return;
+            if (sessionError) {
+                // A failed lookup is not the same as "no reset link", and
+                // saying the latter would be a plausible wrong answer over a
+                // real fault. Report it as its own state.
+                console.error("Reset-password session check failed:", sessionError.message);
+                setGate((current) =>
+                    current.status === "allowed"
+                        ? current
+                        : { status: "denied", reason: "session-error" },
+                );
+                return;
+            }
             // The marker must name THIS user. One tab that completed a
             // recovery must not keep vouching for whoever signs in next —
             // a shared control-room tablet is exactly where that happens.
@@ -174,7 +186,24 @@ export default function ResetPasswordPage() {
     // bouncing to the dashboard — a silent redirect would leave the user
     // guessing whether their reset worked.
     if (gate.status === "denied") {
-        const unconfigured = gate.reason === "unconfigured";
+        const DENIALS = {
+            unconfigured: {
+                heading: "Password reset unavailable",
+                detail: "The app cannot reach its authentication service, so passwords cannot be changed right now. Please contact your administrator.",
+                offersNewLink: false,
+            },
+            "session-error": {
+                heading: "Could not check your reset link",
+                detail: "Reading your sign-in state failed, so this page cannot tell whether your reset link is valid. This is a fault on our side, not an expired link — please try again, and request a new link if it keeps happening.",
+                offersNewLink: true,
+            },
+            "no-recovery": {
+                heading: "This reset link is missing or expired",
+                detail: "Open the most recent link from your password-reset email — this page can only set a new password straight after that link is followed. If the link has expired, request a new one.",
+                offersNewLink: true,
+            },
+        } as const;
+        const denial = DENIALS[gate.reason];
         return (
             <div className="min-h-screen flex items-center justify-center bg-muted p-4">
                 <div
@@ -184,17 +213,11 @@ export default function ResetPasswordPage() {
                     <div className="flex items-center gap-2 mb-2">
                         <AlertCircle aria-hidden="true" className="h-5 w-5 text-mb-danger-text" />
                         <h2 className="text-xl font-bold text-destructive">
-                            {unconfigured
-                                ? "Password reset unavailable"
-                                : "This reset link is missing or expired"}
+                            {denial.heading}
                         </h2>
                     </div>
-                    <p className="text-muted-foreground mb-6">
-                        {unconfigured
-                            ? "The app cannot reach its authentication service, so passwords cannot be changed right now. Please contact your administrator."
-                            : "Open the most recent link from your password-reset email — this page can only set a new password straight after that link is followed. If the link has expired, request a new one."}
-                    </p>
-                    {!unconfigured && (
+                    <p className="text-muted-foreground mb-6">{denial.detail}</p>
+                    {denial.offersNewLink && (
                         <Button
                             onClick={() => router.push("/forgot-password")}
                             className="w-full"

@@ -571,7 +571,14 @@ stops at last month" problem is structurally closed:
   same accidental-access hole on the shared tablets this app runs on. It
   now carries the user id it was minted for, and the reset page requires
   that to match the session in front of it.
-  Tests: `__tests__/pages/auth-reset-password.test.tsx` (10 cases) and the
+  A third review finding: `getSession()`'s error was ignored, so a failed
+  session lookup was reported as "reset link missing or expired" — a
+  plausible wrong answer over a real fault, against non-negotiable #1. It
+  now has its own denial state. A fourth (wrap the denial panel in
+  `SectionBoundary`) was declined: that boundary is for sections rendering
+  live data, this panel is static markup, no auth page uses it, and
+  `app/error.tsx` is already the route-level net.
+  Tests: `__tests__/pages/auth-reset-password.test.tsx` (11 cases) and the
   handoff block in `__tests__/pages/auth-callback.test.tsx` (4 cases).
   Both regressions are pinned by reverting: 2 cases fail against the old
   any-session gate, and the PKCE case fails against the missing handoff.
