@@ -72,15 +72,19 @@ export default function ResetPasswordPage() {
             // check below demands a session too, so taking the event's word
             // for one would be the single branch that opens the form on an
             // assumption instead of on evidence.
-            if (event !== "PASSWORD_RECOVERY" || !session) return;
-            markRecoveryHandoff();
+            const userId = session?.user?.id;
+            if (event !== "PASSWORD_RECOVERY" || !userId) return;
+            markRecoveryHandoff(userId);
             if (active) setGate({ status: "allowed" });
         });
 
         void (async () => {
             const { data: { session } } = await supabase.auth.getSession();
             if (!active) return;
-            const entitled = Boolean(session) && hasRecoveryHandoff();
+            // The marker must name THIS user. One tab that completed a
+            // recovery must not keep vouching for whoever signs in next —
+            // a shared control-room tablet is exactly where that happens.
+            const entitled = hasRecoveryHandoff(session?.user?.id);
             // Never downgrade a decision the event above already made: these
             // two run concurrently and the await can settle second.
             setGate((current) =>

@@ -559,8 +559,22 @@ stops at last month" problem is structurally closed:
   the console, so no client-side gate closes that. Closing it properly
   needs server-side reauthentication (Supabase's `secure_password_change`),
   which is a dashboard/API setting, not something this page can enforce.
-  Tests: `__tests__/pages/auth-reset-password.test.tsx` (8 cases; 2 fail
-  against the old any-session gate, verified by reverting it).
+  **Two defects found by CodeRabbit on the PR and fixed there.** (1) The
+  handoff was wired into the `token_hash` and implicit-hash branches but
+  NOT the PKCE `?code=` branch — and a recovery email can arrive as PKCE,
+  landing on `/auth/callback` with `next=/auth/reset-password` (which
+  `detectFlow` already classifies as recovery). That path set no marker,
+  so a genuine reset link was refused: the exact breakage this design
+  existed to avoid. All three redemption paths now hand off. (2) The
+  marker was not bound to an identity, so on one tab it outlived an
+  account switch and vouched for whoever signed in next — narrow, but the
+  same accidental-access hole on the shared tablets this app runs on. It
+  now carries the user id it was minted for, and the reset page requires
+  that to match the session in front of it.
+  Tests: `__tests__/pages/auth-reset-password.test.tsx` (10 cases) and the
+  handoff block in `__tests__/pages/auth-callback.test.tsx` (4 cases).
+  Both regressions are pinned by reverting: 2 cases fail against the old
+  any-session gate, and the PKCE case fails against the missing handoff.
 
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in

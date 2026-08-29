@@ -3,6 +3,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import ResetPasswordPage from '@/app/auth/reset-password/page';
 import { markRecoveryHandoff } from '@/lib/auth-recovery';
 
+const USER = 'u1';
+const OTHER_USER = 'u2';
+
 const push = vi.fn();
 
 vi.mock('next/navigation', () => ({
@@ -22,7 +25,7 @@ vi.mock('@/lib/supabase', () => ({
 vi.mock('@/lib/auth', () => ({ updatePassword: vi.fn() }));
 
 const noSession = { data: { session: null } };
-const withSession = { data: { session: { user: { id: 'u1' } } } };
+const withSession = { data: { session: { user: { id: USER } } } };
 
 type RecoverySession = typeof withSession.data.session;
 
@@ -69,7 +72,7 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
     });
 
     it('opens the form for a session that followed a recovery link', async () => {
-        markRecoveryHandoff();
+        markRecoveryHandoff(USER);
         getSession.mockResolvedValue(withSession);
 
         render(<ResetPasswordPage />);
@@ -90,7 +93,7 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
     // A stale marker is not a substitute for being signed in: without a
     // session there is nothing to call updateUser against.
     it('refuses a recovery marker with no session behind it', async () => {
-        markRecoveryHandoff();
+        markRecoveryHandoff(USER);
         getSession.mockResolvedValue(noSession);
 
         render(<ResetPasswordPage />);
@@ -116,6 +119,19 @@ describe('/auth/reset-password — gates on a recovery link, not any session', (
     it('refuses a PASSWORD_RECOVERY event that carries no session', async () => {
         getSession.mockResolvedValue(noSession);
         onAuthStateChange.mockImplementation(fireRecovery(null));
+
+        render(<ResetPasswordPage />);
+
+        expect(await screen.findByText(REFUSED)).toBeInTheDocument();
+        expect(screen.queryByText(FORM)).not.toBeInTheDocument();
+    });
+
+    // A marker left by one account must not vouch for the next person to
+    // sign in on the same tab — a shared control-room tablet is exactly
+    // where an account switch happens.
+    it('refuses a marker minted for a different user', async () => {
+        markRecoveryHandoff(OTHER_USER);
+        getSession.mockResolvedValue(withSession);
 
         render(<ResetPasswordPage />);
 

@@ -256,19 +256,35 @@ function AuthCallbackContent() {
             const flowParam = searchParams.get('flow');
             const errorParam = searchParams.get('error_description') || searchParams.get('error');
 
-            setFlow(detectFlow(type, next, null, flowParam));
+            const detectedFlow = detectFlow(type, next, null, flowParam);
+            setFlow(detectedFlow);
 
             if (errorParam) {
                 setError(friendlyError(errorParam));
                 return;
             }
 
+            // A recovery link redeemed here is the ONLY first-hand evidence
+            // that /auth/reset-password gets — it is redeemed on this page,
+            // then navigated away from, so PASSWORD_RECOVERY has already
+            // fired by the time that page mounts. Record it against the user
+            // it belongs to, so a shared tab cannot vouch for the next
+            // person to sign in on it.
+            const handOffRecovery = (userId: string | undefined) => {
+                if (detectedFlow === 'recovery' && userId) markRecoveryHandoff(userId);
+            };
+
             // ── Flow 1: PKCE code exchange (?code=...) ──
             if (code) {
                 try {
-                    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+                    const { data: exchangeData, error: exchangeError } =
+                        await supabase.auth.exchangeCodeForSession(code);
                     if (exchangeError) {
                         if (await spentButSignedIn(exchangeError.message)) {
+                            // The session exists, so this exchange did complete —
+                            // somewhere. Read the user back to hand off against.
+                            const { data: { session } } = await supabase.auth.getSession();
+                            handOffRecovery(session?.user?.id);
                             router.push(next);
                             router.refresh();
                             return;
@@ -277,6 +293,10 @@ function AuthCallbackContent() {
                         setError(friendlyError(exchangeError.message));
                         return;
                     }
+                    // A recovery email can arrive as PKCE (?code=) rather than
+                    // ?token_hash=, landing here with next=/auth/reset-password.
+                    // Without this the reset page would refuse a genuine link.
+                    handOffRecovery(exchangeData?.session?.user?.id);
                     router.push(next);
                     router.refresh();
                     return;
@@ -288,7 +308,7 @@ function AuthCallbackContent() {
             // ── Flow 2: Token hash verification (?token_hash=...&type=...) ──
             if (tokenHash && type) {
                 try {
-                    const { error: verifyError } = await supabase.auth.verifyOtp({
+                    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
                         token_hash: tokenHash,
                         type,
                     });
@@ -300,7 +320,9 @@ function AuthCallbackContent() {
                     if (type === 'recovery') {
                         // This is the only point that knows a recovery token
                         // was just redeemed; /auth/reset-password gates on it.
-                        markRecoveryHandoff();
+                        if (verifyData?.session?.user?.id) {
+                            markRecoveryHandoff(verifyData.session.user.id);
+                        }
                         router.push('/auth/reset-password');
                     } else {
                         router.push(next);
@@ -331,7 +353,7 @@ function AuthCallbackContent() {
 
                 if (accessToken && refreshToken) {
                     try {
-                        const { error: sessionError } = await supabase.auth.setSession({
+                        const { data: hashData, error: sessionError } = await supabase.auth.setSession({
                             access_token: accessToken,
                             refresh_token: refreshToken,
                         });
@@ -346,7 +368,9 @@ function AuthCallbackContent() {
 
                         if (hashType === 'recovery') {
                             // Same handoff as the token_hash flow above.
-                            markRecoveryHandoff();
+                            if (hashData?.session?.user?.id) {
+                                markRecoveryHandoff(hashData.session.user.id);
+                            }
                             router.push('/auth/reset-password');
                         } else {
                             router.push(next);
