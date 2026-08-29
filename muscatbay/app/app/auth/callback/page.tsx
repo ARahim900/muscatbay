@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { getSupabaseClient } from '@/lib/supabase';
 import { safeNext } from '@/lib/validation';
+import { markRecoveryHandoff } from '@/lib/auth-recovery';
 import { signInWithGoogle } from '@/lib/auth';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -297,6 +298,9 @@ function AuthCallbackContent() {
                         return;
                     }
                     if (type === 'recovery') {
+                        // This is the only point that knows a recovery token
+                        // was just redeemed; /auth/reset-password gates on it.
+                        markRecoveryHandoff();
                         router.push('/auth/reset-password');
                     } else {
                         router.push(next);
@@ -341,6 +345,8 @@ function AuthCallbackContent() {
                         window.history.replaceState(null, '', window.location.pathname);
 
                         if (hashType === 'recovery') {
+                            // Same handoff as the token_hash flow above.
+                            markRecoveryHandoff();
                             router.push('/auth/reset-password');
                         } else {
                             router.push(next);
