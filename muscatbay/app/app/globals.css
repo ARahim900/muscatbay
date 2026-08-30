@@ -1107,6 +1107,32 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* ── GSAP compositor hint ──
+   * Put `gsap-lift` on a surface that GSAP animates on transform and/or
+   * opacity — card entrances, staggered stat tiles, the sidebar rail, drawer
+   * panels. It promotes the element to its own compositor layer up front so
+   * the first frame of the tween doesn't pay for the promotion mid-flight.
+   *
+   * Scope it tightly. will-change costs memory for as long as it is set, so
+   * this belongs on the handful of elements a timeline actually drives, never
+   * on a list of 200 rows and never as a default on a shared card. It is the
+   * deliberate counterpart to the note on .card-elevated above, which
+   * REMOVED will-change because box-shadow is paint-only and gains nothing
+   * from a layer — transform and opacity are the two properties that do.
+   *
+   * Under prefers-reduced-motion the tweens are suppressed, so the hint has
+   * nothing to optimise and only costs memory: it is dropped there. Note that
+   * `will-change: auto` is the real reset — `none` is not a valid value. */
+  .gsap-lift {
+    will-change: transform, opacity;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gsap-lift {
+      will-change: auto;
+    }
+  }
+
   /* ── Horizontal scroll affordance ──
    * Fades the right edge so users see content extends beyond the viewport.
    * Pair with overflow-x-auto on a wrapper. Pure CSS mask, theme-independent. */

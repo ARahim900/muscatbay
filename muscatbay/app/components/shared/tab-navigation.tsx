@@ -54,8 +54,18 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
     }, [tabs, onTabChange]);
 
     // Slide the active pill under the selected tab. offsetLeft/offsetTop are
-    // layout-based, so the pill stays correct in RTL and while the strip
-    // scrolls horizontally.
+    // layout-based, so the pill stays correct while the strip scrolls
+    // horizontally, and they are PHYSICAL (left-origin) in both writing
+    // directions — which is why the pill is anchored at `left-0` and moved by
+    // translation. Anchoring it at `start-0` made the offsets fight the
+    // inset-inline-start in RTL, where an over-constrained left/right/width
+    // box resolves in favour of `right`.
+    //
+    // The slide animates TRANSFORMS ONLY (x/y/scaleX/scaleY). It used to tween
+    // left/top/width/height, which forces a layout pass on every frame of
+    // every tab change. The box is morphed by scaling from the pill's own
+    // unscaled layout box, then snapped to the target's real width/height on
+    // completion, so the corner radius is never left stretched at rest.
     useIsomorphicLayoutEffect(() => {
         if (prefersReducedMotion()) return;
 
@@ -64,18 +74,64 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
         const button = tabRefs.current[activeIndex];
         if (!pill || !list || !button) return;
 
+        type PillBox = { left: number; top: number; width: number; height: number };
+        const boxOf = (el: HTMLElement): PillBox => ({
+            left: el.offsetLeft,
+            top: el.offsetTop,
+            width: el.offsetWidth,
+            height: el.offsetHeight,
+        });
+
+        /** Resting state: exact geometry, no residual scale. */
+        const snap = (box: PillBox) => {
+            gsap.set(pill, {
+                width: box.width,
+                height: box.height,
+                x: box.left,
+                y: box.top,
+                scaleX: 1,
+                scaleY: 1,
+                transformOrigin: "0 0",
+            });
+        };
+
+        // Held so an unmount (or a resize landing mid-slide) can stop the
+        // tween instead of leaving it animating a detached node.
+        let slide: gsap.core.Tween | null = null;
+
         const place = (animate: boolean) => {
-            const target = {
-                left: button.offsetLeft,
-                top: button.offsetTop,
-                width: button.offsetWidth,
-                height: button.offsetHeight,
-            };
-            if (animate) {
-                gsap.to(pill, { ...target, duration: 0.45, ease: MOTION.ease.out, overwrite: "auto" });
-            } else {
-                gsap.set(pill, target);
+            const box = boxOf(button);
+            if (!animate) {
+                slide?.kill();
+                slide = null;
+                pill.classList.remove("gsap-lift");
+                snap(box);
+                return;
             }
+            // offsetWidth/Height ignore transforms, so this is the pill's
+            // unscaled layout box — the base every scale factor is relative
+            // to. It cannot change mid-flight (only snap() writes width /
+            // height), so interrupting one slide with the next stays
+            // continuous: GSAP tweens on from the live scale.
+            const baseWidth = pill.offsetWidth || box.width;
+            const baseHeight = pill.offsetHeight || box.height;
+            // Hint held for the length of the slide only — a permanent
+            // will-change on the pill would cost a layer for the whole session.
+            pill.classList.add("gsap-lift");
+            slide = gsap.to(pill, {
+                x: box.left,
+                y: box.top,
+                scaleX: box.width / baseWidth,
+                scaleY: box.height / baseHeight,
+                duration: 0.45,
+                ease: MOTION.ease.out,
+                overwrite: "auto",
+                onComplete: () => {
+                    // Re-measure: the strip may have reflowed during the slide.
+                    snap(boxOf(button));
+                    pill.classList.remove("gsap-lift");
+                },
+            });
         };
 
         place(hasAnimatedRef.current);
@@ -85,9 +141,27 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
             setPillReady(true);
         }
 
-        const resizeObserver = new ResizeObserver(() => place(false));
+        // ResizeObserver fires once immediately on observe(). That first
+        // callback reports the size we have just measured, so honouring it
+        // would kill the slide the line above may have started. Skip it and
+        // react only to real reflows (font swap, container resize, rotation).
+        let sawInitialResize = false;
+        const resizeObserver = new ResizeObserver(() => {
+            if (!sawInitialResize) {
+                sawInitialResize = true;
+                return;
+            }
+            place(false);
+        });
         resizeObserver.observe(list);
-        return () => resizeObserver.disconnect();
+        return () => {
+            resizeObserver.disconnect();
+            // kill() leaves the current transform in place, so re-running the
+            // effect for the next tab picks the slide up from where this one
+            // stopped instead of jumping.
+            slide?.kill();
+            pill.classList.remove("gsap-lift");
+        };
     }, [activeIndex, tabKeys, variant]);
 
     // On narrow screens, keep the selected tab visible after click, keyboard
@@ -147,7 +221,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                     ref={pillRef}
                     aria-hidden="true"
                     className={cn(
-                        "absolute start-0 top-0 z-0 rounded-lg pointer-events-none",
+                        "absolute left-0 top-0 z-0 rounded-lg pointer-events-none",
                         pillClassName,
                         pillReady ? "opacity-100" : "opacity-0"
                     )}

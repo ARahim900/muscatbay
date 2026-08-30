@@ -7,7 +7,7 @@ import { checkRateLimit, recordRateLimitAttempt, resetRateLimit, validateEmail }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
 import { AuthBrandLockup } from "@/components/auth/brand-lockup";
 import { Loader2, Mail, ArrowLeft, CheckCircle2 } from "lucide-react";
 
@@ -61,7 +61,9 @@ export default function ForgotPasswordPage() {
                         <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
                         </div>
-                        <h2 className="text-2xl font-bold mb-2">Check your email</h2>
+                        {/* The page's own <h1> — this success view replaces the
+                            form entirely, so it must carry the top-level heading. */}
+                        <h1 className="text-2xl font-bold mb-2">Check your email</h1>
                         <p className="text-muted-foreground mb-6">
                             We&apos;ve sent a password reset link to <strong>{email}</strong>.
                             Please check your inbox and follow the instructions.
@@ -87,7 +89,13 @@ export default function ForgotPasswordPage() {
 
                 <Card className="card-elevated">
                     <CardHeader className="space-y-1 pb-4">
-                        <CardTitle className="text-2xl font-bold text-center">Forgot password?</CardTitle>
+                        {/* Written as a raw <h1> rather than <CardTitle>: this card title IS
+                            the page heading (WCAG 1.3.1 — the page previously opened at <h2>,
+                            and AuthBrandLockup renders the wordmark as a <p>, not a heading).
+                            CardTitle's `as` prop only offers h2-h4 and card.tsx is shared, so
+                            the classes cn() would have produced are inlined here — identical
+                            rendering, since globals.css styles h1 and h2 the same. */}
+                        <h1 data-slot="card-title" className="text-2xl leading-normal font-bold text-center">Forgot password?</h1>
                         <CardDescription className="text-center">
                             Enter your email and we&apos;ll send you a reset link
                         </CardDescription>

@@ -34,11 +34,14 @@ export function SplashScreen({ exiting = false }: SplashScreenProps) {
           style={{ width: 120, height: 120, border: "1.5px solid color-mix(in srgb, var(--secondary) 40%, transparent)", animationDelay: "0.6s" }}
         />
 
-        {/* Logo — scale pulse while idle */}
+        {/* Logo — scale pulse while idle.
+            alt="" because the mark is decorative here: the wrapper already
+            carries role="status" with an accessible name, and "Muscat Bay" is
+            rendered as real text below. A real alt announces the brand twice. */}
         <div className="mb-pulse relative z-10">
           <Image
             src="/logo.png"
-            alt="Muscat Bay"
+            alt=""
             width={96}
             height={96}
             priority

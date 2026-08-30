@@ -25,13 +25,47 @@ import { calcTrend } from "@/lib/trends";
 // ─── Extracted subcomponents (pure relocation, no behavior changes) ─────────
 import { CHART_COLORS, meterColors } from "@/components/electricity/electricity-shared";
 import { ElectricityLoadingSkeleton } from "@/components/electricity/electricity-loading";
-import { ElectricityOverviewCharts } from "@/components/electricity/electricity-overview-charts";
-import { ElectricityAnalysisView } from "@/components/electricity/electricity-analysis-view";
 import { LoadWatch } from "@/components/electricity/load-watch";
+import { StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
+import dynamic from "next/dynamic";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
     AnomalyLegend, ReadingValue, describeReading, readingBaseline,
 } from "@/components/electricity/reading-cell";
+
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// These two views are the route's only Recharts consumers — Load Watch, the
+// default tab, is cards, a heatmap and a table, so nothing on first paint needs
+// the charting library. Neither can render before the Supabase fetch resolves
+// (the page shows ElectricityLoadingSkeleton until then), so the chunk arrives
+// alongside the data rather than blocking first-load JS. Fallback heights match
+// the real blocks so hydration doesn't shift the page.
+const ElectricityOverviewCharts = dynamic(
+    () => import("@/components/electricity/electricity-overview-charts").then((m) => ({ default: m.ElectricityOverviewCharts })),
+    {
+        loading: () => (
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5" role="status" aria-busy="true" aria-label="Loading consumption trends">
+                <Skeleton className="h-[440px] w-full rounded-[10.5px] lg:col-span-3" />
+                <Skeleton className="h-[440px] w-full rounded-[10.5px] lg:col-span-2" />
+            </div>
+        ),
+        ssr: false,
+    },
+);
+const ElectricityAnalysisView = dynamic(
+    () => import("@/components/electricity/electricity-analysis-view").then((m) => ({ default: m.ElectricityAnalysisView })),
+    {
+        loading: () => (
+            <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading meter analysis">
+                {/* stats grid · monthly trend card · meters-by-consumption card */}
+                <StatsGridSkeleton />
+                <Skeleton className="h-[500px] w-full rounded-[10.5px]" />
+                <Skeleton className="h-[600px] w-full rounded-[10.5px]" />
+            </div>
+        ),
+        ssr: false,
+    },
+);
 
 // Use centralized config for rates
 const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;

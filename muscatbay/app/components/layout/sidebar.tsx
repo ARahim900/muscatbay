@@ -184,11 +184,16 @@ export function Sidebar() {
         }}
         aria-label="Main navigation"
       >
-        {/* Gliding active rail — travels between items; see effect above */}
+        {/* Gliding active rail — travels between items; see effect above.
+            gsap-lift is warranted here and nowhere else in the sidebar: this is
+            a single node that GSAP re-drives on every navigation, so the layer
+            promotion is paid once and reused rather than being re-taken on each
+            tween. (The rail also tweens `height`, which no will-change hint can
+            help; `y` and `autoAlpha` are the two that benefit.) */}
         <span
           ref={railRef}
           aria-hidden="true"
-          className="pointer-events-none absolute start-0 top-0 z-10 w-[3px] rounded-e-full bg-secondary opacity-0"
+          className="gsap-lift pointer-events-none absolute start-0 top-0 z-10 w-[3px] rounded-e-full bg-secondary opacity-0"
         />
 
         {/* Brand lockup — same height as topbar (h-16 = 64px) */}

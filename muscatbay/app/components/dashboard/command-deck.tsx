@@ -91,10 +91,20 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
         const cells = deck.querySelectorAll<HTMLElement>("[data-deck-cell]");
         if (items.length === 0 && cells.length === 0) return;
 
+        /* Compositor hint, held only for the length of the tween. will-change
+           costs memory for as long as it is set, so it goes on immediately
+           before the entrance (which starts on mount, not on scroll) and comes
+           off in onComplete. The bounded set here — a few header items plus
+           the KPI cells — is exactly the "staggered tile" case .gsap-lift is
+           for; it must never become a permanent class on the cells. */
+        const lift = (els: NodeListOf<HTMLElement>, on: boolean) =>
+            els.forEach((el) => el.classList.toggle("gsap-lift", on));
+
         const ctx = gsap.context(() => {
             const tl = gsap.timeline();
             if (items.length > 0) {
                 gsap.set(items, { autoAlpha: 0, y: 18 });
+                lift(items, true);
                 tl.to(items, {
                     autoAlpha: 1,
                     y: 0,
@@ -102,10 +112,12 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                     ease: MOTION.ease.outExpo,
                     stagger: MOTION.stagger.base,
                     clearProps: "opacity,visibility,transform",
+                    onComplete: () => lift(items, false),
                 });
             }
             if (cells.length > 0) {
                 gsap.set(cells, { autoAlpha: 0, y: 14 });
+                lift(cells, true);
                 tl.to(cells, {
                     autoAlpha: 1,
                     y: 0,
@@ -113,11 +125,18 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                     ease: MOTION.ease.out,
                     stagger: MOTION.stagger.tight,
                     clearProps: "opacity,visibility,transform",
+                    onComplete: () => lift(cells, false),
                 }, items.length > 0 ? "-=0.55" : 0);
             }
         }, deck);
 
-        return () => ctx.revert();
+        return () => {
+            ctx.revert();
+            // revert() undoes GSAP's own writes; the hint is ours to clear in
+            // case the deck unmounts mid-entrance.
+            lift(items, false);
+            lift(cells, false);
+        };
     }, []);
 
     const count = stats.length;

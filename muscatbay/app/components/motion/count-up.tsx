@@ -36,6 +36,10 @@ export function CountUp({ value, className, delay = 0, duration = MOTION.dur.cou
                 if (!entries.some((e) => e.isIntersecting)) return;
                 observer.disconnect();
 
+                // No .gsap-lift here, deliberately: this tween drives a plain
+                // JS counter and writes textContent — nothing is animated on
+                // transform or opacity, so a compositor layer would cost memory
+                // and optimise nothing. Keep the hint off this component.
                 el.textContent = formatMetricValue(parsed, 0);
                 tween = gsap.to(counter, {
                     n: parsed.value,

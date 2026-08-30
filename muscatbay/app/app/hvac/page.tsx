@@ -4,16 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { isSupabaseConfigured } from "@/functions/supabase-client";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
-import { PageSkeleton } from "@/components/shared/skeleton";
+import { PageSkeleton, StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   LayoutGrid, ClipboardList, AlertTriangle,
 } from "lucide-react";
 import type { GulfExpertData } from "@/components/hvac/types";
-import { OverviewTab } from "@/components/hvac/overview-tab";
 import { FindingsTab } from "@/components/hvac/findings-tab";
 import { RecurringTab } from "@/components/hvac/recurring-tab";
+import dynamic from "next/dynamic";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -24,6 +24,30 @@ import {
   getGulfExpertCommunications,
   GULF_EXPERT_REALTIME_TABLES,
 } from "@/functions/api/gulf-expert";
+
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// Overview is the only Recharts consumer on this route (Maintenance and
+// Recurring Issues are tables, so they stay eagerly imported). It cannot render
+// before the Gulf Expert fetch resolves — PageSkeleton holds the route until
+// then — so the chart chunk downloads alongside the data instead of sitting in
+// first-load JS. The fallback mirrors Overview's own block heights: the six-KPI
+// grid, the two 280px chart cards and the PPM schedule table.
+const OverviewTab = dynamic(
+  () => import("@/components/hvac/overview-tab").then((m) => ({ default: m.OverviewTab })),
+  {
+    loading: () => (
+      <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading HVAC overview">
+        <StatsGridSkeleton count={6} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-[360px] w-full rounded-[10.5px]" />
+          <Skeleton className="h-[360px] w-full rounded-[10.5px]" />
+        </div>
+        <Skeleton className="h-[220px] w-full rounded-[10.5px]" />
+      </div>
+    ),
+    ssr: false,
+  },
+);
 
 const tabs = [
   { key: "overview", label: "Overview", icon: LayoutGrid },

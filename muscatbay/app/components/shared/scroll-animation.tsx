@@ -64,6 +64,10 @@ interface AnimateOnScrollItemProps {
 
 /**
  * Wraps a single element with a GSAP fade-in + lift animation on scroll.
+ *
+ * The compositor hint (.gsap-lift) is added when the element enters the
+ * viewport and the tween actually starts — not at mount, when the element may
+ * sit hidden below the fold for the whole session — and removed once it lands.
  */
 export function AnimateOnScrollItem({
   children,
@@ -92,12 +96,14 @@ export function AnimateOnScrollItem({
         if (!entries.some((e) => e.isIntersecting)) return;
         observer.disconnect();
 
+        el.classList.add("gsap-lift");
         tween = gsap.to(el, {
           autoAlpha: 1,
           y: 0,
           duration,
           ease: MOTION.ease.out,
           clearProps: "opacity,visibility,transform",
+          onComplete: () => el.classList.remove("gsap-lift"),
         });
       },
       { rootMargin }
@@ -107,6 +113,7 @@ export function AnimateOnScrollItem({
     return () => {
       observer.disconnect();
       tween?.kill();
+      el.classList.remove("gsap-lift");
       gsap.set(el, { clearProps: "opacity,visibility,transform" });
     };
   }, [y, duration, rootMargin]);

@@ -39,12 +39,66 @@ import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";
 import { STP_THRESHOLDS } from "@/lib/thresholds";
 import { SectionBoundary } from "@/components/shared/section-boundary";
-import { PlantWatch } from "@/components/stp/plant-watch";
 import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
-import {
-    ChartViewToggle, STPVolumeChart, STPEconomicChart, STPTankerChart,
-    type ChartView, type STPChartDataPoint,
-} from "@/components/stp/stp-trend-charts";
+import dynamic from "next/dynamic";
+// Types only — erased at compile time, so this import pulls no runtime module.
+import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
+
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// Plant Watch and the three trend charts are the only Recharts consumers on
+// this route, and neither tab can render before the Supabase fetch resolves —
+// the page shows its skeleton until then — so deferring them takes Recharts
+// out of the route's first-load JS at no cost to perceived speed.
+//
+// ChartViewToggle carries no chart of its own, but it LIVES in the same module
+// as the three charts: importing it statically would pull that module (and its
+// `import ... from "recharts"`) straight back into the page chunk, so it is
+// loaded from the same lazy chunk as the charts it labels.
+//
+// Every fallback is sized to the element it stands in for, so nothing shifts
+// when the chunk lands.
+
+/** Placeholder sized to a trend chart's plot area plus its point-count caption. */
+function TrendChartFallback({ height }: { height: string }) {
+    return (
+        <div className="w-full min-w-0" aria-hidden="true">
+            <Skeleton className={`${height} w-full rounded-[10.5px]`} />
+            <Skeleton className="mx-auto mt-1 h-3 w-56" />
+        </div>
+    );
+}
+
+const PlantWatch = dynamic(
+    () => import("@/components/stp/plant-watch").then((m) => ({ default: m.PlantWatch })),
+    {
+        loading: () => (
+            <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading plant watch">
+                {/* briefing ticker · process-health cards · load-vs-recovery · heatmap */}
+                <Skeleton className="h-14 w-full rounded-[10.5px]" />
+                <StatsGridSkeleton count={5} />
+                <ChartSkeleton height="h-[420px]" />
+                <ChartSkeleton height="h-[360px]" />
+            </div>
+        ),
+        ssr: false,
+    },
+);
+const ChartViewToggle = dynamic(
+    () => import("@/components/stp/stp-trend-charts").then((m) => ({ default: m.ChartViewToggle })),
+    { loading: () => <Skeleton className="h-[30px] w-[124px] rounded-lg" />, ssr: false },
+);
+const STPVolumeChart = dynamic(
+    () => import("@/components/stp/stp-trend-charts").then((m) => ({ default: m.STPVolumeChart })),
+    { loading: () => <TrendChartFallback height="h-[320px]" />, ssr: false },
+);
+const STPEconomicChart = dynamic(
+    () => import("@/components/stp/stp-trend-charts").then((m) => ({ default: m.STPEconomicChart })),
+    { loading: () => <TrendChartFallback height="h-[280px]" />, ssr: false },
+);
+const STPTankerChart = dynamic(
+    () => import("@/components/stp/stp-trend-charts").then((m) => ({ default: m.STPTankerChart })),
+    { loading: () => <TrendChartFallback height="h-[280px]" />, ssr: false },
+);
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;

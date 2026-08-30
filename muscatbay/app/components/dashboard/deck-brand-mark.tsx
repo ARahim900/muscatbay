@@ -28,6 +28,11 @@ interface DeckBrandMarkProps {
  * only — the geometry itself never deforms at any scroll position.
  *
  * Honors prefers-reduced-motion by rendering the static mark untouched.
+ *
+ * Both timelines are created inside a gsap.context, so the single ctx.revert()
+ * on unmount also kills the ScrollTrigger — GSAP's context collects the
+ * ScrollTriggers created within its function. No separate kill() is needed,
+ * and adding one would double-kill the same instance.
  */
 export function DeckBrandMark({ className }: DeckBrandMarkProps) {
     const rootRef = useRef<HTMLDivElement>(null);
@@ -38,6 +43,14 @@ export function DeckBrandMark({ className }: DeckBrandMarkProps) {
 
         gsap.registerPlugin(ScrollTrigger);
         const q = gsap.utils.selector(root);
+
+        /* Compositor hint for the nodes a timeline drives on transform/opacity.
+           will-change costs memory for as long as it is set, so it is toggled
+           with the animation rather than baked into the markup: on for the
+           assembly, off when it lands; on while the scrubbed trigger is in
+           range, off the moment the deck leaves it. */
+        const lift = (els: Element[], on: boolean) =>
+            els.forEach((el) => el.classList.toggle("gsap-lift", on));
 
         const ctx = gsap.context(() => {
             // Intro and scroll transforms live on separate nested nodes
@@ -51,9 +64,14 @@ export function DeckBrandMark({ className }: DeckBrandMarkProps) {
             if (introStripes.length === 0 || introBars.length === 0) return;
 
             // ── Assembly — plays once on load ────────────────────────────
+            const introTargets = [...introStripes, ...introBars];
             gsap.set(introStripes, { x: -46 * AXIS.x, y: -46 * AXIS.y, autoAlpha: 0 });
             gsap.set(introBars, { y: -24, autoAlpha: 0 });
-            gsap.timeline({ defaults: { ease: MOTION.ease.outExpo } })
+            lift(introTargets, true);
+            gsap.timeline({
+                defaults: { ease: MOTION.ease.outExpo },
+                onComplete: () => lift(introTargets, false),
+            })
                 .to(introStripes, {
                     x: 0,
                     y: 0,
@@ -71,6 +89,7 @@ export function DeckBrandMark({ className }: DeckBrandMarkProps) {
             // ── Scroll choreography — scrubbed, fully reversible ─────────
             const deck = root.closest("section") ?? root;
             const drift = (units: number) => ({ x: units * AXIS.x, y: units * AXIS.y });
+            const scrollTargets = [...sheen, ...scrollStripes, ...scrollBars, root];
             gsap.timeline({
                 defaults: { ease: "none" },
                 scrollTrigger: {
@@ -79,6 +98,10 @@ export function DeckBrandMark({ className }: DeckBrandMarkProps) {
                     end: "bottom top",
                     scrub: 0.6,
                     invalidateOnRefresh: true,
+                    // Promote only while the deck is inside the scrubbed
+                    // range; scrolled past, the layers are idle and the hint
+                    // would just hold memory.
+                    onToggle: (self) => lift(scrollTargets, self.isActive),
                 },
             })
                 .to(sheen, drift(1000), 0)
@@ -91,7 +114,13 @@ export function DeckBrandMark({ className }: DeckBrandMarkProps) {
                 .to(root, { y: 14 }, 0);
         }, root);
 
-        return () => ctx.revert();
+        return () => {
+            // Kills both timelines AND the ScrollTrigger they registered.
+            ctx.revert();
+            // The hint is ours, not GSAP's — clear it if we unmount mid-flight
+            // or while the trigger is still active.
+            lift([root, ...root.querySelectorAll(".gsap-lift")], false);
+        };
     }, []);
 
     return (

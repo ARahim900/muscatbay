@@ -20,10 +20,30 @@ import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/
 import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 
-// Monthly dashboard (Supabase-wired) + Daily report (lazy)
-import { WaterMonthlyDashboard } from "@/components/water/monthly/water-monthly-dashboard";
+// All three dashboard views are loaded on demand (Supabase-wired).
+//
+// Every one of them carries Recharts (or, for Satellite, maplibre), and none
+// can render before the water fetch resolves — the page shows the skeleton
+// below until then. Loading them lazily lets those chunks download alongside
+// the data instead of sitting in the route's first-load JS, and each fallback
+// is sized to the real view so hydration doesn't shift the page.
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import dynamic from "next/dynamic";
+const WaterMonthlyDashboard = dynamic(
+    () => import("@/components/water/monthly/water-monthly-dashboard").then((m) => ({ default: m.WaterMonthlyDashboard })),
+    {
+        loading: () => (
+            <div className="space-y-5" role="status" aria-busy="true" aria-label="Loading monthly water analysis">
+                {/* section tabs · period filter card · KPI row · first panel */}
+                <Skeleton className="h-10 w-full max-w-2xl rounded-lg" />
+                <Skeleton className="h-[124px] w-full rounded-[10.5px]" />
+                <StatsGridSkeleton count={6} />
+                <ChartSkeleton height="h-[400px]" />
+            </div>
+        ),
+        ssr: false,
+    },
+);
 const DailyWaterReport = dynamic(
     () => import("@/components/water/daily-water-report").then((m) => ({ default: m.DailyWaterReport })),
     { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },

@@ -190,13 +190,15 @@ export default function ProfessionalApplicationPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8">
             <div className="w-full max-w-lg">
-                {/* Logo */}
+                {/* Logo — the mark is decorative (alt=""): "Muscat Bay" sits
+                    beside it as a real heading, so a real alt would announce
+                    the brand twice. */}
                 <div className="flex justify-center mb-6">
                     <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 rounded-xl bg-mb-primary flex items-center justify-center shadow-lg overflow-hidden">
                             <Image
                                 src="/logo.png"
-                                alt="Muscat Bay Logo"
+                                alt=""
                                 fill
                                 sizes="48px"
                                 className="object-contain p-1"

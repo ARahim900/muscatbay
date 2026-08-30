@@ -37,6 +37,9 @@ interface DashboardChartsProps {
 const REFERENCE_LINE_LABEL = { position: 'insideTopRight' as const, fontSize: 10, fill: 'var(--chart-axis)', dy: -4 };
 const MAX_MARKER_LABEL = { value: 'Max', position: 'top' as const, fontSize: 9, fill: 'var(--chart-axis)' };
 const MIN_MARKER_LABEL = { value: 'Min', position: 'bottom' as const, fontSize: 9, fill: 'var(--chart-axis)' };
+// The latest-reading marker is two things with two different contrast floors:
+// the DOT is a graphic mark (3:1 — icon/stroke tier, `--status-info`), while
+// this LABEL is 10px text and needs 4.5:1, so it takes the text tier.
 const NOW_MARKER_LABEL = { value: 'Now', position: 'top' as const, fontSize: 10, fill: 'var(--status-info)', fontWeight: 700 };
 
 /** Synthesise a one-line insight from the data so boards see the takeaway, not the numbers. */
@@ -79,7 +82,14 @@ function buildStpInsight(
     };
 }
 
-/** Status token per verdict — colour always paired with the sentence itself. */
+/**
+ * Status token per verdict — colour always paired with the sentence itself.
+ *
+ * This colours PROSE (and the glyph that leads it), so it takes the text tier.
+ * `--status-*` is tuned to the 3:1 graphic floor for dots, thin strokes and
+ * reference marks; a sentence needs 4.5:1, which is what `--mb-*-text` gives
+ * on the card in both themes.
+ */
 const INSIGHT_STATUS_COLOR = {
     normal: "var(--status-normal)",
     warning: "var(--status-warning)",
@@ -116,28 +126,34 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
     }, [chartData]);
 
     return (
+        // The two cards share a row but not a width — 4/7 and 3/7 at lg — so a
+        // viewport breakpoint gave the narrow card the same chart height and
+        // type scale as the wide one. Each Card is its own `@container`; the
+        // chart height and type scale below read the CARD's width. The grid
+        // itself and the header padding stay viewport-driven: how many columns
+        // fit, and how much touch padding a finger needs, are device questions.
         <AnimateOnScroll className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
             <Link href="/water" aria-label="View water production details" className="col-span-1 lg:col-span-4 group/chart">
                 <Card
                     interactive
                     data-glow
-                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="@container card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <CardTitle className="flex items-center gap-2 text-base @md:text-lg">
                             <Droplets className="h-5 w-5 text-mb-secondary" />
                             Water Production Trend
                             <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
+                        <p className="text-xs @md:text-sm text-muted-foreground">Monthly water production in thousand m³</p>
                         {waterInsight && (
-                            <p className="mt-1 text-[11px] sm:text-xs italic text-foreground/70">
+                            <p className="mt-1 text-[11px] @md:text-xs italic text-foreground/70">
                                 {waterInsight}
                             </p>
                         )}
                     </CardHeader>
                     <div role="img" aria-label="Water production monthly trend chart in thousand cubic meters">
-                        <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
+                        <ChartContainer height="100%" className="h-[200px] @sm:h-[250px] @md:h-[300px]">
                             <AreaChart data={chartData} margin={{ top: 12, right: 24, left: 0, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
@@ -175,18 +191,18 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                 <Card
                     interactive
                     data-glow
-                    className="card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
+                    className="@container card-elevated mb-glow overflow-hidden transition-shadow duration-200 hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--primary)_22%,transparent)] dark:hover:shadow-[0_8px_30px_-4px_color-mix(in_srgb,var(--sidebar)_55%,transparent)] focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                        <CardTitle className="flex items-center gap-2 text-base @md:text-lg">
                             <Recycle className="h-5 w-5 text-mb-primary" />
                             STP Treatment Overview
                             <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>
-                        <p className="text-xs sm:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
+                        <p className="text-xs @md:text-sm text-muted-foreground">Monthly inlet vs TSE output (k m³)</p>
                         {stpInsight && (
                             <p
-                                className="mt-1 flex items-start gap-1.5 text-[11px] sm:text-xs"
+                                className="mt-1 flex items-start gap-1.5 text-[11px] @md:text-xs"
                                 style={{ color: INSIGHT_STATUS_COLOR[stpInsight.status] }}
                             >
                                 {stpInsight.status === "normal"
@@ -197,7 +213,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                         )}
                     </CardHeader>
                     <div role="img" aria-label="STP monthly inlet vs TSE output comparison bar chart">
-                        <ChartContainer height="100%" className="h-[200px] sm:h-[250px] md:h-[300px]">
+                        <ChartContainer height="100%" className="h-[200px] @sm:h-[250px] @md:h-[300px]">
                             <BarChart data={stpChartData}>
                                 <CartesianGrid strokeDasharray="2 6" stroke="var(--chart-grid)" vertical={false} />
                                 <XAxis dataKey="month" className="text-xs" tick={AXIS_TICK_SM} axisLine={false} tickLine={false} dy={10} />

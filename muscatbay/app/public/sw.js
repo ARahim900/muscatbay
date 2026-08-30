@@ -19,6 +19,12 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v8 (2026-08-30) re-precaches the brand mark. /logo.png was missing from the
+ *                   build for a period; `install` runs once per SW version and
+ *                   tolerates a per-asset failure, so every client that
+ *                   installed v7 in that window holds a shell cache with no
+ *                   mark and would never retry. Restoring the file alone does
+ *                   not repair them — only a version bump re-runs `install`.
  *   v7 (2026-07-25) split shell/static/pages caches, added the offline shell,
  *                   stale-while-revalidate, and an explicit no-cache list for
  *                   authenticated endpoints.
@@ -26,7 +32,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
@@ -58,8 +64,11 @@ self.addEventListener("install", (event) => {
       // would leave clients on the previous SW. Add them individually instead.
       Promise.all(
         SHELL_ASSETS.map((url) =>
-          cache.add(new Request(url, { cache: "reload" })).catch(() => {
-            console.warn("[sw] could not precache", url);
+          cache.add(new Request(url, { cache: "reload" })).catch((err) => {
+            // Deliberately non-fatal: a single missing asset must not strand
+            // clients on the previous SW. Log the reason so a 404 here is
+            // diagnosable rather than silent.
+            console.warn("[sw] could not precache", url, err);
           })
         )
       )

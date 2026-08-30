@@ -16,8 +16,53 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import { Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-// The bay backdrop loads after the form is interactive — sign-in never waits on WebGL
+// The bay backdrop loads after the form is interactive — sign-in never waits on WebGL.
+// next/dynamic runs the loader on FIRST RENDER, so gating the JSX below (see
+// `mountAmbient`) also gates the three.js chunk download, not just its boot.
 const AmbientBay = dynamic(() => import("@/components/three/ambient-bay"), { ssr: false });
+
+/**
+ * Network Information API — not in lib.dom, so the two fields we read are
+ * declared here rather than reaching for `any`. Both are absent on Safari and
+ * Firefox, which simply means "no reason to skip".
+ */
+interface NetworkInformationLike {
+    saveData?: boolean;
+    effectiveType?: string;
+}
+
+/**
+ * Should the decorative water field be downloaded and booted at all?
+ *
+ * ambient-bay is already code-split and ssr:false, and it disposes cleanly —
+ * but /login is the first route every unauthenticated visitor meets, and a
+ * WebGL renderer plus an 8,100-point shader is a real cost on a phone over a
+ * mobile link. The panel it decorates is purely ornamental: its token gradient
+ * sits underneath and the page is complete without the canvas.
+ *
+ * Skip entirely when:
+ *   - reduced motion is requested (the component would idle anyway, but the
+ *     download is the cost that matters);
+ *   - the connection reports Data Saver or a 2g-class effective type;
+ *   - the viewport is below `lg`, where the brand panel is `hidden` and the
+ *     canvas would never be seen.
+ *
+ * Evaluated once, at idle. A visitor who later widens a narrow window keeps the
+ * gradient — deliberately, since re-checking on resize would hand the heaviest
+ * asset on the page to someone who has already started reading the form.
+ */
+function shouldMountAmbientBay(): boolean {
+    if (prefersReducedMotion()) return false;
+
+    // The panel is `hidden lg:flex` — 1024px is Tailwind's lg breakpoint.
+    if (!window.matchMedia("(min-width: 1024px)").matches) return false;
+
+    const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection;
+    if (connection?.saveData) return false;
+    if (connection?.effectiveType === "2g" || connection?.effectiveType === "slow-2g") return false;
+
+    return true;
+}
 
 export default function LoginPage() {
     return (
@@ -39,6 +84,25 @@ function LoginContent() {
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [emailError, setEmailError] = useState<string | null>(null);
     const [focusedField, setFocusedField] = useState<string | null>(null);
+    const [mountAmbient, setMountAmbient] = useState(false);
+
+    // Defer the WebGL backdrop until the browser is idle, and only where it
+    // earns its weight (see shouldMountAmbientBay). Signing in never competes
+    // with three.js for bandwidth or main-thread time.
+    useEffect(() => {
+        if (!shouldMountAmbientBay()) return;
+
+        const mount = () => setMountAmbient(true);
+
+        // requestIdleCallback is unavailable on Safari < 17 — fall back to a
+        // timeout well past first interaction.
+        if (typeof window.requestIdleCallback === "function") {
+            const handle = window.requestIdleCallback(mount, { timeout: 2500 });
+            return () => window.cancelIdleCallback(handle);
+        }
+        const handle = window.setTimeout(mount, 1500);
+        return () => window.clearTimeout(handle);
+    }, []);
 
     // Entrance choreography: brand panel and form settle in as one sequence.
     // DOM order drives the stagger, so the story reads logo → headline →
@@ -50,6 +114,13 @@ function LoginContent() {
         const ctx = gsap.context(() => {
             const items = root.querySelectorAll<HTMLElement>("[data-reveal]");
             if (items.length === 0) return;
+            // .gsap-lift promotes each revealed surface to its own layer so the
+            // first frame doesn't pay for the promotion mid-tween. It is added
+            // here rather than in JSX, and dropped on completion, because
+            // will-change costs memory for as long as it is set and this
+            // timeline runs exactly once — the form then re-renders on every
+            // keystroke, which would reinstate a JSX-declared class forever.
+            items.forEach((el) => el.classList.add("gsap-lift"));
             gsap.set(items, { autoAlpha: 0, y: 22 });
             gsap.to(items, {
                 autoAlpha: 1,
@@ -59,9 +130,14 @@ function LoginContent() {
                 stagger: MOTION.stagger.base,
                 delay: 0.05,
                 clearProps: "opacity,visibility,transform",
+                onComplete: () => items.forEach((el) => el.classList.remove("gsap-lift")),
             });
         }, root);
-        return () => ctx.revert();
+        return () => {
+            ctx.revert();
+            // Unmounting mid-entrance must not strand the hint on the nodes.
+            root.querySelectorAll<HTMLElement>("[data-reveal]").forEach((el) => el.classList.remove("gsap-lift"));
+        };
     }, []);
 
     // Pick up error/success messages from redirects (?error=... or ?message=...)
@@ -125,9 +201,11 @@ function LoginContent() {
             {/* Left Panel - Branding */}
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-primary bg-[linear-gradient(150deg,var(--primary)_0%,var(--sidebar)_100%)]">
 
-                {/* Ambient bay water field — the literal subject of the brand */}
+                {/* Ambient bay water field — the literal subject of the brand.
+                    Decorative and gated: the panel's own gradient is the
+                    fallback whenever the canvas is skipped. */}
                 <div className="absolute inset-0" aria-hidden="true">
-                    <AmbientBay className="absolute inset-0" intensity="bold" />
+                    {mountAmbient && <AmbientBay className="absolute inset-0" intensity="bold" />}
                     <div className="absolute inset-0 bg-[radial-gradient(110%_80%_at_80%_-10%,color-mix(in_srgb,var(--secondary)_14%,transparent),transparent_60%)]" />
                 </div>
 

@@ -42,8 +42,13 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
             : null);
 
     return (
+        // 3/5 and 2/5 of the same row at lg, full width when stacked — three
+        // different widths at two viewports. Each Card is its own `@container`
+        // so the plot area sizes from the card it lives in rather than from the
+        // window; the grid stays viewport-driven (how many columns fit is a
+        // device question).
         <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-5">
-            <Card className="lg:col-span-3">
+            <Card className="@container lg:col-span-3">
                 <CardHeader>
                     <CardTitle>Monthly Consumption Trend</CardTitle>
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -53,7 +58,7 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                     </p>
                 </CardHeader>
                 <CardContent>
-                    <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] sm:h-[260px] md:h-[300px] min-h-[260px]">
+                    <div role="img" aria-label="Monthly electricity consumption trend: area chart showing kilowatt-hour usage over selected date range" className="h-[220px] @sm:h-[260px] @md:h-[300px] min-h-[260px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={filteredMonthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                 <defs>
@@ -83,12 +88,12 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                 </CardContent>
             </Card>
 
-            <Card className="lg:col-span-2">
+            <Card className="@container lg:col-span-2">
                 <CardHeader>
                     <CardTitle>Consumption by Type</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div role="img" aria-label="Electricity consumption by type: horizontal bar chart breaking down kilowatt-hour usage across meter categories" className="h-[220px] sm:h-[260px] md:h-[300px] min-h-[260px]">
+                    <div role="img" aria-label="Electricity consumption by type: horizontal bar chart breaking down kilowatt-hour usage across meter categories" className="h-[220px] @sm:h-[260px] @md:h-[300px] min-h-[260px]">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={consumptionByType} layout="vertical" margin={{ left: 10 }}>
                                 <XAxis type="number" hide />
