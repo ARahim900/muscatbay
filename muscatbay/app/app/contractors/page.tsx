@@ -112,7 +112,8 @@ const CONTRACT_EXPORT_COLUMNS: ExportColumn<ContractorContract>[] = [
     { key: 'note', header: 'Note', format: (c) => c.note || '' },
 ];
 
-// Full Contractor_Tracker column set for the AMC Tracker database export
+// Full column set for the AMC Tracker database export. Rows come from
+// `amc_register` via toTrackerRow() — see functions/api/contractors.ts.
 const TRACKER_EXPORT_COLUMNS: ExportColumn<ContractorTracker>[] = [
     { key: 'Contractor', header: 'Contractor' },
     { key: 'Service Provided', header: 'Service Provided' },
@@ -1062,7 +1063,7 @@ export default function ContractorsPage() {
                             <div className="bg-card rounded-xl border border-border">
                                 <EmptyState variant={hasTrackerFilters ? "filter-empty" : "no-data"}
                                     title={hasTrackerFilters ? "No entries match" : "No tracker data"}
-                                    description="Adjust filters or add data to the Contractor_Tracker table." />
+                                    description="Adjust filters, or add agreements to the AMC register." />
                             </div>
                         )}
                     </div>

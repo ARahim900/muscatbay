@@ -49,7 +49,8 @@ const ALERT_REALTIME_TABLES = [
     "water_meters",
     "water_monthly_consumption",
     "water_daily_consumption",
-    "Contractor_Tracker",
+    // Contract-expiry alerts now derive from the AMC register (ACT-012).
+    "amc_register",
     "stp_operations",
 ];
 

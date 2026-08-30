@@ -86,7 +86,9 @@ const DASHBOARD_REALTIME_TABLES = [
     'water_monthly_consumption',
     'water_daily_consumption',
     'electricity_readings',
-    'Contractor_Tracker',
+    // AMC source since 04-Aug-2026. `amc_contractor_summary` is a view over this
+    // table and views never emit postgres_changes events, so subscribe to the base.
+    'amc_register',
 ];
 
 // Sort month keys like 'Jan-25', 'Feb-26' chronologically

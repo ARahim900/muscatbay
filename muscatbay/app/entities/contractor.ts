@@ -6,8 +6,94 @@
 
 import type { Contractor } from '@/lib/mock-data';
 
+// =============================================================================
+// AMC REGISTER — the sole active AMC source (ACT-012, 04-Aug-2026)
+// =============================================================================
+
 /**
- * New unified schema for Contractor_Tracker table (legacy)
+ * A row of `amc_register`, built from the Muscat Bay AMC Contract Register
+ * (evidence review 04-Aug-2026). This replaced `Contractor_Tracker` as the
+ * authoritative source.
+ *
+ * The nullability here is the whole point and must be preserved end-to-end:
+ * **a null fee or date means "not evidenced", never zero.** The evidence review
+ * could substantiate exactly one fee (KONE, and even that is `Conflicting`), so
+ * ten of these rows carry nulls that the UI must render as "—". The legacy
+ * tables asserted precise figures for all of them — e.g. National Marine at
+ * 57,093.12/yr while no formal contract exists at all — which is exactly the
+ * fabricated-confidence failure the non-negotiables in CLAUDE.md forbid.
+ */
+export interface AmcRegister {
+    agreement_id: string;
+    contractor: string;
+    service_system: string;
+    engagement_type: string | null;
+    contract_ref: string | null;
+    current_status: string | null;
+    /** ISO `YYYY-MM-DD` from PostgREST, or null when never evidenced. */
+    start_date: string | null;
+    end_date: string | null;
+    monthly_fee_omr: number | null;
+    annual_fee_omr: number | null;
+    total_value_omr: number | null;
+    vat_basis: string | null;
+    /** Evidence strength — `Conflicting` and `No formal contract` are warnings. */
+    verification: string | null;
+    document_status: string | null;
+    evidence_anchor: string | null;
+    key_note: string | null;
+    required_action: string | null;
+    sort_order: number | null;
+}
+
+/** OMR renders to 3 decimals per the brand framework; null stays null. */
+function omr(value: number | null): string | null {
+    if (value === null || value === undefined) return null;
+    return `${value.toLocaleString('en-US', {
+        minimumFractionDigits: 3,
+        maximumFractionDigits: 3,
+    })} OMR`;
+}
+
+/**
+ * Adapt an `amc_register` row to the legacy `ContractorTracker` shape.
+ *
+ * The AMC Tracker grid, its export, sort, filter and the renewals panel are all
+ * written against `ContractorTracker` across ~35 call sites. Mapping at this one
+ * boundary repoints every consumer to the register without a risky rewrite of
+ * `app/contractors/page.tsx`, and keeps `AmcRegister` as the typed source for
+ * anything built from here on.
+ *
+ * Nulls are passed straight through — never coerced to 0 or "" — so an
+ * unevidenced fee reaches the grid as "—" rather than a confident-looking zero.
+ */
+export function toTrackerRow(row: AmcRegister): ContractorTracker {
+    return {
+        Contractor: row.contractor,
+        "Service Provided": row.service_system,
+        Status: row.current_status,
+        "Contract Type": row.engagement_type,
+        "Start Date": row.start_date,
+        "End Date": row.end_date,
+        "Contract (OMR)/Month": omr(row.monthly_fee_omr),
+        "Contract Total (OMR)/Year": omr(row.annual_fee_omr),
+        "Annual Value (OMR)": row.annual_fee_omr,
+        // The register's required action is the documented renewal/evidence step.
+        // It carries no owner, due date or status — surfacing a recorded fact,
+        // not resolution tracking (CLAUDE.md non-negotiable 2).
+        "Renewal Plan": row.required_action,
+        Note: row.key_note,
+        contract_pdf_url: null,
+    };
+}
+
+/**
+ * Legacy shape of the `Contractor_Tracker` table.
+ *
+ * @deprecated As a *data source*. The table is a read-only audit snapshot since
+ * 04-Aug-2026 and holds figures the AMC evidence review could not substantiate.
+ * The interface itself is still the grid's view model — populate it from
+ * {@link toTrackerRow}, never from `Contractor_Tracker` directly.
  */
 export interface ContractorTracker {
     Contractor: string | null;

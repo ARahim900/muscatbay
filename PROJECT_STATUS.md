@@ -106,7 +106,7 @@ and `next build` were all green before and after.
 | Electricity | `/electricity` | ✅ Live, inspection-first redesign 2026-07-05 | `electricity_meters` / `electricity_readings` | Two tabs (down from three): **Load Watch** (default) — category (meter_type) severity cards worst-first, category×month load heatmap, auto Exceptions & Actions register (per-meter spike/dip/zero/negative/missing vs each meter's own baseline), with KPIs + trend charts kept below; **Meters & Data** (Analysis + Database in one tab). **2026-07-06:** de-duplicated after review — the two near-identical horizontal bar charts (top-10 consumers + meter-vs-average) collapsed into one **Meters by Consumption** chart (ranked high→low, each bar colored above/below the group average with an "Avg" reference line, the filter-selected meter outlined); the two overlapping consumption tables (Monthly Breakdown + the separate anomaly grid) collapsed into one **Meter Consumption & Anomalies** table that follows the shared date range and keeps search + type filter + rows pagination + CSV, now with a Cost column, a Total row and the anomaly tinting on each cell. Monthly readings through Jun-26 (loaded via hand-run `sql/migrations/update_electricity_*.sql`) |
 | STP Plant | `/stp` | ✅ Live, inspection-first redesign 2026-07-05 | `stp_operations` | Two tabs: **Plant Watch** (default) — process-health cards worst-first (efficiency, hydraulic load, TSE reuse, tankers, data completeness), load-vs-recovery chart, metric×day heatmap, auto Exceptions & Actions register (data-relative severity + efficiency bands); **Operations & Trends** keeps the KPIs, charts, daily log/CSV and folds the Airtable DB into a collapsible. Daily ops through May-26; 3D plant twin exists only on unmerged PR #21. `stp_operations` added to the `supabase_realtime` publication 2026-07-06, so both this page and the dashboard now refresh live on data changes (the page already subscribed but the table was unpublished) |
 | Assets | `/assets` | ✅ Live | `master_assets_register` | 6-card KPI grid; register table with toolbar (PR #25). **2026-07-10:** first load no longer flashes a false "Demo Data / OFFLINE / all-zero KPIs" state — the status bar shows a neutral "Connecting…" chip and the KPI grid stays skeletoned until the first fetch resolves (`PageStatusBar` gained a `loading` prop); realtime changes refresh the table silently instead of blanking it |
-| Contractors | `/contractors` | ✅ Live | `Contractor_Tracker`, contracts tables | AMC tracking, yearly costs. **2026-07-10:** contractor names wrap to two lines with the full name on hover instead of truncating with no affordance (mobile cards wrap fully — touch has no hover). **2026-07-23:** AMC Tracker tab gained the missing database (CSV) export — all three contractor tabs now export |
+| Contractors | `/contractors` | ✅ Live | **`amc_register`** (AMC tab, renewals, alerts), `contractor_contracts` (Contracts tab + header KPIs — still legacy) | AMC tracking, yearly costs. **2026-07-10:** contractor names wrap to two lines with the full name on hover instead of truncating with no affordance (mobile cards wrap fully — touch has no hover). **2026-07-23:** AMC Tracker tab gained the missing database (CSV) export — all three contractor tabs now export. **2026-08-04:** repointed off `Contractor_Tracker` to the new `amc_register` (ACT-012) — see "AMC register cutover" below |
 | HVAC | `/hvac` | ✅ Live | Gulf Expert tables | Findings/maintenance model — the layout template other modules align to |
 | Fire Safety | `/firefighting` | ✅ Live (redesigned 2026-06-30) | `fire_safety_equipment`, `fire_ppm_activities`, `fire_issues_register`, `fire_ppm_contacts` | BEC AMC: 3 PPM cycles × 4 zones; aligned with HVAC layout (PRs #26/#27) |
 | Pest Control | `/pest-control` | ✅ Live | pest tables | **2026-07-10:** the AITable embed (cross-origin iframe — internals can't be restyled) now follows the app's light/dark theme via its `theme` param, sits behind a card-surface loading cover until it finishes loading, and gains an "Open full view" header action |
@@ -137,7 +137,7 @@ Electricity, STP, Contractors, HVAC, Fire Safety, Assets):
   operational risk classes and is the single source of truth for "is anything
   wrong": water system loss vs the 15% target (critical zones >25% listed;
   months without an A1/NAMA reading are skipped, never reported as fake loss),
-  contract expiry from `Contractor_Tracker` (past End Date while still marked
+  contract expiry from `amc_register` (past End Date while still marked
   Active = critical; within 60 days = warning; rows already marked Expired are
   treated as closed history), and STP critical failures (zero TSE output while
   sewage arrived, recovery under the 90/80% bands, daily log stale >3 days).
@@ -777,6 +777,50 @@ stops at last month" problem is structurally closed:
   recording — each stat stacked its label *above* its value, so the strip was
   inherently two lines. Stats are now single-line (`.mb-ticker-label` +
   `.mb-ticker-value`), which is what makes the band shape possible.
+
+- **AMC register cutover — 2026-08-04. `Contractor_Tracker` retired as a source.**
+  The owner's *Muscat Bay AMC Contract Register* (evidence review 04-Aug-2026)
+  became the sole active AMC source, per its own **ACT-012** ("make the AMC
+  Register the sole active source; keep one restricted read-only audit snapshot
+  until evidence completion", owner: Application / Database).
+
+  The cleanup on 2026-07-26 below fixed *duplication*. It could not fix the
+  deeper problem, which the evidence review exposed: **the surviving rows
+  asserted commercial figures no document supports.** `Contractor_Tracker` showed
+  National Marine as Active at 57,093.12 OMR/yr when no formal contract exists at
+  all; Muscat Electronics at 10,461.84 OMR/yr against a 1,071 proposal for an AMC
+  that expired 02-Jun-2026; Kalhat at 386,409.718 OMR/yr with no executed
+  contract ever located. `contractor_contracts` disagreed with it on the same
+  contracts (Muna Noor 1,680 vs 16,000; Tadoom 2,211.60 vs 184.30) and the two
+  had no join key, so neither could be reconciled against the other.
+
+  Database (Supabase, all authenticated-only RLS): `amc_register` (10 agreements,
+  typed `date`/`numeric`), `amc_open_actions` (12), `amc_excluded_leads` (5 —
+  records *why* Tadoom, BUDGET, Iron Mountain, Al Nabaa and the two revenue
+  agreements are out), `amc_historical_nouf_2025` (9, audit only).
+  `amc_contractor_summary` and `amc_contractor_expiry` were **empty tables the app
+  already read**; they are now **views over `amc_register`** (`security_invoker`),
+  so they cannot drift from it — this is what finally lit up the Renewals panel,
+  which had been rendering its "table holds no rows" fallback since it was built.
+
+  App: `entities/contractor.ts` gains `AmcRegister` + `toTrackerRow()`;
+  `getAmcRegister()` is the typed reader and `getContractorTrackerData()` now maps
+  through it, which repoints the AMC grid, `useDashboardData` and
+  `useOperationalAlerts` in one place rather than rewriting the 1,258-line page.
+  Both realtime subscriptions moved to `amc_register`.
+  **`ContractorTracker` remains the grid's view model but is `@deprecated` as a
+  data source — never read that table again.**
+
+  Two traps worth keeping: `getContractorCounts()` had to become a **prefix**
+  match (`ilike 'Active%'`), because the register's own wording includes
+  "Active — terms partial" / "Active — term conflict"; the old `.eq('Active')`
+  counted 4 of 8 engaged agreements. And **null fee/date means "not evidenced",
+  never zero** — only one fee (KONE 11,550) survived review, so ten rows render
+  "—" by design. Do not backfill them from the legacy tables.
+
+  Still legacy: the **Contracts tab and the page-header KPIs** read
+  `contractor_contracts` (13 rows, includes 2 revenue agreements that belong in a
+  revenue register). Not yet repointed.
 
 - **`Contractor_Tracker` cleaned and keyed — 2026-07-26. 42 rows → 19.**
   Management reported unrecognised and duplicated contractors. The table held

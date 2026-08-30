@@ -9,10 +9,12 @@ import {
     ContractorTracker,
     ContractorContract,
     ContractorYearlyCost,
+    AmcRegister,
     AmcContractorSummary,
     AmcContractorDetails,
     AmcContractorExpiry,
     AmcContractorPricing,
+    toTrackerRow,
     transformContractor
 } from '@/entities/contractor';
 import type { Contractor } from '@/lib/mock-data';
@@ -98,42 +100,50 @@ export async function updateContractPdfUrl(id: number, pdfUrl: string | null): P
 // NEW CONTRACTOR TRACKER API
 // =============================================================================
 
+const AMC_REGISTER_COLUMNS =
+    'agreement_id, contractor, service_system, engagement_type, contract_ref, current_status, ' +
+    'start_date, end_date, monthly_fee_omr, annual_fee_omr, total_value_omr, vat_basis, ' +
+    'verification, document_status, evidence_anchor, key_note, required_action, sort_order';
+
 /**
- * Fetch all contractor tracker data from Supabase.
+ * Fetch the AMC register — the sole active AMC source since 04-Aug-2026 (ACT-012).
  *
- * Since 2026-07-26 the table has a primary key and a unique constraint on
- * (Contractor, Service Provided), so the database no longer admits duplicates.
- * The filter below is kept as a cheap safety net for older rows and for any
- * future bulk import that lands before the constraint is re-checked.
- *
- * Worth knowing what this dedup can and cannot do: it collapses *identical*
- * (Contractor, Service Provided) pairs only. It never caught the real problem
- * — a bad import had also produced near-miss variants ("Gulf Egypt" for Gulf
- * Expert, "Ras Mountain" for Iron Mountain), which are distinct strings and so
- * passed straight through to the UI. Those were removed at source; see
- * PROJECT_STATUS.md §4.
+ * Ordered by `sort_order` so the app presents AMC-001…010 in the same sequence
+ * as the signed register, which is how Rahim and Commercial read it.
  */
-export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
+export async function getAmcRegister(): Promise<AmcRegister[]> {
     const client = getSupabaseClient();
     if (!client) return [];
 
     const { data, error } = await client
-        .from('Contractor_Tracker')
-        .select('"Contractor", "Service Provided", "Status", "Contract Type", "Start Date", "End Date", "Contract (OMR)/Month", "Contract Total (OMR)/Year", "Annual Value (OMR)", "Renewal Plan", "Note", contract_pdf_url')
-        .order('Contractor');
+        .from('amc_register')
+        .select(AMC_REGISTER_COLUMNS)
+        .order('sort_order')
+        .returns<AmcRegister[]>();
 
-    if (error) failed('Unable to load the AMC tracker', error.message);
+    if (error) failed('Unable to load the AMC register', error.message);
+    return data || [];
+}
 
-    if (!data) return [];
-
-    // Deduplicate rows by composite key (Contractor + Service Provided)
-    const seen = new Set<string>();
-    return data.filter(row => {
-        const key = `${row.Contractor ?? ''}||${row["Service Provided"] ?? ''}`;
-        if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
-    });
+/**
+ * AMC tracker rows for the contractors grid, the dashboard and the alert hook.
+ *
+ * Reads `amc_register` and adapts each row to the grid's legacy view model.
+ * It no longer touches the `Contractor_Tracker` table, which became a read-only
+ * audit snapshot on 04-Aug-2026 because it asserted fees the AMC evidence review
+ * could not substantiate (National Marine shown Active at 57,093.12/yr with no
+ * formal contract in place; Muscat Electronics at 10,461.84/yr against a 1,071
+ * proposal for an AMC that expired 02-Jun-2026).
+ *
+ * The old dedup pass is gone with it: `amc_register.agreement_id` is the primary
+ * key and each of AMC-001…010 is a distinct agreement, so duplicates cannot
+ * arise. Gulf Expert legitimately holds two rows (HVAC and BMS) — the previous
+ * (Contractor, Service Provided) dedup would have been wrong to collapse them
+ * and correctly did not, but the constraint now makes the question moot.
+ */
+export async function getContractorTrackerData(): Promise<ContractorTracker[]> {
+    const rows = await getAmcRegister();
+    return rows.map(toTrackerRow);
 }
 
 // =============================================================================
@@ -160,6 +170,12 @@ export async function getContractorSummary(): Promise<AmcContractorSummary[]> {
  * Count contractors in amc_contractor_summary without fetching any rows.
  * `head: true` makes Supabase return only the exact counts — no data transfer.
  * Returns both the total row count and the count of Active-status contractors.
+ *
+ * The active filter is a prefix match, not equality. Since the view began
+ * reporting the AMC register's own status wording, "Active" is only one of
+ * several live values — "Active — terms partial" and "Active — term conflict"
+ * are equally active, just short of full evidence. An `.eq('Active')` would
+ * count 3 of the 8 engaged agreements and quietly under-report the deck.
  */
 export async function getContractorCounts(): Promise<{ total: number; active: number }> {
     const client = getSupabaseClient();
@@ -167,7 +183,7 @@ export async function getContractorCounts(): Promise<{ total: number; active: nu
 
     const [totalRes, activeRes] = await Promise.all([
         client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }),
-        client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }).eq('status', 'Active'),
+        client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }).ilike('status', 'Active%'),
     ]);
 
     if (totalRes.error) {
