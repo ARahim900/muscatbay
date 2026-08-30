@@ -315,6 +315,10 @@ Supabase MCP tools from a Claude session.)
 
 ## Establishing the framework: baselines & regression
 
+> The first executed baseline (2026-08-30) is recorded in
+> [`BASELINE.md`](./BASELINE.md) — read it for the current verdict and the
+> comparison record before running a new profile.
+
 1. `npm run k6:smoke` against the chosen environment → sanity.
 2. `npm run k6:load` twice, same window → confirm run-to-run variance is
    small (<10% on p95) before trusting any comparison.
