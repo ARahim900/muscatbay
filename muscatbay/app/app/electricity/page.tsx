@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
-import { StatsGrid } from "@/components/shared/stats-grid";
+import { HierarchyStatGrid } from "@/components/shared/hierarchy-stat-card";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
@@ -841,7 +841,7 @@ export default function ElectricityPage() {
                 ]}
             />
 
-            <StatsGrid stats={stats} />
+            <HierarchyStatGrid stats={stats} />
 
             {/* Period controls stay available, but no longer push the current
                 operational summary below the first phone viewport. */}

@@ -14,7 +14,7 @@
 
 import { useMemo, useState } from "react";
 import {
-    ResponsiveContainer, ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine,
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 import {
     Activity, Gauge, Droplets, Recycle, Truck, DollarSign, AlertTriangle,
@@ -23,6 +23,9 @@ import {
 import type { STPOperation } from "@/lib/mock-data";
 import { STP_THRESHOLDS } from "@/lib/thresholds";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -48,6 +51,15 @@ const TIP_STYLE = {
 } as const;
 
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
+
+/** Trailing window for the load-vs-recovery chart, in days. */
+type ChartRange = 7 | 30 | 90;
+
+const CHART_RANGES: ReadonlyArray<{ value: ChartRange; label: string }> = [
+    { value: 90, label: "Last 90 days" },
+    { value: 30, label: "Last 30 days" },
+    { value: 7, label: "Last 7 days" },
+];
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
@@ -249,6 +261,7 @@ export function PlantWatch({
 }) {
     const chartMotion = useChartMotion();
     const [attentionOnly, setAttentionOnly] = useState(false);
+    const [chartRange, setChartRange] = useState<ChartRange>(30);
     const model = useMemo(() => buildSTPModel(operations), [operations]);
     const metrics = useMemo(() => worstFirst(buildHealthMetrics(model)), [model]);
     const visibleMetrics = useMemo(
@@ -261,11 +274,20 @@ export function PlantWatch({
     );
     const findings = useMemo(() => buildSTPFindings(model), [model]);
 
-    // Consolidated load-vs-recovery chart — last ≤30 days for readability.
+    // Consolidated load-vs-recovery chart. The window is the reader's choice —
+    // 7d to see the last week's shape, 90d to judge whether a dip is a trend or
+    // a blip. 30d is the default because it matches the process-health tiles.
+    //
+    // `tse` is carried through RAW: buildSTPModel deliberately never clamps a
+    // negative TSE, because a below-zero reading is a data fault worth seeing.
+    // An area that dips under the axis is exactly the right way to show it.
     const chartData = useMemo(
-        () => model.days.slice(-30).map((d) => ({ day: d.dayLabel, inlet: d.inlet, tse: d.tse, eff: d.eff })),
-        [model.days],
+        () => model.days.slice(-chartRange).map((d) => ({
+            day: d.dayLabel, inlet: d.inlet, tse: d.tse, eff: d.eff,
+        })),
+        [model.days, chartRange],
     );
+    const rangeLabel = CHART_RANGES.find((r) => r.value === chartRange)?.label ?? "Last 30 days";
 
     if (model.days.length === 0) {
         return (
@@ -327,35 +349,111 @@ export function PlantWatch({
             {/* Consolidated load vs recovery */}
             <SectionBoundary title="Load vs recovery">
                 <Card className="card-elevated">
-                    <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2">
-                        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                            <Gauge className="h-4 w-4 text-secondary" aria-hidden="true" />
-                            Load vs Recovery — last {chartData.length} days
-                        </CardTitle>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Bars = daily inlet (hydraulic load, left axis, m³). Line = treatment efficiency (right axis, %); the dashed line is the {STP_THRESHOLDS.RECOVERY_GOOD}% target — dips below it are where recovery slipped.
-                        </p>
+                    <CardHeader className="card-elevated-header flex flex-col gap-3 p-4 pb-2 sm:flex-row sm:items-start sm:p-5 md:p-6">
+                        <div className="grid flex-1 gap-1">
+                            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                                <Gauge className="h-4 w-4 text-secondary" aria-hidden="true" />
+                                Load vs Recovery
+                            </CardTitle>
+                            <p className="text-xs text-muted-foreground">
+                                Daily inlet (hydraulic load) against the TSE sent to irrigation, both m³.
+                                The gap between the two bands is the water that never made it back out —
+                                recovery is {STP_THRESHOLDS.RECOVERY_GOOD}% or better on a good day, and the
+                                exact figure for any day is in the tooltip.
+                            </p>
+                        </div>
+                        {/* Base UI's Select.Value renders the raw value, not the
+                            matched item's text, so the value IS the label here —
+                            the same shape as every other Select in the app. */}
+                        <Select
+                            value={rangeLabel}
+                            onValueChange={(v) =>
+                                setChartRange(CHART_RANGES.find((r) => r.label === v)?.value ?? 30)
+                            }
+                        >
+                            <SelectTrigger
+                                className="w-full rounded-lg sm:ml-auto sm:w-[160px]"
+                                aria-label="Select the reporting window"
+                            >
+                                <SelectValue placeholder="Last 30 days" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                {CHART_RANGES.map((r) => (
+                                    <SelectItem key={r.value} value={r.label} className="rounded-lg">
+                                        {r.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-5 md:p-6 pt-2">
+                    <CardContent className="p-4 pt-2 sm:p-5 md:p-6">
                         <ResponsiveContainer width="100%" height={280}>
-                            <ComposedChart data={chartData} margin={{ top: 6, right: 8, left: -8, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-                                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "var(--chart-axis)" }} interval="preserveStartEnd" minTickGap={16} />
-                                <YAxis yAxisId="left" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} unit=" m³" width={64} />
-                                <YAxis yAxisId="right" orientation="right" domain={[0, 110]} tick={{ fontSize: 11, fill: "var(--chart-axis)" }} unit="%" />
+                            <AreaChart data={chartData} margin={{ top: 6, right: 8, left: -8, bottom: 0 }}>
+                                {/* Bands are LAYERED, not stacked. Stacking would draw a total of
+                                    inlet + TSE, which is not a quantity that exists: TSE is the
+                                    portion of the inlet that came back out, so it belongs inside
+                                    the inlet band, not on top of it. */}
+                                <defs>
+                                    <linearGradient id="stpFillInlet" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--chart-brand)" stopOpacity={0.55} />
+                                        <stop offset="95%" stopColor="var(--chart-brand)" stopOpacity={0.06} />
+                                    </linearGradient>
+                                    <linearGradient id="stpFillTse" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--chart-stp-primary)" stopOpacity={0.75} />
+                                        <stop offset="95%" stopColor="var(--chart-stp-primary)" stopOpacity={0.1} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                                <XAxis
+                                    dataKey="day"
+                                    tickLine={false}
+                                    axisLine={false}
+                                    tickMargin={8}
+                                    minTickGap={24}
+                                    tick={{ fontSize: 10, fill: "var(--chart-axis)" }}
+                                />
+                                <YAxis
+                                    tickLine={false}
+                                    axisLine={false}
+                                    width={64}
+                                    unit=" m³"
+                                    tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
+                                />
                                 <Tooltip
                                     contentStyle={TIP_STYLE}
-                                    cursor={{ fill: "var(--chart-cursor-fill)" }}
-                                    formatter={(v: TipValue, name) => {
-                                        if (name === "Efficiency") return [v != null ? `${Number(v).toFixed(1)}%` : "—", name];
-                                        return [`${num(Number(v))} m³`, name];
+                                    cursor={{ stroke: "var(--chart-axis)", strokeOpacity: 0.35 }}
+                                    formatter={(v: TipValue, name) => [`${num(Number(v))} m³`, name]}
+                                    labelFormatter={(label, payload) => {
+                                        // Recovery is the point of the chart, so it rides on the
+                                        // tooltip label rather than costing a second axis.
+                                        // Recharts types `label` as ReactNode and overloads
+                                        // `payload`, so narrow both rather than casting to any.
+                                        const first = Array.isArray(payload) ? payload[0] : undefined;
+                                        const point = first?.payload as { eff?: number | null } | undefined;
+                                        const eff = point?.eff;
+                                        return eff == null ? label : `${String(label)} · ${eff.toFixed(1)}% recovered`;
                                     }}
                                 />
                                 <Legend wrapperStyle={{ fontSize: 11, color: "var(--foreground)" }} />
-                                <ReferenceLine yAxisId="right" y={STP_THRESHOLDS.RECOVERY_GOOD} stroke="var(--mb-success)" strokeDasharray="4 4" ifOverflow="extendDomain" />
-                                <Bar yAxisId="left" dataKey="inlet" name="Inlet load" fill="var(--chart-brand)" radius={[3, 3, 0, 0]} maxBarSize={22} {...chartMotion}/>
-                                <Line yAxisId="right" dataKey="eff" name="Efficiency" stroke="var(--chart-stp-primary)" strokeWidth={2} dot={false} connectNulls {...chartMotion}/>
-                            </ComposedChart>
+                                <Area
+                                    dataKey="inlet"
+                                    name="Inlet load"
+                                    type="natural"
+                                    fill="url(#stpFillInlet)"
+                                    stroke="var(--chart-brand)"
+                                    strokeWidth={2}
+                                    {...chartMotion}
+                                />
+                                <Area
+                                    dataKey="tse"
+                                    name="TSE to irrigation"
+                                    type="natural"
+                                    fill="url(#stpFillTse)"
+                                    stroke="var(--chart-stp-primary)"
+                                    strokeWidth={2}
+                                    {...chartMotion}
+                                />
+                            </AreaChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
