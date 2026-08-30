@@ -1013,6 +1013,8 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-30 — docs(load-testing): record first executed baseline (50-concurrent run + prod DB profile)
+- 2026-08-30 — feat(load-testing): k6 + Artillery scalability harness (50 VU / 5 min)
 - 2026-08-31 — feat(stp,electricity): interactive load-vs-recovery chart and Water-style KPI tiles
 - 2026-08-30 — feat(contractors): make amc_register the sole AMC source (ACT-012)
 - 2026-08-30 — fix(a11y,perf): logo restore, WebGL gating, chart code-splitting and container queries
