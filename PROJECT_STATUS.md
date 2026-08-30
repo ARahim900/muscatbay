@@ -1114,3 +1114,4 @@ Do not hand-edit existing entries; curate meaning in the sections above.
 | `muscatbay/app/ARCHITECTURE.md`, `README.md` | Architecture snapshots | 2026-05 snapshot |
 | `muscatbay/app/DATABASE_AUDIT.md`, `AUTHENTICATION_AUDIT_REPORT.md` | Point-in-time audits | 2026-06 / earlier |
 | `muscatbay/app/sql/migrations/` | Schema & data-load history (files are the DB change log) | append-only |
+| `load-testing/README.md` | Load-testing harness (k6 primary + Artillery): 50-VU/5-min profiles, secure Bearer/Cookie auth, p50/p95/error gates, API-vs-DB interpretation guide. Journeys mirror `functions/api/*` reads — **update the mirrored queries in `load-testing/` whenever a reader changes** | 2026-08-30 |

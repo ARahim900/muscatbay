@@ -1,0 +1,131 @@
+# Muscat Bay — Artillery load test (equivalent of k6/loadtest.js)
+#
+# Artillery drives an OPEN workload model: it injects new virtual users at an
+# arrival RATE, whereas k6's ramping-vus holds a fixed CLOSED pool of users.
+# "50 concurrent users" is therefore approximated here via Little's law
+# (concurrency L = arrival rate λ × mean journey duration W):
+#   each journey below lasts ≈ 6–7 s (requests + think time), so λ = 8/s
+#   gives L ≈ 50–56 concurrent users, hard-capped by maxVusers: 50.
+# If you change the think times or add requests, retune arrivalRate ≈ 50 / W.
+# For the strict fixed-50-VU exercise, prefer the k6 script — that is why k6
+# is the primary tool in this framework.
+#
+# Auth (requirement: secure Bearer/Cookie injection) comes exclusively from
+# environment variables, read by processor.cjs at runtime — no secret ever
+# appears in this file or in the report output. See README §Authentication.
+#
+# Run (from load-testing/, after `set -a; . ./.env; set +a`):
+#   npm run artillery:smoke     # short sanity pass first
+#   npm run artillery:load      # 5-minute, ~50-concurrent run
+#
+# Env used: BASE_URL (required), SUPABASE_URL + SUPABASE_ANON_KEY (enable the
+# api tier), AUTH_TOKEN (Bearer JWT), SESSION_COOKIE (page-tier Cookie).
+#
+# Differences vs the k6 script, accepted for simplicity: requests run
+# sequentially within a journey (no browser-style parallel batch), and the
+# exact-count HEAD probe on water_monthly_consumption is omitted (HEAD is not
+# a first-class Artillery step). The k6 script remains the reference workload.
+
+config:
+  target: "{{ $env.BASE_URL }}"
+  processor: "./processor.cjs"
+  phases:
+    - name: ramp-up # 1 minute ramping into the load
+      duration: 60
+      arrivalRate: 1
+      rampTo: 8
+    - name: sustain # 3.5 minutes at ~50 concurrent users
+      duration: 210
+      arrivalRate: 8
+    - name: ramp-down # 30 s tail
+      duration: 30
+      arrivalRate: 8
+      rampTo: 1
+  maxVusers: 50
+  http:
+    timeout: 30
+  defaults:
+    headers:
+      user-agent: "MuscatBay-LoadTest/1.0 (artillery; load-testing/artillery/loadtest.yml)"
+  plugins:
+    # p50/p95/error-rate gates — the Artillery counterpart of k6 thresholds.
+    # `http.response_time` percentiles appear in every summary; ensure turns
+    # them into a pass/fail exit code for CI use.
+    ensure: {}
+    # Per-endpoint latency breakdown (the k6 per-endpoint Trends equivalent):
+    # every named request gets its own p50/p95 block in the report.
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+  ensure:
+    thresholds:
+      - http.response_time.p50: 500
+      - http.response_time.p95: 1500
+    maxErrorRate: 1 # percent
+
+# Shared shape for every Supabase PostgREST read. `prepRest` (processor.cjs)
+# fills url* vars from the environment; when SUPABASE_URL/ANON_KEY are unset
+# the vars stay empty and `ifTrue` skips the request — pages-only mode, same
+# as the k6 script.
+_templates:
+  restHeaders: &restHeaders
+    apikey: "{{ restApikey }}"
+    authorization: "{{ restAuthz }}"
+    accept: "application/json"
+
+scenarios:
+  # Same journeys and weights as k6/loadtest.js: the page shell, then the
+  # PostgREST reads that page performs on mount (mirrored from
+  # muscatbay/app/functions/api/* — same tables, columns, order, paging).
+  - name: dashboard
+    weight: 35
+    flow:
+      - function: prepRest
+      - get:
+          name: "page /"
+          url: "/"
+          beforeRequest: setPageAuth
+      - get: { name: "rest water_meters", url: "{{ urlWaterMeters }}", ifTrue: "urlWaterMeters", headers: *restHeaders }
+      - get: { name: "rest electricity_meters", url: "{{ urlElecMeters }}", ifTrue: "urlElecMeters", headers: *restHeaders }
+      - get: { name: "rest electricity_readings", url: "{{ urlElecReadingsP1 }}", ifTrue: "urlElecReadingsP1", headers: *restHeaders }
+      - get: { name: "rest stp_operations", url: "{{ urlStpOperations }}", ifTrue: "urlStpOperations", headers: *restHeaders }
+      - think: 4
+
+  - name: water
+    weight: 30
+    flow:
+      - function: prepRest
+      - get:
+          name: "page /water"
+          url: "/water"
+          beforeRequest: setPageAuth
+      - get: { name: "rest water_meters", url: "{{ urlWaterMeters }}", ifTrue: "urlWaterMeters", headers: *restHeaders }
+      - get: { name: "rest water_monthly_consumption", url: "{{ urlWaterMonthlyP1 }}", ifTrue: "urlWaterMonthlyP1", headers: *restHeaders }
+      - get: { name: "rest water_monthly_consumption", url: "{{ urlWaterMonthlyP2 }}", ifTrue: "urlWaterMonthlyP2", headers: *restHeaders }
+      - get: { name: "rest water_daily_consumption", url: "{{ urlWaterDaily }}", ifTrue: "urlWaterDaily", headers: *restHeaders }
+      - get: { name: "rest water_loss_summary", url: "{{ urlWaterLossSummary }}", ifTrue: "urlWaterLossSummary", headers: *restHeaders }
+      - get: { name: "rest water_loss_daily", url: "{{ urlWaterLossDaily }}", ifTrue: "urlWaterLossDaily", headers: *restHeaders }
+      - think: 4
+
+  - name: electricity
+    weight: 20
+    flow:
+      - function: prepRest
+      - get:
+          name: "page /electricity"
+          url: "/electricity"
+          beforeRequest: setPageAuth
+      - get: { name: "rest electricity_meters", url: "{{ urlElecMeters }}", ifTrue: "urlElecMeters", headers: *restHeaders }
+      - get: { name: "rest electricity_readings", url: "{{ urlElecReadingsP1 }}", ifTrue: "urlElecReadingsP1", headers: *restHeaders }
+      - get: { name: "rest electricity_readings", url: "{{ urlElecReadingsP2 }}", ifTrue: "urlElecReadingsP2", headers: *restHeaders }
+      - think: 3
+
+  - name: stp
+    weight: 15
+    flow:
+      - function: prepRest
+      - get:
+          name: "page /stp"
+          url: "/stp"
+          beforeRequest: setPageAuth
+      - get: { name: "rest stp_operations", url: "{{ urlStpOperations }}", ifTrue: "urlStpOperations", headers: *restHeaders }
+      - think: 3

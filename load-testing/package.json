@@ -1,0 +1,22 @@
+{
+  "name": "muscatbay-load-testing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "k6 + Artillery load-testing harness for the Muscat Bay utility app (see README.md)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "mock": "node scripts/mock-target.mjs",
+    "token": "node scripts/get-token.mjs",
+    "k6:smoke": "k6 run -e PROFILE=smoke k6/loadtest.js",
+    "k6:load": "k6 run -e PROFILE=load k6/loadtest.js",
+    "k6:stress": "k6 run -e PROFILE=stress k6/loadtest.js",
+    "artillery:smoke": "artillery run artillery/loadtest.yml --overrides '{\"config\":{\"phases\":[{\"duration\":15,\"arrivalRate\":2}],\"maxVusers\":5}}'",
+    "artillery:load": "artillery run artillery/loadtest.yml --output results/artillery-$(date +%Y%m%dT%H%M%S).json"
+  },
+  "devDependencies": {
+    "artillery": "^2.0.21"
+  }
+}

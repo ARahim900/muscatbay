@@ -23,6 +23,7 @@
 | **Build** | `cd muscatbay/app && npm run build` |
 | **Lint** | `cd muscatbay/app && npm run lint` |
 | **Test** | `cd muscatbay/app && npm run test` |
+| **Load test** | `cd load-testing && npm install && npm run k6:smoke` — k6 (primary) + Artillery harness, see `load-testing/README.md`. Mirrors `functions/api/*` queries: update `load-testing/` when a reader changes |
 | **Deploy** | Vercel (auto-deploy from main) |
 | **Mobile app** | `mobile/` — Expo SDK 57 + Expo Router + NativeWind |
 | **Mobile run** | `cd mobile && npm install && npx expo start` (scan QR with Expo Go) |

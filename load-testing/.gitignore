@@ -1,0 +1,12 @@
+# Secrets — the env template is the only env file that belongs in git
+.env
+.env.*
+!.env.example
+
+# Tooling
+node_modules/
+
+# Run artifacts (JSON summaries can be large; keep them local or attach to
+# the perf log deliberately)
+results/*
+!results/.gitkeep
