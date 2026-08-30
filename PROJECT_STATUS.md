@@ -1013,6 +1013,8 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-08-30 — feat(contractors): make amc_register the sole AMC source (ACT-012)
+- 2026-08-30 — fix(a11y,perf): logo restore, WebGL gating, chart code-splitting and container queries
 - 2026-08-29 — fix(auth): close the open redirect on /auth/callback's ?next= (#72)
 - 2026-08-29 — fix(auth): stop the double PKCE redemption that failed every Google sign-in (#71)
 - 2026-08-28 — fix(auth): serve one canonical host so Google sign-in works on every domain (#70)
