@@ -1,7 +1,7 @@
 /**
  * Typography primitives.
  *
- * Geist ships to React Native as one font file per weight, so weight is chosen
+ * Inter ships to React Native as one font file per weight, so weight is chosen
  * by family (`font-sans-semibold`) rather than by `fontWeight`. Routing every
  * label through these components keeps that detail in one place and keeps the
  * type scale (BRAND_DESIGN.md §3) consistent across screens.

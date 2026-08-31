@@ -56,9 +56,13 @@ export function PageHeader({ title, description, className, showBreadcrumbs = tr
                     className={cn("transition-design", accentColor && "border-s-[3px] ps-3")}
                     style={accentColor ? { borderColor: accentColor } : undefined}
                 >
-                    <h1 className="text-2xl sm:text-3xl md:text-[2.125rem] font-bold tracking-tight md:leading-[1.15]">{title}</h1>
+                    {/* Main headline — Inter SemiBold at the display end of the opsz axis;
+                        tracking-tight (-0.025em) matches Inter's recommended tightening at
+                        these sizes. 600 (not 700) keeps every heading in the app on one
+                        weight — BRAND_DESIGN.md §3 "Heading Rule". */}
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight md:leading-[1.15]">{title}</h1>
                     {description && (
-                        <p className="text-sm sm:text-[0.9375rem] text-muted-foreground mt-1.5 sm:mt-2 leading-relaxed">{description}</p>
+                        <p className="text-sm sm:text-[0.9375rem] text-muted-foreground mt-1.5 sm:mt-2 leading-relaxed max-w-prose">{description}</p>
                     )}
                 </div>
                 <div className="flex items-center gap-2">

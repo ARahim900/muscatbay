@@ -5,19 +5,26 @@ import { Providers } from "@/components/providers/app-providers";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Inter } from "next/font/google";
 
-// Geist — modern, precise, elegant UI face that suits the dark-first BMS tone.
+// Inter — the UI face for headings AND body (directed by Rahim 2026-08-31,
+// superseding the 2026-08-30 "Geist stands" decision — see BRAND_DESIGN.md §3).
 // Variable font (100–900), so font-medium/semibold/bold AND font-extrabold (800)
 // and font-black (900) are all genuine weights — nothing synthesises a faux weight.
-const geistSans = Geist({
+// The `opsz` axis loads Inter's optical-size range (14–32): small UI text renders
+// the text grade, large headlines automatically get the Display grade with its
+// tighter built-in spacing — the "UI-optimised" behaviour Inter is designed for.
+const interSans = Inter({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-sans",
+  axes: ["opsz"],
 });
 
 // Geist Mono — meter IDs, account numbers and other genuine mono content
 // (wired to --font-mono and consumed by the .meter rule in globals.css).
+// Deliberately kept through the Inter switch: the brand framework prescribes
+// no monospace face, and tabular identifiers need one.
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
@@ -116,7 +123,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
-      <body className={`${geistSans.className} ${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className={`${interSans.className} ${interSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <RegisterSW />
         <Providers>
           <NotificationProvider>

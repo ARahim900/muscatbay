@@ -110,20 +110,22 @@ muscatbay/app/
 - Brand colors: primary `#4E4456` (purple), accent `#A1D1D5` (soft teal)
 - **Authoritative brand spec**: `BRAND_DESIGN.md` (overrides any older tokens elsewhere)
 - Full design system also documented in `muscatbay/app/DESIGN_SYSTEM.md`
-- Fonts: **Geist** (UI/body, `--font-sans`) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, resolved through the `@theme inline` block in `app/globals.css`. Never re-declare `font-family` elsewhere. Geist is a **variable font (100–900)**, so every Tailwind weight is a genuine glyph: `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all render real weights — no faux synthesis.
+- Fonts: **Inter** (UI/body/headings, `--font-sans`) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, resolved through the `@theme inline` block in `app/globals.css`. Never re-declare `font-family` elsewhere. Inter is a **variable font (100–900)** loaded with its **`opsz` optical-size axis** (small text renders the text grade, large headlines the tighter Display grade — do not drop the axis), so every Tailwind weight is a genuine glyph: `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all render real weights — no faux synthesis. Adopted 2026-08-31 on the owner's direction, superseding Geist — decision history in `BRAND_DESIGN.md` §3. Main headline spec: Inter SemiBold (600), `text-2xl sm:text-3xl md:text-4xl`, `tracking-tight`; descriptions: Inter Regular, 14→15px, `text-muted-foreground`.
 
 > ⚠️ **`muscatbay/app/tailwind.config.ts` is DEAD CONFIGURATION.** Tailwind 4
 > only loads a JS config via an explicit `@config` directive, and `globals.css`
 > has none — so that file's `fontSize`, `borderRadius`, `boxShadow` and `colors`
 > blocks have **zero effect**. Everything real lives in the `@theme inline`
-> block in `app/globals.css`. Edit tokens there. (Consequence: `text-lg`/`text-xl`
-> are Tailwind's stock 18px/20px, not the 15px/15.75px `DESIGN_SYSTEM.md` claims.)
+> block in `app/globals.css`. Edit tokens there. (Consequence: `text-*` utilities
+> are Tailwind's stock sizes — `text-sm` 14px, `text-lg` 18px, `text-xl` 20px. The
+> legacy `--font-size-*` tokens were removed from `globals.css` on 2026-08-31.)
 
-> ⚠️ **Two known doc-vs-code conflicts where the CODE is correct.**
-> `BRAND_DESIGN.md` §3 names **Inter**; the app ships **Geist**.
+> ⚠️ **One known doc-vs-code conflict where the CODE is correct.**
 > `BRAND_DESIGN.md` §2.3/§8 give text-on-teal as `#FFFFFF` (~1.5:1), which
 > contradicts that same doc's own §10 accessibility table; `globals.css` uses
 > `--secondary-foreground: #1F2937` (~10:1) and that is what to follow.
+> (The former Geist-vs-Inter font conflict was resolved 2026-08-31 — the app
+> now ships **Inter**, and `BRAND_DESIGN.md` §3 records the decision.)
 
 ### Components
 - **UI primitives**: shadcn/ui (base-vega style) in `components/ui/`
@@ -263,7 +265,7 @@ Add these only on an explicit, current instruction from the owner.
 
 ## Design Context
 
-> Full spec: [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins — **except** for the two documented cases above (Geist vs Inter, and text-on-teal contrast) where the code is correct and the doc is not.
+> Full spec: [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins — **except** for the one documented case above (text-on-teal contrast) where the code is correct and the doc is not.
 
 ### Users
 Operations staff and facility/asset managers at Muscat Bay (water, electricity, STP, assets, contractors, HVAC, pest, fire). Secondary: executives on the dashboard. Field: tablet users in control rooms and on-site, sometimes gloved or in night-shift lighting. Live Supabase data — never assume demo mode.

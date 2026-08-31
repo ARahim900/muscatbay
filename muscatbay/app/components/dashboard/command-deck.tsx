@@ -171,16 +171,19 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                         >
                             <Breadcrumbs />
                         </div>
+                        {/* Same headline spec as PageHeader — Inter SemiBold 600,
+                            24/30/36px, tracking-tight — so the deck and the module
+                            pages read as one system. */}
                         <h1
                             data-deck-item
-                            className="text-2xl sm:text-3xl md:text-[2.1rem] font-bold tracking-tight text-white print:text-(--primary)"
+                            className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight text-white print:text-(--primary)"
                         >
                             {title}
                         </h1>
                         {description && (
                             <p
                                 data-deck-item
-                                className="mt-1.5 text-xs sm:text-sm text-white/70 print:text-(--muted-foreground)"
+                                className="mt-1.5 text-sm sm:text-[0.9375rem] leading-relaxed text-white/70 print:text-(--muted-foreground)"
                             >
                                 {description}
                             </p>

@@ -81,8 +81,8 @@ const config: ExpoConfig = {
     [
       'expo-font',
       {
-        // Geist is bundled from @expo-google-fonts and loaded at runtime in
-        // src/app/_layout.tsx; listing the plugin keeps native builds consistent.
+        // Inter (and Geist Mono) are bundled from @expo-google-fonts and loaded at
+        // runtime in src/app/_layout.tsx; listing the plugin keeps native builds consistent.
         fonts: [],
       },
     ],

@@ -1,13 +1,15 @@
 import '~/global.css';
 
 // Imported by weight subpath, not from the package root: the root barrel
-// re-exports all 18 Geist instances and Metro then bundles every one of them
-// (~1.6 MB of unused TTFs). These five are the only faces the app renders.
-import { Geist_400Regular } from '@expo-google-fonts/geist/400Regular';
-import { Geist_500Medium } from '@expo-google-fonts/geist/500Medium';
-import { Geist_600SemiBold } from '@expo-google-fonts/geist/600SemiBold';
-import { Geist_700Bold } from '@expo-google-fonts/geist/700Bold';
+// re-exports all 18 Inter instances and Metro then bundles every one of them
+// (megabytes of unused TTFs). These five are the only faces the app renders.
+// Inter for UI text mirrors the web app (Rahim's 2026-08-31 direction — see
+// BRAND_DESIGN.md §3); Geist Mono stays for meter IDs and account numbers.
 import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono/400Regular';
+import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
+import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';
+import { Inter_600SemiBold } from '@expo-google-fonts/inter/600SemiBold';
+import { Inter_700Bold } from '@expo-google-fonts/inter/700Bold';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -60,10 +62,10 @@ function RootNavigator() {
   const { theme, colors, ready: settingsReady } = useTheme();
 
   const [fontsLoaded, fontError] = useFonts({
-    Geist_400Regular,
-    Geist_500Medium,
-    Geist_600SemiBold,
-    Geist_700Bold,
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
     GeistMono_400Regular,
   });
 

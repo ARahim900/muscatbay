@@ -105,7 +105,7 @@ const config: Config = {
                     'monospace',
                 ],
             },
-            // Geist is a variable font (100–900), so every weight below is a genuine
+            // Inter is a variable font (100–900), so every weight below is a genuine
             // glyph — including extrabold (800) and black (900). No capping needed.
             fontWeight: {
                 normal: '400',

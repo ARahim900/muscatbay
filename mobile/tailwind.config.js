@@ -89,14 +89,14 @@ module.exports = {
         DEFAULT: '10.5px',
       },
       fontFamily: {
-        // Geist ships to React Native as static instances (one file per weight),
+        // Inter ships to React Native as static instances (one file per weight),
         // so each weight is its own family. Named `sans-*` to avoid colliding
         // with Tailwind's `font-medium` / `font-bold` fontWeight utilities,
         // which do nothing useful for a static-instance font on iOS.
-        sans: ['Geist_400Regular'],
-        'sans-medium': ['Geist_500Medium'],
-        'sans-semibold': ['Geist_600SemiBold'],
-        'sans-bold': ['Geist_700Bold'],
+        sans: ['Inter_400Regular'],
+        'sans-medium': ['Inter_500Medium'],
+        'sans-semibold': ['Inter_600SemiBold'],
+        'sans-bold': ['Inter_700Bold'],
         mono: ['GeistMono_400Regular'],
       },
       fontSize: {

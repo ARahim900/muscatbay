@@ -106,39 +106,51 @@ For multi-series charts use the chart slots; for domain-specific charts, layer w
 
 ### Font family
 
-**Inter** (variable, weights 400/500/600/700/800), loaded once via `next/font/google` in `app/layout.tsx` and exposed through `--font-sans`. The font is wired through `tailwind.config.ts` `fontFamily.sans` so every Tailwind `font-sans` class — and every element under `<body>` — resolves to Inter.
+**Inter** (variable, 100–900, with the `opsz` optical-size axis) for UI, body
+and headings, plus **Geist Mono** for genuine mono content (meter IDs, account
+numbers, via the `.meter` rule). Both are loaded once via `next/font/google` in
+`app/layout.tsx` and resolved through the `@theme inline` block in
+`app/globals.css` (`tailwind.config.ts` is dead configuration — Tailwind 4
+never reads it). The `opsz` axis is what makes Inter behave as designed:
+small text renders the sturdier text grade, large headlines automatically get
+the Display grade with its tighter built-in spacing.
+
+Adopted 2026-08-31 on Rahim's direction, superseding Geist (see
+`BRAND_DESIGN.md` §3 for the full decision history).
 
 **Never re-declare `font-family` anywhere.** That was the root cause of the cross-section font drift fixed in commit `08ec7fe`. The CSS variable is the single source of truth.
 
 ```ts
 // app/layout.tsx — one place, no exceptions
-import { Inter } from "next/font/google";
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans",
-                       weight: ["400", "500", "600", "700", "800"] });
+import { Geist_Mono, Inter } from "next/font/google";
+const interSans = Inter({ subsets: ["latin"], display: "swap",
+                          variable: "--font-sans", axes: ["opsz"] });
+const geistMono = Geist_Mono({ subsets: ["latin"], display: "swap",
+                               variable: "--font-mono" });
 ```
 
-```ts
-// tailwind.config.ts
-fontFamily: {
-  sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif', ...],
-}
+```css
+/* app/globals.css — @theme inline exposes the next/font variables to Tailwind */
+--font-sans: var(--font-sans);
+--font-mono: var(--font-mono);
 ```
 
 ### Type scale
 
-Sizes live as Tailwind tokens. Avoid arbitrary `text-[Npx]` outside this scale.
-
-| Token | Size | Tailwind class | Use for |
-|-------|------|----------------|---------|
-| `--font-size-xs` | `12.25px` | `text-xs` | Captions, micro-text, badges |
-| `--font-size-sm` | `14px` | `text-sm` | Labels, button text |
-| `--font-size-base` | `14px` | `text-base` | Body text |
-| `--font-size-lg` | `15px` | `text-lg` | Larger body |
-| `--font-size-xl` | `15.75px` | `text-xl` | H1/H3 headings |
+Text utilities are **Tailwind stock values** (`text-xs` 12px, `text-sm` 14px,
+`text-base` 16px, `text-lg` 18px, `text-xl` 20px…). The legacy `--font-size-*`
+tokens that used to be documented here were referenced by nothing and were
+removed from `globals.css` on 2026-08-31. Most chrome and table text sits on
+`text-xs`/`text-sm`; avoid arbitrary `text-[Npx]` outside the specs below.
 
 ### Heading rule
 
 All `h1–h6` use `font-semibold tracking-tight`. Color is `text-primary` in light mode, `text-foreground` in dark.
+
+**Main headline** (`PageHeader` and command-deck `<h1>`): Inter SemiBold (600),
+`text-2xl sm:text-3xl md:text-4xl` (24 → 30 → 36px), `tracking-tight`.
+**Description below it**: Inter Regular (400), `text-sm sm:text-[0.9375rem]`
+(14 → 15px), `leading-relaxed`, `text-muted-foreground`, `max-w-prose`.
 
 ### KPI values (overrides the base scale)
 

@@ -361,15 +361,13 @@
   --radius-md: 7px;
   --radius-lg: 10.5px;
 
-  /* Typography Scale */
-  --font-size-xs: 12.25px;
-  --font-size-sm: 14px;
-  --font-size-base: 14px;
-  --font-size-lg: 15px;
-  --font-size-xl: 15.75px;
-  --line-height-tight: 20px;
-  --line-height-normal: 21px;
-  --line-height-relaxed: 24.5px;
+  /* Typography — Inter (UI/body/headings) + Geist Mono, both loaded once in
+   * app/layout.tsx and resolved through the @theme inline block above. The
+   * text-* / leading-* utilities are Tailwind stock values on purpose; the
+   * legacy --font-size-* / --line-height-* tokens that used to sit here were
+   * referenced by nothing and were removed 2026-08-31 so nobody designs
+   * against a scale the app never applied. The real, shipped type ramp is
+   * documented in BRAND_DESIGN.md §3. */
 }
 
 .dark {

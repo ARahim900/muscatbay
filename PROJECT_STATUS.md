@@ -33,7 +33,7 @@ in one Next.js app backed by Supabase.
 | Backend | Supabase project `utnlgeuqajmwibqmdmgt` (ap-northeast-1) — Postgres 17, Auth, Realtime |
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (156 tests), ESLint, `tsc --noEmit`, `next build` — all green as of 2026-07-10 |
+| Tests / checks | Vitest (322 tests), ESLint, `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-08-31 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -947,14 +947,16 @@ stops at last month" problem is structurally closed:
     export, so it can be re-imported by accident — delete it in a follow-up.
   - `lib/config.ts` `CHART_COLORS` and the `color` fields in `lib/mock-data.ts`
     still hold raw hexes. Neither is read by any rendered chart today.
-  - `BRAND_DESIGN.md` §3 and `DESIGN_SYSTEM.md` §3 still name **Inter** as the
-    font family; `app/layout.tsx` (and `CLAUDE.md`) ship **Geist**. Separately,
+  - ~~`BRAND_DESIGN.md` §3 and `DESIGN_SYSTEM.md` §3 still name **Inter** as
+    the font family while the app ships Geist~~ — **resolved 2026-08-31**: the
+    app now ships **Inter** (owner's direction; `BRAND_DESIGN.md` §3 records
+    the decision history, including the retained Geist Mono). Still open:
     `BRAND_DESIGN.md` §2.3/§8 give text-on-brand-teal as `#FFFFFF`, which is
     ~1.5:1 on `--secondary` `#A1D1D5` and contradicts that doc's own §10
     accessibility table; `globals.css` and `DESIGN_SYSTEM.md` §2.1 use
     `--secondary-foreground` `#1F2937` (~10:1) and the 2026-07-25 pass
-    standardised every teal surface on that. Both are doc edits an owner should
-    make — the code is already correct.
+    standardised every teal surface on that. That one is a doc edit an owner
+    should make — the code is already correct.
 
 ## 4b. O&M scope — what this app deliberately is not
 
@@ -978,6 +980,16 @@ tables that no screen reads.
 
 ## 5. In-flight work (open PRs)
 
+- **Typography — Inter adoption (2026-08-31)** — draft PR from branch
+  `claude/typography-font-sizing-7shsei`. On the owner's direction the UI face
+  switched **Geist → Inter** (variable, with the `opsz` optical-size axis;
+  Geist Mono kept for meter IDs) in both the web app and `mobile/`
+  (`@expo-google-fonts/inter`). Main headlines (`PageHeader` + command deck)
+  unified on Inter SemiBold 600, 24→30→36px, `tracking-tight`; descriptions on
+  Inter Regular 14→15px `text-muted-foreground`. Dead `--font-size-*` /
+  `--line-height-*` tokens removed from `globals.css`; `BRAND_DESIGN.md` §3,
+  `DESIGN_SYSTEM.md` §3 and `CLAUDE.md` realigned (the Geist-vs-Inter doc
+  conflict in §4 is resolved).
 - **#49 Front-end & O&M review remediation + Expo mobile foundation** — draft,
   active. Contents described in §2 (2026-07-25). Also introduces `mobile/`, an
   **Expo Router native app**: the web app is a PWA and a PWA cannot be listed

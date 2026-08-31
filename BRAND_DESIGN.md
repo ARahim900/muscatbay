@@ -417,67 +417,77 @@ is the app's one large solid brand field besides the sidebar. Row selection is
 
 ### Font Family
 
-**Geist** (UI/body) with **Geist Mono** for genuine mono content. Both are
-loaded once via `next/font/google` in
+**Inter** (UI/body/headings) with **Geist Mono** for genuine mono content. Both
+are loaded once via `next/font/google` in
 [`app/layout.tsx`](muscatbay/app/app/layout.tsx) and exposed to Tailwind through
 the `@theme inline` block in `globals.css`. **Never re-declare `font-family`
 anywhere else.**
 
 | Role | Face | CSS variable | Tailwind | Applied by |
 |------|------|-------------|----------|-----------|
-| Body / UI / headings | **Geist** | `--font-sans` | `font-sans` | `body { @apply font-sans }` — everything inherits |
+| Body / UI / headings | **Inter** | `--font-sans` | `font-sans` | `body { @apply font-sans }` — everything inherits |
 | Mono | **Geist Mono** | `--font-mono` | `font-mono` | the `.meter` rule (meter IDs, account numbers) |
 
-Geist is a variable font (100–900), so `font-medium` (500), `font-semibold`
-(600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all
-render real weights — nothing synthesises a faux weight.
+Both are loaded as **variable fonts (100–900)** with `display: "swap"` and the
+`latin` subset, so `font-medium` (500), `font-semibold` (600), `font-bold`
+(700), `font-extrabold` (800) and `font-black` (900) all render real weights —
+nothing synthesises a faux weight. Inter is additionally loaded with its
+**`opsz` optical-size axis (14–32)**: browsers interpolate the grade to the
+rendered size, so small UI text gets the sturdier text cut and large headlines
+automatically get the Display cut with its tighter built-in spacing. This is
+the "UI-optimised" behaviour Inter is designed around — do not drop the axis.
 
-> **Deviation from MB-BDF v1.0, accepted by Rahim on 2026-08-30.** The framework
-> mandates Roboto Slab for headings and Inter for body. That pair was trialled
-> and rejected on sight: the slab headings read as obtrusive against this
-> product's dense operational tables, and Inter's UI weights render noticeably
-> thinner than Geist's at dashboard sizes. Geist stands. Headings keep the
-> framework's other rules — sentence case, token-driven colour, tabular figures.
-> Do not re-apply the Roboto Slab/Inter pair without asking him first.
-
-All three are loaded as **variable fonts (100–900)** with `display: "swap"` and
-the `latin` subset. Every Tailwind weight is therefore a real glyph — `font-medium`
-(500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and
-`font-black` (900) — nothing synthesises a faux weight.
+> **Decision history, so it is not re-litigated.**
+> *2026-08-30:* MB-BDF v1.0's Roboto Slab (headings) + Inter (body) pair was
+> trialled and rejected on sight — slab headings read as obtrusive against the
+> dense operational tables — and Geist stood for everything.
+> *2026-08-31:* **Rahim directed the switch to Inter for headings AND body** —
+> headlines in Inter SemiBold with tight tracking, body/description text in
+> Inter Regular — superseding the Geist decision. The earlier concern that
+> Inter's UI weights render thin at dashboard sizes is addressed by the `opsz`
+> axis (real optical grades) and by SemiBold headline weight. Roboto Slab
+> remains rejected: **headings deliberately use Inter, not the framework's
+> slab** — do not re-apply Roboto Slab without asking Rahim first. Headings
+> keep the framework's other rules — sentence case, token-driven colour,
+> tabular figures. **Geist Mono was deliberately kept** — the framework
+> prescribes no monospace face, and tabular identifiers need one.
 
 ```css
-/* headings and body share one face — Geist, via next/font's fallback stack */
+/* headings and body share one face — Inter, via next/font's fallback stack */
 font-family: var(--font-sans);
 
 /* .meter cells only */
 font-family: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
 ```
 
-**History, so it is not re-litigated:** the app shipped **Geist** for both
-headings and body before the framework landed. Geist is retired for UI text.
-Geist Mono was deliberately **kept** — MB-BDF v1.0 governs headings and body/UI
-and prescribes no monospace face, and tabular identifiers need one.
-`--font-display` is declared self-referentially in `@theme inline` (the same
-shape as `--font-sans`) purely to expose the `font-display` utility; the
-Georgia fallback lives on the `h1–h6` rule, **not** in the theme value — putting
-it there would make the `:root` declaration self-referential *and*
-fallback-bearing, which resolves to nothing.
-
 ### Type Scale
 
-⚠️ **These tokens exist but Tailwind does not read them.**
-`tailwind.config.ts` is dead configuration — Tailwind 4 only loads a JS config
-behind an explicit `@config` directive and `globals.css` has none. So
-`text-lg`/`text-xl` are Tailwind's stock **18px/20px**, not the values below.
-The `--font-size-*` tokens are currently referenced by nothing in the app.
+Text utilities are **Tailwind stock values** on purpose (`text-sm` 14px,
+`text-base` 16px, `text-lg` 18px, `text-xl` 20px…): `tailwind.config.ts` is
+dead configuration — Tailwind 4 only loads a JS config behind an explicit
+`@config` directive and `globals.css` has none. The legacy `--font-size-*` /
+`--line-height-*` tokens that once shadowed this scale were referenced by
+nothing and were **removed from `globals.css` on 2026-08-31** so nobody designs
+against values the app never applied.
 
-| Token | Value | Line-height token | Value |
-|-------|-------|-------------------|-------|
-| `--font-size-xs` | `12.25px` | `--line-height-tight` | `20px` |
-| `--font-size-sm` | `14px` | `--line-height-normal` | `21px` |
-| `--font-size-base` | `14px` | `--line-height-relaxed` | `24.5px` |
-| `--font-size-lg` | `15px` | | |
-| `--font-size-xl` | `15.75px` | | |
+### Main Headline Rule
+
+The page headline — `PageHeader`'s `<h1>` and the dashboard command deck's
+`<h1>` — is one shared spec (2026-08-31):
+
+| Property | Value |
+|----------|-------|
+| Face / weight | Inter **SemiBold (600)** — same weight as every other heading, size does the hierarchy work |
+| Size | `text-2xl` 24px → `sm:text-3xl` 30px → `md:text-4xl` 36px |
+| Tracking | `tracking-tight` (`-0.025em`) — the tightening Inter's dynamic metrics recommend at these sizes; the `opsz` axis adds the Display grade on top |
+| Leading | `md:leading-[1.15]` on `PageHeader`; deck relies on the size's stock leading |
+| Colour | from the heading rule — `--primary` light / `--foreground` dark; solid white on the purple command deck |
+
+**Description under a headline:** Inter Regular (400), `text-sm` 14px →
+`sm:text-[0.9375rem]` 15px, `leading-relaxed`, `max-w-prose` measure, in
+`--muted-foreground` — the AA-safe medium grey (`#5D6976` light / `#9CA3AF`
+dark). On the purple command deck it is `text-white/70` instead, tuned to that
+always-dark surface.
 
 **Sizes actually shipped** (hard-coded in the component CSS, and the real scale
 to design against):
@@ -507,9 +517,9 @@ enforced, the table system and the ticker are the two places to change.
 
 | Property | Value |
 |----------|-------|
-| Family | `var(--font-sans)` → Geist (inherited; headings share the body face) |
+| Family | `var(--font-sans)` → Inter (inherited; headings share the body face) |
 | Weight | `font-semibold` (600) |
-| Tracking | `tracking-tight` (Tailwind `-0.025em`) — as it was before the 2026-08-30 type trial |
+| Tracking | `tracking-tight` (Tailwind `-0.025em`) |
 | Colour (light) | `var(--primary)` `#4E4456` — 8.64:1 on `--background`, 9.19:1 on `--card` |
 | Colour (dark) | `var(--foreground)` `#F1F5F9` — 18.13:1 on `--background`, 16.67:1 on `--card` |
 

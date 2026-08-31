@@ -188,8 +188,9 @@ for SVG and navigation). Two tokens differ deliberately: dark `--border` /
 `--card` here, because React Native has no equivalent token-level alpha
 compositing.
 
-**Fonts:** real Geist and Geist Mono, via `@expo-google-fonts/geist` — the same
-faces as the web app. Because Geist ships to React Native as one file per weight,
+**Fonts:** real Inter (UI/body) and Geist Mono (meter IDs), via
+`@expo-google-fonts/inter` and `@expo-google-fonts/geist-mono` — the same faces
+as the web app. Because Inter ships to React Native as one file per weight,
 weight is selected by font family (`font-sans-medium`, `font-sans-semibold`,
 `font-sans-bold`) rather than by `fontWeight`.
 

@@ -24,7 +24,7 @@ export default function TabsLayout() {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
         },
-        tabBarLabelStyle: { fontFamily: 'Geist_500Medium', fontSize: 11 },
+        tabBarLabelStyle: { fontFamily: 'Inter_500Medium', fontSize: 11 },
         sceneStyle: { backgroundColor: colors.background },
       }}>
       <Tabs.Screen
