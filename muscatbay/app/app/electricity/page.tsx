@@ -3,8 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { getElectricityMeters, MeterReading } from "@/lib/mock-data";
 import { getElectricityMetersFromSupabase, isSupabaseConfigured } from "@/lib/supabase";
-import { ELECTRICITY_RATES, ELECTRICITY_TARGETS } from "@/lib/config";
-import { HierarchyStatGrid } from "@/components/shared/hierarchy-stat-card";
+import { ELECTRICITY_RATES } from "@/lib/config";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
@@ -451,93 +450,6 @@ export default function ElectricityPage() {
 
     const dbHasActiveFilters = dbSearchTerm || (dbSelectedTypes.length > 0 && dbSelectedTypes.length < allMeterTypes.length);
 
-    const stats = useMemo(() => {
-        // Months within the selected (chronological) range — slider may point at
-        // months with no data, so we filter by ordinal rather than by indexOf.
-        const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
-
-        // Calculate totals across selected months
-        const totalConsumption = meters.reduce((sum, meter) => {
-            return sum + rangeMonths.reduce((mSum, month) => mSum + (meter.readings[month] || 0), 0);
-        }, 0);
-
-        // Total cost
-        const totalCost = totalConsumption * ratePerKWh;
-
-        // Highest consumer in range
-        const highest = meters.reduce((max, meter) => {
-            const c = rangeMonths.reduce((s, month) => s + (meter.readings[month] || 0), 0);
-            return c > max.val ? { name: meter.name, val: c } : max;
-        }, { name: "N/A", val: 0 });
-
-        const rangeLabel = startMonth && endMonth ? `${startMonth} - ${endMonth}` : "All Time";
-
-        // Previous period for trend comparison: same length immediately before the current range
-        const startIdxAll = rangeMonths.length > 0 ? allMonths.indexOf(rangeMonths[0]) : -1;
-        const prevEndIdx = startIdxAll > 0 ? startIdxAll - 1 : -1;
-        const prevStartIdx = prevEndIdx >= 0 ? Math.max(0, prevEndIdx - (rangeMonths.length - 1)) : -1;
-
-        let prevConsumption = 0;
-        let prevCost = 0;
-        if (prevStartIdx >= 0 && prevEndIdx >= 0) {
-            const prevMonths = allMonths.slice(prevStartIdx, prevEndIdx + 1);
-            prevConsumption = meters.reduce((sum, meter) => {
-                return sum + prevMonths.reduce((mSum, month) => mSum + (meter.readings[month] || 0), 0);
-            }, 0);
-            prevCost = prevConsumption * ratePerKWh;
-        }
-
-        const consumptionTrend = calcTrend(totalConsumption, prevConsumption);
-        const costTrend = calcTrend(totalCost, prevCost);
-
-        return [
-            {
-                label: "CONSUMPTION",
-                value: (totalConsumption / 1000).toFixed(1),
-                unit: "MWh",
-                subtitle: rangeLabel,
-                icon: Zap,
-                variant: "warning" as const,
-                trend: consumptionTrend.trend,
-                trendValue: consumptionTrend.trendValue,
-                invertTrend: true,  // Less consumption = saving = green ✓
-            },
-            {
-                label: "TOTAL COST",
-                value: totalCost.toLocaleString('en-US', { maximumFractionDigits: 1 }),
-                unit: "OMR",
-                // Cost is always stated with its rate, and against the configured
-                // budget when one exists — never against an invented figure.
-                subtitle: ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR !== null
-                    ? `@ ${ratePerKWh} OMR/kWh · budget ${ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR.toLocaleString('en-US')} OMR/month`
-                    : `@ ${ratePerKWh} OMR/kWh · no budget configured`,
-                icon: DollarSign,
-                variant: "success" as const,
-                trend: costTrend.trend,
-                trendValue: costTrend.trendValue,
-                invertTrend: true,  // Lower cost = saving = green ✓
-            },
-            {
-                label: "METER COUNT",
-                value: meters.length.toString(),
-                subtitle: "Active Meters",
-                icon: MapPin,
-                variant: "water" as const,
-                trend: 'neutral' as const,
-                trendValue: '—'
-            },
-            {
-                label: "TOP CONSUMER",
-                value: highest.name,
-                subtitle: `${Math.round(highest.val).toLocaleString('en-US', { maximumFractionDigits: 1 })} kWh`,
-                icon: TrendingUp,
-                variant: "danger" as const,
-                trend: 'neutral' as const,
-                trendValue: '—'
-            }
-        ];
-    }, [meters, allMonths, startMonth, endMonth]);
-
     // Monthly data filtered by selected range (for Overview chart)
     const filteredMonthlyData = useMemo(() => {
         const rangeMonths = monthsInRange(allMonths, startMonth, endMonth);
@@ -841,10 +753,7 @@ export default function ElectricityPage() {
                 ]}
             />
 
-            <HierarchyStatGrid stats={stats} />
-
-            {/* Period controls stay available, but no longer push the current
-                operational summary below the first phone viewport. */}
+            {/* Period controls stay directly below the section tabs. */}
             {allMonths.length > 0 && (
                 <PeriodFilterPanel
                     periodLabel={analysisData.dateRangeLabel.replace(" - ", " – ")}
