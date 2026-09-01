@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/alerts/reconcile",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 22 * * *"
     }
   ]
 }

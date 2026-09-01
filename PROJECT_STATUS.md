@@ -405,6 +405,8 @@ unapplied until staging verification and owner approval.
   HVAC/BMS contract dates are reconciled from stored evidence; alert
   acknowledgement and resolution are separate incident timestamps; critical
   incidents remain visible until resolved or the underlying metric recovers.
+  Live clients re-evaluate every 30 minutes and on realtime changes; the Vercel
+  Hobby-compatible server safety sweep runs daily at 02:00 Oman time.
 - **UI and performance:** Water, Electricity and STP use the same four-card KPI
   system, primary/secondary navigation hierarchy, status bar, briefing and
   chart shell. Heavy charts are dynamically imported, chart containers wait
