@@ -522,6 +522,67 @@ stops at last month" problem is structurally closed:
   user on a failure card over a destination they never chose. Tests:
   `__tests__/lib/auth-next-redirect.test.ts`.
 
+- **/auth/reset-password gated on any session, now on a recovery link
+  (2026-08-29).** The page checked only that `getSession()` returned
+  *something*, so an already signed-in user who reached the URL — typed
+  address, bookmark, stale tab, a shared control-room tablet — got the
+  form and could set a new password without ever holding a reset link.
+  Hardening rather than an open hole (a signed-in user can change their
+  own password from settings anyway), but it matters on shared devices.
+  Found alongside #71 and flagged by a review bot there; out of scope at
+  the time.
+  **The obvious fix does not work here.** The usual shape is to wait for
+  Supabase's `PASSWORD_RECOVERY` event on this page — but in this app a
+  reset link lands on `/auth/callback`, which redeems it (`verifyOtp` for
+  `?token_hash=…&type=recovery`, `setSession` for the implicit hash) and
+  only *then* navigates here. The event therefore fires on the callback
+  page, before this one mounts, and `onAuthStateChange` does not replay it
+  (a fresh subscriber gets `INITIAL_SESSION`). Gating on that event alone
+  would have rejected every genuine reset link.
+  So the callback records the redemption where it actually happens —
+  `markRecoveryHandoff()` in `lib/auth-recovery.ts`, at both recovery
+  branches — and the reset page requires **both** a live session and that
+  marker. The `PASSWORD_RECOVERY` subscription is still registered, so a
+  link that ever lands here directly is honoured as first-hand evidence.
+  The marker is `sessionStorage` (dies with the tab, so a bookmark opened
+  in a new tab does not inherit it), is not consumed on read (reloading
+  mid-typing must not strand a legitimate user), and is cleared once the
+  password is actually updated.
+  Refusal is an honest state — "this reset link is missing or expired"
+  with a route to `/forgot-password`, never a silent bounce to the
+  dashboard. The fatal gate and the form's own errors are now separate
+  state, which retires a bug where the invalid-link card was keyed on
+  `!password`.
+  **Known limit, deliberately not overclaimed:** this stops *accidental*
+  access, not someone with devtools on a signed-in browser — they can set
+  the key by hand, but can equally call `supabase.auth.updateUser()` from
+  the console, so no client-side gate closes that. Closing it properly
+  needs server-side reauthentication (Supabase's `secure_password_change`),
+  which is a dashboard/API setting, not something this page can enforce.
+  **Two defects found by CodeRabbit on the PR and fixed there.** (1) The
+  handoff was wired into the `token_hash` and implicit-hash branches but
+  NOT the PKCE `?code=` branch — and a recovery email can arrive as PKCE,
+  landing on `/auth/callback` with `next=/auth/reset-password` (which
+  `detectFlow` already classifies as recovery). That path set no marker,
+  so a genuine reset link was refused: the exact breakage this design
+  existed to avoid. All three redemption paths now hand off. (2) The
+  marker was not bound to an identity, so on one tab it outlived an
+  account switch and vouched for whoever signed in next — narrow, but the
+  same accidental-access hole on the shared tablets this app runs on. It
+  now carries the user id it was minted for, and the reset page requires
+  that to match the session in front of it.
+  A third review finding: `getSession()`'s error was ignored, so a failed
+  session lookup was reported as "reset link missing or expired" — a
+  plausible wrong answer over a real fault, against non-negotiable #1. It
+  now has its own denial state. A fourth (wrap the denial panel in
+  `SectionBoundary`) was declined: that boundary is for sections rendering
+  live data, this panel is static markup, no auth page uses it, and
+  `app/error.tsx` is already the route-level net.
+  Tests: `__tests__/pages/auth-reset-password.test.tsx` (11 cases) and the
+  handoff block in `__tests__/pages/auth-callback.test.tsx` (4 cases).
+  Both regressions are pinned by reverting: 2 cases fail against the old
+  any-session gate, and the PKCE case fails against the missing handoff.
+
 - **Water monthly dashboard tables still bespoke (2026-08-24).** The A1
   reconciliation, per-zone meters, meter database and exceptions register in
   `components/water/monthly/water-monthly-dashboard.tsx` render raw `<table>`

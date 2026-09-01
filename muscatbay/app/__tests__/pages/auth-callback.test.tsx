@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import AuthCallbackPage from '@/app/auth/callback/page';
+import { hasRecoveryHandoff } from '@/lib/auth-recovery';
 
 const push = vi.fn();
 const refresh = vi.fn();
@@ -168,5 +169,64 @@ describe('/auth/callback — email token_hash return', () => {
             /verification link has expired/i,
         );
         expect(push).not.toHaveBeenCalled();
+    });
+});
+
+// ── Recovery handoff to /auth/reset-password ──────────
+// That page cannot see PASSWORD_RECOVERY: the link is
+// redeemed HERE and navigated away from, so the event has
+// already fired by the time it mounts. It therefore gates
+// on a marker this page writes. Every path that redeems a
+// recovery must write it, or a genuine reset link is
+// refused.
+describe('/auth/callback — recovery handoff marker', () => {
+    beforeEach(() => {
+        push.mockClear();
+        exchangeCodeForSession.mockReset();
+        getSession.mockReset().mockResolvedValue(noSession);
+        getUser.mockReset().mockResolvedValue({ data: { user: null }, error: null });
+        verifyOtp.mockReset();
+        window.sessionStorage.clear();
+    });
+
+    const recoverySession = { session: { user: { id: 'u1' } } };
+
+    it('marks the handoff for a recovery arriving as PKCE ?code=', async () => {
+        // A recovery email can be sent as PKCE rather than
+        // ?token_hash=, landing here with next=/auth/reset-password.
+        // This path had no marker, so it refused real reset links.
+        exchangeCodeForSession.mockResolvedValue({ data: recoverySession, error: null });
+
+        renderCallback('code=abc123&next=%2Fauth%2Freset-password');
+
+        await waitFor(() => expect(push).toHaveBeenCalledWith('/auth/reset-password'));
+        expect(hasRecoveryHandoff('u1')).toBe(true);
+    });
+
+    it('marks the handoff for a recovery arriving as ?token_hash=', async () => {
+        verifyOtp.mockResolvedValue({ data: recoverySession, error: null });
+
+        renderCallback('token_hash=hash123&type=recovery');
+
+        await waitFor(() => expect(push).toHaveBeenCalledWith('/auth/reset-password'));
+        expect(hasRecoveryHandoff('u1')).toBe(true);
+    });
+
+    it('binds the marker to the user it was minted for', async () => {
+        verifyOtp.mockResolvedValue({ data: recoverySession, error: null });
+
+        renderCallback('token_hash=hash123&type=recovery');
+
+        await waitFor(() => expect(push).toHaveBeenCalledWith('/auth/reset-password'));
+        expect(hasRecoveryHandoff('someone-else')).toBe(false);
+    });
+
+    it('does not mark an ordinary sign-in as a recovery', async () => {
+        exchangeCodeForSession.mockResolvedValue({ data: recoverySession, error: null });
+
+        renderCallback('flow=oauth&code=abc123');
+
+        await waitFor(() => expect(push).toHaveBeenCalledWith('/'));
+        expect(hasRecoveryHandoff('u1')).toBe(false);
     });
 });
