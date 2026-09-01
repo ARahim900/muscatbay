@@ -9,10 +9,10 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
     LabelList,
     Legend,
 } from "recharts";
+import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
 interface LiquidBarChartProps {

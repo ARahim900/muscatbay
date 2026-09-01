@@ -25,6 +25,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
     isSupabaseConfigured,
+    getSupabaseClient,
     getWaterMetersFromSupabase,
     getSTPOperationsFromSupabase,
     getContractorTrackerData,
@@ -35,14 +36,18 @@ import type { STPOperation } from "@/lib/mock-data";
 import { evaluateOperationalAlerts, type OperationalAlert } from "@/lib/operational-alerts";
 import {
     getAlertPreferences,
-    getAcknowledgedAlertIds,
-    acknowledgeAlertId,
-    unacknowledgeAlertId,
-    pruneAcknowledgedAlertIds,
     getSeenAlertIds,
     markAlertIdsSeen,
 } from "@/lib/alert-preferences";
+import {
+    acknowledgeAlertIncident,
+    mergeOpenAlertIncidents,
+    readOpenAlertIncidents,
+    type AlertIncident,
+} from "@/lib/alert-incidents";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
+import { getGulfExpertContractDateReconciliation } from "@/functions/api/gulf-expert";
+import type { ContractDateReconciliation } from "@/lib/contract-reconciliation";
 
 /** Tables whose changes can move an alert condition. */
 const ALERT_REALTIME_TABLES = [
@@ -51,7 +56,9 @@ const ALERT_REALTIME_TABLES = [
     "water_daily_consumption",
     // Contract-expiry alerts now derive from the AMC register (ACT-012).
     "amc_register",
+    "gulf_expert_contracts",
     "stp_operations",
+    "operational_alert_incidents",
 ];
 
 /** Re-evaluate (same data, new clock) so day-based rules roll over. */
@@ -61,6 +68,8 @@ export type OperationalAlertStatus = "loading" | "ready" | "unavailable";
 
 export interface AckableAlert extends OperationalAlert {
     acknowledged: boolean;
+    /** False when the incident migration/evaluator is unavailable. */
+    canAcknowledge: boolean;
 }
 
 export interface UseOperationalAlertsReturn {
@@ -82,6 +91,7 @@ interface SourceData {
     waterMeters: WaterMeter[] | null;
     contractors: ContractorTracker[] | null;
     stpOperations: STPOperation[] | null;
+    contractDateReconciliation: ContractDateReconciliation | null;
 }
 
 /**
@@ -94,13 +104,9 @@ export function useOperationalAlerts(
     const [status, setStatus] = useState<OperationalAlertStatus>("loading");
     const [evaluatedAt, setEvaluatedAt] = useState<Date | null>(null);
     const [evalTick, setEvalTick] = useState(0);
-    const [ackedIds, setAckedIds] = useState<string[]>([]);
-
-    // Load persisted acks after mount (SSR-safe).
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setAckedIds(getAcknowledgedAlertIds());
-    }, []);
+    const [incidents, setIncidents] = useState<AlertIncident[]>([]);
+    const [incidentStoreAvailable, setIncidentStoreAvailable] = useState(false);
+    const [canAcknowledgeIncidents, setCanAcknowledgeIncidents] = useState(false);
 
     const fetchSources = useCallback(async () => {
         if (!isSupabaseConfigured()) {
@@ -109,18 +115,22 @@ export function useOperationalAlerts(
             setEvaluatedAt(new Date());
             return;
         }
-        const [waterRes, trackerRes, stpRes] = await Promise.allSettled([
+        const [waterRes, trackerRes, stpRes, contractDateRes] = await Promise.allSettled([
             getWaterMetersFromSupabase(),
             getContractorTrackerData(),
             getSTPOperationsFromSupabase(),
+            getGulfExpertContractDateReconciliation(),
         ]);
         // The fetchers return [] on failure; a live deployment always has rows,
         // so [] means "source unavailable", never "all clear".
         const waterMeters = waterRes.status === "fulfilled" && waterRes.value.length > 0 ? waterRes.value : null;
         const contractors = trackerRes.status === "fulfilled" && trackerRes.value.length > 0 ? trackerRes.value : null;
         const stpOperations = stpRes.status === "fulfilled" && stpRes.value.length > 0 ? stpRes.value : null;
+        const contractDateReconciliation = contractDateRes.status === "fulfilled"
+            ? contractDateRes.value
+            : null;
 
-        setData({ waterMeters, contractors, stpOperations });
+        setData({ waterMeters, contractors, stpOperations, contractDateReconciliation });
         setStatus(waterMeters || contractors || stpOperations ? "ready" : "unavailable");
         setEvaluatedAt(new Date());
     }, []);
@@ -161,6 +171,7 @@ export function useOperationalAlerts(
         return evaluateOperationalAlerts({
             waterMeters: data.waterMeters,
             contractors: data.contractors,
+            contractDateReconciliation: data.contractDateReconciliation,
             stpOperations: data.stpOperations,
             now: new Date(),
         });
@@ -175,13 +186,26 @@ export function useOperationalAlerts(
         return out;
     }, [data]);
 
-    // Push once per new warning/critical fingerprint; prune stale acks.
+    // Read server-owned lifecycle state. If the migration or trusted evaluator
+    // is not live, alerts remain visible and acknowledgement is read-only.
+    useEffect(() => {
+        let active = true;
+        const client = getSupabaseClient();
+        if (!client) {
+            return () => { active = false; };
+        }
+        void readOpenAlertIncidents(client).then((result) => {
+            if (!active) return;
+            setIncidents(result.incidents);
+            setIncidentStoreAvailable(result.available);
+            setCanAcknowledgeIncidents(result.canAcknowledge);
+        });
+        return () => { active = false; };
+    }, [rawAlerts]);
+
+    // Push once per new warning/critical fingerprint.
     useEffect(() => {
         if (rawAlerts.length === 0) return;
-        const activeIds = rawAlerts.map((a) => a.id);
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing React state with the localStorage-backed ack store
-        setAckedIds(pruneAcknowledgedAlertIds(activeIds));
-
         const seen = new Set(getSeenAlertIds());
         const fresh = rawAlerts.filter((a) => !seen.has(a.id));
         if (fresh.length === 0) return;
@@ -196,17 +220,26 @@ export function useOperationalAlerts(
         }
     }, [rawAlerts, pushToOS]);
 
-    const acknowledge = useCallback((id: string) => {
-        setAckedIds(acknowledgeAlertId(id));
-    }, []);
+    const acknowledge = useCallback((fingerprint: string) => {
+        const client = getSupabaseClient();
+        const incident = incidents.find((item) => item.fingerprint === fingerprint && item.resolved_at === null);
+        if (!client || !incidentStoreAvailable || !canAcknowledgeIncidents || !incident) return;
+        void acknowledgeAlertIncident(client, incident.id).then((acknowledged) => {
+            if (!acknowledged) return;
+            setIncidents((current) => current.map((item) => item.id === incident.id
+                ? { ...item, acknowledged_at: new Date().toISOString() }
+                : item));
+        });
+    }, [incidentStoreAvailable, canAcknowledgeIncidents, incidents]);
 
-    const unacknowledge = useCallback((id: string) => {
-        setAckedIds(unacknowledgeAlertId(id));
+    // Acknowledgement is an audit fact and is deliberately not reversible.
+    const unacknowledge = useCallback(() => {
+        return;
     }, []);
 
     const alerts = useMemo<AckableAlert[]>(
-        () => rawAlerts.map((a) => ({ ...a, acknowledged: ackedIds.includes(a.id) })),
-        [rawAlerts, ackedIds],
+        () => mergeOpenAlertIncidents(rawAlerts, incidents, incidentStoreAvailable, canAcknowledgeIncidents),
+        [rawAlerts, incidents, incidentStoreAvailable, canAcknowledgeIncidents],
     );
 
     const unacknowledgedCount = useMemo(

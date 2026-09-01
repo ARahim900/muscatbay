@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     evaluateWaterLossAlerts,
     evaluateContractAlerts,
+    evaluateContractDateConflictAlerts,
     evaluateSTPAlerts,
     evaluateOperationalAlerts,
     parseTrackerDate,
@@ -53,8 +54,8 @@ function contractor(partial: Partial<ContractorTracker>): ContractorTracker {
     };
 }
 
-function stpOp(date: string, inlet: number, tse: number): STPOperation {
-    return { id: date, date, inlet_sewage: inlet, tse_for_irrigation: tse, tanker_trips: 2 };
+function stpOp(date: string, inlet: number | null, tse: number | null, trips: number | null = 2): STPOperation {
+    return { id: date, date, inlet_sewage: inlet, tse_for_irrigation: tse, tanker_trips: trips };
 }
 
 /* ── water loss ───────────────────────────────────────────────────────── */
@@ -216,6 +217,26 @@ describe('evaluateContractAlerts', () => {
     });
 });
 
+describe('evaluateContractDateConflictAlerts', () => {
+    it('surfaces both date sources and does not select a canonical conflicting date', () => {
+        const alerts = evaluateContractDateConflictAlerts({
+            unreferenced: [],
+            contracts: [{
+                contractRef: 'GE-2025-HVAC', canonicalStartDate: '2024-07-01',
+                canonicalEndDate: null, conflictFields: ['end_date'],
+                evidence: [
+                    { source: 'amc_register', recordId: 'AMC-1', contractor: 'Gulf Expert', service: 'HVAC', contractRef: 'GE-2025-HVAC', startDate: '2024-07-01', endDate: '2028-06-30', evidenceAnchor: 'Contract' },
+                    { source: 'gulf_expert_contracts', recordId: '1', contractor: 'Gulf Expert', service: 'HVAC', contractRef: 'GE-2025-HVAC', startDate: '2024-07-01', endDate: '2027-06-30', evidenceAnchor: 'Register' },
+                ],
+            }],
+        });
+        expect(alerts).toHaveLength(1);
+        expect(alerts[0].message).toContain('2028-06-30');
+        expect(alerts[0].message).toContain('2027-06-30');
+        expect(alerts[0].message).toContain('no date was overwritten');
+    });
+});
+
 /* ── STP ──────────────────────────────────────────────────────────────── */
 
 describe('evaluateSTPAlerts', () => {
@@ -266,6 +287,24 @@ describe('evaluateSTPAlerts', () => {
         const alerts = evaluateSTPAlerts(ops, NOW);
         expect(alerts.find((a) => a.id.startsWith('stp-zero-output'))).toBeUndefined();
         expect(alerts.find((a) => a.id.startsWith('stp-stale-log'))).toBeUndefined();
+    });
+
+    it('separates missing evidence from a genuine zero-output process alert', () => {
+        const missing = evaluateSTPAlerts([stpOp('2026-07-12', 500, null)], NOW);
+        expect(missing.some((a) => a.category === 'data_quality' && a.id.startsWith('stp-missing-readings'))).toBe(true);
+        expect(missing.some((a) => a.id.startsWith('stp-zero-output'))).toBe(false);
+
+        const zero = evaluateSTPAlerts([stpOp('2026-07-12', 500, 0)], NOW);
+        expect(zero.some((a) => a.category === 'process_performance' && a.id.startsWith('stp-zero-output'))).toBe(true);
+    });
+
+    it('flags output above inlet as data quality and excludes it from recovery performance', () => {
+        const alerts = evaluateSTPAlerts([
+            stpOp('2026-07-11', 100, 90),
+            stpOp('2026-07-12', 100, 150),
+        ], NOW);
+        expect(alerts.some((a) => a.category === 'data_quality' && a.message.includes('>100% recovery'))).toBe(true);
+        expect(alerts.some((a) => a.id.startsWith('stp-low-recovery'))).toBe(false);
     });
 });
 

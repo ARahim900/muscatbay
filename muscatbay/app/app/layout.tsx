@@ -6,6 +6,11 @@ import { NotificationProvider } from "@/components/providers/notification-provid
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { Geist_Mono, Inter } from "next/font/google";
+import { getServerAuthSnapshot } from "@/lib/supabase-server";
+
+// Nonces are unique per response and the authenticated shell is server-seeded,
+// so this layout must never be emitted as a shared static document.
+export const dynamic = "force-dynamic";
 
 // Inter — the UI face for headings AND body (directed by Rahim 2026-08-31,
 // superseding the 2026-08-30 "Geist stands" decision — see BRAND_DESIGN.md §3).
@@ -111,11 +116,13 @@ export const viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialAuth = await getServerAuthSnapshot();
+
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
@@ -127,7 +134,7 @@ export default function RootLayout({
         <RegisterSW />
         <Providers>
           <NotificationProvider>
-            <LayoutRouter>
+            <LayoutRouter initialAuth={initialAuth}>
               {children}
             </LayoutRouter>
           </NotificationProvider>

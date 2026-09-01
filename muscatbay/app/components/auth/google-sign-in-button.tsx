@@ -42,7 +42,8 @@ interface GoogleSignInButtonProps {
 }
 
 /**
- * "Continue with Google" button shared by /login and /signup.
+ * "Continue with Google" button for invited users. The database auth hook
+ * rejects first-time identities that do not have an active invitation.
  *
  * On success the browser navigates away to Google, so the pending state
  * deliberately stays up until the page unloads. Errors thrown before the

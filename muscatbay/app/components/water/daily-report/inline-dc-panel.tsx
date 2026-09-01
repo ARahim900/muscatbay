@@ -7,9 +7,10 @@ import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
-    ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    ComposedChart, Area, Line, XAxis, YAxis, Tooltip,
     ReferenceLine, Legend,
 } from "recharts";
+import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";

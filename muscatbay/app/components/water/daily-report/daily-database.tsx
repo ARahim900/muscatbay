@@ -164,6 +164,7 @@ export function DailyDatabase({
                             className="w-full border-collapse text-[11px]"
                             style={{ minWidth: `${560 + days.length * 58}px` }}
                         >
+                            <caption className="sr-only">Daily water meter readings for {month}, with day {selectedDay} highlighted and data-quality flags shown per meter.</caption>
                             <thead>
                                 <tr>
                                     {/* Corner cell sticks on both axes (thBase already pins top). */}

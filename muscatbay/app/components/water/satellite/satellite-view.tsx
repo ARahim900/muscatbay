@@ -27,9 +27,11 @@ import type { WaterMeter } from "@/lib/water-data";
 import type { DailyWaterConsumption } from "@/entities";
 import { getDailyWaterConsumptionFromSupabase, type DerivedMonth } from "@/functions/api/water";
 import { Skeleton } from "@/components/shared/skeleton";
+import { canonicalizeApprovedEmbedUrl } from "@/lib/embed-security";
 import { buildSatellitePayload, type SatellitePayload } from "./satellite-model";
 
 const ENGINE_URL = "/satellite/index.html?embed=1";
+const SATELLITE_EMBED = canonicalizeApprovedEmbedUrl(ENGINE_URL);
 
 interface SatelliteViewProps {
     waterMeters: WaterMeter[];
@@ -121,6 +123,7 @@ export function SatelliteView({ waterMeters, derivedMonths }: SatelliteViewProps
                 key={frameKey}
                 ref={frameRef}
                 src={ENGINE_URL}
+                sandbox={SATELLITE_EMBED?.sandbox}
                 title="Muscat Bay water network — satellite view"
                 className="h-[75vh] min-h-[520px] w-full rounded-[10.5px] border border-border bg-neutral-950"
             />

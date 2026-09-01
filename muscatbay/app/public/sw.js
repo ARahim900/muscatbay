@@ -6,9 +6,9 @@
  *
  * Strategy
  * ────────
- *   navigations       network-first → cached page → /offline.html
+ *   navigations        network-only → /offline.html
  *   /_next/static/*    cache-first (immutable, content-hashed URLs)
- *   other same-origin  stale-while-revalidate (icons, images, manifest)
+ *   public assets      stale-while-revalidate (icons, images, manifest)
  *   /api/*, /auth/*    network-only, never cached (auth + live data)
  *   cross-origin       passthrough (Supabase, fonts — never cached here)
  *
@@ -19,6 +19,13 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v10 (2026-09-01) removes authenticated page/RSC caching. Navigation HTML
+ *                    can contain the server-seeded user profile and must never
+ *                    survive logout or cross between users on a shared device.
+ *   v9 (2026-09-01) invalidates cached utility pages after the production KPI
+ *                   shell update. Activation removes v8 page/static caches and
+ *                   claims open clients, so Electricity cards refresh without
+ *                   asking operators to clear browser storage manually.
  *   v8 (2026-08-30) re-precaches the brand mark. /logo.png was missing from the
  *                   build for a period; `install` runs once per SW version and
  *                   tolerates a per-asset failure, so every client that
@@ -32,11 +39,10 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v10";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
-const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
-const CURRENT_CACHES = [SHELL_CACHE, STATIC_CACHE, PAGES_CACHE];
+const CURRENT_CACHES = [SHELL_CACHE, STATIC_CACHE];
 
 const OFFLINE_URL = "/offline.html";
 
@@ -51,9 +57,6 @@ const SHELL_ASSETS = [
 
 /** Never cached: authenticated or inherently live endpoints. */
 const NO_STORE_PREFIXES = ["/api/", "/auth/"];
-
-/** Cap the page cache so a long session can't grow it without bound. */
-const MAX_PAGES = 40;
 
 // ─── Install ────────────────────────────────────────────────────────────────
 
@@ -111,12 +114,16 @@ function isImmutableAsset(url) {
   return url.pathname.startsWith("/_next/static/");
 }
 
-/** Trim a cache to `max` entries, oldest-first. */
-async function trimCache(cacheName, max) {
-  const cache = await caches.open(cacheName);
-  const keys = await cache.keys();
-  if (keys.length <= max) return;
-  await Promise.all(keys.slice(0, keys.length - max).map((key) => cache.delete(key)));
+function isPublicStaticAsset(url) {
+  return SHELL_ASSETS.includes(url.pathname)
+    || /\.(?:svg|png|jpg|jpeg|gif|webp|ico|avif|woff2?|ttf|otf|webmanifest)$/.test(url.pathname);
+}
+
+function canStore(response) {
+  const cacheControl = response.headers.get("cache-control") || "";
+  return response.ok
+    && response.type === "basic"
+    && !/(?:^|,)\s*(?:private|no-store)(?:\s|,|$)/i.test(cacheControl);
 }
 
 /** Cache-first: cached hit wins; otherwise fetch and store. */
@@ -124,7 +131,7 @@ async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
   const response = await fetch(request);
-  if (response.ok) {
+  if (canStore(response)) {
     const cache = await caches.open(cacheName);
     cache.put(request, response.clone());
   }
@@ -143,7 +150,7 @@ async function staleWhileRevalidate(event, cacheName) {
 
   const network = fetch(request)
     .then((response) => {
-      if (response.ok && response.type === "basic") {
+      if (canStore(response)) {
         cache.put(request, response.clone());
       }
       return response;
@@ -162,22 +169,14 @@ async function staleWhileRevalidate(event, cacheName) {
   throw new Error("offline and not cached");
 }
 
-/** Network-first for navigations, falling back to the cached page, then the shell. */
+/** Protected navigation responses are never persisted in CacheStorage. */
 async function handleNavigation(event) {
   const { request } = event;
   try {
     const preload = event.preloadResponse ? await event.preloadResponse : null;
     const response = preload || (await fetch(request));
-    if (response && response.ok) {
-      const cache = await caches.open(PAGES_CACHE);
-      cache.put(request, response.clone());
-      void trimCache(PAGES_CACHE, MAX_PAGES);
-    }
     return response;
   } catch {
-    const cachedPage = await caches.match(request, { ignoreSearch: true });
-    if (cachedPage) return cachedPage;
-
     const offline = await caches.match(OFFLINE_URL);
     if (offline) return offline;
 
@@ -227,11 +226,13 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    staleWhileRevalidate(event, STATIC_CACHE).catch(
-      () => new Response("", { status: 503, statusText: "Offline" })
-    )
-  );
+  if (isPublicStaticAsset(url)) {
+    event.respondWith(
+      staleWhileRevalidate(event, STATIC_CACHE).catch(
+        () => new Response("", { status: 503, statusText: "Offline" })
+      )
+    );
+  }
 });
 
 // ─── Messages ───────────────────────────────────────────────────────────────
@@ -240,6 +241,13 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING" || event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
+  }
+  if (event.data?.type === "PURGE_PRIVATE_CACHES") {
+    event.waitUntil(
+      caches.keys().then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith("muscatbay-pages-")).map((key) => caches.delete(key))
+      ))
+    );
   }
 });
 

@@ -1,364 +1,47 @@
-"use client";
-
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUp } from "@/lib/auth";
-import { validateEmail, validateFullName, getPasswordRequirements, checkRateLimit, resetRateLimit, recordRateLimitAttempt } from "@/lib/validation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/components/ui/card";
+import { ArrowLeft, MailCheck, ShieldCheck } from "lucide-react";
+
 import { AuthBrandLockup } from "@/components/auth/brand-lockup";
-import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
-import { Loader2, Mail, Lock, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 
-type SignUpStatus =
-    | { kind: "form" }
-    | { kind: "check-email"; email: string }; // confirmation required, email sent
-
-export default function SignUpPage() {
-    const router = useRouter();
-    const [fullName, setFullName] = useState("");
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [emailError, setEmailError] = useState<string | null>(null);
-    const [nameError, setNameError] = useState<string | null>(null);
-    const [status, setStatus] = useState<SignUpStatus>({ kind: "form" });
-
-    // Use enhanced password requirements from validation library
-    const passwordRequirements = getPasswordRequirements(password);
-    const allRequirementsMet = passwordRequirements.every((req) => req.met);
-
-    const handleEmailChange = (value: string) => {
-        setEmail(value);
-        setEmailError(null);
-    };
-
-    const handleNameChange = (value: string) => {
-        setFullName(value);
-        setNameError(null);
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-        setEmailError(null);
-        setNameError(null);
-
-        // Rate limiting for signup
-        const rateLimit = checkRateLimit('signup', 3, 60000, 600000);
-        if (!rateLimit.isAllowed) {
-            setError(`Too many signup attempts. Please try again in ${Math.ceil((rateLimit.waitSeconds || 600) / 60)} minutes.`);
-            return;
-        }
-
-        // Validate full name
-        const nameValidation = validateFullName(fullName);
-        if (!nameValidation.isValid) {
-            setNameError(nameValidation.error || 'Invalid name');
-            return;
-        }
-
-        // Validate email
-        const emailValidation = validateEmail(email);
-        if (!emailValidation.isValid) {
-            setEmailError(emailValidation.error || 'Invalid email');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            setError("Passwords do not match");
-            return;
-        }
-
-        if (!allRequirementsMet) {
-            setError("Please meet all password requirements");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const data = await signUp(email, password, fullName);
-            resetRateLimit('signup');
-
-            // Supabase signUp response shape:
-            //  - new user + confirmation off: { user, session }       → logged in
-            //  - new user + confirmation on:  { user (identities:[*]), session: null } → email sent
-            //  - existing user:               { user (identities:[]), session: null }  → already registered
-            const sUser = data?.user;
-            const identities = sUser?.identities ?? [];
-            const session = data?.session;
-
-            if (sUser && identities.length === 0) {
-                // Supabase returned a shadow user — this email is already registered.
-                // Don't reveal too much (prevents enumeration); point the user at login.
-                setError("An account with this email may already exist. Try signing in, or reset your password.");
-                return;
-            }
-
-            if (!session) {
-                // Email confirmation is enabled — tell the user to check their inbox
-                // instead of silently bouncing them through the protected-route redirect.
-                setStatus({ kind: "check-email", email: email.trim().toLowerCase() });
-                return;
-            }
-
-            // Session present — user is logged in, redirect to dashboard
-            router.push("/");
-            router.refresh();
-            return;
-        } catch (err: unknown) {
-            recordRateLimitAttempt('signup');
-            const errorMessage = err instanceof Error ? err.message : "Failed to create account. Please try again.";
-            setError(errorMessage);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ── "Check your email" success state (email confirmation required) ──
-    if (status.kind === "check-email") {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background p-4">
-                <Card className="w-full max-w-md card-elevated">
-                    <CardContent role="status" aria-live="polite" className="pt-8 pb-8 text-center">
-                        <div className="w-16 h-16 bg-mb-success-light rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 className="w-8 h-8 text-mb-success-text" />
+export default function InvitationOnlyPage() {
+    return (
+        <main className="flex min-h-screen items-center justify-center bg-background p-4">
+            <div className="w-full max-w-md">
+                <AuthBrandLockup className="mb-8 justify-center" />
+                <Card className="card-elevated">
+                    <CardHeader className="space-y-2 text-center">
+                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                            <ShieldCheck className="h-6 w-6 text-primary" aria-hidden="true" />
                         </div>
-                        {/* The page's own <h1> — this success view replaces the
-                            form entirely, so it must carry the top-level heading. */}
-                        <h1 className="text-2xl font-bold mb-2">Check your email</h1>
-                        <p className="text-muted-foreground mb-6">
-                            We&apos;ve sent a confirmation link to{" "}
-                            <strong className="text-foreground">{status.email}</strong>.
-                            Click the link in the email to activate your account, then sign in.
+                        <h1 className="text-2xl font-bold">Access is invitation only</h1>
+                        <CardDescription>
+                            Dashboard accounts are created by a Muscat Bay administrator.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-5">
+                        <div className="flex gap-3 rounded-lg border border-border bg-muted/40 p-4">
+                            <MailCheck className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+                            <p className="text-sm text-muted-foreground">
+                                If you received an invitation, use the link in that email. Existing invited users may also sign in with Google using the same email address.
+                            </p>
+                        </div>
+                        <Link href="/login" className="block">
+                            <Button className="min-h-11 w-full">
+                                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                                Return to sign in
+                            </Button>
+                        </Link>
+                        <p className="text-center text-xs text-muted-foreground">
+                            Service providers can submit a professional application without receiving dashboard access.
                         </p>
-                        <div className="space-y-3">
-                            <Link href="/login" className="block">
-                                <Button className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground">
-                                    Go to Login
-                                </Button>
-                            </Link>
-                            <button
-                                type="button"
-                                onClick={() => setStatus({ kind: "form" })}
-                                className="text-sm text-muted-foreground/70 hover:text-mb-primary dark:hover:text-secondary transition-colors"
-                            >
-                                Use a different email
-                            </button>
-                        </div>
+                        <Link href="/signup/professional" className="block text-center text-sm font-medium text-primary hover:underline">
+                            Submit a professional application
+                        </Link>
                     </CardContent>
                 </Card>
             </div>
-        );
-    }
-
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4">
-            <div className="w-full max-w-md">
-                {/* Logo — shared lockup (see components/auth/brand-lockup) */}
-                <div className="flex justify-center mb-8">
-                    <AuthBrandLockup />
-                </div>
-
-                <Card className="card-elevated">
-                    <CardHeader className="space-y-1 pb-4">
-                        {/* Written as a raw <h1> rather than <CardTitle>: this card title IS
-                            the page heading (WCAG 1.3.1 — the page previously opened at <h2>,
-                            and AuthBrandLockup renders the wordmark as a <p>, not a heading).
-                            CardTitle's `as` prop only offers h2-h4 and card.tsx is shared, so
-                            the classes cn() would have produced are inlined here — identical
-                            rendering, since globals.css styles h1 and h2 the same. */}
-                        <h1 data-slot="card-title" className="text-2xl leading-normal font-bold text-center">Create an account</h1>
-                        <CardDescription className="text-center">
-                            Enter your details to get started
-                        </CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleSubmit}>
-                        <CardContent className="space-y-4">
-                            {error && (
-                                <div role="alert" className="p-3 text-sm text-mb-danger-text bg-mb-danger-light rounded-lg border border-mb-danger/20">
-                                    {error}
-                                </div>
-                            )}
-
-                            <div className="space-y-2">
-                                <Label htmlFor="fullName">Full Name <span aria-hidden="true" className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <User className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="fullName"
-                                        type="text"
-                                        placeholder="John Doe"
-                                        value={fullName}
-                                        onChange={(e) => handleNameChange(e.target.value)}
-                                        aria-describedby={nameError ? "name-error" : undefined}
-                                        aria-invalid={nameError ? true : undefined}
-                                        className={`ps-10 ${nameError ? 'border-destructive' : ''}`}
-                                        required
-                                        autoComplete="name"
-                                        maxLength={100}
-                                    />
-                                </div>
-                                {nameError && (
-                                    <p id="name-error" className="text-xs text-destructive">{nameError}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email <span aria-hidden="true" className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        placeholder="name@muscatbay.com"
-                                        value={email}
-                                        onChange={(e) => handleEmailChange(e.target.value)}
-                                        aria-describedby={emailError ? "email-error" : undefined}
-                                        aria-invalid={emailError ? true : undefined}
-                                        className={`ps-10 ${emailError ? 'border-destructive' : ''}`}
-                                        required
-                                        autoComplete="email"
-                                    />
-                                </div>
-                                {emailError && (
-                                    <p id="email-error" className="text-xs text-destructive">{emailError}</p>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Password <span aria-hidden="true" className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Create a password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        aria-describedby={password.length > 0 ? "password-requirements" : undefined}
-                                        className="ps-10 pe-10"
-                                        required
-                                        autoComplete="new-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        aria-label={showPassword ? "Hide password" : "Show password"}
-                                        className="absolute end-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
-                                    >
-                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                                    </button>
-                                </div>
-                                {/* Password requirements */}
-                                {password.length > 0 && (
-                                    <div id="password-requirements" className="space-y-1 mt-2">
-                                        {passwordRequirements.map((req) => (
-                                            <div key={req.label} className="flex items-center gap-2 text-xs">
-                                                <div className={`w-1.5 h-1.5 rounded-full ${req.met ? "bg-mb-success" : "bg-border"}`} />
-                                                <span className={req.met ? "text-mb-success-text" : "text-muted-foreground"}>
-                                                    {req.label}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password <span aria-hidden="true" className="text-destructive">*</span></Label>
-                                <div className="relative">
-                                    <Lock className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        id="confirmPassword"
-                                        type={showPassword ? "text" : "password"}
-                                        placeholder="Confirm your password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        aria-describedby={confirmPassword.length > 0 && password !== confirmPassword ? "confirm-password-error" : undefined}
-                                        aria-invalid={confirmPassword.length > 0 && password !== confirmPassword ? true : undefined}
-                                        className="ps-10"
-                                        required
-                                        autoComplete="new-password"
-                                    />
-                                </div>
-                                {confirmPassword.length > 0 && password !== confirmPassword && (
-                                    <p id="confirm-password-error" className="text-xs text-destructive">Passwords do not match</p>
-                                )}
-                            </div>
-                        </CardContent>
-
-                        <CardFooter className="flex flex-col gap-4">
-                            <Button
-                                type="submit"
-                                className="w-full bg-mb-primary hover:bg-mb-primary-hover text-primary-foreground"
-                                disabled={loading || !allRequirementsMet}
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                                        Creating account...
-                                    </>
-                                ) : (
-                                    "Create account"
-                                )}
-                            </Button>
-
-                            <p className="text-sm text-center text-muted-foreground">
-                                Already have an account?{" "}
-                                <Link href="/login" className="text-mb-primary hover:underline font-medium">
-                                    Sign in
-                                </Link>
-                            </p>
-
-                            <div className="relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-border" />
-                                </div>
-                                <div className="relative flex justify-center text-xs uppercase">
-                                    <span className="bg-card px-2 text-muted-foreground">
-                                        or
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Google OAuth — instant sign-up: Google has already
-                                verified the address, so there is no confirmation
-                                email to click and no return trip to finish here. */}
-                            <div className="w-full space-y-1.5">
-                                <GoogleSignInButton
-                                    label="Sign up with Google"
-                                    onError={setError}
-                                />
-                                <p className="text-xs text-center text-muted-foreground">
-                                    Instant — no verification email to wait for.
-                                </p>
-                            </div>
-
-                            <Link href="/signup/professional" className="block">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    className="w-full border-mb-primary/30 text-mb-primary hover:bg-mb-primary/5"
-                                >
-                                    Apply as a Professional / Contractor
-                                </Button>
-                            </Link>
-                        </CardFooter>
-                    </form>
-                </Card>
-
-                <p className="text-center text-xs text-muted-foreground mt-6">
-                    By creating an account, you agree to our Terms of Service and Privacy Policy.
-                </p>
-            </div>
-        </div>
+        </main>
     );
 }

@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getCurrentUser, getUserProfile, onAuthStateChange, signOut, AuthUser, UserProfile } from "@/lib/auth";
+import type { ServerAuthSnapshot } from "@/lib/supabase-server";
 import { SplashScreen } from "@/components/ui/splash-screen";
 
 interface AuthContextType {
@@ -39,6 +40,20 @@ const AuthContext = createContext<AuthContextType>({
     refreshProfile: async () => { },
 });
 
+async function purgePrivatePageCaches(): Promise<void> {
+    if (typeof window === "undefined") return;
+    navigator.serviceWorker?.controller?.postMessage({ type: "PURGE_PRIVATE_CACHES" });
+    if (!("caches" in window)) return;
+    try {
+        const keys = await caches.keys();
+        await Promise.all(
+            keys.filter((key) => key.startsWith("muscatbay-pages-")).map((key) => caches.delete(key)),
+        );
+    } catch (error) {
+        console.error("Unable to purge private page caches:", error);
+    }
+}
+
 export const useAuth = () => useContext(AuthContext);
 
 // Public routes that don't require authentication
@@ -52,15 +67,18 @@ const OPEN_WHEN_AUTHENTICATED = ["/auth/reset-password", "/privacy", "/terms"];
 
 interface AuthProviderProps {
     children: ReactNode;
+    initialAuth?: ServerAuthSnapshot;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [splashVisible, setSplashVisible] = useState(true);
+export function AuthProvider({ children, initialAuth }: AuthProviderProps) {
+    const hasServerSnapshot = initialAuth !== undefined;
+    const [user, setUser] = useState<AuthUser | null>(initialAuth?.user ?? null);
+    const [profile, setProfile] = useState<UserProfile | null>(initialAuth?.profile ?? null);
+    const [loading, setLoading] = useState(!hasServerSnapshot);
+    const [splashVisible, setSplashVisible] = useState(!hasServerSnapshot);
     const [splashExiting, setSplashExiting] = useState(false);
     const splashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const previousUserId = useRef(initialAuth?.user?.id ?? null);
     const router = useRouter();
     const pathname = usePathname();
 
@@ -76,6 +94,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const logout = async () => {
         try {
             await signOut();
+            await purgePrivatePageCaches();
             setUser(null);
             setProfile(null);
             router.push("/login");
@@ -124,13 +143,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
         };
 
-        initAuth();
+        if (!hasServerSnapshot) {
+            void initAuth();
+        }
 
         // Listen for auth changes. This also fires INITIAL_SESSION shortly
         // after subscribing, which acts as a second safety net for clearing
         // `loading` if getCurrentUser() somehow never resolves.
         const { data: { subscription } } = onAuthStateChange((authUser) => {
             if (!mounted) return;
+            if (previousUserId.current !== authUser?.id) {
+                void purgePrivatePageCaches();
+                previousUserId.current = authUser?.id ?? null;
+            }
             setUser(authUser);
             setLoading(false);
             if (authUser) {
@@ -144,7 +169,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             mounted = false;
             subscription.unsubscribe();
         };
-    }, []);
+    }, [hasServerSnapshot]);
 
     // Handle route protection
     useEffect(() => {

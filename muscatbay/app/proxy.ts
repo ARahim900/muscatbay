@@ -1,33 +1,33 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * Build the Content-Security-Policy header.
- *
- * Next.js 16 currently emits required framework inline scripts without a nonce
- * in this app. Using a nonce or strict-dynamic here blocks hydration in modern
- * browsers, leaving users stuck on the splash screen.
- */
-function buildCsp(): string {
+export function buildCsp(nonce: string, isDev = process.env.NODE_ENV !== 'production'): string {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-    const supabaseHost = supabaseUrl ? new URL(supabaseUrl).host : '*.supabase.co'
-    // Dev-only allowance so the Impeccable live helper (port 8400) can load
-    // its picker script and stream SSE events. Removed in production builds.
-    const isDev = process.env.NODE_ENV !== 'production'
+    let supabaseHost = '*.supabase.co'
+    try {
+        if (supabaseUrl) supabaseHost = new URL(supabaseUrl).host
+    } catch {
+        // A malformed deployment variable must not prevent security headers
+        // from being emitted. Supabase requests will fail closed separately.
+    }
     const liveDevScript = isDev ? ' http://localhost:8400' : ''
     const liveDevConnect = isDev ? ' http://localhost:8400 ws://localhost:8400' : ''
+    const scriptPolicy = isDev
+        ? `'self' 'unsafe-eval' 'unsafe-inline'${liveDevScript}`
+        : `'self' 'nonce-${nonce}' 'strict-dynamic'`
     return [
         `default-src 'self'`,
-        `script-src 'self' 'unsafe-eval' 'unsafe-inline'${liveDevScript}`,
+        `script-src ${scriptPolicy}`,
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
         `font-src 'self' https://fonts.gstatic.com`,
         `img-src 'self' data: https:`,
         `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}${liveDevConnect}`,
-        `frame-src 'self' https://airtable.com https://*.airtable.com https://aitable.ai https://*.aitable.ai https://grafana.nec-oman.com`,
+        `frame-src 'self' https://aitable.ai https://drive.google.com`,
         `frame-ancestors 'none'`,
         `base-uri 'self'`,
         `form-action 'self'`,
         `object-src 'none'`,
+        ...(isDev ? [] : ['upgrade-insecure-requests']),
     ].join('; ')
 }
 
@@ -43,10 +43,10 @@ function buildCsp(): string {
  *   blob URL (`worker-src blob:`). Neither is needed — or granted — anywhere
  *   else in the app.
  */
-function buildSatelliteCsp(): string {
+export function buildSatelliteCsp(): string {
     return [
         `default-src 'self'`,
-        `script-src 'self' 'unsafe-inline'`,
+        `script-src 'self' 'sha256-Xgw0wwrzqHD2i9ttcCubeN7sHBhnYTz9sFyiMUs/M5I=' 'sha256-cKcS1Ohc5Ek1dGmA065wKqk1js+T+mmqLEB3qascgU0='`,
         `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
         `font-src 'self' https://fonts.gstatic.com`,
         `img-src 'self' data: blob: https:`,
@@ -98,43 +98,56 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(canonicalUrl, 308)
     }
 
+    const nonce = crypto.randomUUID()
+    const isSatellite = request.nextUrl.pathname.startsWith('/satellite/')
+    const cspHeader = process.env.CSP_REPORT_ONLY === 'true'
+        ? 'Content-Security-Policy-Report-Only'
+        : 'Content-Security-Policy'
+    const csp = isSatellite ? buildSatelliteCsp() : buildCsp(nonce)
     const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-nonce', nonce)
+    // Next.js reads the request CSP to attach the nonce to framework scripts.
+    // The browser enforces only the response header set below.
+    requestHeaders.set('Content-Security-Policy', csp)
 
     let response = NextResponse.next({
         request: { headers: requestHeaders },
     })
 
-    // Create a Supabase client configured to use cookies
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (supabaseUrl && supabaseAnonKey) {
+        // Create a Supabase client configured to use cookies
+        const supabase = createServerClient(
+            supabaseUrl,
+            supabaseAnonKey,
+            {
+                cookies: {
+                    getAll() {
+                        return request.cookies.getAll()
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value }) => {
+                            request.cookies.set(name, value)
+                        })
+                        response = NextResponse.next({ request: { headers: requestHeaders } })
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            response.cookies.set(name, value, options)
+                        })
+                    },
                 },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) => {
-                        request.cookies.set(name, value)
-                    })
-                    response = NextResponse.next({ request: { headers: requestHeaders } })
-                    cookiesToSet.forEach(({ name, value, options }) => {
-                        response.cookies.set(name, value, options)
-                    })
-                },
-            },
-        }
-    )
+            }
+        )
 
-    // Refresh session if expired - required for Server Components
-    // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
-    await supabase.auth.getUser()
+        // Refresh session if expired - required for Server Components
+        // https://supabase.com/docs/guides/auth/auth-helpers/nextjs#managing-session-with-middleware
+        await supabase.auth.getUser()
+    }
 
     // Security headers — applied to every navigation response. The Satellite
     // View engine is the one page this app frames itself, so it gets its own
     // policy (same-origin framing allowed, map-tile fetches allowed).
-    const isSatellite = request.nextUrl.pathname.startsWith('/satellite/')
-    response.headers.set('Content-Security-Policy', isSatellite ? buildSatelliteCsp() : buildCsp())
+    response.headers.set(cspHeader, csp)
     response.headers.set('X-Content-Type-Options', 'nosniff')
     if (isSatellite) {
         response.headers.set('X-Frame-Options', 'SAMEORIGIN')
@@ -143,6 +156,7 @@ export async function proxy(request: NextRequest) {
     }
     response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
     response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive')
 
     return response
 }

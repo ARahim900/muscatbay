@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { BarChart3, CalendarDays, DatabaseZap, RefreshCw, AlertTriangle, Satellite } from "lucide-react";
 
 // Water data
@@ -60,6 +60,10 @@ type DashboardView = "monthly" | "daily" | "satellite";
 // reference stays stable across renders (the realtime hook re-subscribes
 // when the reference changes).
 const WATER_REALTIME_TABLES = ["water_meters", "water_monthly_consumption", "water_daily_consumption"];
+const MONTH_NUMBER: Record<string, number> = {
+    Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5,
+    Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+};
 
 // Session cache — revisiting /water renders the last data instantly and
 // refreshes silently in the background instead of re-showing the skeleton.
@@ -191,20 +195,28 @@ export default function WaterPage() {
         saveFilterPreferences("water", { dashboardView });
     }, [dashboardView]);
 
+    const latestDataDate = useMemo(() => {
+        let latest: Date | null = null;
+        for (const meter of waterMeters) {
+            for (const [period, value] of Object.entries(meter.consumption)) {
+                if (typeof value !== "number") continue;
+                const match = /^([A-Z][a-z]{2})-(\d{2})$/.exec(period);
+                if (!match || MONTH_NUMBER[match[1]] === undefined) continue;
+                const date = new Date(2000 + Number(match[2]), MONTH_NUMBER[match[1]] + 1, 0);
+                if (!latest || date > latest) latest = date;
+            }
+        }
+        return latest;
+    }, [waterMeters]);
+
     if (isLoading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200" role="status" aria-busy="true" aria-label="Loading water system data">
-                {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-4 w-4" />
-                            <Skeleton className="h-4 w-16" />
-                        </div>
-                        <Skeleton className="h-9 w-64" />
-                        <Skeleton className="h-4 w-96" />
-                    </div>
+                    <PageHeader
+                        title="Water System Analysis"
+                        description="Comprehensive water consumption and loss analysis across the network"
+                    />
                     <Skeleton className="h-8 w-32 rounded-full" />
                 </div>
                 {/* Tabs skeleton */}
@@ -221,7 +233,6 @@ export default function WaterPage() {
     }
 
     const hasData = waterMeters.length > 0;
-
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             {/* Header */}
@@ -234,6 +245,8 @@ export default function WaterPage() {
                     isConnected={!error && hasData}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
+                    latestDataDate={latestDataDate}
+                    staleAfterDays={45}
                     loading={isLoading}
                     error={error}
                     disconnectedLabel="No live data"

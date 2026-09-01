@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge"
 import { TabNavigation } from "@/components/shared/tab-navigation"
 import { PageHeader } from "@/components/shared/page-header"
+import { InviteUserForm } from "@/components/settings/invite-user-form"
 import { Loader2, Upload, Save, User, Shield, Bell, Monitor, CheckCircle2, Droplets, Users, Waves, type LucideIcon } from "lucide-react"
 
 type SettingsTab = 'profile' | 'account' | 'notifications'
@@ -375,6 +376,12 @@ export default function SettingsPage() {
                                         <Badge variant="outline" className="text-mb-success-text bg-mb-success-light border-mb-success/20">Current</Badge>
                                     </div>
                                 </div>
+                                {profile?.role === "admin" && (
+                                    <>
+                                        <Separator />
+                                        <InviteUserForm />
+                                    </>
+                                )}
                             </CardContent>
                             <CardFooter className="border-t border-sidebar/10 px-6 py-4 bg-sidebar/5">
                                 <p className="text-sm text-muted-foreground">

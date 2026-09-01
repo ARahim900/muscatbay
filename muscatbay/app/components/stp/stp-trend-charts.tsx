@@ -18,22 +18,23 @@
 
 import { memo } from "react";
 import {
-    ResponsiveContainer, AreaChart, Area, BarChart, Bar, LineChart, Line,
+    AreaChart, Area, BarChart, Bar, LineChart, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
 import { useChartMotion } from "@/hooks/useReducedMotion";
+import { ChartContainer } from "@/components/charts/chart-container";
 
 export type ChartView = "daily" | "monthly";
 
 export interface STPChartDataPoint {
     month: string;
     sortKey: string;
-    inlet: number;
-    tse: number;
-    income: number;
-    savings: number;
-    trips: number;
+    inlet: number | null;
+    tse: number | null;
+    income: number | null;
+    savings: number | null;
+    trips: number | null;
 }
 
 const CHART_COLORS = {
@@ -76,7 +77,7 @@ export function ChartViewToggle({ value, onChange }: { value: ChartView; onChang
                     onClick={() => onChange(v)}
                     aria-pressed={value === v}
                     className={cn(
-                        "px-3 py-1 text-xs font-medium rounded-md transition-design capitalize",
+                        "min-h-11 min-w-11 rounded-md px-3 py-1 text-xs font-medium capitalize transition-design",
                         value === v
                             ? "bg-card text-foreground shadow-sm"
                             : "text-muted-foreground hover:text-foreground",
@@ -108,7 +109,7 @@ export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { dat
                 aria-label="Water treatment volumes area chart showing sewage inlet versus TSE reuse output in cubic meters over the selected period"
                 className="h-[320px] min-h-[260px] w-full"
             >
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer minHeight={260}>
                     <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
                             <linearGradient id="stp-inlet-area" x1="0" y1="0" x2="0" y2="1">
@@ -133,7 +134,7 @@ export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { dat
                         <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#stp-inlet-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
                         <Area type="monotone" dataKey="tse" name="TSE Output" stroke={CHART_COLORS.primary} fill="url(#stp-tse-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
                     </AreaChart>
-                </ResponsiveContainer>
+                </ChartContainer>
             </div>
             <PointCount count={data.length} view={view} />
         </div>
@@ -149,7 +150,7 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
                 aria-label="Economic impact bar chart showing income and savings from TSE reuse in Omani Rials over the selected period"
                 className="h-[280px] min-h-[240px] w-full"
             >
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer minHeight={240}>
                     <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
                         <XAxis dataKey="month" tick={X_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} dy={6} />
@@ -164,7 +165,7 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
                         <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
                         <Bar dataKey="savings" name="Savings" fill={CHART_COLORS.inlet} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
                     </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
             </div>
             <PointCount count={data.length} view={view} />
         </div>
@@ -180,7 +181,7 @@ export const STPTankerChart = memo(function STPTankerChart({ data, view }: { dat
                 aria-label="Tanker operations line chart showing number of tanker trips over the selected period"
                 className="h-[280px] min-h-[240px] w-full"
             >
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer minHeight={240}>
                     <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
                         <XAxis dataKey="month" tick={X_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} dy={6} />
@@ -203,7 +204,7 @@ export const STPTankerChart = memo(function STPTankerChart({ data, view }: { dat
                             {...chartMotion}
                         />
                     </LineChart>
-                </ResponsiveContainer>
+                </ChartContainer>
             </div>
             <PointCount count={data.length} view={view} />
         </div>

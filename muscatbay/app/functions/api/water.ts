@@ -18,6 +18,7 @@ import {
     DAILY_WATER_CONSUMPTION_SELECT_COLUMNS
 } from '@/entities/water';
 import type { WaterMeter } from '@/lib/water-data';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // Earliest period in the seeded dataset. Acts as a floor so old backfills
 // can't accidentally inflate the response. There is deliberately NO ceiling:
@@ -189,8 +190,8 @@ export interface WaterMetersResult {
  * being able to tell "no reading", "genuinely zero" and "impossible reading"
  * apart.
  */
-export async function fetchWaterMeters(): Promise<WaterMetersResult> {
-    const client = getSupabaseClient();
+export async function fetchWaterMeters(clientOverride?: SupabaseClient): Promise<WaterMetersResult> {
+    const client = clientOverride ?? getSupabaseClient();
     if (!client) {
         return { meters: [], error: 'Supabase is not configured.', negatives: [], derivedMonths: [] };
     }

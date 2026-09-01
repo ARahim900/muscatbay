@@ -15,7 +15,7 @@
 > - Deep reference detail lives in the linked docs at the bottom — this file
 >   holds the *current state*, not the full manuals.
 
-**Last curated review:** 2026-07-25
+**Last curated review:** 2026-09-02
 
 ---
 
@@ -387,6 +387,38 @@ dependencies — everything reuses `components/shared/data-table/` and
 `next build` succeeds (21 routes) · headless-Chromium pass over STP,
 Electricity, Contractors, Fire, Assets in mock/offline mode — zero console
 errors, first-column weight 600 confirmed computed.
+
+**2026-09-02 — production-hardening release candidate (not yet applied to the
+live database).** The application-side security, data-integrity, performance,
+accessibility and utility-layout work is implemented on
+`codex/production-hardening`; the two SQL migrations remain deliberately
+unapplied until staging verification and owner approval.
+
+- **Access control:** public sign-up routes now present an invitation-only
+  flow; server-side invitation validation supports approved addresses and
+  domains. The first migration adds a Before User Created hook plus explicit
+  role policies for viewer, contractor and admin access, without relying on UI
+  visibility. A PostgREST adversarial test script is included for dummy Viewer
+  and Contractor sessions.
+- **Operational accuracy:** fire PPM status is date-driven; STP process alerts
+  distinguish data-quality warnings from performance alerts; Gulf Expert and
+  HVAC/BMS contract dates are reconciled from stored evidence; alert
+  acknowledgement and resolution are separate incident timestamps; critical
+  incidents remain visible until resolved or the underlying metric recovers.
+- **UI and performance:** Water, Electricity and STP use the same four-card KPI
+  system, primary/secondary navigation hierarchy, status bar, briefing and
+  chart shell. Heavy charts are dynamically imported, chart containers wait
+  for measurable dimensions, pagination remains reachable on mobile, and KPI
+  refreshes are committed as one state update.
+- **Hardening and accessibility:** third-party embed URLs are allowlisted and
+  sandboxed; CSP no longer permits unsafe script execution; robots and
+  `X-Robots-Tag` block indexing; touch targets, heading order, table labels,
+  duplicate ticker semantics and reduced-motion states are covered by tests.
+- **Dependency and release checks:** Next.js is pinned to 16.2.11 and vulnerable
+  transitive packages are refreshed. TypeScript, ESLint, 365 Vitest tests,
+  production build, dependency audit and the signed-out Playwright suite pass.
+  Authenticated profile/avatar/password/push flows and direct REST RLS tests
+  stay staging-gated because no isolated staging project is currently recorded.
 
 ## 3. Water monthly data — how it works now (important)
 

@@ -4,21 +4,16 @@
 //     app/electricity/page.tsx. Pure relocation; no behavior changes.
 
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { PageHeader } from "@/components/shared/page-header";
 
 export function ElectricityLoadingSkeleton() {
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
-            {/* Header skeleton */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-2">
-                    <div className="flex items-center gap-2 mb-1">
-                        <Skeleton className="h-4 w-20" />
-                        <Skeleton className="h-4 w-4" />
-                        <Skeleton className="h-4 w-24" />
-                    </div>
-                    <Skeleton className="h-9 w-56" />
-                    <Skeleton className="h-4 w-80" />
-                </div>
+                <PageHeader
+                    title="Electricity Monitoring"
+                    description="Track power consumption and costs across all meters"
+                />
                 <Skeleton className="h-8 w-36 rounded-full" />
             </div>
             {/* Tabs skeleton — exactly two pills, matching the page's two tabs

@@ -18,6 +18,8 @@ import {
     transformContractor
 } from '@/entities/contractor';
 import type { Contractor } from '@/lib/mock-data';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { ContractDateEvidence } from '@/lib/contract-reconciliation';
 
 /**
  * Read failures throw instead of resolving to `[]`.
@@ -111,8 +113,8 @@ const AMC_REGISTER_COLUMNS =
  * Ordered by `sort_order` so the app presents AMC-001…010 in the same sequence
  * as the signed register, which is how Rahim and Commercial read it.
  */
-export async function getAmcRegister(): Promise<AmcRegister[]> {
-    const client = getSupabaseClient();
+export async function getAmcRegister(clientOverride?: SupabaseClient): Promise<AmcRegister[]> {
+    const client = clientOverride ?? getSupabaseClient();
     if (!client) return [];
 
     const { data, error } = await client
@@ -123,6 +125,28 @@ export async function getAmcRegister(): Promise<AmcRegister[]> {
 
     if (error) failed('Unable to load the AMC register', error.message);
     return data || [];
+}
+
+/** Minimal, evidence-preserving date projection used for cross-register checks. */
+export async function getAmcContractDateEvidence(
+    clientOverride?: SupabaseClient,
+): Promise<ContractDateEvidence[]> {
+    const client = clientOverride ?? getSupabaseClient();
+    if (!client) return [];
+    const { data, error } = await client
+        .from('amc_register')
+        .select('agreement_id, contractor, service_system, contract_ref, start_date, end_date, evidence_anchor');
+    if (error) failed('Unable to load AMC contract-date evidence', error.message);
+    return (data ?? []).map((row) => ({
+        source: 'amc_register' as const,
+        recordId: String(row.agreement_id),
+        contractor: String(row.contractor),
+        service: row.service_system == null ? null : String(row.service_system),
+        contractRef: row.contract_ref == null ? null : String(row.contract_ref),
+        startDate: row.start_date == null ? null : String(row.start_date),
+        endDate: row.end_date == null ? null : String(row.end_date),
+        evidenceAnchor: row.evidence_anchor == null ? null : String(row.evidence_anchor),
+    }));
 }
 
 /**

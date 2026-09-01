@@ -8,12 +8,11 @@
  */
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    ResponsiveContainer, ComposedChart, Area, Line, XAxis, YAxis,
+    ComposedChart, Area, Line, XAxis, YAxis,
     CartesianGrid, Tooltip, Legend, ReferenceLine,
 } from "recharts";
-import { TrendingDown } from "lucide-react";
+import { ChartShell, SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { n } from "./inline-shared";
 import { buildDailyGrid, buildZoneDaySeries, buildZoneMtd } from "./daily-metrics";
@@ -48,20 +47,12 @@ export function ZoneMtdChart({
     const selectedLabel = data.find((p) => p.day === selectedDay)?.label;
 
     return (
-        <Card className="card-elevated">
-            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2 sm:pb-2 md:pb-2">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <TrendingDown className="h-4 w-4 text-secondary" aria-hidden="true" />
-                    Month-to-Date Cumulative Balance — {activeZoneName}
-                </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">
-                    Running totals for {month}: a widening gap between the lines is a steady leak, even when
-                    single days look normal. Cumulative loss so far: <b className="text-foreground">{n(last.cumLoss)} m³</b>
-                    {last.cumSupply > 0 ? ` (${((last.cumLoss / last.cumSupply) * 100).toFixed(1)}% of zone supply)` : ""}.
-                    Days with a missing L2 reading count as 0 supply.
-                </p>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-2 sm:pt-2 md:pt-2">
+        <ChartShell
+            title={`Month-to-Date Cumulative Balance — ${activeZoneName}`}
+            description={`Running totals for ${month}. Cumulative loss so far: ${n(last.cumLoss)} m³${last.cumSupply > 0 ? ` (${((last.cumLoss / last.cumSupply) * 100).toFixed(1)}% of zone supply)` : ""}.`}
+            state="ready"
+            interpretation="A widening gap between supply and metered consumption indicates a sustained loss pattern that needs field verification. Missing L2 days remain identified in the source data."
+        >
                 <ResponsiveContainer width="100%" height={280}>
                     <ComposedChart data={data} margin={{ top: 6, right: 8, left: -6, bottom: 0 }}>
                         <defs>
@@ -90,7 +81,6 @@ export function ZoneMtdChart({
                         <Line type="monotone" dataKey="cumLoss" name="Cumulative loss" stroke="var(--chart-loss)" strokeWidth={2.5} dot={false} {...chartMotion}/>
                     </ComposedChart>
                 </ResponsiveContainer>
-            </CardContent>
-        </Card>
+        </ChartShell>
     );
 }

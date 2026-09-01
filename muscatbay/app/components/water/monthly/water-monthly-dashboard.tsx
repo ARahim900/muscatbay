@@ -19,9 +19,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
-    ResponsiveContainer, ComposedChart, BarChart, Bar, Line,
+    ComposedChart, BarChart, Bar, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
 } from "recharts";
+import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
@@ -397,15 +398,12 @@ function PeriodFilter({ data, year, nMonths, startMonth, endMonth, onRangeChange
 }
 
 function WaterSummary({ period, lossDelta, periodLabel }: Pick<OverviewProps, "period" | "lossDelta" | "periodLabel">) {
-    const efficiency = pct(period.A3, period.A1);
     const lossCost = Math.max(0, period.loss) * LOSS_RATE_OMR;
     const stats: StatItem[] = [
         { label: "Total Supply (A1)", value: fmt(period.A1), unit: "m³", subtitle: periodLabel, icon: Droplet, variant: "water" },
-        { label: "Distribution (A2)", value: fmt(period.A2), unit: "m³", subtitle: "Zone bulk + direct", icon: Droplet, variant: "info" },
         { label: "Consumption (A3)", value: fmt(period.A3), unit: "m³", subtitle: "Billed at end-user", icon: CheckCircle2, variant: "success" },
-        { label: "Efficiency", value: efficiency.toFixed(1), unit: "%", subtitle: `Target ≥ ${100 - TARGET_LOSS_PCT}%`, icon: Gauge, variant: "success" },
         {
-            label: "Total Loss",
+            label: "System Loss",
             value: fmt(period.loss),
             unit: "m³",
             subtitle: `${period.lossPct}% of supply`,
@@ -418,7 +416,7 @@ function WaterSummary({ period, lossDelta, periodLabel }: Pick<OverviewProps, "p
                 invertTrend: true,
             }),
         },
-        { label: "Loss Cost Estimate", value: fmt(lossCost), unit: "OMR", subtitle: `${LOSS_RATE_OMR} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
+        { label: "Loss Cost", value: fmt(lossCost), unit: "OMR", subtitle: `${LOSS_RATE_OMR} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
     ];
 
     return <StatsGrid stats={stats} />;
@@ -1458,9 +1456,7 @@ export function WaterMonthlyDashboard({
 
     return (
         <div className="water-monthly space-y-5">
-            <TabNavigation activeTab={tab} onTabChange={setTab} tabs={SECTION_TABS} ariaLabel="Water monthly sections" />
-
-            {tab === "overview" && <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />}
+            <TabNavigation activeTab={tab} onTabChange={setTab} tabs={SECTION_TABS} variant="secondary" ariaLabel="Water monthly sections" />
 
             <PeriodFilter
                 data={data}
@@ -1472,6 +1468,8 @@ export function WaterMonthlyDashboard({
                 onYear={chooseYear}
                 onReset={resetRange}
             />
+
+            {tab === "overview" && <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />}
 
             <p className="text-[11px] -mt-2 px-1" style={{ color: "var(--wm-muted)" }}>
                 NAMA Bulk Account {data.meta.mainAccount} · {data.meta.totalMeters} meters · {periodLabel}

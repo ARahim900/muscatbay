@@ -67,7 +67,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
     // unscaled layout box, then snapped to the target's real width/height on
     // completion, so the corner radius is never left stretched at rest.
     useIsomorphicLayoutEffect(() => {
-        if (prefersReducedMotion()) return;
+        if (variant === "secondary" || prefersReducedMotion()) return;
 
         const pill = pillRef.current;
         const list = listRef.current;
@@ -177,9 +177,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
         });
     }, [activeIndex]);
 
-    const pillClassName = variant === "secondary"
-        ? "bg-card border border-border/80 shadow-md"
-        : "bg-primary dark:bg-primary/80 shadow-md shadow-primary/20";
+    const pillClassName = "bg-primary dark:bg-primary/80 shadow-md shadow-primary/20";
     const useMobileSelect = tabs.length > 3;
 
     return (
@@ -207,10 +205,10 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
             <div
                 ref={listRef}
                 className={cn(
-                    "relative inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full scroll-px-4",
-                    "bg-muted/80",
-                    "border border-border/60",
-                    "shadow-sm",
+                    "relative inline-flex max-w-full items-center overflow-x-auto scroll-px-4",
+                    variant === "primary"
+                        ? "gap-1.5 rounded-xl border border-border/60 bg-muted/80 p-1 shadow-sm sm:gap-3 sm:p-1.5"
+                        : "gap-5 border-b border-border bg-transparent px-0",
                     useMobileSelect && "hidden sm:inline-flex"
                 )}
                 role="tablist"
@@ -223,14 +221,15 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                     className={cn(
                         "absolute left-0 top-0 z-0 rounded-lg pointer-events-none",
                         pillClassName,
-                        pillReady ? "opacity-100" : "opacity-0"
+                        variant === "primary" && pillReady ? "opacity-100" : "opacity-0"
                     )}
                 />
                 {tabs.map((tab, index) => {
                     const isActive = activeTab === tab.key;
 
                     if (variant === "secondary") {
-                        // Secondary variant: Outlined/bordered style for view switching
+                        // Secondary navigation stays deliberately quiet: an underline
+                        // communicates selection without competing with primary tabs.
                         return (
                             <button
                                 key={tab.key}
@@ -243,20 +242,12 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 aria-controls={`panel-${tab.key}`}
                                 tabIndex={isActive ? 0 : -1}
                                 className={cn(
-                                    "relative z-[1] flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                    "relative z-[1] flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-1 py-2.5 text-xs font-medium sm:gap-2 sm:text-sm",
                                     "transition-colors duration-200 ease-out",
                                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                     isActive
-                                        ? [
-                                            "text-primary dark:text-foreground",
-                                            // Static fallback styling until the pill takes over
-                                            !pillReady && "bg-card shadow-md border border-border/80",
-                                        ]
-                                        : [
-                                            "text-muted-foreground",
-                                            "hover:text-primary dark:hover:text-foreground",
-                                            "hover:bg-card/60",
-                                        ]
+                                        ? "border-primary text-primary dark:border-secondary dark:text-foreground"
+                                        : "border-transparent text-muted-foreground hover:border-border hover:text-primary dark:hover:text-foreground"
                                 )}
                             >
                                 {tab.icon && (
@@ -268,18 +259,11 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                     />
                                 )}
                                 {tab.label}
-                                {/* Active indicator bar */}
-                                {isActive && (
-                                    <span
-                                        className="absolute bottom-0 left-3 right-3 h-0.5 bg-secondary rounded-full"
-                                        aria-hidden="true"
-                                    />
-                                )}
                             </button>
                         );
                     }
 
-                    // Primary variant: Solid fill style for sub-navigation
+                    // Primary navigation: solid segmented control.
                     return (
                         <button
                             key={tab.key}
@@ -292,7 +276,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                             aria-controls={`panel-${tab.key}`}
                             tabIndex={isActive ? 0 : -1}
                             className={cn(
-                                "relative z-[1] flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2.5 sm:py-3 min-h-[44px] lg:min-h-0 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap",
+                                "relative z-[1] flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 py-2.5 text-xs font-medium sm:gap-2 sm:px-4 sm:py-3 sm:text-sm",
                                 "transition-colors duration-200 ease-out",
                                 "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1",
                                 isActive

@@ -36,17 +36,18 @@ import {
 // Programme + contract data live outside the component so they can be updated
 // without touching page logic. See the module headers for provenance.
 import {
-    CYCLES, CYCLE_BY_KEY, PPM_ACTIVITIES, SYSTEM_LEGEND, ZONES, ZONE_BY_KEY,
+    CYCLES, CYCLE_BY_KEY, buildPpmActivities, SYSTEM_LEGEND, ZONES, ZONE_BY_KEY,
     PPM_PROGRAMME_AS_OF, PPM_PROGRAMME_SOURCE,
-    type PpmActivity, type PpmStatus,
+    type PpmActivity,
 } from "@/components/firefighting/ppm-programme";
+import type { FirePpmScheduleStatus } from "@/lib/fire-ppm-status";
 import {
     AMC_CONTRACT_SUMMARY, AMC_SCOPE_COUNTS, INSURANCE_COVERAGE, REFERENCE_AS_OF,
     REFERENCE_NOTE, SLA_TIERS, TANKER_AGREEMENTS, TANKER_DISCHARGE_RATE,
 } from "@/components/firefighting/contract-reference";
 import {
     CARD_TITLE, CHART_TOOLTIP_STYLE, CycleBadge, EQUIP_STATUS_CHART_COLORS,
-    PpmStatusBadge, ReferenceChip, SectionHeading, STATUS_CFG, SystemTag, ZoneBadge,
+    ReferenceChip, SectionHeading, SystemTag, ZoneBadge,
     equipZoneKey,
 } from "@/components/firefighting/firefighting-ui";
 import { EquipmentRegister } from "@/components/firefighting/equipment-register";
@@ -56,7 +57,18 @@ import { useChartMotion } from "@/hooks/useReducedMotion";
 // Maintenance tracker filter option lists (dropdowns operate on display labels).
 const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
 const ZONE_OPTIONS = ZONES.map((z) => z.label);
-const PPM_STATUS_OPTIONS = (Object.keys(STATUS_CFG) as PpmStatus[]).map((s) => STATUS_CFG[s].label);
+const PPM_STATUS_OPTIONS: FirePpmScheduleStatus[] = ["Completed", "Scheduled", "Overdue", "Not Evidenced"];
+
+const PPM_STATUS_CLASS: Record<FirePpmScheduleStatus, string> = {
+    Completed: "bg-mb-success-light text-mb-success-text",
+    Scheduled: "bg-primary/10 text-primary dark:text-muted-foreground/80",
+    Overdue: "bg-mb-danger-light text-mb-danger-text",
+    "Not Evidenced": "bg-mb-warning-light text-mb-warning-text",
+};
+
+function ProgrammeStatusBadge({ status }: { status: FirePpmScheduleStatus }) {
+    return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold", PPM_STATUS_CLASS[status])}>{status}</span>;
+}
 
 const PPM_EXPORT_COLUMNS: ExportColumn<PpmActivity>[] = [
     { key: "cycle", header: "Cycle", format: (a) => CYCLE_BY_KEY[a.cycle].label },
@@ -64,7 +76,7 @@ const PPM_EXPORT_COLUMNS: ExportColumn<PpmActivity>[] = [
     { key: "area", header: "Area / Asset" },
     { key: "systems", header: "Systems" },
     { key: "date", header: "Scheduled" },
-    { key: "status", header: "Status", format: (a) => STATUS_CFG[a.status].label },
+    { key: "status", header: "Status" },
     { key: "notes", header: "Notes" },
 ];
 
@@ -112,6 +124,13 @@ export default function FirefightingPage() {
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState<PageSizeOption>(25);
+    const [statusEvaluationTime, setStatusEvaluationTime] = useState(() => new Date());
+    const ppmActivities = useMemo(() => buildPpmActivities(statusEvaluationTime), [statusEvaluationTime]);
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setStatusEvaluationTime(new Date()), 30 * 60 * 1000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     const loadData = useCallback(async (silent = false) => {
         const res = await fetchFireSafetyDataAction();
@@ -169,13 +188,13 @@ export default function FirefightingPage() {
         [issues],
     );
     const completedCycles = useMemo(
-        () => CYCLES.filter((c) => PPM_ACTIVITIES.filter((a) => a.cycle === c.key)
-            .every((a) => a.status !== "upcoming" && a.status !== "scheduled")).length,
-        [],
+        () => CYCLES.filter((c) => ppmActivities.filter((a) => a.cycle === c.key)
+            .every((a) => a.status === "Completed")).length,
+        [ppmActivities],
     );
     const openFaults = useMemo(
-        () => PPM_ACTIVITIES.filter((a) => a.status === "fault" || a.status === "no_access"),
-        [],
+        () => ppmActivities.filter((a) => a.reportedOutcome === "fault" || a.reportedOutcome === "no_access"),
+        [ppmActivities],
     );
 
     const equipmentByZone = useMemo(() => {
@@ -213,14 +232,14 @@ export default function FirefightingPage() {
             case "area": return a.area;
             case "systems": return a.systems.join(", ");
             case "date": return a.date;
-            case "status": return STATUS_CFG[a.status].label;
+            case "status": return a.status;
             case "notes": return a.notes || "";
             default: return "";
         }
     }, []);
 
     const filteredActivities = useMemo(() => {
-        let result = [...PPM_ACTIVITIES];
+        let result = [...ppmActivities];
 
         if (search) {
             const term = search.toLowerCase();
@@ -238,7 +257,7 @@ export default function FirefightingPage() {
             result = result.filter((a) => selectedZones.includes(ZONE_BY_KEY[a.zone].label));
         }
         if (selectedStatuses.length > 0 && selectedStatuses.length < PPM_STATUS_OPTIONS.length) {
-            result = result.filter((a) => selectedStatuses.includes(STATUS_CFG[a.status].label));
+            result = result.filter((a) => selectedStatuses.includes(a.status));
         }
 
         if (sortField) {
@@ -249,7 +268,7 @@ export default function FirefightingPage() {
         }
 
         return result;
-    }, [search, selectedCycles, selectedZones, selectedStatuses, sortField, sortDirection, sortValue]);
+    }, [ppmActivities, search, selectedCycles, selectedZones, selectedStatuses, sortField, sortDirection, sortValue]);
 
     const handleSort = (field: string) => {
         if (sortField === field) setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -379,7 +398,15 @@ export default function FirefightingPage() {
                                 {/* Cycle progress */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
                                     {CYCLES.map((c) => {
-                                        const done = c.status === "completed";
+                                        const cycleActivities = ppmActivities.filter((activity) => activity.cycle === c.key);
+                                        const cycleStatus: FirePpmScheduleStatus = cycleActivities.every((activity) => activity.status === "Completed")
+                                            ? "Completed"
+                                            : cycleActivities.some((activity) => activity.status === "Overdue")
+                                                ? "Overdue"
+                                                : cycleActivities.some((activity) => activity.status === "Scheduled")
+                                                    ? "Scheduled"
+                                                    : "Not Evidenced";
+                                        const done = cycleStatus === "Completed";
                                         return (
                                             <div key={c.key} className={cn("rounded-lg border p-3", done ? "border-secondary/30 bg-secondary/5 dark:bg-secondary/10" : "border-border bg-muted/50")}>
                                                 <div className="flex items-center justify-between">
@@ -389,7 +416,7 @@ export default function FirefightingPage() {
                                                     </span>
                                                     {done
                                                         ? <span className="flex items-center gap-1 text-[11px] font-semibold text-secondary"><CheckCircle className="w-3.5 h-3.5" aria-hidden="true" /> Completed</span>
-                                                        : <span className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground"><Clock className="w-3.5 h-3.5" aria-hidden="true" /> Upcoming</span>}
+                                                        : <ProgrammeStatusBadge status={cycleStatus} />}
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-2 ps-8">{c.window}</p>
                                             </div>
@@ -516,7 +543,7 @@ export default function FirefightingPage() {
                             <ExportButton rows={filteredActivities} filename="fire-ppm-activities" columns={PPM_EXPORT_COLUMNS} />
                             <div className="text-sm text-muted-foreground whitespace-nowrap">
                                 <span className="font-semibold text-foreground">{filteredActivities.length}</span>
-                                {filteredActivities.length !== PPM_ACTIVITIES.length && <span> of {PPM_ACTIVITIES.length}</span>} activities
+                                {filteredActivities.length !== ppmActivities.length && <span> of {ppmActivities.length}</span>} activities
                             </div>
                         </TableToolbar>
 
@@ -534,7 +561,7 @@ export default function FirefightingPage() {
                                 <div key={a.id} className="rounded-xl border border-border bg-card p-4 space-y-2">
                                     <div className="flex items-start justify-between gap-2">
                                         <div className="flex items-center gap-1.5 flex-wrap"><CycleBadge cycle={a.cycle} /><ZoneBadge zone={a.zone} /></div>
-                                        <PpmStatusBadge status={a.status} />
+                                        <ProgrammeStatusBadge status={a.status} />
                                     </div>
                                     <p className="text-sm font-medium text-foreground">{a.area}</p>
                                     <div className="flex items-center justify-between gap-2">
@@ -573,7 +600,7 @@ export default function FirefightingPage() {
                                             <TableCell className="font-semibold text-foreground">{a.area}</TableCell>
                                             <TableCell><div className="flex gap-1 flex-wrap">{a.systems.map((s) => <SystemTag key={s} label={s} />)}</div></TableCell>
                                             <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{a.date}</TableCell>
-                                            <TableCell><PpmStatusBadge status={a.status} /></TableCell>
+                                            <TableCell><ProgrammeStatusBadge status={a.status} /></TableCell>
                                             {/* Notes wrap instead of truncating: a `title` tooltip cannot be
                                                 reached on a touch device, so the text would be lost. */}
                                             <TableCell className="text-[11px] text-muted-foreground max-w-[280px] whitespace-normal break-words">{a.notes || "—"}</TableCell>

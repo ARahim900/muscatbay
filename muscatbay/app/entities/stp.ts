@@ -5,6 +5,7 @@
  */
 
 import type { STPOperation } from '@/lib/mock-data';
+import { nullableFiniteNumber } from '@/lib/stp-data-quality';
 
 /**
  * STP operation record from stp_operations table
@@ -34,9 +35,9 @@ export function transformSTPOperation(dbRecord: SupabaseSTPOperation): STPOperat
     return {
         id: String(dbRecord.id),
         date: dbRecord.date,
-        inlet_sewage: Number(dbRecord.inlet_sewage) || 0,
-        tse_for_irrigation: Number(dbRecord.tse_for_irrigation) || 0,
-        tanker_trips: Number(dbRecord.tanker_trips) || 0,
+        inlet_sewage: nullableFiniteNumber(dbRecord.inlet_sewage),
+        tse_for_irrigation: nullableFiniteNumber(dbRecord.tse_for_irrigation),
+        tanker_trips: nullableFiniteNumber(dbRecord.tanker_trips),
         generated_income: dbRecord.generated_income != null ? Number(dbRecord.generated_income) : undefined,
         water_savings: dbRecord.water_savings != null ? Number(dbRecord.water_savings) : undefined,
         total_impact: dbRecord.total_impact != null ? Number(dbRecord.total_impact) : undefined,

@@ -21,6 +21,8 @@ export interface AuthUser {
     };
 }
 
+export type UserProfileUpdate = Partial<Pick<UserProfile, 'full_name' | 'username' | 'avatar_url' | 'website'>>;
+
 // =============================================================================
 // DEVELOPMENT MODE HELPERS
 // =============================================================================
@@ -57,50 +59,6 @@ const DEV_PROFILE: UserProfile = {
     website: null,
     role: 'admin',
 };
-
-// Sign up with email and password
-export async function signUp(email: string, password: string, fullName?: string) {
-    // Input validation
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-        throw new Error(emailValidation.error);
-    }
-
-    const passwordValidation = validatePassword(password, false);
-    if (!passwordValidation.isValid) {
-        throw new Error(passwordValidation.error);
-    }
-
-    if (fullName) {
-        const nameValidation = validateFullName(fullName);
-        if (!nameValidation.isValid) {
-            throw new Error(nameValidation.error);
-        }
-    }
-
-    const supabase = getSupabaseClient();
-    if (!supabase) {
-        throw new Error('Supabase not configured');
-    }
-
-    // Sanitize inputs
-    const sanitizedEmail = email.trim().toLowerCase();
-    const sanitizedName = fullName ? sanitizeInput(fullName) : '';
-
-    const { data, error } = await supabase.auth.signUp({
-        email: sanitizedEmail,
-        password,
-        options: {
-            data: {
-                full_name: sanitizedName,
-            },
-        },
-    });
-
-    if (error) throw error;
-
-    return data;
-}
 
 // Sign in with email and password
 export async function signIn(email: string, password: string) {
@@ -142,13 +100,10 @@ export async function signIn(email: string, password: string) {
     return data;
 }
 
-// Sign in — or sign up — with Google (Supabase OAuth, PKCE flow).
-// One flow serves both: Google has already verified the address, so a
-// first-time user gets an account without the confirmation-email
-// round-trip, and an existing user simply signs in. The browser is
-// redirected to Google and returns to /auth/callback?code=..., where the
-// existing exchangeCodeForSession call completes the session. On success
-// this function never resolves for practical purposes — the page unloads.
+// Sign in with Google (Supabase OAuth, PKCE flow). Account creation is guarded
+// by the database Before User Created hook in the invitation-only security
+// migration. The browser must never receive a service-role key or query the
+// invitation register directly.
 export async function signInWithGoogle() {
     const supabase = getSupabaseClient();
     if (!supabase) {
@@ -218,6 +173,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
             user_metadata: session.user.user_metadata as AuthUser['user_metadata'],
         };
     } catch {
+        logger.warn('Unable to read the local authentication session');
         return null;
     }
 }
@@ -240,7 +196,11 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
         .eq('id', userId)
         .single();
 
-    if (error || !data) return null;
+    if (error) {
+        logger.error('Unable to load the authenticated user profile');
+        return null;
+    }
+    if (!data) return null;
 
     return {
         id: data.id,
@@ -249,12 +209,12 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
         username: data.username,
         avatar_url: data.avatar_url,
         website: data.website,
-        role: data.role || 'user',
+        role: data.role || 'unknown',
     };
 }
 
 // Update user profile
-export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+export async function updateUserProfile(userId: string, updates: UserProfileUpdate) {
     // Validate profile updates
     if (updates.full_name) {
         const nameValidation = validateFullName(updates.full_name);
@@ -292,12 +252,12 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
 
     const { data, error } = await supabase
         .from('profiles')
-        .upsert({
-            id: userId,
+        .update({
             ...sanitizedUpdates,
             updated_at: new Date().toISOString(),
         })
-        .select()
+        .eq('id', userId)
+        .select('id, email, full_name, username, avatar_url, website, role, updated_at')
         .single();
 
     if (error) throw error;
@@ -305,7 +265,12 @@ export async function updateUserProfile(userId: string, updates: Partial<UserPro
 }
 
 // Upload avatar
-const AVATAR_ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+const AVATAR_TYPE_EXTENSION: Readonly<Record<string, string>> = {
+    'image/png': 'png',
+    'image/jpeg': 'jpg',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+};
 const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
 export async function uploadAvatar(userId: string, file: File): Promise<string> {
@@ -315,20 +280,21 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
     }
 
     // Validate before touching storage.
-    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+    const fileExt = AVATAR_TYPE_EXTENSION[file.type];
+    if (!fileExt) {
         throw new Error('Unsupported image type — use PNG, JPEG, WebP, or GIF');
     }
     if (file.size > AVATAR_MAX_BYTES) {
         throw new Error('Image must be under 2MB');
     }
 
-    const fileExt = (file.name.split('.').pop() || 'png').toLowerCase();
     const fileName = `${userId}-${Date.now()}.${fileExt}`;
     const filePath = `${userId}/${fileName}`;
 
     // Snapshot the user's existing avatars so we can clean them up after a
     // successful upload — otherwise every save orphans the previous file.
-    const { data: existing } = await supabase.storage.from('avatars').list(userId);
+    const { data: existing, error: listError } = await supabase.storage.from('avatars').list(userId);
+    if (listError) logger.warn('Unable to list prior avatar files for cleanup');
 
     const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -342,7 +308,8 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
             .filter((obj) => obj.name !== fileName)
             .map((obj) => `${userId}/${obj.name}`);
         if (stale.length > 0) {
-            await supabase.storage.from('avatars').remove(stale);
+            const { error: removeError } = await supabase.storage.from('avatars').remove(stale);
+            if (removeError) logger.warn('Unable to remove prior avatar files');
         }
     }
 
@@ -374,11 +341,13 @@ export async function resetPassword(email: string) {
 
     // Always succeed to prevent user enumeration
     try {
-        await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
+        const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
             redirectTo: `${siteUrl}/auth/callback?next=/auth/reset-password`,
         });
+        if (error) logger.warn('Password reset request could not be completed');
     } catch {
-        // Silently handle errors to prevent user enumeration
+        // The UI response stays generic to prevent user enumeration.
+        logger.warn('Password reset request could not be completed');
     }
 }
 

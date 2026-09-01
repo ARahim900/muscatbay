@@ -6,17 +6,15 @@ import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supaba
 import { STP_RATES } from "@/lib/config";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
-import { HierarchyStatGrid } from "@/components/shared/hierarchy-stat-card";
+import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChartShell } from "@/components/charts/chart-container";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
     Droplets,
     Recycle,
-    Truck,
-    DollarSign,
     TrendingUp,
     Gauge,
     Activity,
@@ -41,6 +39,7 @@ import { STP_THRESHOLDS } from "@/lib/thresholds";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import dynamic from "next/dynamic";
+import { canonicalizeApprovedEmbedUrl } from "@/lib/embed-security";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
 
@@ -102,6 +101,43 @@ const STPTankerChart = dynamic(
 
 // Use centralized config for rates
 const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
+const STP_OPERATIONS_EMBED = canonicalizeApprovedEmbedUrl("https://aitable.ai/share/shripyzrlnlQ91WRSyCLF");
+
+interface EvidenceTotal {
+    value: number | null;
+    evidenced: number;
+    missing: number;
+}
+
+function totalEvidenced(operations: STPOperation[], select: (operation: STPOperation) => number | null): EvidenceTotal {
+    const values = operations.map(select).filter((value): value is number => value !== null);
+    return {
+        value: values.length > 0 ? values.reduce((sum, value) => sum + value, 0) : null,
+        evidenced: values.length,
+        missing: operations.length - values.length,
+    };
+}
+
+function recoveryPercent(inlet: number | null, tse: number | null): number | null {
+    return inlet !== null && inlet > 0 && tse !== null ? (tse / inlet) * 100 : null;
+}
+
+function derivedValue(value: number | null, rate: number): number | null {
+    return value === null ? null : value * rate;
+}
+
+function combinedImpact(income: number | null, savings: number | null): number | null {
+    return income === null || savings === null ? null : income + savings;
+}
+
+function addEvidenced(current: number | null, next: number | null): number | null {
+    if (next === null) return current;
+    return current === null ? next : current + next;
+}
+
+function numericLabel(value: number | null, options?: Intl.NumberFormatOptions): string {
+    return value === null ? "Not evidenced" : value.toLocaleString("en-US", options);
+}
 
 // Sanitize STP rows at the source so no downstream `format(new Date(op.date))`
 // (charts, log, Plant Watch, date-range picker) is fed a bad row:
@@ -261,7 +297,7 @@ export default function STPPage() {
         if (!latest) return [];
 
         const alerts: Array<{ key: string; title: string; message: string; tone: "warning" | "info" }> = [];
-        if (latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
+        if (latest.inlet_sewage !== null && latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
             alerts.push({
                 key: "high-inlet",
                 title: "High inlet sewage",
@@ -269,7 +305,7 @@ export default function STPPage() {
                 tone: "warning",
             });
         }
-        if (latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
+        if (latest.tanker_trips !== null && latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
             alerts.push({
                 key: "high-tanker-activity",
                 title: "High tanker activity",
@@ -467,29 +503,40 @@ export default function STPPage() {
 
     // Calculate statistics from filtered operations
     const stats = useMemo(() => {
-        const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const totalTrips = operations.reduce((sum, op) => sum + op.tanker_trips, 0);
-        const generatedIncome = totalTrips * TANKER_FEE;
-        const waterSavings = totalTSE * TSE_SAVING_RATE;
-        const totalEconomicImpact = generatedIncome + waterSavings;
-        const treatmentEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
-        const dailyAverageInlet = operations.length > 0 ? totalInlet / operations.length : 0;
+        const inlet = totalEvidenced(operations, (operation) => operation.inlet_sewage);
+        const tse = totalEvidenced(operations, (operation) => operation.tse_for_irrigation);
+        const trips = totalEvidenced(operations, (operation) => operation.tanker_trips);
+        const generatedIncome = derivedValue(trips.value, TANKER_FEE);
+        const waterSavings = derivedValue(tse.value, TSE_SAVING_RATE);
+        const totalEconomicImpact = combinedImpact(generatedIncome, waterSavings);
+        const treatmentEfficiency = recoveryPercent(inlet.value, tse.value);
+        const dailyAverageInlet = inlet.value !== null && inlet.evidenced > 0
+            ? inlet.value / inlet.evidenced
+            : null;
 
         // Previous period totals for trend comparison
-        const prevInlet = prevOperations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const prevTSE = prevOperations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const prevTrips = prevOperations.reduce((sum, op) => sum + op.tanker_trips, 0);
-        const prevIncome = prevTrips * TANKER_FEE;
-        const prevSavings = prevTSE * TSE_SAVING_RATE;
-        const prevEconomicImpact = prevIncome + prevSavings;
+        const prevInlet = totalEvidenced(prevOperations, (operation) => operation.inlet_sewage);
+        const prevTSE = totalEvidenced(prevOperations, (operation) => operation.tse_for_irrigation);
+        const prevTrips = totalEvidenced(prevOperations, (operation) => operation.tanker_trips);
+        const prevIncome = derivedValue(prevTrips.value, TANKER_FEE);
+        const prevSavings = derivedValue(prevTSE.value, TSE_SAVING_RATE);
+        const prevEconomicImpact = combinedImpact(prevIncome, prevSavings);
 
-        const hasPrev = prevOperations.length > 0;
-
-        const inletTrend = hasPrev ? calcTrend(totalInlet, prevInlet) : null;
-        const tseTrend = hasPrev ? calcTrend(totalTSE, prevTSE) : null;
-        const tripsTrend = hasPrev ? calcTrend(totalTrips, prevTrips) : null;
-        const economicTrend = hasPrev ? calcTrend(totalEconomicImpact, prevEconomicImpact) : null;
+        const inletTrend = inlet.value !== null && prevInlet.value !== null && inlet.missing === 0 && prevInlet.missing === 0
+            ? calcTrend(inlet.value, prevInlet.value)
+            : null;
+        const tseTrend = tse.value !== null && prevTSE.value !== null && tse.missing === 0 && prevTSE.missing === 0
+            ? calcTrend(tse.value, prevTSE.value)
+            : null;
+        const economicTrend = totalEconomicImpact !== null && prevEconomicImpact !== null
+            && trips.missing === 0 && tse.missing === 0 && prevTrips.missing === 0 && prevTSE.missing === 0
+            ? calcTrend(totalEconomicImpact, prevEconomicImpact)
+            : null;
+        const previousRecovery = recoveryPercent(prevInlet.value, prevTSE.value);
+        const recoveryTrend = treatmentEfficiency !== null && previousRecovery !== null
+            && inlet.missing === 0 && tse.missing === 0 && prevInlet.missing === 0 && prevTSE.missing === 0
+            ? calcTrend(treatmentEfficiency, previousRecovery)
+            : null;
 
         // Five cards, not eight — the 8-card deck was reported as clutter
         // (2026-07-29). Nothing is dropped, three figures just stop being
@@ -502,43 +549,59 @@ export default function STPPage() {
         // it is TSE ÷ inlet, so it rides on the TSE subtitle here, and it
         // remains the LEAD health card on the Plant Watch tab with its target
         // bands intact.
-        const money = (v: number) =>
-            v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const money = (value: number | null) => numericLabel(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
         return [
             {
-                label: "Inlet Sewage",
-                value: totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 }),
-                unit: "m³",
-                subtitle: `avg ${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³/day over this range`,
+                label: "Inlet Volume",
+                value: numericLabel(inlet.value, { maximumFractionDigits: 1 }),
+                unit: inlet.value === null ? undefined : "m³",
+                subtitle: dailyAverageInlet === null
+                    ? "No inlet readings evidenced"
+                    : `${inlet.missing > 0 ? "Partial · " : ""}avg ${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³/evidenced day`,
                 icon: Droplets,
                 variant: "primary" as const,
+                dataQuality: inlet.missing > 0 ? "incomplete" as const : undefined,
+                status: inlet.value === null ? "missing" as const : undefined,
                 ...(inletTrend && { trend: inletTrend.trend, trendValue: inletTrend.trendValue }),
             },
             {
-                label: "TSE for Irrigation",
-                value: totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 }),
-                unit: "m³",
-                subtitle: `${treatmentEfficiency.toFixed(1)}% of inlet recycled`,
+                label: "TSE Output",
+                value: numericLabel(tse.value, { maximumFractionDigits: 1 }),
+                unit: tse.value === null ? undefined : "m³",
+                subtitle: treatmentEfficiency === null
+                    ? "Recovery not evidenced"
+                    : `${tse.missing > 0 ? "Partial · " : ""}${treatmentEfficiency.toFixed(1)}% of evidenced inlet`,
                 icon: Recycle,
                 variant: "secondary" as const,
+                dataQuality: tse.missing > 0 ? "incomplete" as const : undefined,
+                status: tse.value === null ? "missing" as const : undefined,
                 ...(tseTrend && { trend: tseTrend.trend, trendValue: tseTrend.trendValue }),
             },
             {
-                label: "Tanker Trips",
-                value: `${totalTrips.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
-                subtitle: `at ${TANKER_FEE} OMR / trip`,
-                icon: Truck,
-                variant: "warning" as const,
-                ...(tripsTrend && { trend: tripsTrend.trend, trendValue: tripsTrend.trendValue }),
+                label: "Recovery",
+                value: treatmentEfficiency === null ? "Not evidenced" : treatmentEfficiency.toFixed(1),
+                unit: treatmentEfficiency === null ? undefined : "%",
+                subtitle: treatmentEfficiency === null ? "Complete inlet and TSE evidence required" : "Evidenced TSE output ÷ inlet volume",
+                icon: Gauge,
+                variant: treatmentEfficiency !== null && treatmentEfficiency > 100 ? "danger" as const : "warning" as const,
+                dataQuality: treatmentEfficiency !== null && treatmentEfficiency > 100
+                    ? "anomaly" as const
+                    : inlet.missing > 0 || tse.missing > 0 ? "incomplete" as const : undefined,
+                status: treatmentEfficiency === null ? "missing" as const : treatmentEfficiency > 100 ? "danger" as const : undefined,
+                ...(recoveryTrend && { trend: recoveryTrend.trend, trendValue: recoveryTrend.trendValue }),
             },
             {
-                label: "Total Economic Impact",
+                label: "Economic Impact",
                 value: money(totalEconomicImpact),
-                unit: "OMR",
-                subtitle: `${money(generatedIncome)} income + ${money(waterSavings)} savings`,
+                unit: totalEconomicImpact === null ? undefined : "OMR",
+                subtitle: totalEconomicImpact === null
+                    ? "Tanker trips and TSE output both required"
+                    : `${trips.missing > 0 || tse.missing > 0 ? "Partial · " : ""}${money(generatedIncome)} income + ${money(waterSavings)} savings`,
                 icon: TrendingUp,
                 variant: "success" as const,
+                dataQuality: trips.missing > 0 || tse.missing > 0 ? "incomplete" as const : undefined,
+                status: totalEconomicImpact === null ? "missing" as const : undefined,
                 ...(economicTrend && { trend: economicTrend.trend, trendValue: economicTrend.trendValue }),
             },
         ];
@@ -552,13 +615,13 @@ export default function STPPage() {
             const monthKey = format(new Date(op.date), "MMM-yy");
             const sortKey = format(new Date(op.date), "yyyy-MM");
             if (!monthly[monthKey]) {
-                monthly[monthKey] = { month: monthKey, sortKey, inlet: 0, tse: 0, income: 0, savings: 0, trips: 0 };
+                monthly[monthKey] = { month: monthKey, sortKey, inlet: null, tse: null, income: null, savings: null, trips: null };
             }
-            monthly[monthKey].inlet += op.inlet_sewage;
-            monthly[monthKey].tse += op.tse_for_irrigation;
-            monthly[monthKey].income += (op.tanker_trips * TANKER_FEE);
-            monthly[monthKey].savings += (op.tse_for_irrigation * TSE_SAVING_RATE);
-            monthly[monthKey].trips += op.tanker_trips;
+            monthly[monthKey].inlet = addEvidenced(monthly[monthKey].inlet, op.inlet_sewage);
+            monthly[monthKey].tse = addEvidenced(monthly[monthKey].tse, op.tse_for_irrigation);
+            monthly[monthKey].income = addEvidenced(monthly[monthKey].income, derivedValue(op.tanker_trips, TANKER_FEE));
+            monthly[monthKey].savings = addEvidenced(monthly[monthKey].savings, derivedValue(op.tse_for_irrigation, TSE_SAVING_RATE));
+            monthly[monthKey].trips = addEvidenced(monthly[monthKey].trips, op.tanker_trips);
         });
 
         return Object.values(monthly).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
@@ -571,13 +634,13 @@ export default function STPPage() {
         operations.forEach(op => {
             const dateKey = format(new Date(op.date), "yyyy-MM-dd");
             if (!daily[dateKey]) {
-                daily[dateKey] = { month: format(new Date(op.date), "dd MMM"), sortKey: dateKey, inlet: 0, tse: 0, income: 0, savings: 0, trips: 0 };
+                daily[dateKey] = { month: format(new Date(op.date), "dd MMM"), sortKey: dateKey, inlet: null, tse: null, income: null, savings: null, trips: null };
             }
-            daily[dateKey].inlet += op.inlet_sewage;
-            daily[dateKey].tse += op.tse_for_irrigation;
-            daily[dateKey].income += op.tanker_trips * TANKER_FEE;
-            daily[dateKey].savings += op.tse_for_irrigation * TSE_SAVING_RATE;
-            daily[dateKey].trips += op.tanker_trips;
+            daily[dateKey].inlet = addEvidenced(daily[dateKey].inlet, op.inlet_sewage);
+            daily[dateKey].tse = addEvidenced(daily[dateKey].tse, op.tse_for_irrigation);
+            daily[dateKey].income = addEvidenced(daily[dateKey].income, derivedValue(op.tanker_trips, TANKER_FEE));
+            daily[dateKey].savings = addEvidenced(daily[dateKey].savings, derivedValue(op.tse_for_irrigation, TSE_SAVING_RATE));
+            daily[dateKey].trips = addEvidenced(daily[dateKey].trips, op.tanker_trips);
         });
 
         return Object.values(daily).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
@@ -606,22 +669,22 @@ export default function STPPage() {
             filtered = filtered.filter(op => {
                 const dateStr = format(new Date(op.date), "dd/MM/yyyy");
                 return dateStr.includes(term) ||
-                    op.inlet_sewage.toString().includes(term) ||
-                    op.tse_for_irrigation.toString().includes(term) ||
-                    op.tanker_trips.toString().includes(term);
+                    (op.inlet_sewage !== null && op.inlet_sewage.toString().includes(term)) ||
+                    (op.tse_for_irrigation !== null && op.tse_for_irrigation.toString().includes(term)) ||
+                    (op.tanker_trips !== null && op.tanker_trips.toString().includes(term));
             });
         }
 
         // Sort based on logSortField and logSortDirection
         filtered.sort((a, b) => {
-            let aVal: number | string = 0;
-            let bVal: number | string = 0;
-            const aEfficiency = a.inlet_sewage > 0 ? (a.tse_for_irrigation / a.inlet_sewage) * 100 : 0;
-            const bEfficiency = b.inlet_sewage > 0 ? (b.tse_for_irrigation / b.inlet_sewage) * 100 : 0;
-            const aIncome = a.tanker_trips * TANKER_FEE;
-            const bIncome = b.tanker_trips * TANKER_FEE;
-            const aSavings = a.tse_for_irrigation * TSE_SAVING_RATE;
-            const bSavings = b.tse_for_irrigation * TSE_SAVING_RATE;
+            let aVal: number | null;
+            let bVal: number | null;
+            const aEfficiency = recoveryPercent(a.inlet_sewage, a.tse_for_irrigation);
+            const bEfficiency = recoveryPercent(b.inlet_sewage, b.tse_for_irrigation);
+            const aIncome = derivedValue(a.tanker_trips, TANKER_FEE);
+            const bIncome = derivedValue(b.tanker_trips, TANKER_FEE);
+            const aSavings = derivedValue(a.tse_for_irrigation, TSE_SAVING_RATE);
+            const bSavings = derivedValue(b.tse_for_irrigation, TSE_SAVING_RATE);
 
             switch (logSortField) {
                 case 'date': aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime(); break;
@@ -631,10 +694,13 @@ export default function STPPage() {
                 case 'trips': aVal = a.tanker_trips; bVal = b.tanker_trips; break;
                 case 'income': aVal = aIncome; bVal = bIncome; break;
                 case 'savings': aVal = aSavings; bVal = bSavings; break;
-                case 'total': aVal = aIncome + aSavings; bVal = bIncome + bSavings; break;
+                case 'total': aVal = combinedImpact(aIncome, aSavings); bVal = combinedImpact(bIncome, bSavings); break;
                 default: aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime();
             }
-            return logSortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+            if (aVal === null && bVal === null) return 0;
+            if (aVal === null) return 1;
+            if (bVal === null) return -1;
+            return logSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
         });
 
         return filtered;
@@ -652,14 +718,21 @@ export default function STPPage() {
     // Month totals — computed from ALL daily operations (not paginated) for the selected month
     const monthTotals = useMemo(() => {
         if (dailyOperations.length === 0) return null;
-        const totalInlet = dailyOperations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const totalTSE = dailyOperations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const totalTrips = dailyOperations.reduce((sum, op) => sum + op.tanker_trips, 0);
-        const avgEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
-        const totalIncome = totalTrips * TANKER_FEE;
-        const totalSavings = totalTSE * TSE_SAVING_RATE;
-        const totalImpact = totalIncome + totalSavings;
-        return { totalInlet, totalTSE, totalTrips, avgEfficiency, totalIncome, totalSavings, totalImpact };
+        const inlet = totalEvidenced(dailyOperations, (operation) => operation.inlet_sewage);
+        const tse = totalEvidenced(dailyOperations, (operation) => operation.tse_for_irrigation);
+        const trips = totalEvidenced(dailyOperations, (operation) => operation.tanker_trips);
+        const totalIncome = derivedValue(trips.value, TANKER_FEE);
+        const totalSavings = derivedValue(tse.value, TSE_SAVING_RATE);
+        return {
+            totalInlet: inlet.value,
+            totalTSE: tse.value,
+            totalTrips: trips.value,
+            avgEfficiency: recoveryPercent(inlet.value, tse.value),
+            totalIncome,
+            totalSavings,
+            totalImpact: combinedImpact(totalIncome, totalSavings),
+            missing: inlet.missing + tse.missing + trips.missing,
+        };
     }, [dailyOperations]);
 
     // Handle sort for daily log
@@ -676,18 +749,19 @@ export default function STPPage() {
     // Export daily ops to CSV
     const handleLogExportCSV = () => {
         const data = dailyOperations.map(op => {
-            const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-            const income = op.tanker_trips * TANKER_FEE;
-            const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
+            const efficiency = recoveryPercent(op.inlet_sewage, op.tse_for_irrigation);
+            const income = derivedValue(op.tanker_trips, TANKER_FEE);
+            const savings = derivedValue(op.tse_for_irrigation, TSE_SAVING_RATE);
+            const totalImpact = combinedImpact(income, savings);
             return {
                 Date: format(new Date(op.date), "dd/MM/yyyy"),
-                'Inlet (m³)': op.inlet_sewage,
-                'TSE Output (m³)': op.tse_for_irrigation,
-                'Efficiency %': Number(efficiency.toFixed(1)),
-                'Tanker Trips': op.tanker_trips,
-                'Income (OMR)': Number(income.toFixed(1)),
-                'Savings (OMR)': Number(savings.toFixed(1)),
-                'Total Impact (OMR)': Number((income + savings).toFixed(1)),
+                'Inlet (m³)': op.inlet_sewage === null ? '' : op.inlet_sewage,
+                'TSE Output (m³)': op.tse_for_irrigation === null ? '' : op.tse_for_irrigation,
+                'Efficiency %': efficiency === null ? '' : Number(efficiency.toFixed(1)),
+                'Tanker Trips': op.tanker_trips === null ? '' : op.tanker_trips,
+                'Income (OMR)': income === null ? '' : Number(income.toFixed(1)),
+                'Savings (OMR)': savings === null ? '' : Number(savings.toFixed(1)),
+                'Total Impact (OMR)': totalImpact === null ? '' : Number(totalImpact.toFixed(1)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);
@@ -731,17 +805,8 @@ export default function STPPage() {
     if (loading) {
         return (
             <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
-                {/* Header skeleton */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-4 w-4" />
-                            <Skeleton className="h-4 w-20" />
-                        </div>
-                        <Skeleton className="h-9 w-48" />
-                        <Skeleton className="h-4 w-64" />
-                    </div>
+                    <PageHeader title="STP Plant" description="Water Treatment Management" />
                     <Skeleton className="h-6 w-32 rounded-full" />
                 </div>
                 {/* Tabs skeleton */}
@@ -807,14 +872,11 @@ export default function STPPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
-                variant="secondary"
                 tabs={[
                     { key: "watch", label: "Plant Watch", icon: Gauge },
                     { key: "dashboard", label: "Operations & Trends", icon: Activity },
                 ]}
             />
-
-            <HierarchyStatGrid stats={stats} />
 
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}
@@ -846,7 +908,7 @@ export default function STPPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
+                                                className={`min-h-11 min-w-11 rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -870,6 +932,8 @@ export default function STPPage() {
                 </PeriodFilterPanel>
             )}
 
+            <StatsGrid stats={stats} />
+
             {/* Plant Watch — process-health cards, day heatmap, exceptions & actions */}
             {activeTab === "watch" && (
                 <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
@@ -881,74 +945,49 @@ export default function STPPage() {
                 <div id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
                     {/* Water Treatment Volumes Chart */}
                     <SectionBoundary title="Water treatment volumes">
-                    <Card className="card-elevated">
-                        <CardHeader className="card-elevated-header">
-                            <div className="flex items-center justify-between gap-4 flex-wrap">
-                                <div className="space-y-1">
-                                    <CardTitle className="text-lg">Water Treatment Volumes (m³)</CardTitle>
-                                    <p className="text-sm text-muted-foreground">
-                                        {selectedDateRange.start && selectedDateRange.end
-                                            ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end} \u00B7 ${volumeChartView === 'daily' ? `${dailyChartData.length} days` : `${monthlyChartData.length} months`}`
-                                            : "Sewage Inlet vs TSE Output comparison"}
-                                    </p>
-                                </div>
-                                <ChartViewToggle value={volumeChartView} onChange={setVolumeChartView} />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
+                    <ChartShell
+                        title="Water Treatment Volumes (m³)"
+                        description={selectedDateRange.start && selectedDateRange.end
+                            ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end} \u00B7 ${volumeChartView === "daily" ? `${dailyChartData.length} days` : `${monthlyChartData.length} months`}`
+                            : "Sewage Inlet vs TSE Output comparison"}
+                        controls={<ChartViewToggle value={volumeChartView} onChange={setVolumeChartView} />}
+                        state={(volumeChartView === "daily" ? dailyChartData : monthlyChartData).length > 0 ? "ready" : "empty"}
+                        interpretation="Compare inlet and TSE output together; a widening gap or TSE above inlet requires data-quality review before performance conclusions."
+                    >
                             <STPVolumeChart data={volumeChartView === 'daily' ? dailyChartData : monthlyChartData} view={volumeChartView} />
-                        </CardContent>
-                    </Card>
+                    </ChartShell>
                     </SectionBoundary>
 
                     {/* Two Charts Side by Side */}
                     <SectionBoundary title="Economic impact & tanker operations">
                     <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2">
                         {/* Economic Impact */}
-                        <Card className="card-elevated h-full">
-                            <CardHeader className="card-elevated-header">
-                                <div className="flex items-center justify-between gap-3 flex-wrap">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <DollarSign className="h-5 w-5 text-[var(--mb-success-text)]" />
-                                            Economic Impact (OMR)
-                                        </CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            {selectedDateRange.start && selectedDateRange.end
-                                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
-                                                : "Income & Savings breakdown"}
-                                        </p>
-                                    </div>
-                                    <ChartViewToggle value={economicChartView} onChange={setEconomicChartView} />
-                                </div>
-                            </CardHeader>
-                            <CardContent>
+                        <ChartShell
+                            className="h-full"
+                            title="Economic Impact (OMR)"
+                            description={selectedDateRange.start && selectedDateRange.end
+                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
+                                : "Income & Savings breakdown"}
+                            controls={<ChartViewToggle value={economicChartView} onChange={setEconomicChartView} />}
+                            state={(economicChartView === "daily" ? dailyChartData : monthlyChartData).length > 0 ? "ready" : "empty"}
+                            interpretation="Treat economic impact as evidenced only where the underlying TSE output reading is present."
+                        >
                                 <STPEconomicChart data={economicChartView === 'daily' ? dailyChartData : monthlyChartData} view={economicChartView} />
-                            </CardContent>
-                        </Card>
+                        </ChartShell>
 
                         {/* Tanker Operations */}
-                        <Card className="card-elevated h-full">
-                            <CardHeader className="card-elevated-header">
-                                <div className="flex items-center justify-between gap-3 flex-wrap">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-lg flex items-center gap-2">
-                                            <Truck className="h-5 w-5 text-[var(--mb-warning-text)]" />
-                                            Tanker Operations
-                                        </CardTitle>
-                                        <p className="text-sm text-muted-foreground">
-                                            {selectedDateRange.start && selectedDateRange.end
-                                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
-                                                : "Tanker trip trends"}
-                                        </p>
-                                    </div>
-                                    <ChartViewToggle value={tankerChartView} onChange={setTankerChartView} />
-                                </div>
-                            </CardHeader>
-                            <CardContent>
+                        <ChartShell
+                            className="h-full"
+                            title="Tanker Operations"
+                            description={selectedDateRange.start && selectedDateRange.end
+                                ? `${selectedDateRange.start} \u2013 ${selectedDateRange.end}`
+                                : "Tanker trip trends"}
+                            controls={<ChartViewToggle value={tankerChartView} onChange={setTankerChartView} />}
+                            state={(tankerChartView === "daily" ? dailyChartData : monthlyChartData).length > 0 ? "ready" : "empty"}
+                            interpretation="Use trip changes as an operating signal; missing trip readings remain unevidenced rather than zero."
+                        >
                                 <STPTankerChart data={tankerChartView === 'daily' ? dailyChartData : monthlyChartData} view={tankerChartView} />
-                            </CardContent>
-                        </Card>
+                        </ChartShell>
                     </div>
                     </SectionBoundary>
 
@@ -989,7 +1028,7 @@ export default function STPPage() {
 
                             <button
                                 onClick={handleLogExportCSV}
-                                className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                                className="flex min-h-11 items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
                             >
                                 <Download className="w-3.5 h-3.5" />
                                 <span>Export CSV</span>
@@ -1003,34 +1042,36 @@ export default function STPPage() {
                         {/* Mobile card view */}
                         <div className="md:hidden space-y-3">
                             {paginatedDailyOperations.map((op) => {
-                                const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-                                const income = op.tanker_trips * TANKER_FEE;
-                                const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
-                                const totalImpact = income + savings;
-                                const efficiencyBadgeColor: BadgeColor = efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                const efficiency = recoveryPercent(op.inlet_sewage, op.tse_for_irrigation);
+                                const income = derivedValue(op.tanker_trips, TANKER_FEE);
+                                const savings = derivedValue(op.tse_for_irrigation, TSE_SAVING_RATE);
+                                const totalImpact = combinedImpact(income, savings);
+                                const efficiencyBadgeColor: BadgeColor = efficiency === null
+                                    ? 'slate'
+                                    : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
 
                                 return (
                                     <div key={op.id} className="rounded-xl border border-border/80 bg-card p-4 shadow-sm space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-foreground">{format(new Date(op.date), "dd/MM/yyyy")}</span>
-                                            <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
+                                            <StatusBadge label={efficiency === null ? "Not evidenced" : `${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Inlet</span>
-                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
+                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage === null ? "Not evidenced" : `${op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">TSE Output</span>
-                                                <p className="font-mono font-medium text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
+                                                <p className="font-mono font-medium text-mb-info-text">{op.tse_for_irrigation === null ? "Not evidenced" : `${op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³`}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Tanker Trips</span>
-                                                <p className="font-mono font-medium text-[var(--mb-warning-text)]">{op.tanker_trips}</p>
+                                                <p className="font-mono font-medium text-[var(--mb-warning-text)]">{op.tanker_trips === null ? "Not evidenced" : op.tanker_trips}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Total Impact</span>
-                                                <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact.toFixed(1)} OMR</p>
+                                                <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact === null ? "Not evidenced" : `${totalImpact.toFixed(1)} OMR`}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1055,19 +1096,19 @@ export default function STPPage() {
                                     <div className="grid grid-cols-2 gap-3 text-xs">
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Inlet (m³)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{numericLabel(monthTotals.totalInlet, { maximumFractionDigits: 1 })}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">TSE Output (m³)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{numericLabel(monthTotals.totalTSE, { maximumFractionDigits: 1 })}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Tanker Trips</p>
-                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalTrips}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{numericLabel(monthTotals.totalTrips)}</p>
                                         </div>
                                         <div>
                                             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total Impact (OMR)</p>
-                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{monthTotals.totalImpact.toFixed(1)}</p>
+                                            <p className="mt-0.5 font-mono text-sm font-semibold text-foreground">{numericLabel(monthTotals.totalImpact, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1076,7 +1117,7 @@ export default function STPPage() {
 
                         {/* Desktop table */}
                         <div className="hidden md:block">
-                            <Table data-density="compact">
+                            <Table data-density="compact" aria-label="STP daily operations log">
                                 <TableHeader>
                                     <TableRow>
                                         <SortableTableHead field="date" currentSortField={logSortField} currentSortDirection={logSortDirection} onSort={handleLogSort}>Date</SortableTableHead>
@@ -1091,26 +1132,28 @@ export default function STPPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {paginatedDailyOperations.map((op) => {
-                                        const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-                                        const income = op.tanker_trips * TANKER_FEE;
-                                        const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
-                                        const totalImpact = income + savings;
-                                        const efficiencyBadgeColor: BadgeColor = efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                        const efficiency = recoveryPercent(op.inlet_sewage, op.tse_for_irrigation);
+                                        const income = derivedValue(op.tanker_trips, TANKER_FEE);
+                                        const savings = derivedValue(op.tse_for_irrigation, TSE_SAVING_RATE);
+                                        const totalImpact = combinedImpact(income, savings);
+                                        const efficiencyBadgeColor: BadgeColor = efficiency === null
+                                            ? 'slate'
+                                            : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
 
                                         return (
                                             <TableRow key={op.id}>
                                                 <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
-                                                <TableCell className="num text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                                <TableCell className="num text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-primary">{op.inlet_sewage === null ? "—" : op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-mb-info-text">{op.tse_for_irrigation === null ? "—" : op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end">
-                                                        <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
+                                                        <StatusBadge label={efficiency === null ? "Not evidenced" : `${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="num text-mb-warning-text">{op.tanker_trips}</TableCell>
-                                                <TableCell className="num text-mb-success-text">{income.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-mb-success-text">{totalImpact.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-mb-warning-text">{op.tanker_trips === null ? "—" : op.tanker_trips}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{income === null ? "—" : income.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-primary">{savings === null ? "—" : savings.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{totalImpact === null ? "—" : totalImpact.toFixed(1)}</TableCell>
                                             </TableRow>
                                         );
                                     })}
@@ -1131,7 +1174,9 @@ export default function STPPage() {
                                     suffix that could not adapt to dark mode). */}
                                 {monthTotals && (() => {
                                     const { RECOVERY_GOOD, RECOVERY_WATCH } = STP_THRESHOLDS;
-                                    const effColor: BadgeColor = monthTotals.avgEfficiency >= RECOVERY_GOOD ? 'green' : monthTotals.avgEfficiency >= RECOVERY_WATCH ? 'amber' : 'red';
+                                    const effColor: BadgeColor = monthTotals.avgEfficiency === null
+                                        ? 'slate'
+                                        : monthTotals.avgEfficiency >= RECOVERY_GOOD ? 'green' : monthTotals.avgEfficiency >= RECOVERY_WATCH ? 'amber' : 'red';
                                     const cell = "px-4 sm:px-6 py-4 align-middle text-sm font-semibold text-right tabular-nums text-foreground";
                                     return (
                                         <TableFooter>
@@ -1142,17 +1187,17 @@ export default function STPPage() {
                                                         Monthly Total ({dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''})
                                                     </span>
                                                 </td>
-                                                <td className={cell}>{monthTotals.totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
-                                                <td className={cell}>{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
+                                                <td className={cell}>{numericLabel(monthTotals.totalInlet, { maximumFractionDigits: 1 })}</td>
+                                                <td className={cell}>{numericLabel(monthTotals.totalTSE, { maximumFractionDigits: 1 })}</td>
                                                 <td className="px-4 sm:px-6 py-4 align-middle text-sm text-right">
                                                     <div className="flex justify-end">
-                                                        <StatusBadge label={`${monthTotals.avgEfficiency.toFixed(1)}%`} color={effColor} />
+                                                        <StatusBadge label={monthTotals.avgEfficiency === null ? "Not evidenced" : `${monthTotals.avgEfficiency.toFixed(1)}%`} color={effColor} />
                                                     </div>
                                                 </td>
-                                                <td className={cell}>{monthTotals.totalTrips}</td>
-                                                <td className={cell}>{monthTotals.totalIncome.toFixed(1)}</td>
-                                                <td className={cell}>{monthTotals.totalSavings.toFixed(1)}</td>
-                                                <td className={`${cell} bg-muted/60 dark:bg-muted/30 text-primary dark:text-foreground`}>{monthTotals.totalImpact.toFixed(1)}</td>
+                                                <td className={cell}>{numericLabel(monthTotals.totalTrips)}</td>
+                                                <td className={cell}>{numericLabel(monthTotals.totalIncome, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td>
+                                                <td className={cell}>{numericLabel(monthTotals.totalSavings, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td>
+                                                <td className={`${cell} bg-muted/60 dark:bg-muted/30 text-primary dark:text-foreground`}>{numericLabel(monthTotals.totalImpact, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</td>
                                             </tr>
                                         </TableFooter>
                                     );
@@ -1187,15 +1232,20 @@ export default function STPPage() {
                             <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
                         </summary>
                         <div className="border-t border-border">
+                            {STP_OPERATIONS_EMBED ? (
                             <iframe
-                                src="https://aitable.ai/share/shripyzrlnlQ91WRSyCLF"
+                                src={STP_OPERATIONS_EMBED.url}
                                 className="h-[70vh] w-full"
                                 style={{ border: 'none' }}
                                 loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                                allow="fullscreen"
+                                referrerPolicy="no-referrer"
+                                sandbox={STP_OPERATIONS_EMBED.sandbox}
+                                allow={STP_OPERATIONS_EMBED.allow}
                                 title="STP Operations Database"
                             />
+                            ) : (
+                                <p role="alert" className="p-5 text-sm text-[var(--mb-danger-text)]">The operations database URL is not approved for embedding.</p>
+                            )}
                         </div>
                     </details>
                 </div>

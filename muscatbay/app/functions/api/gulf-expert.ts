@@ -23,6 +23,12 @@ import type {
     GulfExpertContract,
     GulfExpertCommunication,
 } from '@/components/hvac/types';
+import { getAmcContractDateEvidence } from '@/functions/api/contractors';
+import {
+    reconcileContractDates,
+    type ContractDateReconciliation,
+    type ContractDateEvidence,
+} from '@/lib/contract-reconciliation';
 
 /** Rows requested per PostgREST round-trip (must be <= the server max_rows cap). */
 const PAGE_SIZE = 1000;
@@ -122,6 +128,34 @@ export async function getGulfExpertContracts(
     const client = clientOverride ?? getSupabaseClient();
     if (!client) return emptyResult<GulfExpertContract>();
     return fetchAllRows<GulfExpertContract>(client, 'gulf_expert_contracts', CONTRACT_COLS);
+}
+
+/**
+ * Compare Gulf Expert dates with the AMC register by contract reference.
+ * Conflicts return a null canonical date and both source records for review.
+ */
+export async function getGulfExpertContractDateReconciliation(
+    clientOverride?: SupabaseClient,
+): Promise<ContractDateReconciliation> {
+    const client = clientOverride ?? getSupabaseClient();
+    if (!client) return { contracts: [], unreferenced: [] };
+
+    const [gulfExpert, amcEvidence] = await Promise.all([
+        getGulfExpertContracts(client),
+        getAmcContractDateEvidence(client),
+    ]);
+    const gulfExpertEvidence: ContractDateEvidence[] = gulfExpert.rows.map((contract) => ({
+        source: 'gulf_expert_contracts',
+        recordId: String(contract.id),
+        contractor: 'Gulf Expert',
+        service: contract.contract_type,
+        contractRef: contract.contract_ref,
+        startDate: contract.start_date,
+        endDate: contract.end_date,
+        evidenceAnchor: contract.notes,
+    }));
+
+    return reconcileContractDates([...amcEvidence, ...gulfExpertEvidence]);
 }
 
 /**
