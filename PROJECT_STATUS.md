@@ -434,6 +434,32 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **The two sync skills need a one-time Mac setup that no repo file can do
+  for them (2026-08-31).** `sync-grafana-water` and `sync-aitable-stp` do not
+  call an API — they drive a real Chrome window, reuse the operator's own
+  Grafana/AITable session, read the table off the screen and write rows to
+  Supabase. That needs `mcp__computer-use__open_application` and the
+  `mcp__Claude_in_Chrome__*` family. Both are **built into Claude Code** — not
+  plugins, not npm packages — and both are off by default. Turning them on is
+  local to the Mac: `computer-use` via `/mcp` → Enable (stored per project in
+  `~/.claude.json`), Chrome via the Claude in Chrome extension plus `/chrome`
+  → "Enabled by default". macOS Accessibility and Screen Recording grants live
+  in the OS privacy database. None of that is committable, so a fresh machine
+  silently has no sync capability until someone does it by hand. Three
+  constraints bite in practice and were previously written down nowhere: the
+  session must be **interactive** (computer use never loads under `claude -p`,
+  so these skills cannot be cron'd); the plan must be **Pro or Max** (the
+  research preview excludes Team and Enterprise); and an exported
+  `ANTHROPIC_API_KEY` or `claude setup-token` token **silently disables both**
+  features, because the browser extension cannot authenticate with those
+  credentials. `scripts/setup-mac-control.sh` now checks every precondition
+  that is checkable from a shell — OS, CLI version, auth mode, browser,
+  extension version, native messaging host — and names the manual steps left;
+  `docs/mac-control-setup.md` is the walkthrough and the troubleshooting table.
+  The permission grants themselves stay unverifiable by design: macOS keeps
+  that database unreadable to other processes, so the script reports what it
+  can prove and does not guess at the rest.
+
 - **Google sign-in ships dark until its provider is enabled in Supabase
   (2026-08-28).** `/login` and `/signup` now carry a "Continue with Google"
   button (`components/auth/google-sign-in-button.tsx` →
