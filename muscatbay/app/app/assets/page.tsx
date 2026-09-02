@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+    Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
     MultiSelectDropdown, SortableTableHead, TablePagination,
@@ -604,6 +604,11 @@ export default function AssetsPage() {
                             ))}
                             <div className="hidden md:block">
                                 <Table>
+                                    <TableCaption className="sr-only mt-0">
+                                        Asset register, overview view: one row per asset with its name, asset tag,
+                                        discipline, category, zone, building, operational status and criticality band.
+                                        A hyphen means the value is not recorded.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <SortableTableHead field="name" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Name</SortableTableHead>
@@ -655,6 +660,12 @@ export default function AssetsPage() {
                             ))}
                             <div className="hidden md:block">
                                 <Table>
+                                    <TableCaption className="sr-only mt-0">
+                                        Asset register, lifecycle view: one row per asset with its asset tag, name,
+                                        discipline, installation year, current age, expected life, estimated remaining
+                                        life, percentage of life used, warranty expiry, condition and criticality band.
+                                        Ages and lives are in years; a hyphen means the value is not recorded.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
@@ -710,6 +721,12 @@ export default function AssetsPage() {
                             ))}
                             <div className="hidden md:block">
                                 <Table>
+                                    <TableCaption className="sr-only mt-0">
+                                        Asset register, maintenance view: one row per asset with its asset tag, name,
+                                        discipline, zone or building, planned preventive maintenance frequency and
+                                        interval in months, AMC contractor, last and next PPM dates, AMC notes and
+                                        maintenance notes. A hyphen means the value is not recorded.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
@@ -768,6 +785,12 @@ export default function AssetsPage() {
                             ))}
                             <div className="hidden md:block">
                                 <Table>
+                                    <TableCaption className="sr-only mt-0">
+                                        Asset register, technical view: one row per asset with its asset tag, name,
+                                        discipline, sub-category, manufacturer, model, country of origin, power or
+                                        capacity rating, serial number, registering authority and the source the
+                                        record came from. A hyphen means the value is not recorded.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>
@@ -826,6 +849,12 @@ export default function AssetsPage() {
                             ))}
                             <div className="hidden md:block">
                                 <Table>
+                                    <TableCaption className="sr-only mt-0">
+                                        Asset register, financial view: one row per asset with its asset tag, name,
+                                        discipline, zone or building, original and replacement cost in Omani rial, BOQ
+                                        reference, BOQ design life in years, supplier and notes. A hyphen means no
+                                        figure is recorded.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <SortableTableHead field="tag" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort} className="col-sticky">Asset Tag</SortableTableHead>

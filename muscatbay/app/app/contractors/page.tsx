@@ -31,7 +31,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, TablePagination, ActiveFilterPills,
@@ -756,7 +756,16 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        <Table aria-label="Contractor performance summary">
+                        {/* The old name, "Contractor performance summary", described a table
+                            this is not — it is the contract register, so it is named as one. */}
+                        <Table aria-label="Contract register">
+                            <TableCaption className="sr-only mt-0">
+                                Contract register: one row per contract with its record number, contractor, contract
+                                reference, service, flow (whether the contract is a cost or a revenue), term in years,
+                                annual value and total value in Omani rial, and a button to view or add the contract
+                                PDF. A hyphen means the value is not recorded; a value column instead shows the rate
+                                note, or &ldquo;Variable&rdquo;, where no fixed figure is held.
+                            </TableCaption>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead scope="col" className="w-8">#</TableHead>
@@ -906,7 +915,16 @@ export default function ContractorsPage() {
                             {/* Desktop: matrix table — the shared <Table> primitive supplies
                                 header band, zebra, hover and the sticky Year column */}
                             <div className="hidden md:block">
-                                <Table className="whitespace-nowrap" aria-label="Contract compliance matrix">
+                                {/* The old name, "Contract compliance matrix", described a table
+                                    this is not — it is the year-by-year cost matrix, so it is named as one. */}
+                                <Table className="whitespace-nowrap" aria-label="Year-by-year expense breakdown">
+                                    <TableCaption className="sr-only mt-0">
+                                        Year-by-year expense breakdown: one row per contract year and one column per
+                                        contractor, each cell holding that contractor&apos;s cost for that year in Omani
+                                        rial, with a year total on every row and contractor totals plus a grand total in
+                                        the closing row. An em dash means no cost is recorded for that contractor in
+                                        that year.
+                                    </TableCaption>
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="col-sticky">Year</TableHead>
@@ -1083,7 +1101,13 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        <Table aria-label="Contractor records">
+                        <Table aria-label="AMC tracker">
+                            <TableCaption className="sr-only mt-0">
+                                AMC tracker: one row per agreement with its contractor, service, recorded status,
+                                contract type, start and end dates, an expiry band read from the end date, annual value
+                                in Omani rial, a button to view the contract PDF where one is held, the recorded
+                                renewal plan and any note. A hyphen means the value is not recorded.
+                            </TableCaption>
                             <TableHeader>
                                 <TableRow>
                                     <SortableTableHead field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Contractor</SortableTableHead>

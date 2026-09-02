@@ -12,7 +12,7 @@ import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableCaption } from "@/components/ui/table";
 import {
     MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar, ExportButton,
     type PageSizeOption, type ExportColumn,
@@ -579,6 +579,13 @@ export default function FirefightingPage() {
                         {/* Desktop table */}
                         <div className="hidden md:block">
                             <Table>
+                                <TableCaption className="sr-only mt-0">
+                                    BEC preventive maintenance programme, as transcribed from the contractor&apos;s
+                                    plan: one row per scheduled activity with its cycle, zone, area or asset, the fire
+                                    systems covered, the scheduled date, the programme status derived from BEC&apos;s
+                                    reported outcome and that date, and any notes. An em dash means no note was
+                                    recorded.
+                                </TableCaption>
                                 <TableHeader>
                                     <TableRow>
                                         <SortableTableHead field="cycle" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Cycle</SortableTableHead>
