@@ -1112,6 +1112,18 @@ tables that no screen reads.
     button, toast dismiss). The `@media (pointer: coarse)` floor in
     `globals.css` sets `min-block-size` only, so it raises height and leaves
     width alone; controls routed through `components/ui/button.tsx` were fine.
+  - **The same defect in reverse.** `--mb-primary` is a *dark* purple, so as
+    text it is comfortable in light mode (8.58:1) and fails in **dark**, where
+    it lightens only to `#5f5168` — **2.71:1**, under the 3:1 graphic floor, let
+    alone 4.5:1. It was carrying body copy in the Water daily legends, the
+    Settings session label and several links. New **`--mb-primary-text`**, light
+    `#4D445D` (unchanged brand purple), dark `#8b7f94` (the lightened brand
+    purple already in the palette): 5.26:1 and 4.84:1 in dark.
+  - **Recharts (~180 kB) shipped in the first load** of Contractors, Assets and
+    Fire Safety — the only three routes with no dynamic import. All three now
+    code-split behind size-matched fallbacks. Measured from `.next`, per-route
+    first load: Fire Safety **315 → 201 kB gzip**, Contractors **350 → 241 kB**,
+    Assets **343 → 231 kB**. The 326 kB Recharts chunk is gone from all three.
   - **HVAC and Fire Safety lost their page title while loading**, replacing the
     whole page with a generic skeleton. Both now keep the real `<h1>` and swap
     only the data regions, matching Water/STP/Electricity.
@@ -1120,8 +1132,8 @@ tables that no screen reads.
     parent happened to carry a fixed height. Both now use `ChartContainer`.
   - **Water Monthly brought onto the shared module pattern** — see the
     Water — Monthly row in §2.
-  Gates: TypeScript (web + `mobile/`), ESLint, **426** Vitest tests in 56 files,
-  production build, and 52 SQL assertions — all clean.
+  Gates: TypeScript (web + `mobile/`), ESLint, **476** Vitest tests in 60 files
+  (up from 392), production build, and 52 SQL assertions — all clean.
   **Still the owner's call:** HTTP/PostgREST-level RLS verification
   (`npm run test:rls:staging`) and the credential-gated account-flow E2E specs
   both need a staging project with dummy Viewer/Contractor/Admin accounts. The
