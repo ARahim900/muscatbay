@@ -223,7 +223,7 @@ export function BottomNav() {
             <div className="flex items-center gap-2">
               <span className="text-sm font-semibold text-foreground">{sheetTitle}</span>
               {renderedSheet === "alerts" && unreadCount > 0 && (
-                <span className="text-[11px] font-semibold text-secondary bg-secondary/12 rounded-full px-2 py-0.5">
+                <span className="text-[11px] font-semibold text-mb-secondary-text bg-secondary/12 rounded-full px-2 py-0.5">
                   {unreadCount} new
                 </span>
               )}
@@ -286,7 +286,7 @@ export function BottomNav() {
               <div className="space-y-2">
                 {permission === "default" && (
                   <div className="flex items-center gap-3 p-3 rounded-2xl bg-secondary/[0.07] border border-secondary/25">
-                    <Bell className="w-5 h-5 text-secondary flex-shrink-0" aria-hidden="true" />
+                    <Bell className="w-5 h-5 text-mb-secondary-text flex-shrink-0" aria-hidden="true" />
                     <p className="flex-1 text-xs text-foreground/80 leading-snug">
                       Enable push notifications for loss, contract and plant-failure alerts.
                     </p>
@@ -318,7 +318,7 @@ export function BottomNav() {
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-semibold text-foreground truncate">{displayName}</span>
                     {user?.email && <span className="text-xs text-muted-foreground truncate">{user.email}</span>}
-                    <span className="text-[11px] text-secondary font-medium mt-0.5">{roleLabel}</span>
+                    <span className="text-[11px] text-mb-secondary-text font-medium mt-0.5">{roleLabel}</span>
                   </div>
                 </div>
 
@@ -399,7 +399,7 @@ export function BottomNav() {
             <Link
               href="/"
               className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                overviewActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                overviewActive ? "text-mb-secondary-text" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-current={overviewActive ? "page" : undefined}
             >
@@ -411,7 +411,7 @@ export function BottomNav() {
             <button
               onClick={(e) => toggleSheet("modules", e)}
               className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                modulesActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                modulesActive ? "text-mb-secondary-text" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-haspopup="dialog"
               aria-expanded={openSheet === "modules"}
@@ -424,7 +424,7 @@ export function BottomNav() {
             <button
               onClick={(e) => toggleSheet("alerts", e)}
               className={`relative flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                alertsActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                alertsActive ? "text-mb-secondary-text" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-haspopup="dialog"
               aria-expanded={openSheet === "alerts"}
@@ -449,7 +449,7 @@ export function BottomNav() {
             <button
               onClick={(e) => toggleSheet("profile", e)}
               className={`flex flex-col items-center justify-center gap-1 flex-1 rounded-[20px] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                profileActive ? "text-secondary" : "text-muted-foreground hover:text-foreground"
+                profileActive ? "text-mb-secondary-text" : "text-muted-foreground hover:text-foreground"
               }`}
               aria-haspopup="dialog"
               aria-expanded={openSheet === "profile"}
