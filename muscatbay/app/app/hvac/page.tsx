@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { isSupabaseConfigured } from "@/functions/supabase-client";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
-import { StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
+import { PageSkeleton, StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
@@ -28,11 +28,10 @@ import {
 // ─── Recharts is loaded on demand ──────────────────────────────────────────
 // Overview is the only Recharts consumer on this route (Maintenance and
 // Recurring Issues are tables, so they stay eagerly imported). It cannot render
-// before the Gulf Expert fetch resolves — the page's loading branch below holds
-// the route until then — so the chart chunk downloads alongside the data
-// instead of sitting in first-load JS. The fallback mirrors Overview's own
-// block heights: the six-KPI grid, the two 280px chart cards and the PPM
-// schedule table.
+// before the Gulf Expert fetch resolves — PageSkeleton holds the route until
+// then — so the chart chunk downloads alongside the data instead of sitting in
+// first-load JS. The fallback mirrors Overview's own block heights: the six-KPI
+// grid, the two 280px chart cards and the PPM schedule table.
 const OverviewTab = dynamic(
   () => import("@/components/hvac/overview-tab").then((m) => ({ default: m.OverviewTab })),
   {
@@ -156,48 +155,8 @@ export default function GulfExpertPage() {
     enabled: dataSource === "supabase",
   });
 
-  // A blanket <PageSkeleton /> used to stand in for the whole route here, which
-  // replaced the real "HVAC System" heading with an anonymous grey bar — the
-  // operator lost the page identity on every cold load. The header is real from
-  // the first paint and the skeletons sit only where the Gulf Expert data
-  // actually goes, the pattern Water, STP and Electricity already follow.
-  // (The tab strip is safe to skeletonise on this route: `activeTab` is state
-  // on THIS component, which stays mounted across the branch, so it cannot be
-  // reset the way replacing the Contractors page reset its tabs.)
   if (loading) {
-    return (
-      <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <PageHeader
-            title="HVAC System"
-            description="Preventive maintenance tracker for HVAC & BMS systems across Muscat Bay"
-          />
-          <Skeleton className="h-8 w-36 rounded-full" />
-        </div>
-        <div
-          className="space-y-6"
-          role="status"
-          aria-busy="true"
-          aria-label="Loading HVAC data"
-        >
-          {/* Tabs skeleton — exactly three pills, matching this page's three
-              tabs, so the strip does not shift when the real one renders. */}
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-28 rounded-lg" />
-            <Skeleton className="h-10 w-32 rounded-lg" />
-            <Skeleton className="h-10 w-40 rounded-lg" />
-          </div>
-          {/* Overview is the default tab — same block heights as its own
-              dynamic-import fallback above. */}
-          <StatsGridSkeleton count={6} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Skeleton className="h-[360px] w-full rounded-[10.5px]" />
-            <Skeleton className="h-[360px] w-full rounded-[10.5px]" />
-          </div>
-          <Skeleton className="h-[220px] w-full rounded-[10.5px]" />
-        </div>
-      </div>
-    );
+    return <PageSkeleton />;
   }
 
   if (error) {

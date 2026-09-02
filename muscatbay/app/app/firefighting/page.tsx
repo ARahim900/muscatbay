@@ -12,17 +12,21 @@ import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableCaption } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import {
     MultiSelectDropdown, SortableTableHead, TablePagination, TableToolbar, ExportButton,
     type PageSizeOption, type ExportColumn,
 } from "@/components/shared/data-table";
-import { Skeleton, StatsGridSkeleton } from "@/components/shared/skeleton";
+import { PageSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { cn } from "@/lib/utils";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
-import dynamic from "next/dynamic";
+import {
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+    CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend,
+} from "recharts";
+import { CHART_PALETTE } from "@/lib/tokens";
 import {
     ShieldCheck, AlertTriangle, CheckCircle, Clock,
     Calendar, FileText, Info, Building2, LayoutGrid, Layers, Users,
@@ -42,12 +46,13 @@ import {
     REFERENCE_NOTE, SLA_TIERS, TANKER_AGREEMENTS, TANKER_DISCHARGE_RATE,
 } from "@/components/firefighting/contract-reference";
 import {
-    CARD_TITLE, CycleBadge,
+    CARD_TITLE, CHART_TOOLTIP_STYLE, CycleBadge, EQUIP_STATUS_CHART_COLORS,
     ReferenceChip, SectionHeading, SystemTag, ZoneBadge,
     equipZoneKey,
 } from "@/components/firefighting/firefighting-ui";
 import { EquipmentRegister } from "@/components/firefighting/equipment-register";
 import { IssuesRegister } from "@/components/firefighting/issues-register";
+import { useChartMotion } from "@/hooks/useReducedMotion";
 
 // Maintenance tracker filter option lists (dropdowns operate on display labels).
 const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
@@ -95,63 +100,8 @@ interface FirefightingPageCache {
     lastUpdated: Date;
 }
 
-/**
- * Stand-in sized to the real pair in components/firefighting/overview-charts:
- * same cards, same titles, same 260px plots, so nothing shifts when the chunk
- * lands. It stays here rather than beside the charts precisely because it must
- * be reachable without loading them.
- *
- * It carries no live-region role of its own — the two places it renders (the
- * lazy chunk's fallback and the page-level loading branch) each own one, and
- * nesting them would announce the same wait twice.
- */
-function EquipmentChartsFallback() {
-    return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className={CARD_TITLE}><Building2 className="h-4 w-4 text-primary" aria-hidden="true" /> Equipment by Zone</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-[260px] w-full rounded-[10.5px]" />
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className={CARD_TITLE}><ShieldCheck className="h-4 w-4 text-secondary" aria-hidden="true" /> Equipment by Status</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-[260px] w-full rounded-[10.5px]" />
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-// ─── Recharts is loaded on demand ──────────────────────────────────────────
-// The two Overview plots are this route's only Recharts consumers — Maintenance
-// is a table and Contract & Team is reference cards — so importing them eagerly
-// put ~330 kB of charting code into the first load of a page whose first paint
-// is a header, four KPI cards and two registers. They cannot render before the
-// fire-safety fetch resolves (the loading branch below holds the route until
-// then), so the chunk arrives alongside the data rather than blocking first-load
-// JS. Same pattern as Dashboard, STP, Electricity and HVAC.
-//
-// The shared ChartContainer is a Recharts consumer too, so it is imported by
-// overview-charts.tsx and stays behind this boundary with the plots.
-const EquipmentCharts = dynamic(
-    () => import("@/components/firefighting/overview-charts").then((m) => ({ default: m.EquipmentCharts })),
-    {
-        loading: () => (
-            <div role="status" aria-busy="true" aria-label="Loading equipment charts">
-                <EquipmentChartsFallback />
-            </div>
-        ),
-        ssr: false,
-    },
-);
-
 export default function FirefightingPage() {
+    const chartMotion = useChartMotion();
     const [activeTab, setActiveTab] = useState<TabKey>("overview");
     // Seed from the session cache so revisits render instantly (silent refresh below)
     const [cached] = useState(() => getPageCache<FirefightingPageCache>(FIREFIGHTING_CACHE_KEY));
@@ -342,45 +292,8 @@ export default function FirefightingPage() {
 
     // ───────────────────────────────────────────────────────────────────────
 
-    // A blanket <PageSkeleton /> used to stand in for the whole route here, which
-    // replaced the real "Fire Safety Management" heading with an anonymous grey
-    // bar — the operator lost the page identity on every cold load. The header is
-    // real from the first paint and the skeletons sit only where the fire-safety
-    // data actually goes, the pattern HVAC, Water, STP and Electricity follow.
-    // (The tab strip is safe to skeletonise on this route: `activeTab` is state on
-    // THIS component, which stays mounted across the branch, so it cannot be reset
-    // the way replacing the Contractors page reset its tabs.)
     if (loading) {
-        return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <PageHeader
-                        title="Fire Safety Management"
-                        description="Fire-safety assets, preventive maintenance compliance and open issues"
-                    />
-                    <Skeleton className="h-8 w-36 rounded-full" />
-                </div>
-                <div
-                    className="space-y-6"
-                    role="status"
-                    aria-busy="true"
-                    aria-label="Loading fire safety data"
-                >
-                    {/* Tabs skeleton — exactly three pills, matching this page's three
-                        tabs, so the strip does not shift when the real one renders. */}
-                    <div className="flex gap-2">
-                        <Skeleton className="h-10 w-28 rounded-lg" />
-                        <Skeleton className="h-10 w-36 rounded-lg" />
-                        <Skeleton className="h-10 w-44 rounded-lg" />
-                    </div>
-                    {/* Overview is the default tab: four KPI cards, the two 260px
-                        chart cards, then the programme summary card. */}
-                    <StatsGridSkeleton count={4} />
-                    <EquipmentChartsFallback />
-                    <Skeleton className="h-[220px] w-full rounded-[10.5px]" />
-                </div>
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     return (
@@ -413,7 +326,59 @@ export default function FirefightingPage() {
                     {/* Charts — equipment by zone + by status (live register) */}
                     {equipment.length > 0 && (
                         <SectionBoundary title="Equipment Charts">
-                            <EquipmentCharts byZone={equipByZoneChart} byStatus={equipByStatusChart} />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className={CARD_TITLE}><Building2 className="h-4 w-4 text-primary" aria-hidden="true" /> Equipment by Zone</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[260px]">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
+                                                <BarChart data={equipByZoneChart} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
+                                                    <XAxis dataKey="zone" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
+                                                    <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
+                                                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                                                    <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Equipment" {...chartMotion}/>
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="pb-2">
+                                        <CardTitle className={CARD_TITLE}><ShieldCheck className="h-4 w-4 text-secondary" aria-hidden="true" /> Equipment by Status</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[260px]">
+                                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
+                                                <PieChart>
+                                                    <Pie
+                                                        data={equipByStatusChart}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={55}
+                                                        outerRadius={90}
+                                                        paddingAngle={2}
+                                                        dataKey="count"
+                                                        nameKey="status"
+                                                        label={(props) => `${props.name}: ${props.value}`}
+                                                        labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
+                                                        {...chartMotion}
+                                                    >
+                                                        {equipByStatusChart.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={EQUIP_STATUS_CHART_COLORS[entry.status] || CHART_PALETTE[index % CHART_PALETTE.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                                                    <Legend verticalAlign="bottom" height={36} iconSize={10} formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
                         </SectionBoundary>
                     )}
 
@@ -446,14 +411,11 @@ export default function FirefightingPage() {
                                             <div key={c.key} className={cn("rounded-lg border p-3", done ? "border-secondary/30 bg-secondary/5 dark:bg-secondary/10" : "border-border bg-muted/50")}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="flex items-center gap-2 text-sm font-bold text-foreground">
-                                                        {/* White on the brand teal is ~1.7:1. The teal fill's own
-                                                            foreground token (--secondary-foreground, #1F2937) is the
-                                                            pair that passes; the grey fill keeps white. */}
-                                                        <span aria-hidden="true" className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold", done ? "bg-secondary text-secondary-foreground" : "bg-muted-foreground/60 text-primary-foreground")}>{c.key}</span>
+                                                        <span aria-hidden="true" className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground", done ? "bg-secondary" : "bg-muted-foreground/60")}>{c.key}</span>
                                                         {c.label}
                                                     </span>
                                                     {done
-                                                        ? <span className="flex items-center gap-1 text-[11px] font-semibold text-mb-secondary-text"><CheckCircle className="w-3.5 h-3.5" aria-hidden="true" /> Completed</span>
+                                                        ? <span className="flex items-center gap-1 text-[11px] font-semibold text-secondary"><CheckCircle className="w-3.5 h-3.5" aria-hidden="true" /> Completed</span>
                                                         : <ProgrammeStatusBadge status={cycleStatus} />}
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-2 ps-8">{c.window}</p>
@@ -489,7 +451,7 @@ export default function FirefightingPage() {
                                                 </div>
                                                 <div className="flex items-center justify-between mt-1 text-xs">
                                                     <span className="text-muted-foreground">Open issues</span>
-                                                    <span className={cn("font-semibold tabular-nums", zoneIssues > 0 ? "text-destructive" : "text-mb-secondary-text")}>{zoneIssues}</span>
+                                                    <span className={cn("font-semibold tabular-nums", zoneIssues > 0 ? "text-destructive" : "text-secondary")}>{zoneIssues}</span>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -617,13 +579,6 @@ export default function FirefightingPage() {
                         {/* Desktop table */}
                         <div className="hidden md:block">
                             <Table>
-                                <TableCaption className="sr-only mt-0">
-                                    BEC preventive maintenance programme, as transcribed from the contractor&apos;s
-                                    plan: one row per scheduled activity with its cycle, zone, area or asset, the fire
-                                    systems covered, the scheduled date, the programme status derived from BEC&apos;s
-                                    reported outcome and that date, and any notes. An em dash means no note was
-                                    recorded.
-                                </TableCaption>
                                 <TableHeader>
                                     <TableRow>
                                         <SortableTableHead field="cycle" currentSortField={sortField} currentSortDirection={sortDirection} onSort={handleSort}>Cycle</SortableTableHead>
@@ -731,7 +686,7 @@ export default function FirefightingPage() {
                                                 <p className="text-sm font-semibold text-foreground">{c.name}</p>
                                                 <p className="text-[11px] text-muted-foreground">{c.role}</p>
                                                 <div className="mt-2 space-y-1">
-                                                    {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-[11px] text-mb-secondary-text hover:underline break-all"><Mail className="w-3 h-3 flex-shrink-0" aria-hidden="true" />{c.email}</a>}
+                                                    {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-[11px] text-secondary hover:underline break-all"><Mail className="w-3 h-3 flex-shrink-0" aria-hidden="true" />{c.email}</a>}
                                                     {c.phone && <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><Phone className="w-3 h-3 flex-shrink-0" aria-hidden="true" />{c.phone}</p>}
                                                     {c.active_period && <p className="text-[10px] text-muted-foreground/70">{c.active_period}</p>}
                                                 </div>

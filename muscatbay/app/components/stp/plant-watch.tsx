@@ -360,7 +360,7 @@ export function PlantWatch({
                     <CardHeader className="card-elevated-header flex flex-col gap-3 p-4 pb-2 sm:flex-row sm:items-start sm:p-5 md:p-6">
                         <div className="grid flex-1 gap-1">
                             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                                <Gauge className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
+                                <Gauge className="h-4 w-4 text-secondary" aria-hidden="true" />
                                 Load vs Recovery
                             </CardTitle>
                             <p className="text-xs text-muted-foreground">

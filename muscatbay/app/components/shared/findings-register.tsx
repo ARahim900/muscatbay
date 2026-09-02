@@ -275,7 +275,7 @@ export function FindingsRegister({
                 <TableToolbar className="flex-wrap">
                     <div className="min-w-0">
                         <h3 className="flex items-center gap-2 text-lg font-semibold text-foreground">
-                            <ClipboardList className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
+                            <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
                             {title}
                         </h3>
                         <p className="text-sm text-muted-foreground">{subtitle}</p>
@@ -365,7 +365,7 @@ export function FindingsRegister({
                                     <Search className="h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
                                     <p className="text-sm font-semibold text-foreground">No findings match these filters</p>
                                     {hasFilters && (
-                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-mb-secondary-text underline underline-offset-2">
+                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-secondary underline underline-offset-2">
                                             Clear filters
                                         </button>
                                     )}
@@ -417,7 +417,7 @@ export function FindingsRegister({
                                                     <Search className="h-7 w-7 text-muted-foreground/70" aria-hidden="true" />
                                                     <p className="text-sm font-medium text-foreground">No findings match these filters</p>
                                                     {hasFilters && (
-                                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-mb-secondary-text underline underline-offset-2">
+                                                        <button type="button" onClick={clearFilters} className="text-xs font-semibold text-secondary underline underline-offset-2">
                                                             Clear filters
                                                         </button>
                                                     )}

@@ -11,14 +11,9 @@ import {
   AlertTriangle, RefreshCw, Building2, Shield, Mailbox,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis,
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend,
 } from "recharts";
-// Charts mount through the shared container, never Recharts' own
-// ResponsiveContainer: it defers the plot until a ResizeObserver reports a real
-// box and enforces a minHeight, so a parent that loses its fixed height can no
-// longer produce a silent width(-1)/height(-1) blank chart.
-import { ChartContainer } from "@/components/charts/chart-container";
 import { format } from "date-fns";
 import type { GulfExpertContract, GulfExpertData } from "./types";
 import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
@@ -193,7 +188,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
-                <ChartContainer minHeight={280}>
+                <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={openByBuilding} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                     <XAxis dataKey="building" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
@@ -209,7 +204,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     />
                     <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Open Findings" {...chartMotion}/>
                   </BarChart>
-                </ChartContainer>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -218,13 +213,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
           <Card className="bg-card rounded-xl border border-border shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-mb-secondary-text" />
+                <ClipboardList className="h-4 w-4 text-secondary" />
                 Findings by Status
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
-                <ChartContainer minHeight={280}>
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={findingsByStatus}
@@ -264,7 +259,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       )}
                     />
                   </PieChart>
-                </ChartContainer>
+                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
@@ -393,7 +388,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-card rounded-xl border border-border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Mailbox className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
+              <Mailbox className="h-4 w-4 text-secondary" aria-hidden="true" />
               Open Actions from AMC Correspondence
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1">

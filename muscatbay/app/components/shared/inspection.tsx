@@ -318,7 +318,7 @@ export function MetricHeatmap({
         <div className="card-elevated rounded-[10.5px] border border-border bg-card">
             <div className="p-4 sm:p-5 md:p-6 pb-2">
                 <h3 className="flex items-center gap-2 text-base sm:text-lg font-semibold text-foreground">
-                    {Icon && <Icon className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />}
+                    {Icon && <Icon className="h-4 w-4 text-secondary" aria-hidden="true" />}
                     {title}
                 </h3>
                 {note && <p className="mt-1 text-xs text-muted-foreground">{note}</p>}

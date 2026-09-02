@@ -112,8 +112,8 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                    <span className="text-mb-primary-text font-medium">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
-                    <span className="text-mb-secondary-text font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
+                    <span className="text-mb-primary font-medium">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
+                    <span className="text-mb-secondary font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
                     <span className="font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
                     Sales Center is counted as DC
                 </p>

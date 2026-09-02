@@ -535,7 +535,7 @@ export function DateRangePicker({
                                         ${isEndpoint
                                             ? 'font-extrabold text-primary dark:text-secondary'
                                             : isInRange
-                                                ? 'font-semibold text-mb-secondary-text dark:text-secondary/90'
+                                                ? 'font-semibold text-secondary dark:text-secondary/90'
                                                 : hasData
                                                     ? 'font-medium text-muted-foreground'
                                                     : 'font-medium text-muted-foreground/70 dark:text-muted-foreground'

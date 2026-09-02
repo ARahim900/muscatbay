@@ -48,12 +48,9 @@ interface StatsGridProps {
 
 const SCROLL_ANIMATION_CONFIG = { y: 30, duration: 0.5, stagger: 0.1 } as const;
 
-// The icon sits on a light tinted tile (variantTileBg), so the accent needs its
-// text token: raw --secondary is a background tint and measures ~1.6:1 there in
-// light mode. --mb-secondary-text is brand teal in dark, so nothing shifts there.
 const variantIconClass: Record<StatVariant, string> = {
     primary: "text-primary",
-    secondary: "text-mb-secondary-text",
+    secondary: "text-secondary",
     success: "text-[var(--status-normal)]",
     warning: "text-[var(--status-warning)]",
     danger: "text-[var(--status-danger)]",

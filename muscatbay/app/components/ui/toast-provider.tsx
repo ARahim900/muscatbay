@@ -79,12 +79,9 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) 
                     <p className="text-xs text-muted-foreground mt-1">{toast.message}</p>
                 )}
             </div>
-            {/* Icon-only control: needs a ≥44px box on touch (WCAG 2.5.5) in BOTH
-                axes — the coarse-pointer rule in globals.css only floors height.
-                Same contract as `components/ui/button.tsx`; mouse sizing unchanged. */}
             <button
                 onClick={onRemove}
-                className="flex-shrink-0 p-1 pointer-coarse:min-h-11 pointer-coarse:min-w-11 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                className="flex-shrink-0 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                 aria-label="Dismiss"
             >
                 <X className="h-4 w-4 text-muted-foreground" />

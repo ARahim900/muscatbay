@@ -409,7 +409,7 @@ export default function ProfessionalApplicationPage() {
                             <div className="flex items-center justify-center gap-4 text-sm">
                                 <Link
                                     href="/login"
-                                    className="flex items-center gap-1 text-muted-foreground hover:text-mb-primary-text"
+                                    className="flex items-center gap-1 text-muted-foreground hover:text-mb-primary"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                     Back to Sign In
@@ -417,7 +417,7 @@ export default function ProfessionalApplicationPage() {
                                 <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
                                 <Link
                                     href="/login"
-                                    className="text-mb-primary-text hover:underline font-medium"
+                                    className="text-mb-primary hover:underline font-medium"
                                 >
                                     Sign in
                                 </Link>

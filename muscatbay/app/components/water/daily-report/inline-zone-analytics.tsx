@@ -94,8 +94,8 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                    <span className="text-mb-secondary-text font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
-                    <span className="text-mb-primary-text font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
+                    <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
+                    <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
                     <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
                 </p>
             </div>

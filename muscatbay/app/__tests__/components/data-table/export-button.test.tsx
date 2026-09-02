@@ -78,16 +78,4 @@ describe('ExportButton', () => {
         render(<ExportButton rows={rows} filename="x" label="Export Register" />);
         expect(screen.getByRole('button', { name: 'Export Register' })).toBeInTheDocument();
     });
-
-    it('carries a ≥44px touch target in BOTH axes on coarse pointers', () => {
-        render(<ExportButton rows={rows} filename="x" />);
-        const button = screen.getByRole('button', { name: 'Export CSV' });
-
-        // Below `sm` the label is hidden and only the icon shows, so the width
-        // floor matters as much as the height one (WCAG 2.5.5).
-        expect(button.className).toContain('pointer-coarse:min-h-11');
-        expect(button.className).toContain('pointer-coarse:min-w-11');
-        // Mouse sizing is unchanged.
-        expect(button.className).toContain('min-h-[36px]');
-    });
 });

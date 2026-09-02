@@ -17,7 +17,7 @@ import {
 import type {
     AmcContractorDetails, AmcContractorExpiry, AmcContractorPricing,
 } from "@/entities/contractor";
-import { Skeleton, StatsGridSkeleton, TableSkeleton } from "@/components/shared/skeleton";
+import { StatsGridSkeleton, TableSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -31,7 +31,7 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter
 } from "@/components/ui/dialog";
-import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from "@/components/ui/table";
+import { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 import {
     MultiSelectDropdown, TablePagination, ActiveFilterPills,
@@ -47,36 +47,7 @@ import { ExpiryBadge, expiryStatus } from "@/components/contractors/contract-dat
 import { RenewalsPanel } from "@/components/contractors/renewals";
 import { TermsPanel } from "@/components/contractors/terms";
 import { PricingPanel } from "@/components/contractors/pricing";
-import dynamic from "next/dynamic";
-
-// ─── Recharts is loaded on demand ──────────────────────────────────────────
-// The expense-by-year bar chart is this route's ONLY Recharts consumer — every
-// other tab is a table, a renewals list or a terms panel — so a static import
-// put ~330 kB of charting library into the first load of a page that lands on
-// the AMC Tracker tab and may never show a chart at all. It can only render on
-// the Yearly Costs tab, after the contractor fetch has resolved, so the chunk
-// arrives well before anything needs it.
-//
-// The fallback is sized to the real card: title, sub-line and the chart's own
-// 260px plot box, so the matrix below it does not jump when the chunk lands.
-const YearlyCostChart = dynamic(
-    () => import("@/components/contractors/yearly-chart").then((m) => ({ default: m.YearlyCostChart })),
-    {
-        loading: () => (
-            <div
-                className="rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard sm:p-5"
-                role="status"
-                aria-busy="true"
-                aria-label="Loading expense by contract year"
-            >
-                <Skeleton className="h-5 w-52 max-w-full" />
-                <Skeleton className="mt-1 h-4 w-96 max-w-full" />
-                <Skeleton className="h-[260px] w-full rounded-[10.5px]" />
-            </div>
-        ),
-        ssr: false,
-    },
-);
+import { YearlyCostChart } from "@/components/contractors/yearly-chart";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -768,7 +739,7 @@ export default function ContractorsPage() {
                                 {c.note && <p className="text-xs text-muted-foreground line-clamp-2">{c.note}</p>}
                                 <button
                                     onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
-                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-mb-secondary-text' : 'text-muted-foreground'}`}
+                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-secondary' : 'text-muted-foreground'}`}
                                 >
                                     {c.contract_pdf_url ? <><FileText className="w-3 h-3" /> View Contract PDF</> : <><Link className="w-3 h-3" /> Add PDF Link</>}
                                 </button>
@@ -785,16 +756,7 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        {/* The old name, "Contractor performance summary", described a table
-                            this is not — it is the contract register, so it is named as one. */}
-                        <Table aria-label="Contract register">
-                            <TableCaption className="sr-only mt-0">
-                                Contract register: one row per contract with its record number, contractor, contract
-                                reference, service, flow (whether the contract is a cost or a revenue), term in years,
-                                annual value and total value in Omani rial, and a button to view or add the contract
-                                PDF. A hyphen means the value is not recorded; a value column instead shows the rate
-                                note, or &ldquo;Variable&rdquo;, where no fixed figure is held.
-                            </TableCaption>
+                        <Table aria-label="Contractor performance summary">
                             <TableHeader>
                                 <TableRow>
                                     <TableHead scope="col" className="w-8">#</TableHead>
@@ -844,7 +806,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "Add PDF link"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-mb-secondary-text hover:bg-secondary/10'
+                                                        ? 'text-secondary hover:bg-secondary/10'
                                                         : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/60'
                                                 }`}
                                             >
@@ -905,13 +867,8 @@ export default function ContractorsPage() {
                         </div>
                     </TableToolbar>
 
-                    {/* Chart first: the shape of the spend before the detail matrix.
-                        Guarded on the row count because the lazy chunk's fallback would
-                        otherwise flash a skeleton for a chart that renders nothing —
-                        YearlyCostChart returns null when there are no years. */}
-                    {matrix.rows.length > 0 && (
-                        <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
-                    )}
+                    {/* Chart first: the shape of the spend before the detail matrix. */}
+                    <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
 
                     {yearlyCosts.length === 0 ? (
                         <div className="bg-card rounded-xl border border-border">
@@ -949,16 +906,7 @@ export default function ContractorsPage() {
                             {/* Desktop: matrix table — the shared <Table> primitive supplies
                                 header band, zebra, hover and the sticky Year column */}
                             <div className="hidden md:block">
-                                {/* The old name, "Contract compliance matrix", described a table
-                                    this is not — it is the year-by-year cost matrix, so it is named as one. */}
-                                <Table className="whitespace-nowrap" aria-label="Year-by-year expense breakdown">
-                                    <TableCaption className="sr-only mt-0">
-                                        Year-by-year expense breakdown: one row per contract year and one column per
-                                        contractor, each cell holding that contractor&apos;s cost for that year in Omani
-                                        rial, with a year total on every row and contractor totals plus a grand total in
-                                        the closing row. An em dash means no cost is recorded for that contractor in
-                                        that year.
-                                    </TableCaption>
+                                <Table className="whitespace-nowrap" aria-label="Contract compliance matrix">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="col-sticky">Year</TableHead>
@@ -1116,7 +1064,7 @@ export default function ContractorsPage() {
                                     {c.contract_pdf_url && (
                                         <button
                                             onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
-                                            className="text-xs text-mb-secondary-text flex items-center gap-1 mt-2"
+                                            className="text-xs text-secondary flex items-center gap-1 mt-2"
                                         >
                                             <FileText className="w-3 h-3" /> View Contract PDF
                                         </button>
@@ -1135,13 +1083,7 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        <Table aria-label="AMC tracker">
-                            <TableCaption className="sr-only mt-0">
-                                AMC tracker: one row per agreement with its contractor, service, recorded status,
-                                contract type, start and end dates, an expiry band read from the end date, annual value
-                                in Omani rial, a button to view the contract PDF where one is held, the recorded
-                                renewal plan and any note. A hyphen means the value is not recorded.
-                            </TableCaption>
+                        <Table aria-label="Contractor records">
                             <TableHeader>
                                 <TableRow>
                                     <SortableTableHead field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Contractor</SortableTableHead>
@@ -1192,7 +1134,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "No PDF uploaded"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-mb-secondary-text hover:bg-secondary/10'
+                                                        ? 'text-secondary hover:bg-secondary/10'
                                                         : 'text-muted-foreground/70 dark:text-muted-foreground cursor-not-allowed'
                                                 }`}
                                                 disabled={!c.contract_pdf_url}

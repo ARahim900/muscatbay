@@ -89,7 +89,7 @@ export default function PestControlPage() {
                     <CardHeader className="card-elevated-header">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex items-center gap-4 min-w-0">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-mb-primary/10 text-mb-primary-text">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-mb-primary/10 text-mb-primary">
                                     <Bug className="w-5 h-5" aria-hidden="true" />
                                 </div>
                                 <div className="min-w-0">
@@ -167,7 +167,7 @@ export default function PestControlPage() {
                                         aria-label="Loading pest control database"
                                         className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-card"
                                     >
-                                        <Loader2 className="h-6 w-6 motion-safe:animate-spin text-mb-secondary-text" aria-hidden="true" />
+                                        <Loader2 className="h-6 w-6 motion-safe:animate-spin text-secondary" aria-hidden="true" />
                                         <p className="text-xs text-muted-foreground">Loading operations database…</p>
                                     </div>
                                 )}

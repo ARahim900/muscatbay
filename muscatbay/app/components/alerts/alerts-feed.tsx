@@ -160,7 +160,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                       <Link
                         href={alert.href}
                         onClick={onNavigate}
-                        className="inline-flex min-h-11 min-w-11 items-center rounded-lg px-2 text-xs font-semibold text-mb-secondary-text hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="inline-flex min-h-11 min-w-11 items-center rounded-lg px-2 text-xs font-semibold text-secondary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         Review
                       </Link>

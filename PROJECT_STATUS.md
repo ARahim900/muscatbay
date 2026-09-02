@@ -1200,6 +1200,36 @@ tables that no screen reads.
     Verified in a real browser: `/login`, `/signup` and `/privacy` now issue
     **zero** Supabase requests and log **zero** console errors, with the sign-in
     form intact.
+
+- **Visual changes reverted at the owner's request (2026-09-02)** — the owner
+  reviewed the deployed result and asked for the **design and theme to look
+  exactly as before**, while keeping the security work. Eleven commits were
+  reverted; nothing else was touched.
+  - **Reverted:** the Water Monthly restructure (`279e058` — this is the one
+    the owner noticed: the KPI row went from six cards to four, gained a
+    briefing and moved its charts to `ChartShell`; all three are undone, so
+    Water again shows **Total Supply (A1), Distribution (A2), Consumption (A3),
+    Efficiency, Total Loss, Loss Cost Estimate**); the accent-as-text contrast
+    tokens `--mb-secondary-text` and `--mb-primary-text` with all their call
+    sites; the 44px touch-target work; the nine screen-reader table captions;
+    the HVAC/Fire Safety loading headers; and the Recharts code-splitting that
+    was bundled into the same commits.
+  - **Kept, because it is security or correctness rather than design:** every
+    RLS and invitation migration, the invitation API route and its settings
+    form, `lib/embed-security.ts`, the CSP and `robots` work, the `sql-security`
+    CI job and the SQL harness, the alert-identity and STP figure-validation
+    fixes, and the `NotificationProvider` scoping fix — that last one is now
+    *required*, since without it the public login page fires reads that RLS
+    refuses.
+  - **Consequence to be aware of:** the reverted contrast tokens were fixing
+    real WCAG AA failures — the brand teal as text measured about **1.6:1** in
+    light mode, and the brand purple **2.71:1** in dark, against a 4.5:1 floor.
+    Those failures are back. They are a legibility problem, not a security one,
+    and the owner's preference for the original look was explicit.
+  - Gates after the revert: TypeScript (web + `mobile/`), ESLint, **392** Vitest
+    tests in 49 files (the pre-existing baseline — the design tests reverted
+    with their commits), and a passing production build.
+
 - **Roles assigned and dormant accounts removed (2026-09-02)** — on the owner's
   instruction, the account estate went from **11 admins out of 12** to **one
   admin and eight viewers**. Until this, the RLS boundary applied the same day

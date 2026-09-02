@@ -39,7 +39,7 @@ export const STATUS_CFG: Record<PpmStatus, { label: string; icon: LucideIcon; cl
 
 export const ZONE_TAG: Record<ZoneKey, string> = {
     zone1: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/80",
-    zone3: "bg-secondary/15 text-mb-secondary-text",
+    zone3: "bg-secondary/15 text-secondary",
     zone5: "bg-mb-info-light text-mb-info-text",
     vs: "bg-mb-stale-light text-mb-stale-text",
 };
@@ -48,7 +48,7 @@ export const SYSTEM_TAG: Record<string, string> = {
     FA: "bg-primary/10 text-primary dark:bg-primary/20 dark:text-muted-foreground/80",
     FF: "bg-mb-danger-light text-mb-danger-text",
     FE: "bg-mb-warning-light text-mb-warning-text",
-    "Hose Reel": "bg-secondary/15 text-mb-secondary-text",
+    "Hose Reel": "bg-secondary/15 text-secondary",
     Hydrants: "bg-mb-info-light text-mb-info-text",
 };
 
@@ -150,7 +150,7 @@ export function SectionHeading({
         <div className="mb-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
             <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                    <Icon className="w-4 h-4 text-mb-secondary-text" aria-hidden="true" />
+                    <Icon className="w-4 h-4 text-secondary" aria-hidden="true" />
                     <h2 className="text-sm font-semibold text-foreground">{title}</h2>
                     {count != null && <span className="text-xs text-muted-foreground tabular-nums">· {count}</span>}
                 </div>

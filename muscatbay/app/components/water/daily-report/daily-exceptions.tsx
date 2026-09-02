@@ -61,7 +61,7 @@ export function DailyExceptions({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                             <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                                <ClipboardList className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
+                                <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
                                 Exceptions &amp; Actions — {month} · Day {selectedDay}
                             </CardTitle>
                             <p className="mt-1 text-xs text-muted-foreground">
