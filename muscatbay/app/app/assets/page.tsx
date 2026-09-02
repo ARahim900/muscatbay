@@ -60,7 +60,7 @@ const AssetAttention = dynamic(
                 aria-busy="true"
                 aria-label="Loading assets needing attention"
             >
-                {[0, 1, 2].map(i => <Skeleton key={i} className="h-[124px] w-full rounded-[10.5px]" />)}
+                {[0, 1, 2].map(i => <Skeleton key={i} className="h-[118px] w-full rounded-[10.5px]" />)}
             </div>
         ),
         ssr: false,

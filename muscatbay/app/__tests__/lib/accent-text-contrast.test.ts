@@ -259,3 +259,66 @@ describe("focus indicators read --ring, never the accent tint", () => {
         );
     });
 });
+
+/**
+ * The mirror of the accent case, failing for the opposite reason.
+ *
+ * --mb-primary is a DARK purple, so as text it is comfortable in light mode
+ * and fails in dark, where it lightens only to #5f5168 — 2.71:1 on
+ * --background, under the 3:1 graphic floor let alone the 4.5:1 text floor.
+ * --mb-primary-text keeps the brand purple in light and takes the already
+ * -in-palette lightened brand purple in dark, so no new hue is introduced.
+ */
+describe("--mb-primary-text (brand purple as text)", () => {
+    const LIGHT_SURFACES = ["--background", "--card", "--popover"] as const;
+    const DARK_SURFACES = ["--background", "--card", "--popover"] as const;
+
+    it("clears the AA text floor on every light surface it lands on", () => {
+        for (const surface of LIGHT_SURFACES) {
+            expect(
+                contrast(token("--mb-primary-text", "light"), token(surface, "light")),
+            ).toBeGreaterThanOrEqual(AA_TEXT);
+        }
+    });
+
+    it("clears the AA text floor on every dark surface it lands on", () => {
+        for (const surface of DARK_SURFACES) {
+            expect(
+                contrast(token("--mb-primary-text", "dark"), token(surface, "dark")),
+            ).toBeGreaterThanOrEqual(AA_TEXT);
+        }
+    });
+
+    it("records the defect it replaces: raw --mb-primary fails in dark mode", () => {
+        // Not an aspiration — this is why the token exists. If --mb-primary is
+        // ever retuned light enough to pass, this test should be revisited
+        // rather than silently left asserting a stale premise.
+        expect(
+            contrast(token("--mb-primary", "dark"), token("--background", "dark")),
+        ).toBeLessThan(AA_NON_TEXT);
+    });
+
+    it("keeps the brand purple unchanged in light mode", () => {
+        expect(token("--mb-primary-text", "light")).toEqual(token("--mb-primary", "light"));
+    });
+
+    it("no component uses raw --mb-primary as text without a dark-mode variant", () => {
+        // `dark:`-scoped uses are fine: they render a passing colour in the
+        // theme that would otherwise fail.
+        const files = [
+            "components/water/daily-report/inline-zone-analytics.tsx",
+            "components/water/daily-report/inline-dc-panel.tsx",
+            "components/charts/dashboard-charts.tsx",
+            "app/settings/page.tsx",
+            "app/pest-control/page.tsx",
+            "app/forgot-password/page.tsx",
+            "app/signup/professional/page.tsx",
+        ];
+        const unqualified = /(?<!dark:)(?<!dark:hover:)(?:hover:)?text-mb-primary(?![\w-])/;
+        for (const file of files) {
+            expect(source(file), `${file} still uses raw --mb-primary as text`).not.toMatch(
+                unqualified,
+            );
+        }
+    });
+});

@@ -87,6 +87,7 @@
   --color-mb-secondary-light: var(--mb-secondary-light);
   --color-mb-secondary-active: var(--mb-secondary-active);
   --color-mb-secondary-text: var(--mb-secondary-text);
+  --color-mb-primary-text: var(--mb-primary-text);
   --color-mb-primary-light: var(--mb-primary-light);
   --color-mb-success: var(--mb-success);
   --color-mb-success-hover: var(--mb-success-hover);
@@ -153,6 +154,16 @@
   --mb-secondary-light: #E8F1EF;
   --mb-secondary-active: #7BB6BA;
   --mb-primary-light: #6B5F73;
+
+  /* Brand purple as TEXT. The mirror of --mb-secondary-text, and needed for
+   * the opposite reason: --mb-primary is a dark purple, so in LIGHT mode it
+   * reads fine as text (8.58:1 on --background, 9.13:1 on --card) but in DARK
+   * mode it lightens only to #5f5168, which is 2.71:1 on --background —
+   * failing not just the 4.5:1 text floor but the 3:1 graphic floor too.
+   * Light keeps the brand purple; dark takes the already-in-palette lightened
+   * brand purple (#8b7f94, the dark --mb-primary-light), so no new hue is
+   * introduced. Dark measures 5.26:1 on --background and 4.84:1 on --card. */
+  --mb-primary-text: #4D445D; /* 8.58:1 on --background, 9.13:1 on --card */
 
   /* Muscat Bay Status Colors — Elegant Palette */
   --mb-success: #84B59F;
@@ -398,6 +409,10 @@
   --mb-secondary-light: rgba(77, 191, 191, 0.12);
   --mb-secondary-active: #7BB6BA;
   --mb-primary-light: #8b7f94;
+  /* See the light-mode note: --mb-primary is only 2.71:1 here, so purple text
+   * takes the lightened brand purple instead. 5.26:1 on --background,
+   * 4.84:1 on --card. */
+  --mb-primary-text: #8b7f94;
 
   /* Dark mode status colors — elegant palette, slightly lighter for dark bg readability */
   --mb-success: #84B59F;

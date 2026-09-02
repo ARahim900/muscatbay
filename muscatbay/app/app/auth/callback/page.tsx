@@ -132,7 +132,7 @@ function LoadingSpinner({ message }: { message: string }) {
                             aria-live="polite"
                             className="flex flex-col items-center gap-4"
                         >
-                            <Loader2 className="h-10 w-10 animate-spin text-mb-primary" />
+                            <Loader2 className="h-10 w-10 animate-spin text-mb-primary-text" />
                             <p className="text-sm text-muted-foreground">{message}</p>
                         </div>
                     </CardContent>

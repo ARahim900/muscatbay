@@ -366,10 +366,10 @@ export default function SettingsPage() {
                                     <div className="flex items-center justify-between p-4 border rounded-lg bg-card/50 border-mb-primary/10">
                                         <div className="flex items-center gap-3">
                                             <div className="p-2 bg-card rounded-full border border-border shadow-sm">
-                                                <Monitor className="w-5 h-5 text-mb-primary" />
+                                                <Monitor className="w-5 h-5 text-mb-primary-text" />
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-mb-primary">Current Session</p>
+                                                <p className="text-sm font-medium text-mb-primary-text">Current Session</p>
                                                 <p className="text-xs text-muted-foreground">Active now</p>
                                             </div>
                                         </div>
