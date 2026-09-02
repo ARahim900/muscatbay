@@ -86,6 +86,7 @@
   --color-mb-secondary-foreground: var(--mb-secondary-foreground);
   --color-mb-secondary-light: var(--mb-secondary-light);
   --color-mb-secondary-active: var(--mb-secondary-active);
+  --color-mb-secondary-text: var(--mb-secondary-text);
   --color-mb-primary-light: var(--mb-primary-light);
   --color-mb-success: var(--mb-success);
   --color-mb-success-hover: var(--mb-success-hover);
@@ -177,6 +178,24 @@
   --mb-info-text:    #1e3a5f;   /* navy:       10:1+ on info-light bg       */
   --mb-success-text: #064e3b;   /* emerald-900: 8:1+ on success-light bg   */
   --mb-stale-text:   #7c2d12;   /* orange-900: 8:1+  on stale-light bg      */
+
+  /* ── Accent-as-text token ──
+   * The same rule, applied to the brand accent. --secondary / --accent /
+   * --mb-secondary (#A1D1D5) is a background TINT: as text on a light surface
+   * it measures 1.57:1 on --background and 1.67:1 on --card, far below the AA
+   * body-text floor of 4.5:1. --ring (#4A8E93) is the closest darker teal but
+   * only clears the 3:1 non-text floor (3.54:1 / 3.76:1), so it is not a text
+   * colour either. Use --mb-secondary-text wherever the teal has to carry a
+   * word or a meaning-bearing icon; keep --secondary for fills, borders,
+   * chart series and focus rings, where it is correct.
+   *
+   * Derived exactly the way the --status-* icon tier was (BRAND_DESIGN.md
+   * §2.6): brand teal's hue and saturation held (HSL 184.6°, 38.2%), lightness
+   * lowered 73.3% → 35%. No new hue invented — it is the brand teal, deepened.
+   * Light 4.89:1 on --background · 5.20:1 on --card/--popover · 4.72:1 on
+   * --muted · 4.95:1 on a secondary/10 wash over --card · 4.52:1 on
+   * --mb-secondary-light. */
+  --mb-secondary-text: #37767B; /* deep brand teal: 4.89:1 on --background, 5.20:1 on --card */
 
   /* ── Status colour tokens — single source of truth for all data indicators ──
    * Use these (not --mb-*) for status dots, badges, trend arrows, and alerts. */
@@ -400,6 +419,13 @@
   --mb-info-text:    #bfdbfe;   /* blue-200  */
   --mb-success-text: #a7f3d0;   /* emerald-200 */
   --mb-stale-text:   #fdba74;   /* orange-300 */
+
+  /* Accent-as-text — brand teal is already a light field, so dark mode uses it
+   * verbatim rather than inventing a second dark-mode teal that would read as a
+   * different colour beside --ring / --sidebar teal. 11.91:1 on --background ·
+   * 10.95:1 on --card/--popover · 9.63:1 on --muted · 8.97:1 on a secondary/10
+   * wash over --card · 8.93:1 on --mb-secondary-light. */
+  --mb-secondary-text: #A1D1D5; /* brand teal: 11.91:1 on --background, 10.95:1 on --card */
 
   /* Dark surfaces — warm near-black family, harmonized with #4E4456 brand.
    * Shifted from slate (blue-family) to neutral near-black with a whisper of

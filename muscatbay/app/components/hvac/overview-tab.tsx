@@ -11,9 +11,14 @@ import {
   AlertTriangle, RefreshCw, Building2, Shield, Mailbox,
 } from "lucide-react";
 import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
+  BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend,
 } from "recharts";
+// Charts mount through the shared container, never Recharts' own
+// ResponsiveContainer: it defers the plot until a ResizeObserver reports a real
+// box and enforces a minHeight, so a parent that loses its fixed height can no
+// longer produce a silent width(-1)/height(-1) blank chart.
+import { ChartContainer } from "@/components/charts/chart-container";
 import { format } from "date-fns";
 import type { GulfExpertContract, GulfExpertData } from "./types";
 import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
@@ -188,7 +193,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer minHeight={280}>
                   <BarChart data={openByBuilding} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
                     <XAxis dataKey="building" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
@@ -204,7 +209,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     />
                     <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Open Findings" {...chartMotion}/>
                   </BarChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>
@@ -219,7 +224,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </CardHeader>
             <CardContent>
               <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ChartContainer minHeight={280}>
                   <PieChart>
                     <Pie
                       data={findingsByStatus}
@@ -259,7 +264,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       )}
                     />
                   </PieChart>
-                </ResponsiveContainer>
+                </ChartContainer>
               </div>
             </CardContent>
           </Card>

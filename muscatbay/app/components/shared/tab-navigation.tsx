@@ -254,7 +254,10 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                     <tab.icon
                                         className={cn(
                                             "w-4 h-4 transition-colors duration-200",
-                                            isActive ? "text-secondary" : "text-muted-foreground/70"
+                                            // The secondary variant sits on the page/card surface, so the
+                                            // active icon needs the accent's text token — raw --secondary
+                                            // is a background tint and measures ~1.6:1 here in light mode.
+                                            isActive ? "text-mb-secondary-text" : "text-muted-foreground/70"
                                         )}
                                     />
                                 )}
@@ -297,6 +300,10 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                                 <tab.icon
                                     className={cn(
                                         "w-4 h-4 transition-colors duration-200",
+                                        // Deliberately raw --secondary, NOT --mb-secondary-text: the
+                                        // active primary tab always sits on the purple pill (--primary),
+                                        // where brand teal is 5.51:1 light / 6.48:1 dark. The deepened
+                                        // text token would be dark-on-dark here and regress it.
                                         isActive ? "text-secondary" : ""
                                     )}
                                 />

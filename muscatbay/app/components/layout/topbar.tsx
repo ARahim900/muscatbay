@@ -154,7 +154,7 @@ export function Topbar() {
                                         {user?.email && (
                                             <span className="text-xs text-muted-foreground truncate">{user.email}</span>
                                         )}
-                                        <span className="text-[10px] text-secondary font-medium mt-0.5">{userRole}</span>
+                                        <span className="text-[10px] text-mb-secondary-text font-medium mt-0.5">{userRole}</span>
                                     </div>
                                 </div>
                             </div>

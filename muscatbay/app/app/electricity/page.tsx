@@ -836,8 +836,8 @@ export default function ElectricityPage() {
                                         {/* Meter selector (appears when a specific type is selected) */}
                                         {analysisType !== "All" && metersOfSelectedType.length > 0 && (
                                             <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-secondary/10 border border-secondary/30">
-                                                <Filter className="w-3.5 h-3.5 text-secondary" />
-                                                <span className="text-xs font-medium text-secondary">Meter:</span>
+                                                <Filter className="w-3.5 h-3.5 text-mb-secondary-text" aria-hidden="true" />
+                                                <span className="text-xs font-medium text-mb-secondary-text">Meter:</span>
                                                 <select
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
