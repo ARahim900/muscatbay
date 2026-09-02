@@ -298,6 +298,33 @@ clear AA on the matching tint (≥8:1 light, ≥12:1 on `--card` in dark).
 | `--mb-warning-text` | `#78350f` | `#fde68a` |
 | `--mb-info-text` | `#1e3a5f` | `#bfdbfe` |
 | `--mb-stale-text` | `#7c2d12` | `#fdba74` |
+| `--mb-secondary-text` | `#37767B` | `#A1D1D5` |
+
+**`--mb-secondary-text` (added 2026-09-02)** extends the same rule to the brand
+accent. `--secondary` / `--accent` / `--mb-secondary` (`#A1D1D5`) is a
+background tint: as text on a light surface it measures **1.57:1** on
+`--background` and **1.67:1** on `--card`, far below the 4.5:1 AA body-text
+floor. `--ring` (`#4A8E93`) is the closest darker teal but clears only the 3:1
+non-text floor (3.54:1 / 3.76:1), so it is not a text colour either.
+
+The light value is derived exactly as the `--status-*` icon tier above is:
+brand teal's hue and saturation held (HSL 184.6°, 38.2%), lightness lowered
+73.3% → 35%. No new hue is introduced — it is the brand teal, deepened. Dark
+mode keeps the brand teal verbatim, which is already a light field on the
+near-black surfaces; inventing a second dark-mode teal would read as a
+different colour beside `--ring` and the sidebar accent.
+
+Measured: light **4.89:1** on `--background`, **5.20:1** on `--card`, 4.72:1 on
+`--muted`, 4.95:1 on a `secondary/10` wash over `--card`, 4.52:1 on
+`--mb-secondary-light`. Dark **11.91:1** on `--background`, **10.95:1** on
+`--card`. `__tests__/lib/accent-text-contrast.test.ts` recomputes these from the
+real token values, so retuning the token — or any surface it lands on — fails a
+test rather than shipping.
+
+**One exception, deliberate:** teal on the purple `--primary` pill (the
+primary-variant active tab icon) stays raw `--secondary`, where it measures
+5.51:1 light and 6.48:1 dark. Converting that one would put the deepened token
+dark-on-dark and regress it.
 
 ### 2.7 Badge Palette
 Single source of truth for `StatusBadge` and the level-hierarchy badges. In dark
