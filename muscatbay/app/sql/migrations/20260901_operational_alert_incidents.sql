@@ -37,7 +37,16 @@ CREATE POLICY operational_alert_incidents_read
     TO authenticated
     USING ((SELECT public.mb_can_read_module('alerts')));
 
-REVOKE INSERT, UPDATE, DELETE ON public.operational_alert_incidents FROM anon, authenticated;
+-- REVOKE ALL, not just the write verbs. Supabase's default privileges grant
+-- every new public table to anon and authenticated, so revoking writes alone
+-- left anon holding SELECT. RLS still returned zero rows to anon (no policy
+-- names that role), but relying on that is one permissive policy away from a
+-- real leak, and it leaves the table's shape visible to unauthenticated
+-- PostgREST introspection. This matches how migration
+-- 20260901_invitation_only_security_and_rls treats every other server_owned
+-- relation; that migration's fail-closed sweep cannot cover this table because
+-- it runs before this one creates it.
+REVOKE ALL ON public.operational_alert_incidents FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.operational_alert_incidents TO authenticated;
 
 DO $$

@@ -1133,11 +1133,80 @@ tables that no screen reads.
   - **Water Monthly brought onto the shared module pattern** — see the
     Water — Monthly row in §2.
   Gates: TypeScript (web + `mobile/`), ESLint, **476** Vitest tests in 60 files
-  (up from 392), production build, and 52 SQL assertions — all clean.
-  **Still the owner's call:** HTTP/PostgREST-level RLS verification
-  (`npm run test:rls:staging`) and the credential-gated account-flow E2E specs
-  both need a staging project with dummy Viewer/Contractor/Admin accounts. The
-  paid Supabase preview branch was declined, so neither can run from here.
+  (up from 392), production build, and 55 SQL assertions — all clean.
+
+- **Security migrations applied to the live project (2026-09-02)** — both
+  migrations are now **applied** to `utnlgeuqajmwibqmdmgt` via the Supabase MCP
+  server, in the order `invitation_only_security_and_rls` →
+  `operational_alert_incidents`. The database is the authority on access
+  control from this point; the app no longer relies on every signed-in user
+  being trusted.
+  - **Rollback artefact first.** The org is on the **free plan**, so there is no
+    PITR and no automated daily backup. Both migrations are schema/permission
+    only and rewrite no operational data, so what was at risk was permission
+    state — captured before the apply into four `mb_security_snapshot_20260902_*`
+    tables (**95** policies with regenerated `CREATE POLICY` DDL, **1,703**
+    grants, 2 buckets, 28 function ACLs). Restoring is replaying `restore_ddl`,
+    not reconstructing from a transcript.
+  - **Two defects were found by pre-flight and fixed before the apply**, both of
+    which a staging run would have caught and neither of which the SQL suite
+    covered:
+    1. The view allowlist named four electricity views —
+       `electricity_current_month`, `electricity_monthly_totals`,
+       `electricity_readings_with_meters`, `unified_electricity_data` — **none
+       of which exist**, while omitting `amc_contractor_summary` and
+       `amc_contractor_expiry`, which Contractors reads on every load. It would
+       have revoked a live read while protecting nothing.
+    2. `amc_contractor_expiry` reads `amc_open_actions`, which the fail-closed
+       sweep revokes. Because approved views are set `security_invoker = true`,
+       simply re-approving the view would still have failed for every role,
+       administrators included. `amc_open_actions` is now inventoried
+       `server_owned`/`contractors` — read-only, no write path.
+  - **A third defect was found by post-apply verification.**
+    `operational_alert_incidents` revoked only INSERT/UPDATE/DELETE from `anon`,
+    and Supabase grants every new public table to `anon` by default, so `anon`
+    kept SELECT. RLS masked it (no policy names `anon`, so the read returned
+    zero rows) — which is exactly how a boundary defect survives a green suite.
+    Fixed to `REVOKE ALL`, and the suite now asserts the *grant* rather than the
+    row count.
+  - **Verified against the live database, not assumed.** Simulating each role
+    with `set local role` + `request.jwt.claims`: all 28 app-read relations
+    readable by admin and viewer with real row counts; `profiles` correctly
+    scoped (admin 12 rows, viewer 1); a contractor scoped to `["water"]` reads
+    water but gets zero rows from electricity and STP; viewer writes, viewer
+    self-escalation to admin, and reads of fail-closed tables all denied. `anon`
+    now holds exactly **one** privilege in the whole schema — `INSERT` on
+    `professional_applications`, the public intake form. Supabase advisors
+    report **zero ERROR-level lints**; the remaining `rls_enabled_no_policy`
+    entries are INFO and are the fail-closed tables working as designed. All 21
+    SECURITY DEFINER functions retain `service_role` EXECUTE, so the nightly
+    Grafana water sync, STP submission, view rebuild and placeholder-nulling
+    cron jobs are unaffected.
+  - **The invitation gate is live and enforced now.** `auth_invitations` is
+    empty, so no new account can be created. Enforcement comes from the
+    `on_auth_user_created` trigger, which is already installed — it does not
+    wait on the Auth Hook.
+  **Still the owner's call:**
+  - **Configure the Auth Hook** (Dashboard → Authentication → Hooks → Before
+    User Created → `public.mb_before_user_created`). This is *not* what makes
+    signup invitation-only — the trigger already does. It converts the trigger's
+    500 into a clean **403 "Dashboard access is invitation only."**
+  - **11 of 12 accounts hold `admin`**, including `testuser@muscatbay.com`,
+    `test_schedule@example.com` and `ginejev728@zizvy.com` (a disposable-mail
+    domain — evidence that open signup was being used by strangers). RLS grants
+    admin everything, so the boundary means little until these are re-roled or
+    removed. Not actioned: changing another person's access is not a call to
+    make unilaterally.
+  - **Leaked-password protection is disabled** (Supabase advisor, WARN). It is
+    an Auth setting, not SQL, so it cannot be changed from a migration.
+  - **`user_push_tokens` does not exist**, so mobile push registration in
+    `mobile/src/lib/push.ts` fails today. Pre-existing, unrelated to these
+    migrations, and creating the table is a product decision rather than a fix.
+  - HTTP/PostgREST-level RLS verification (`npm run test:rls:staging`) and the
+    credential-gated account-flow E2E specs still need dummy
+    Viewer/Contractor/Admin accounts. The role simulation above exercises the
+    policies through real `auth.uid()` evaluation, but it runs in-database and
+    so does not cover JWT parsing or the REST error surface.
 - **Typography — Inter adoption (2026-08-31)** — draft PR from branch
   `claude/typography-font-sizing-7shsei`. On the owner's direction the UI face
   switched **Geist → Inter** (variable, with the `opsz` optical-size axis;

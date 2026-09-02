@@ -173,6 +173,20 @@ SELECT pg_temp.assert(has_function_privilege('service_role',
 SELECT pg_temp.assert(NOT has_table_privilege('authenticated', 'public.operational_alert_incidents', 'UPDATE'),
     'authenticated cannot write incidents directly');
 
+/* 12b ─ anon holds NO privilege on the incidents table, not even SELECT.
+   The suite previously asserted only that anon could not execute the
+   reconciler, so it passed while anon still held the SELECT that Supabase
+   grants by default on every new public table. RLS masked it — no policy
+   names anon, so the read returned zero rows — which is exactly the kind of
+   accidental pass that hides a boundary defect until someone adds a
+   permissive policy. Assert the grant itself, not the row count. */
+SELECT pg_temp.assert(NOT has_table_privilege('anon', 'public.operational_alert_incidents', 'SELECT'),
+    'anon cannot select incidents');
+SELECT pg_temp.assert(NOT has_table_privilege('anon', 'public.operational_alert_incidents', 'INSERT'),
+    'anon cannot insert incidents');
+SELECT pg_temp.assert(has_table_privilege('authenticated', 'public.operational_alert_incidents', 'SELECT'),
+    'authenticated retains select on incidents');
+
 /* 13 ─ Only one 2-argument overload should remain (no stale signature). */
 SELECT pg_temp.assert(count(*) = 1, 'exactly one reconciler signature exists')
 FROM pg_proc WHERE proname = 'reconcile_operational_alert_incidents';

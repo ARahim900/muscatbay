@@ -367,6 +367,14 @@ insert into mb_security_inventory (table_name, access_class, module_key) values
     ('amc_contractor_details', 'operational', 'contractors'),
     ('amc_contractor_expiry', 'operational', 'contractors'),
     ('amc_contractor_pricing', 'operational', 'contractors'),
+    -- Base table of the amc_contractor_expiry VIEW. The view is re-granted in
+    -- the $views$ block below with security_invoker = true, which means it
+    -- executes as the caller — so the caller needs its own SELECT on every
+    -- base relation. Leaving this table to the fail-closed sweep made the
+    -- Contractors expiry read fail with "permission denied" for every role,
+    -- administrators included. server_owned, not operational: the view is the
+    -- only reader, so it needs SELECT and no write path.
+    ('amc_open_actions', 'server_owned', 'contractors'),
     ('fire_safety_equipment', 'operational', 'firefighting'),
     ('fire_ppm_activities', 'operational', 'firefighting'),
     ('fire_issues_register', 'operational', 'firefighting'),
@@ -577,12 +585,22 @@ $foreign_tables$;
 
 -- Views are deny-by-default. Only reviewed operational views are re-granted,
 -- and ordinary views execute as the caller so base-table RLS still applies.
+--
+-- This list must name views that EXIST and that a client actually reads; the
+-- inventory above cannot cover them because its loop matches relkind r/p only.
+-- It previously named four electricity views — electricity_current_month,
+-- electricity_monthly_totals, electricity_readings_with_meters and
+-- unified_electricity_data — none of which exist in this database, while
+-- omitting the two AMC views the Contractors module reads on every load. The
+-- net effect was an allowlist that protected nothing and revoked a live read.
+-- Electricity is absent by design, not by oversight: functions/api/electricity.ts
+-- reads the electricity_meters and electricity_readings base tables directly,
+-- so the v_electricity_* views have no client and stay revoked.
 do $views$
 declare view_row record;
 declare approved_views constant text[] := array[
     'Water System', 'water_meters_hierarchy',
-    'electricity_current_month', 'electricity_monthly_totals',
-    'electricity_readings_with_meters', 'unified_electricity_data'
+    'amc_contractor_summary', 'amc_contractor_expiry'
 ];
 begin
     for view_row in
