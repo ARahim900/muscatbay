@@ -1014,6 +1014,46 @@ tables that no screen reads.
 
 ## 5. In-flight work (open PRs)
 
+- **#77 Production hardening — alert lifecycle & STP figure integrity
+  (2026-09-02).** Follow-up branch `claude/supabase-service-role-setup-zgjzno`
+  targets `codex/production-hardening`, fixing three defects an independent
+  audit found in #77 *after* its checks went green:
+  1. **Alert incidents split.** Fingerprints embedded the last-occurrence date
+     and the severity band, so a continuing fault re-keyed itself every day and
+     a recovery drift across the 80% band closed the acknowledged critical
+     incident and opened a fresh un-acknowledged warning. An `id` now names the
+     condition only; level, title and message are columns the reconciler updates
+     in place. Water rules stay month-keyed — a new month IS a new incident.
+  2. **Contract incidents keyed by a name set.** `contracts-expired:<joined
+     names>` meant the eleventh expiry re-keyed the incident covering the other
+     ten. Now one incident per agreement, keyed by `amc_register.agreement_id`
+     (carried through `toTrackerRow`), warning→error in place as it lapses.
+  3. **Auto-resolution on incomplete evidence.** Any non-empty fetch counted as
+     a full evaluation, so sparse data produced fewer alerts and closed the
+     rest. `evaluateOperationalAlertsWithCoverage()` now separates *read* from
+     *resolvable*; `reconcile_operational_alert_incidents` takes
+     `p_resolvable_modules` as a distinct grant. Detected alerts are still
+     persisted for a read-only module — incomplete evidence withholds the
+     authority to CLOSE, never the duty to RAISE.
+  Plus **STP figure integrity**: the page's KPI cards, monthly/daily charts,
+  log table, sort keys and CSV export summed raw columns filtering only nulls,
+  so a negative TSE reading subtracted from headline reuse and paid a negative
+  saving, while Plant Watch beside it excluded that same row. All of them now
+  read `summariseSTPReadings()`; recovery is paired-day only and cannot exceed
+  100%; excluded rows are counted and surfaced as an anomaly badge, and the CSV
+  carries a `Data Quality` column. Gates: TypeScript, ESLint, 392 Vitest tests,
+  production build, mobile `tsc` all clean.
+  **The two migrations are still unapplied to the live project.**
+- **Local SQL test harness (no cost) — `npm run test:sql:local`.** The owner
+  declined a paid Supabase preview branch (USD 0.01344/hour), so the
+  alert-incident migration is now exercised against a throwaway local
+  PostgreSQL 16 cluster: `sql/tests/00-supabase-stubs.sql` provides minimal
+  `auth.uid()` / `mb_*` stand-ins, `sql/tests/alert-incidents.test.sql` asserts
+  21 behaviours (escalation keeps its acknowledgement, a read-only module
+  cannot close anything, a NULL resolution grant resolves nothing, per-agreement
+  incidents resolve independently, `anon`/`authenticated` hold no execute grant).
+  This proves the reconciler's logic and grants; it does **not** replace an RLS
+  run against live PostgREST (`npm run test:rls:staging`) before production.
 - **Typography — Inter adoption (2026-08-31)** — draft PR from branch
   `claude/typography-font-sizing-7shsei`. On the owner's direction the UI face
   switched **Geist → Inter** (variable, with the `opsz` optical-size axis;

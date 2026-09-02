@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assessSTPReadings } from "@/lib/stp-data-quality";
+import { assessSTPReadings, summariseSTPReadings } from "@/lib/stp-data-quality";
 import { transformSTPOperation } from "@/entities/stp";
 import { buildSTPModel } from "@/components/stp/stp-analytics";
 
@@ -37,5 +37,70 @@ describe("STP data quality", () => {
         expect(model.summary.invalidReadingDays).toBe(2);
         expect(model.summary.savings).toBe(90 * 1.32);
         expect(model.summary.income).toBe(2 * 4.5);
+    });
+});
+
+/**
+ * These are the figures the STP page publishes as headline KPIs, chart points
+ * and CSV columns. Before `summariseSTPReadings` they were plain sums of the
+ * raw columns with nulls filtered out, so the page disagreed with the Plant
+ * Watch tab beside it about what the plant had done.
+ */
+describe("summariseSTPReadings", () => {
+    it("excludes negative readings from published totals and counts them", () => {
+        const totals = summariseSTPReadings([
+            { inlet: 100, tse: 90, tankerTrips: 2 },
+            { inlet: -50, tse: -30, tankerTrips: -1 },
+        ]);
+        expect(totals.inlet.value).toBe(100);
+        expect(totals.tse.value).toBe(90);
+        expect(totals.tankerTrips.value).toBe(2);
+        expect(totals.inlet.excluded).toBe(1);
+        expect(totals.tse.excluded).toBe(1);
+        expect(totals.tankerTrips.excluded).toBe(1);
+    });
+
+    it("never publishes a recovery above 100%", () => {
+        const totals = summariseSTPReadings([
+            { inlet: 100, tse: 90, tankerTrips: 1 },
+            { inlet: 100, tse: 400, tankerTrips: 1 },
+        ]);
+        expect(totals.recovery.pct).toBe(90);
+        expect(totals.recovery.days).toBe(1);
+        expect(totals.tse.value).toBe(90);
+        expect(totals.rowsWithImpossibleReadings).toBe(1);
+    });
+
+    it("keeps missing and impossible readings in separate counts", () => {
+        const totals = summariseSTPReadings([
+            { inlet: 100, tse: 90, tankerTrips: 2 },
+            { inlet: null, tse: null, tankerTrips: null },
+            { inlet: 100, tse: 150, tankerTrips: 1 },
+        ]);
+        expect(totals.tse.evidenced).toBe(1);
+        expect(totals.tse.missing).toBe(1);
+        expect(totals.tse.excluded).toBe(1);
+        expect(totals.rows).toBe(3);
+    });
+
+    it("counts a TSE volume with no inlet reading, which has no computable recovery", () => {
+        const totals = summariseSTPReadings([{ inlet: null, tse: 80, tankerTrips: 1 }]);
+        expect(totals.tse.value).toBe(80);
+        expect(totals.recovery.pct).toBeNull();
+        expect(totals.recovery.days).toBe(0);
+    });
+
+    it("returns null totals rather than zero when nothing is usable", () => {
+        const totals = summariseSTPReadings([{ inlet: null, tse: null, tankerTrips: null }]);
+        expect(totals.inlet.value).toBeNull();
+        expect(totals.tse.value).toBeNull();
+        expect(totals.tankerTrips.value).toBeNull();
+    });
+
+    it("treats zero as a real reading, not as missing", () => {
+        const totals = summariseSTPReadings([{ inlet: 0, tse: 0, tankerTrips: 0 }]);
+        expect(totals.inlet.value).toBe(0);
+        expect(totals.inlet.evidenced).toBe(1);
+        expect(totals.inlet.missing).toBe(0);
     });
 });

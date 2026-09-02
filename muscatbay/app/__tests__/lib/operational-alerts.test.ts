@@ -5,6 +5,7 @@ import {
     evaluateContractDateConflictAlerts,
     evaluateSTPAlerts,
     evaluateOperationalAlerts,
+    evaluateOperationalAlertsWithCoverage,
     parseTrackerDate,
 } from '@/lib/operational-alerts';
 import type { WaterMeter } from '@/lib/water-data';
@@ -203,17 +204,50 @@ describe('evaluateContractAlerts', () => {
         expect(alerts).toHaveLength(0);
     });
 
-    it('aggregates multiple expired contracts into one alert, oldest first', () => {
+    it('raises one incident PER agreement, longest-expired first', () => {
         const alerts = evaluateContractAlerts(
             [
-                contractor({ Contractor: 'B Co', 'End Date': '6/2/2026' }),
-                contractor({ Contractor: 'A Co', 'End Date': '12/31/2025' }),
+                contractor({ agreement_id: 'AMC-B', Contractor: 'B Co', 'End Date': '6/2/2026' }),
+                contractor({ agreement_id: 'AMC-A', Contractor: 'A Co', 'End Date': '12/31/2025' }),
             ],
             NOW,
         );
-        expect(alerts).toHaveLength(1);
-        expect(alerts[0].title).toContain('2 contracts expired');
-        expect(alerts[0].message.indexOf('A Co')).toBeLessThan(alerts[0].message.indexOf('B Co'));
+        expect(alerts).toHaveLength(2);
+        expect(alerts.map((a) => a.id)).toEqual(['contract-expiry:AMC-A', 'contract-expiry:AMC-B']);
+        expect(alerts[0].message).toContain('A Co');
+    });
+
+    // The defect: the fingerprint used to be the joined set of contractor
+    // names, so an eleventh expiry re-keyed the incident covering the other ten
+    // and discarded every acknowledgement on it.
+    it('keeps each agreement fingerprint stable when another contract expires', () => {
+        const one = contractor({ agreement_id: 'AMC-A', Contractor: 'A Co', 'End Date': '12/31/2025' });
+        const two = contractor({ agreement_id: 'AMC-B', Contractor: 'B Co', 'End Date': '6/2/2026' });
+
+        const before = evaluateContractAlerts([one], NOW).map((a) => a.id);
+        const after = evaluateContractAlerts([one, two], NOW).map((a) => a.id);
+
+        expect(before).toEqual(['contract-expiry:AMC-A']);
+        expect(after).toContain('contract-expiry:AMC-A');
+    });
+
+    // Warning → error is the same contract escalating, not a new incident.
+    it('keeps one fingerprint as a contract crosses its End Date', () => {
+        const row = contractor({ agreement_id: 'AMC-A', 'End Date': '7/20/2026' });
+        const warning = evaluateContractAlerts([row], NOW)[0];
+        const error = evaluateContractAlerts([row], new Date(Date.UTC(2026, 6, 25)))[0];
+
+        expect(warning.level).toBe('warning');
+        expect(error.level).toBe('error');
+        expect(error.id).toBe(warning.id);
+    });
+
+    it('falls back to contractor + service when the register has no agreement ID', () => {
+        const alerts = evaluateContractAlerts(
+            [contractor({ Contractor: 'Legacy Co', 'Service Provided': 'Pest Control', 'End Date': '12/31/2025' })],
+            NOW,
+        );
+        expect(alerts[0].id).toBe('contract-expiry:name:legacy co|pest control');
     });
 });
 
@@ -265,13 +299,53 @@ describe('evaluateSTPAlerts', () => {
             [stpOp('2026-07-11', 1000, 700), stpOp('2026-07-12', 1000, 800)], // 75%
             NOW,
         );
-        expect(critical.some((a) => a.id.startsWith('stp-low-recovery') && a.level === 'error')).toBe(true);
+        expect(critical.some((a) => a.id === 'stp-recovery-below-target' && a.level === 'error')).toBe(true);
 
         const watch = evaluateSTPAlerts(
             [stpOp('2026-07-11', 1000, 850), stpOp('2026-07-12', 1000, 850)], // 85%
             NOW,
         );
-        expect(watch.some((a) => a.id.startsWith('stp-watch-recovery') && a.level === 'warning')).toBe(true);
+        expect(watch.some((a) => a.id === 'stp-recovery-below-target' && a.level === 'warning')).toBe(true);
+    });
+
+    // The defect: `stp-low-recovery:<date>` and `stp-watch-recovery:<date>` were
+    // different fingerprints, so a plant drifting across the 80% band closed the
+    // acknowledged critical incident and opened a fresh un-acknowledged warning.
+    it('keeps ONE recovery fingerprint across the critical/watch boundary', () => {
+        const critical = evaluateSTPAlerts([stpOp('2026-07-11', 1000, 700), stpOp('2026-07-12', 1000, 800)], NOW)
+            .find((a) => a.category === 'process_performance');
+        const watch = evaluateSTPAlerts([stpOp('2026-07-11', 1000, 850), stpOp('2026-07-12', 1000, 850)], NOW)
+            .find((a) => a.category === 'process_performance');
+
+        expect(critical?.level).toBe('error');
+        expect(watch?.level).toBe('warning');
+        expect(critical?.id).toBe(watch?.id);
+    });
+
+    // The defect: the fingerprint carried the last occurrence date, so every
+    // further day of the SAME outage resolved yesterday's incident and raised a
+    // new un-acknowledged one.
+    it('keeps STP fingerprints stable while a fault continues into a new day', () => {
+        const dayOne = evaluateSTPAlerts([stpOp('2026-07-11', 500, 480), stpOp('2026-07-12', 500, 0)], NOW);
+        const dayTwo = evaluateSTPAlerts(
+            [stpOp('2026-07-11', 500, 480), stpOp('2026-07-12', 500, 0), stpOp('2026-07-13', 500, 0)],
+            new Date(Date.UTC(2026, 6, 13, 23)),
+        );
+        const idsOf = (alerts: ReturnType<typeof evaluateSTPAlerts>, prefix: string) =>
+            alerts.filter((a) => a.id.startsWith(prefix)).map((a) => a.id);
+
+        expect(idsOf(dayOne, 'stp-zero-output')).toEqual(['stp-zero-output']);
+        expect(idsOf(dayTwo, 'stp-zero-output')).toEqual(['stp-zero-output']);
+        // The moving date belongs in the message, where it informs without re-keying.
+        expect(dayTwo.find((a) => a.id === 'stp-zero-output')?.message).toContain('13 Jul 2026');
+    });
+
+    it('keeps the data-quality fingerprints stable as the most recent bad day moves', () => {
+        const first = evaluateSTPAlerts([stpOp('2026-07-11', 100, 150), stpOp('2026-07-12', 100, 90)], NOW);
+        const later = evaluateSTPAlerts([stpOp('2026-07-11', 100, 150), stpOp('2026-07-12', 100, 160)], NOW);
+
+        expect(first.find((a) => a.category === 'data_quality')?.id).toBe('stp-impossible-readings');
+        expect(later.find((a) => a.category === 'data_quality')?.id).toBe('stp-impossible-readings');
     });
 
     it('warns when the daily log goes stale (monitoring is blind)', () => {
@@ -304,7 +378,7 @@ describe('evaluateSTPAlerts', () => {
             stpOp('2026-07-12', 100, 150),
         ], NOW);
         expect(alerts.some((a) => a.category === 'data_quality' && a.message.includes('>100% recovery'))).toBe(true);
-        expect(alerts.some((a) => a.id.startsWith('stp-low-recovery'))).toBe(false);
+        expect(alerts.some((a) => a.id === 'stp-recovery-below-target')).toBe(false);
     });
 });
 
@@ -329,5 +403,109 @@ describe('evaluateOperationalAlerts', () => {
 
     it('produces nothing when no data is supplied (never fabricates)', () => {
         expect(evaluateOperationalAlerts({ now: NOW })).toHaveLength(0);
+    });
+});
+
+/* ── evidence coverage ────────────────────────────────────────────────── */
+
+describe('evaluateOperationalAlertsWithCoverage', () => {
+    /** Water fixture whose Mar-26 balance is computable and fully evidenced. */
+    const completeWater = () => waterMetersWithLoss();
+    const completeContractors = () => [
+        contractor({ agreement_id: 'AMC-1', Contractor: 'Soon Co', 'End Date': '8/1/2026' }),
+    ];
+    const completeReconciliation = { contracts: [], unreferenced: [] };
+    const completeStp = () => [stpOp('2026-07-12', 500, 450, 2)];
+
+    it('grants resolution authority only to modules with complete evidence', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            waterMeters: completeWater(),
+            contractors: completeContractors(),
+            contractDateReconciliation: completeReconciliation,
+            stpOperations: completeStp(),
+            now: NOW,
+        });
+        expect(result.evaluatedModules.sort()).toEqual(['contractors', 'stp', 'water']);
+        expect(result.resolvableModules.sort()).toEqual(['contractors', 'stp', 'water']);
+        expect(result.withheldResolution).toEqual({});
+    });
+
+    it('reports a module that was never read as neither evaluated nor resolvable', () => {
+        const result = evaluateOperationalAlertsWithCoverage({ waterMeters: completeWater(), now: NOW });
+        expect(result.evaluatedModules).toEqual(['water']);
+        expect(result.resolvableModules).toEqual(['water']);
+    });
+
+    // The reviewer's final edge case: a meter with the month key ABSENT is as
+    // unevidenced as one holding an explicit null, but only the null was caught,
+    // so a half-reported month could still close an open loss incident.
+    it('withholds water resolution when a meter has no reading for the evaluated month', () => {
+        const meters = completeWater();
+        meters.push(meter({ label: 'Villa 2', consumption: {} }));
+        const result = evaluateOperationalAlertsWithCoverage({ waterMeters: meters, now: NOW });
+
+        expect(result.evaluatedModules).toContain('water');
+        expect(result.resolvableModules).not.toContain('water');
+        expect(result.withheldResolution.water).toContain('Mar-26');
+    });
+
+    it('withholds water resolution for an explicit null reading too', () => {
+        const meters = completeWater();
+        meters.push(meter({ label: 'Villa 2', consumption: { 'Mar-26': null } }));
+        const result = evaluateOperationalAlertsWithCoverage({ waterMeters: meters, now: NOW });
+        expect(result.resolvableModules).not.toContain('water');
+    });
+
+    it('withholds STP resolution when a window day is missing a reading', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            stpOperations: [stpOp('2026-07-11', 500, 450), stpOp('2026-07-12', 500, null)],
+            now: NOW,
+        });
+        expect(result.evaluatedModules).toContain('stp');
+        expect(result.resolvableModules).not.toContain('stp');
+    });
+
+    // Incomplete evidence withholds the authority to CLOSE, never the duty to
+    // RAISE — the earlier fix dropped the data-quality alert along with it.
+    it('still returns the alerts detected on incomplete evidence', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            stpOperations: [stpOp('2026-07-11', 500, 450), stpOp('2026-07-12', 500, null)],
+            now: NOW,
+        });
+        expect(result.resolvableModules).not.toContain('stp');
+        expect(result.alerts.some((a) => a.id === 'stp-missing-readings')).toBe(true);
+    });
+
+    it('withholds contractor resolution when a row carries no agreement ID', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            contractors: [contractor({ Contractor: 'Legacy Co', 'End Date': '8/1/2026' })],
+            contractDateReconciliation: completeReconciliation,
+            now: NOW,
+        });
+        expect(result.resolvableModules).not.toContain('contractors');
+        expect(result.withheldResolution.contractors).toContain('agreement ID');
+    });
+
+    it('withholds contractor resolution when an active row has no End Date', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            contractors: [
+                ...completeContractors(),
+                contractor({ agreement_id: 'AMC-2', 'End Date': 'Schedule of rates' }),
+            ],
+            contractDateReconciliation: completeReconciliation,
+            now: NOW,
+        });
+        expect(result.resolvableModules).not.toContain('contractors');
+        expect(result.withheldResolution.contractors).toContain('End Date');
+    });
+
+    it('withholds contractor resolution when date reconciliation was unavailable', () => {
+        const result = evaluateOperationalAlertsWithCoverage({
+            contractors: completeContractors(),
+            contractDateReconciliation: null,
+            now: NOW,
+        });
+        expect(result.resolvableModules).not.toContain('contractors');
+        expect(result.withheldResolution.contractors).toContain('reconciliation');
     });
 });

@@ -80,11 +80,27 @@ REVOKE ALL ON FUNCTION public.acknowledge_operational_alert_incident(uuid) FROM 
 GRANT EXECUTE ON FUNCTION public.acknowledge_operational_alert_incident(uuid) TO authenticated;
 
 -- Called only by a trusted server-side evaluator after it has successfully
--- read the named modules. Modules omitted from p_evaluated_modules are never
--- auto-resolved, so a source outage cannot make a critical incident disappear.
+-- read the named modules.
+--
+-- TWO SEPARATE GRANTS, and conflating them is what this signature exists to
+-- prevent:
+--
+--   p_evaluated_modules  — modules the evaluator READ. Their alerts are
+--       upserted. A source outage keeps a module out of this list entirely, so
+--       it cannot make a critical incident disappear.
+--   p_resolvable_modules — the subset whose evidence was COMPLETE, so the
+--       absence of a condition is a real observation rather than a gap in the
+--       data. Only these auto-resolve.
+--
+-- A module that returned sparse rows therefore still records its data-quality
+-- alert while being denied the authority to close anything. Passing NULL for
+-- p_resolvable_modules resolves nothing, which is the safe default.
+DROP FUNCTION IF EXISTS public.reconcile_operational_alert_incidents(jsonb, text[]);
+
 CREATE OR REPLACE FUNCTION public.reconcile_operational_alert_incidents(
     p_alerts jsonb,
-    p_evaluated_modules text[]
+    p_evaluated_modules text[],
+    p_resolvable_modules text[] DEFAULT NULL
 )
 RETURNS void
 LANGUAGE plpgsql
@@ -94,19 +110,36 @@ AS $$
 DECLARE
     alert jsonb;
     active_fingerprints text[] := ARRAY[]::text[];
+    -- Normalise up front: a NULL array makes every `= ANY (...)` test return
+    -- NULL, which an IF reads as false — so an unchecked NULL would skip the
+    -- module guard below entirely instead of failing loudly.
+    evaluated_modules text[] := COALESCE(p_evaluated_modules, ARRAY[]::text[]);
+    resolvable_modules text[] := COALESCE(p_resolvable_modules, ARRAY[]::text[]);
 BEGIN
     IF p_alerts IS NULL OR jsonb_typeof(p_alerts) <> 'array' THEN
         RAISE EXCEPTION 'p_alerts must be a JSON array';
     END IF;
 
+    -- Resolution authority is a subset of what was read; anything else is a
+    -- caller bug that would silently close incidents nobody evaluated.
+    IF EXISTS (
+        SELECT 1 FROM unnest(resolvable_modules) AS m
+        WHERE NOT (m = ANY (evaluated_modules))
+    ) THEN
+        RAISE EXCEPTION 'Resolvable modules must be a subset of evaluated modules';
+    END IF;
+
     FOR alert IN SELECT value FROM jsonb_array_elements(p_alerts)
     LOOP
-        IF NOT ((alert->>'module') = ANY (p_evaluated_modules)) THEN
+        IF NOT ((alert->>'module') = ANY (evaluated_modules)) THEN
             RAISE EXCEPTION 'Alert module was not evaluated: %', alert->>'module';
         END IF;
 
         active_fingerprints := array_append(active_fingerprints, alert->>'id');
 
+        -- Level, title and message are COLUMNS, not identity: an incident that
+        -- escalates from warning to error is re-levelled here and keeps its
+        -- acknowledgement, rather than being closed and re-raised.
         UPDATE public.operational_alert_incidents
         SET last_seen_at = now(),
             level = alert->>'level',
@@ -127,16 +160,20 @@ BEGIN
         END IF;
     END LOOP;
 
+    IF array_length(resolvable_modules, 1) IS NULL THEN
+        RETURN;
+    END IF;
+
     UPDATE public.operational_alert_incidents
     SET resolved_at = now(),
-        resolution_reason = 'Condition absent after successful source evaluation'
+        resolution_reason = 'Condition absent after a complete source evaluation'
     WHERE resolved_at IS NULL
-      AND module = ANY (p_evaluated_modules)
+      AND module = ANY (resolvable_modules)
       AND NOT (fingerprint = ANY (active_fingerprints));
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.reconcile_operational_alert_incidents(jsonb, text[]) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.reconcile_operational_alert_incidents(jsonb, text[]) TO service_role;
+REVOKE ALL ON FUNCTION public.reconcile_operational_alert_incidents(jsonb, text[], text[]) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.reconcile_operational_alert_incidents(jsonb, text[], text[]) TO service_role;
 
 commit;

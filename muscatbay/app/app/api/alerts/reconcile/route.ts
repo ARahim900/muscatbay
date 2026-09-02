@@ -9,10 +9,7 @@ import { transformSTPOperation, type SupabaseSTPOperation } from "@/entities/stp
 import { getAmcRegister } from "@/functions/api/contractors";
 import { getGulfExpertContractDateReconciliation } from "@/functions/api/gulf-expert";
 import { fetchWaterMeters } from "@/functions/api/water";
-import {
-    evaluateOperationalAlerts,
-    type OperationalAlert,
-} from "@/lib/operational-alerts";
+import { evaluateOperationalAlertsWithCoverage } from "@/lib/operational-alerts";
 import type { ContractDateReconciliation } from "@/lib/contract-reconciliation";
 
 export const runtime = "nodejs";
@@ -57,7 +54,6 @@ async function evaluate(request: NextRequest): Promise<NextResponse> {
         contractDates: null,
         stpOperations: null,
     };
-    const evaluatedModules: Array<OperationalAlert["module"]> = [];
     const failures: Record<string, string> = {};
 
     const [waterResult, contractorResult, stpResult] = await Promise.allSettled([
@@ -75,7 +71,6 @@ async function evaluate(request: NextRequest): Promise<NextResponse> {
 
     if (waterResult.status === "fulfilled" && !waterResult.value.error && waterResult.value.meters.length > 0) {
         sources.waterMeters = waterResult.value.meters;
-        evaluatedModules.push("water");
     } else {
         failures.water = waterResult.status === "rejected"
             ? errorMessage(waterResult.reason)
@@ -85,7 +80,6 @@ async function evaluate(request: NextRequest): Promise<NextResponse> {
     if (contractorResult.status === "fulfilled" && contractorResult.value[0].length > 0) {
         sources.contractors = contractorResult.value[0].map(toTrackerRow);
         sources.contractDates = contractorResult.value[1];
-        evaluatedModules.push("contractors");
     } else {
         failures.contractors = contractorResult.status === "rejected"
             ? errorMessage(contractorResult.reason)
@@ -94,28 +88,34 @@ async function evaluate(request: NextRequest): Promise<NextResponse> {
 
     if (stpResult.status === "fulfilled" && !stpResult.value.error && (stpResult.value.data?.length ?? 0) > 0) {
         sources.stpOperations = (stpResult.value.data as SupabaseSTPOperation[]).map(transformSTPOperation);
-        evaluatedModules.push("stp");
     } else {
         failures.stp = stpResult.status === "rejected"
             ? errorMessage(stpResult.reason)
             : stpResult.value.error?.message ?? "No STP rows returned";
     }
 
+    const { alerts, evaluatedModules, resolvableModules, withheldResolution } =
+        evaluateOperationalAlertsWithCoverage({
+            waterMeters: sources.waterMeters,
+            contractors: sources.contractors,
+            contractDateReconciliation: sources.contractDates,
+            stpOperations: sources.stpOperations,
+            now: new Date(),
+        });
+
     if (evaluatedModules.length === 0) {
         console.error("[alerts/reconcile] No source could be evaluated:", failures);
         return NextResponse.json({ error: "No operational source could be evaluated", failures }, { status: 503 });
     }
 
-    const alerts = evaluateOperationalAlerts({
-        waterMeters: sources.waterMeters,
-        contractors: sources.contractors,
-        contractDateReconciliation: sources.contractDates,
-        stpOperations: sources.stpOperations,
-        now: new Date(),
-    });
+    // Two distinct grants. Every alert raised is persisted for the modules we
+    // READ; only modules whose evidence was COMPLETE may close incidents whose
+    // condition is now absent. A module that returned sparse rows still gets its
+    // data-quality alert recorded — it just cannot claim anything is fixed.
     const { error: reconcileError } = await client.rpc("reconcile_operational_alert_incidents", {
         p_alerts: alerts,
         p_evaluated_modules: evaluatedModules,
+        p_resolvable_modules: resolvableModules,
     });
 
     if (reconcileError) {
@@ -126,8 +126,13 @@ async function evaluate(request: NextRequest): Promise<NextResponse> {
     if (Object.keys(failures).length > 0) {
         console.warn("[alerts/reconcile] Completed with unavailable sources:", failures);
     }
+    if (Object.keys(withheldResolution).length > 0) {
+        console.warn("[alerts/reconcile] Resolution withheld on incomplete evidence:", withheldResolution);
+    }
     return NextResponse.json({
         evaluatedModules,
+        resolvableModules,
+        withheldResolution,
         activeAlertCount: alerts.length,
         unavailableModules: Object.keys(failures),
     });
