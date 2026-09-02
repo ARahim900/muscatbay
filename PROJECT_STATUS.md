@@ -1186,17 +1186,43 @@ tables that no screen reads.
     empty, so no new account can be created. Enforcement comes from the
     `on_auth_user_created` trigger, which is already installed — it does not
     wait on the Auth Hook.
+- **Roles assigned and dormant accounts removed (2026-09-02)** — on the owner's
+  instruction, the account estate went from **11 admins out of 12** to **one
+  admin and eight viewers**. Until this, the RLS boundary applied the same day
+  was largely decorative: `admin` passes every `mb_can_read_module` and
+  `mb_has_any_role` check, so almost everyone sat on the permissive side of it.
+  - **`alameeri900@gmail.com` is the sole `admin`.** The owner first specified
+    *manager*, which would have left **no admin at all** — and
+    `app/api/admin/invitations/route.ts` gates invitation creation on
+    `role === 'admin'` while signup is now invitation-only, so a manager-only
+    estate could never onboard anyone again without the Supabase dashboard.
+    Raised before applying; the owner chose admin.
+  - **Everyone else is `viewer`** — the "normal view": reads all seven module
+    sections, sees and edits **their own** profile only, cannot write
+    operational data, cannot change any role, cannot invite. Verified by role
+    simulation: 4,687 rows readable across the seven modules, `profiles`
+    returning **1** row, own-name edit allowed, own-role change denied.
+  - **Three non-person accounts deleted** — `testuser@muscatbay.com` (never
+    signed in), `test_schedule@example.com` (test artefact) and
+    `ginejev728@zizvy.com` (disposable-mail domain; a stranger's self-service
+    signup, which is precisely the abuse the invitation gate now prevents).
+    Checked first against the two `NO ACTION` foreign keys that would block a
+    delete — `operational_alert_incidents.acknowledged_by` and
+    `professional_applications.reviewed_by` — plus storage ownership and
+    invitations sent: all zero. `profiles`, sessions and identities cascade.
+    End state: 9 users, 9 profiles, **no orphaned rows either way**.
+  - Prior roles for all 12 accounts are recorded in
+    `public.mb_role_snapshot_20260902`, so the role change is reversible. The
+    three deletions are not.
   **Still the owner's call:**
   - **Configure the Auth Hook** (Dashboard → Authentication → Hooks → Before
     User Created → `public.mb_before_user_created`). This is *not* what makes
     signup invitation-only — the trigger already does. It converts the trigger's
     500 into a clean **403 "Dashboard access is invitation only."**
-  - **11 of 12 accounts hold `admin`**, including `testuser@muscatbay.com`,
-    `test_schedule@example.com` and `ginejev728@zizvy.com` (a disposable-mail
-    domain — evidence that open signup was being used by strangers). RLS grants
-    admin everything, so the boundary means little until these are re-roled or
-    removed. Not actioned: changing another person's access is not a call to
-    make unilaterally.
+  - **`aalbalushi@muscatbay.com` (the owner's work address) is now a `viewer`**,
+    following "the rest all to be users". Signing in with it gives read-only
+    access — invitations and role changes need the `alameeri900@gmail.com`
+    admin account. Say the word if that split is not what was intended.
   - **Leaked-password protection is disabled** (Supabase advisor, WARN). It is
     an Auth setting, not SQL, so it cannot be changed from a migration.
   - **`user_push_tokens` does not exist**, so mobile push registration in
