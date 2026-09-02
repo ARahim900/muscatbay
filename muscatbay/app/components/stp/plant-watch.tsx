@@ -14,11 +14,10 @@
 
 import { useMemo, useState } from "react";
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
 } from "recharts";
-import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import {
-    Activity, Gauge, Droplets, Recycle, AlertTriangle,
+    Activity, Gauge, Droplets, Recycle, Truck, DollarSign, AlertTriangle,
     CheckCircle2, CalendarCheck, TrendingUp,
 } from "lucide-react";
 import type { STPOperation } from "@/lib/mock-data";
@@ -35,10 +34,9 @@ import {
 } from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    MetricHeatmap, SeverityChip, Sparkline, SEV_UI, SEVERITY_LABEL, SEVERITY_RANK, worstFirst,
+    MetricHeatmap, InspectionTicker, SeverityChip, Sparkline, SEV_UI, SEVERITY_LABEL, SEVERITY_RANK, worstFirst,
     type HealthMetric, type TickerStat,
 } from "@/components/shared/inspection";
-import { OperationalBriefing, type OperationalBriefingItem } from "@/components/shared/operational-briefing";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
 import {
@@ -126,7 +124,7 @@ function ProcessHealthTable({
                         onClick={() => onAttentionOnlyChange(!attentionOnly)}
                         aria-pressed={attentionOnly}
                         className={cn(
-                            "inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                            "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                             attentionOnly
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -308,40 +306,34 @@ export function PlantWatch({
     const effTone: TickerStat["tone"] = effSev === "good" ? "success" : effSev === "watch" ? "warning" : effSev === "nodata" ? "default" : "danger";
     const completeness = summary.completenessPct;
 
-    const briefingItems: OperationalBriefingItem[] = [
+    const tickerItems: TickerStat[] = [
+        { icon: Gauge, label: "Efficiency", value: summary.avgEfficiency !== null ? `${summary.avgEfficiency.toFixed(1)}%` : "—", tone: effTone, title: `TSE ÷ inlet · target ≥ ${STP_THRESHOLDS.RECOVERY_GOOD}%` },
+        { icon: Droplets, label: "Inlet treated", value: <>{num(summary.totalInlet)} <span className="text-muted-foreground">m³</span></> },
+        { icon: Recycle, label: "TSE reused", value: <>{num(summary.totalTSE)} <span className="text-muted-foreground">m³</span></> },
+        { icon: Truck, label: "Tanker trips", value: num(summary.totalTrips) },
+        { icon: DollarSign, label: "Economic impact", value: <>{num(summary.economicImpact)} <span className="text-muted-foreground">OMR</span></> },
         {
-            icon: Gauge,
-            label: "Recovery",
-            value: summary.avgEfficiency !== null ? `${summary.avgEfficiency.toFixed(1)}%` : "—",
-            severity: effTone,
-            description: `Target ≥ ${STP_THRESHOLDS.RECOVERY_GOOD}%`,
-        },
-        {
-            icon: Recycle,
-            label: "Treatment volume",
-            value: <>{num(summary.totalInlet)} → {num(summary.totalTSE)} <span className="text-sm text-muted-foreground">m³</span></>,
-            description: "Inlet to TSE output",
-        },
-        {
+            // Data completeness was computed and never rendered — a period missing
+            // a third of its days used to look as trustworthy as a full one.
             icon: CalendarCheck,
             label: "Days logged",
             value: `${summary.daysLogged}/${summary.daysExpected}${completeness !== null ? ` · ${completeness.toFixed(0)}%` : ""}`,
-            severity: completeness === null ? "default" : completeness >= 98 ? "success" : completeness >= 90 ? "warning" : "danger",
-            description: `${summary.missingDays} missing calendar day${summary.missingDays === 1 ? "" : "s"}`,
+            tone: completeness === null ? "default" : completeness >= 98 ? "success" : completeness >= 90 ? "warning" : "danger",
+            title: `${summary.missingDays} calendar day${summary.missingDays === 1 ? "" : "s"} in this span have no record`,
         },
         {
             icon: findings.length > 0 ? AlertTriangle : CheckCircle2,
-            label: "Unresolved findings",
+            label: "Findings",
             value: findings.length > 0 ? `${findings.length} to review` : "0 · all clear",
-            severity: findings.length > 0 ? "danger" : "success",
-            description: `${num(summary.economicImpact)} OMR economic impact`,
+            tone: findings.length > 0 ? "danger" : "success",
         },
     ];
 
     return (
         <div className="space-y-6">
+            {/* Briefing ticker — same idiom as the Water Daily strip */}
             <SectionBoundary title="Plant briefing">
-                <OperationalBriefing title="Plant briefing" periodLabel={summary.periodLabel} items={briefingItems} />
+                <InspectionTicker caption={`Plant briefing · ${summary.periodLabel}`} items={tickerItems} />
             </SectionBoundary>
 
             {/* Process health — same compact table language as Water and Electricity */}

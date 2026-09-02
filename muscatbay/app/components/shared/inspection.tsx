@@ -326,7 +326,6 @@ export function MetricHeatmap({
             <div className="p-4 sm:p-5 md:p-6 pt-2">
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse text-[11px]">
-                        <caption className="sr-only">{title}: operational metric status by period, including the current severity.</caption>
                         <thead>
                             <tr>
                                 <th scope="col" className="sticky left-0 z-10 bg-card px-2 py-1.5 text-left font-semibold text-muted-foreground">Metric</th>

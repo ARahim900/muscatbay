@@ -69,11 +69,6 @@ function omr(value: number | null): string | null {
  */
 export function toTrackerRow(row: AmcRegister): ContractorTracker {
     return {
-        // The register's own primary key. Carried through so an alert incident
-        // can be keyed to the agreement itself rather than to the contractor's
-        // display name, which changes with a rename and is not unique when one
-        // contractor holds several agreements.
-        agreement_id: row.agreement_id,
         Contractor: row.contractor,
         "Service Provided": row.service_system,
         Status: row.current_status,
@@ -101,13 +96,6 @@ export function toTrackerRow(row: AmcRegister): ContractorTracker {
  * {@link toTrackerRow}, never from `Contractor_Tracker` directly.
  */
 export interface ContractorTracker {
-    /**
-     * `amc_register.agreement_id` — the register's stable identity for the
-     * agreement. Optional because the legacy `Contractor_Tracker` snapshot has
-     * no equivalent column; consumers that need a durable key must handle null
-     * rather than fall back to a name.
-     */
-    agreement_id?: string | null;
     Contractor: string | null;
     "Service Provided": string | null;
     Status: string | null;

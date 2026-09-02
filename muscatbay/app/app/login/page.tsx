@@ -449,15 +449,16 @@ function LoginContent() {
                                 </div>
                             </div>
 
-                            {/* Google OAuth is sign-in only. New identities are rejected
-                                by the server-side invitation hook. */}
+                            {/* Google OAuth — one button covers sign-in AND first-time
+                                sign-up: Google has already verified the address, so new
+                                users skip the confirmation-email round-trip entirely. */}
                             <div className="space-y-2">
                                 <GoogleSignInButton
                                     onError={setError}
                                     className="h-12 rounded-xl border-2 border-border hover:border-muted-foreground/40 transition-design"
                                 />
                                 <p className="text-xs text-center text-muted-foreground">
-                                    Use the same email address that received your invitation.
+                                    New here? Google creates your account instantly — no verification email needed.
                                 </p>
                             </div>
 
@@ -468,7 +469,7 @@ function LoginContent() {
                                 </div>
                                 <div className="relative flex justify-center text-xs uppercase">
                                     <span className="bg-card px-3 text-muted-foreground">
-                                        Need dashboard access?
+                                        New to Muscat Bay?
                                     </span>
                                 </div>
                             </div>
@@ -479,7 +480,7 @@ function LoginContent() {
                                     href="/signup"
                                     className="inline-flex items-center justify-center w-full h-12 border-2 border-primary/20 hover:border-primary text-primary dark:text-secondary dark:border-secondary/20 dark:hover:border-secondary font-semibold rounded-xl transition-design hover:bg-primary/5 dark:hover:bg-secondary/5"
                                 >
-                                    Invitation information
+                                    Create an account
                                 </Link>
                             </div>
                         </form>

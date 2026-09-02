@@ -23,12 +23,6 @@
  * @module components/firefighting/ppm-programme
  */
 
-import {
-    classifyFirePpmStatus,
-    type FirePpmEvidenceOutcome,
-    type FirePpmScheduleStatus,
-} from "@/lib/fire-ppm-status";
-
 /** When the contents below were last reconciled against BEC correspondence. */
 export const PPM_PROGRAMME_AS_OF = "May 2026";
 
@@ -38,7 +32,7 @@ export const PPM_PROGRAMME_SOURCE =
 
 export type Cycle = 1 | 2 | 3;
 export type ZoneKey = "zone1" | "zone3" | "zone5" | "vs";
-export type PpmStatus = FirePpmEvidenceOutcome;
+export type PpmStatus = "done" | "scheduled" | "upcoming" | "fault" | "no_access";
 
 export interface PpmActivity {
     id: string;
@@ -47,8 +41,7 @@ export interface PpmActivity {
     area: string;
     systems: string[];
     date: string;
-    status: FirePpmScheduleStatus;
-    reportedOutcome: PpmStatus;
+    status: PpmStatus;
     notes?: string;
 }
 
@@ -63,6 +56,7 @@ export interface CycleDef {
     key: Cycle;
     label: string;
     window: string;
+    status: "completed" | "upcoming";
 }
 
 export const ZONES: ZoneDef[] = [
@@ -78,9 +72,9 @@ export const ZONE_BY_KEY: Record<ZoneKey, ZoneDef> = ZONES.reduce(
 );
 
 export const CYCLES: CycleDef[] = [
-    { key: 1, label: "Cycle 1", window: "07–25 Dec 2025" },
-    { key: 2, label: "Cycle 2", window: "20–30 Apr 2026" },
-    { key: 3, label: "Cycle 3", window: "~Aug 2026" },
+    { key: 1, label: "Cycle 1", window: "07–25 Dec 2025", status: "completed" },
+    { key: 2, label: "Cycle 2", window: "20–30 Apr 2026", status: "completed" },
+    { key: 3, label: "Cycle 3", window: "~Aug 2026", status: "upcoming" },
 ];
 
 export const CYCLE_BY_KEY: Record<Cycle, CycleDef> = CYCLES.reduce(
@@ -143,8 +137,7 @@ export const CYCLE_DETAIL: Record<Cycle, Record<string, { date: string; status: 
 };
 
 /** Flattened cycle × area-group rows — what the Maintenance table renders. */
-export function buildPpmActivities(now: Date): PpmActivity[] {
-    return ([1, 2, 3] as Cycle[]).flatMap((cycle) =>
+export const PPM_ACTIVITIES: PpmActivity[] = ([1, 2, 3] as Cycle[]).flatMap((cycle) =>
     AREA_GROUPS.map((g) => {
         const d = CYCLE_DETAIL[cycle][g.key];
         return {
@@ -154,12 +147,11 @@ export function buildPpmActivities(now: Date): PpmActivity[] {
             area: g.area,
             systems: g.systems,
             date: d.date,
-            status: classifyFirePpmStatus({ scheduledDate: d.date, reportedOutcome: d.status, now }),
-            reportedOutcome: d.status,
+            status: d.status,
             notes: d.notes,
         };
-    }));
-}
+    }),
+);
 
 /** Systems abbreviation legend used by the Maintenance tab. */
 export const SYSTEM_LEGEND: [string, string][] = [

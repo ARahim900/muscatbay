@@ -33,7 +33,7 @@ export function TablePagination({
     if (totalItems === 0) return null;
 
     return (
-        <div className="sticky bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] z-20 flex flex-col flex-wrap items-center justify-between gap-3 border-t border-border/70 bg-background/95 px-2 py-3 shadow-[0_-8px_20px_-18px_rgb(15_23_42_/_0.55)] backdrop-blur sm:static sm:flex-row sm:gap-4 sm:border-0 sm:bg-transparent sm:py-3.5 sm:shadow-none sm:backdrop-blur-none">
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-3 sm:gap-4 py-3 sm:py-3.5 px-2">
             {/* Left side: Page Size + Showing info */}
             <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-start">
                 <div className="flex items-center gap-2">
@@ -45,7 +45,7 @@ export function TablePagination({
                             onPageSizeChange(val === 'All' ? 'All' : parseInt(val));
                         }}
                         aria-label="Rows per page"
-                        className="min-h-11 rounded-full border border-border bg-card px-3 py-2 text-xs text-foreground transition-colors focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/30 sm:text-sm"
+                        className="px-2 py-2 text-xs sm:text-sm rounded-full border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-colors"
                     >
                         {pageSizeOptions.map(size => (
                             <option key={size} value={size}>{size}</option>
@@ -60,29 +60,7 @@ export function TablePagination({
 
             {/* Right side: Page Navigation */}
             {pageSize !== 'All' && totalPages > 1 && (
-                <>
-                <div className="flex w-full items-center justify-between gap-2 sm:hidden" aria-label="Pagination">
-                    <button
-                        onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label="Previous page"
-                    >
-                        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-                        Previous
-                    </button>
-                    <span className="text-xs font-semibold tabular-nums text-foreground" aria-live="polite">Page {currentPage} of {totalPages}</span>
-                    <button
-                        onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 rounded-full border border-border px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30"
-                        aria-label="Next page"
-                    >
-                        Next
-                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                </div>
-                <div className="hidden items-center gap-1 sm:flex sm:gap-1.5">
+                <div className="flex items-center gap-1 sm:gap-1.5">
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}
@@ -159,7 +137,6 @@ export function TablePagination({
                         <ChevronsRight className="w-4 h-4 text-muted-foreground" />
                     </button>
                 </div>
-                </>
             )}
         </div>
     );

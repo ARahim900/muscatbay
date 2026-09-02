@@ -7,17 +7,18 @@
 
 import type { LucideIcon } from "lucide-react";
 import type { MeterReading } from "@/lib/mock-data";
-import type { StatVariant } from "@/components/shared/stats-grid";
+import { StatsGrid, type StatVariant } from "@/components/shared/stats-grid";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid,
+    ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid,
     Tooltip, BarChart, Bar, Cell, Legend, ReferenceLine,
     LineChart as RechartsLineChart, Line,
 } from "recharts";
+import { LineChart } from "lucide-react";
 import { CHART_COLORS, meterColors } from "./electricity-shared";
 import { useChartMotion } from "@/hooks/useReducedMotion";
-import { ChartContainer, ChartShell } from "@/components/charts/chart-container";
 
 // Cap the number of meter bars drawn so the ranking chart stays readable; the
 // full per-meter list lives in the unified table below it.
@@ -77,30 +78,34 @@ export function ElectricityAnalysisView({
     metersOfSelectedType,
 }: AnalysisViewProps) {
     const chartMotion = useChartMotion();
-    const trendTitle = selectedMeter !== "All"
-        ? `Monthly Trend — ${analysisData.selectedMeterName}`
-        : analysisType !== "All" && metersOfSelectedType.length <= 10
-            ? `Per-Meter Breakdown — ${analysisType}`
-            : `Monthly Trend — ${analysisType === "All" ? "All Types" : analysisType}`;
-    const trendHasData = analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10
-        ? analysisData.perMeterChartData.length > 0
-        : analysisData.chartData.length > 0;
     return (
         <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+            {/* Filtered Stats Grid */}
+            <StatsGrid stats={analysisData.stats} />
+
             {/* Monthly Trend Chart */}
-            <ChartShell
-                title={trendTitle}
-                description="Selected-period electricity consumption, shown as a total trend or per-meter comparison."
-                controls={analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
+            <Card className="card-elevated">
+                <CardHeader className="card-elevated-header">
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                            <LineChart className="w-5 h-5 text-module-electricity" />
+                            {selectedMeter !== "All"
+                                ? `Monthly Trend — ${analysisData.selectedMeterName}`
+                                : analysisType !== "All" && metersOfSelectedType.length <= 10
+                                    ? `Per-Meter Breakdown — ${analysisType}`
+                                    : `Monthly Trend — ${analysisType === "All" ? "All Types" : analysisType}`
+                            }
+                        </CardTitle>
+                        {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 && (
                             <Badge variant="outline" className="text-xs font-normal px-2.5 py-1">
                                 {metersOfSelectedType.length} meters
                             </Badge>
-                        ) : undefined}
-                state={trendHasData ? "ready" : "empty"}
-                interpretation="Investigate material changes against the selected period and confirm them at meter level before action."
-            >
+                        )}
+                    </div>
+                </CardHeader>
+                <CardContent>
                     <div role="img" aria-label={`Electricity consumption trend for ${analysisType === 'All' ? 'all meter types' : analysisType}: chart showing kilowatt-hour usage over time per meter or aggregate`} className="h-[280px] sm:h-[340px] md:h-[380px] min-h-[260px]">
-                        <ChartContainer minHeight={260}>
+                        <ResponsiveContainer width="100%" height="100%">
                             {/* Multi-line chart for type aggregate with ≤10 meters */}
                             {analysisType !== "All" && selectedMeter === "All" && metersOfSelectedType.length <= 10 ? (
                                 <RechartsLineChart data={analysisData.perMeterChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -159,9 +164,10 @@ export function ElectricityAnalysisView({
                                     <Area type="monotone" dataKey="consumption" name="Consumption" stroke={CHART_COLORS.secondary} fill="url(#anlGrad)" strokeWidth={3} activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }} {...chartMotion}/>
                                 </AreaChart>
                             )}
-                        </ChartContainer>
+                        </ResponsiveContainer>
                     </div>
-            </ChartShell>
+                </CardContent>
+            </Card>
 
             {/* Meters ranked by consumption, measured against the group average —
                 merges the former "Top Consumers" ranking and "Meter vs Average"
@@ -174,18 +180,20 @@ export function ElectricityAnalysisView({
                 const shown = ranked.slice(0, CHART_METER_CAP);
                 const chartHeight = Math.min(720, Math.max(300, shown.length * 30 + 56));
                 return (
-                    <ChartShell
-                        title={`Meters by Consumption — ${analysisType === "All" ? "All Types" : analysisType}`}
-                        description="Meters ranked high to low, benchmarked against the selected group average."
-                        controls={analysisData.typeAverage > 0 ? (
+                    <Card className="card-elevated">
+                        <CardHeader className="card-elevated-header">
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                                <CardTitle className="text-lg">
+                                    Meters by Consumption — {analysisType === "All" ? "All Types" : analysisType}
+                                </CardTitle>
+                                {analysisData.typeAverage > 0 && (
                                     <Badge variant="outline" className="text-xs font-normal px-2.5 py-1">
                                         Avg: {(analysisData.typeAverage / 1000).toFixed(1)} MWh
                                     </Badge>
-                                ) : undefined}
-                        state={shown.length > 0 ? "ready" : "empty"}
-                        emptyMessage="No meters are available in the selected range."
-                        interpretation="Review the highest consumers and above-average meters first, then confirm whether the variance is operational or data-related."
-                    >
+                                )}
+                            </div>
+                        </CardHeader>
+                        <CardContent>
                             {shown.length > 0 ? (
                                 <>
                                     <div
@@ -194,7 +202,7 @@ export function ElectricityAnalysisView({
                                         style={{ height: chartHeight }}
                                         className="min-h-[260px]"
                                     >
-                                        <ChartContainer minHeight={260}>
+                                        <ResponsiveContainer width="100%" height="100%">
                                             <BarChart data={shown} layout="vertical" margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
                                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="var(--chart-grid)" />
                                                 <XAxis
@@ -261,7 +269,7 @@ export function ElectricityAnalysisView({
                                                     ))}
                                                 </Bar>
                                             </BarChart>
-                                        </ChartContainer>
+                                        </ResponsiveContainer>
                                     </div>
                                     <div className="mt-3 flex items-center justify-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground flex-wrap">
                                         <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: CHART_COLORS.loss }} />Above average</span>
@@ -277,10 +285,12 @@ export function ElectricityAnalysisView({
                                     <p className="text-xs text-muted-foreground">Adjust the year or date range above to load meter data.</p>
                                 </div>
                             )}
-                    </ChartShell>
+                        </CardContent>
+                    </Card>
                 );
             })()}
 
         </div>
     );
 }
+

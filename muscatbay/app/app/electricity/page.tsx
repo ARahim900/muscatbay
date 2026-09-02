@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { Zap, DollarSign, TrendingUp, Database, Search, Download, X, Filter, Gauge, AlertTriangle } from "lucide-react";
+import { Zap, DollarSign, MapPin, TrendingUp, Database, Search, Download, X, Filter, Gauge } from "lucide-react";
 import { MultiSelectDropdown, TablePagination, ActiveFilterPills, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
 
@@ -20,14 +20,12 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";
-import { StatsGrid } from "@/components/shared/stats-grid";
-import { buildElectricityModel } from "@/components/electricity/electricity-analytics";
 
 // ─── Extracted subcomponents (pure relocation, no behavior changes) ─────────
 import { CHART_COLORS, meterColors } from "@/components/electricity/electricity-shared";
 import { ElectricityLoadingSkeleton } from "@/components/electricity/electricity-loading";
 import { LoadWatch } from "@/components/electricity/load-watch";
-import { Skeleton } from "@/components/shared/skeleton";
+import { StatsGridSkeleton, Skeleton } from "@/components/shared/skeleton";
 import dynamic from "next/dynamic";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
@@ -59,6 +57,7 @@ const ElectricityAnalysisView = dynamic(
         loading: () => (
             <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading meter analysis">
                 {/* stats grid · monthly trend card · meters-by-consumption card */}
+                <StatsGridSkeleton />
                 <Skeleton className="h-[500px] w-full rounded-[10.5px]" />
                 <Skeleton className="h-[600px] w-full rounded-[10.5px]" />
             </div>
@@ -500,7 +499,7 @@ export default function ElectricityPage() {
             const month = allMonths[i];
             if (meters.some(m => typeof m.readings[month] === 'number')) {
                 const [mon, yr] = month.split('-');
-                return new Date(parseInt('20' + yr, 10), MONTH_INDEX[mon] || 0, 0);
+                return new Date(parseInt('20' + yr, 10), (MONTH_INDEX[mon] || 1) - 1, 1);
             }
         }
         return null;
@@ -659,13 +658,6 @@ export default function ElectricityPage() {
 
         const consumptionTrend = hasPrev ? calcTrend(totalConsumption, prevConsumption) : { trend: 'neutral' as const, trendValue: '—' };
         const costTrend = hasPrev ? calcTrend(totalCost, prevCost) : { trend: 'neutral' as const, trendValue: '—' };
-        const anomalyModel = buildElectricityModel(
-            filteredMeters,
-            allMonths,
-            selectedMonths[0] ?? startMonth,
-            selectedMonths[selectedMonths.length - 1] ?? endMonth,
-        );
-        const flaggedCount = anomalyModel.summary.flaggedCount;
 
         // Stats Cards Data
         const stats = [
@@ -681,7 +673,7 @@ export default function ElectricityPage() {
                 invertTrend: true,  // Less consumption = saving = green ✓
             },
             {
-                label: "ESTIMATED COST",
+                label: "TOTAL COST",
                 value: totalCost.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
                 unit: "OMR",
                 subtitle: `at ${ratePerKWh} OMR/kWh`,
@@ -692,21 +684,20 @@ export default function ElectricityPage() {
                 invertTrend: true,  // Lower cost = saving = green ✓
             },
             {
-                label: "TOP CONSUMER",
-                value: highestConsumer.name,
-                subtitle: `${(highestConsumer.val / 1000).toFixed(1)} MWh`,
-                icon: TrendingUp,
+                label: "METER COUNT",
+                value: filteredMeters.length.toString(),
+                subtitle: analysisType === "All" ? "Total Meters" : `${analysisType} Meters`,
+                icon: MapPin,
                 variant: "warning" as const,
                 trend: 'neutral' as const,
                 trendValue: '—'
             },
             {
-                label: "FLAGGED METERS",
-                value: flaggedCount.toString(),
-                subtitle: flaggedCount > 0 ? "Latest reading needs review" : "Within current anomaly gates",
-                icon: AlertTriangle,
+                label: "TOP CONSUMER",
+                value: highestConsumer.name,
+                subtitle: `${(highestConsumer.val / 1000).toFixed(1)} MWh`,
+                icon: TrendingUp,
                 variant: "danger" as const,
-                status: flaggedCount > 0 ? "danger" as const : "normal" as const,
                 trend: 'neutral' as const,
                 trendValue: '—'
             }
@@ -745,7 +736,6 @@ export default function ElectricityPage() {
                     isLive={isLive}
                     lastUpdated={lastUpdated}
                     latestDataDate={latestDataDate}
-                    staleAfterDays={45}
                     error={debugError ? `Error: ${debugError}` : null}
                 >
 
@@ -787,7 +777,7 @@ export default function ElectricityPage() {
                                                     setEndMonth(allMonths[allMonths.length - 1]);
                                                 }
                                             }}
-                                            className={`min-h-11 min-w-11 rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-secondary-foreground" : "border-border"}`}
+                                            className={`rounded-full px-4 ${selectedYear === "" ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                         >
                                             All
                                         </Button>
@@ -806,7 +796,7 @@ export default function ElectricityPage() {
                                                         setEndMonth(yearMonths[yearMonths.length - 1]);
                                                     }
                                                 }}
-                                                className={`min-h-11 min-w-11 rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
+                                                className={`rounded-full px-4 ${selectedYear === year ? "bg-secondary text-secondary-foreground" : "border-border"}`}
                                             >
                                                 {year}
                                             </Button>
@@ -874,8 +864,6 @@ export default function ElectricityPage() {
                         </div>
                 </PeriodFilterPanel>
             )}
-
-            <StatsGrid stats={analysisData.stats} />
 
             {/* Load Watch — inspection-first: category cards, load heatmap and exceptions. */}
             {activeTab === 'watch' && (
@@ -1064,7 +1052,7 @@ export default function ElectricityPage() {
 
                         {/* Table (desktop) */}
                         <div className="hidden md:block">
-                        <Table data-density="compact" aria-label="Electricity meter consumption and anomalies">
+                        <Table data-density="compact">
                             <TableHeader>
                                 <TableRow>
                                     <SortableTableHead field="label" currentSortField={dbSortField} currentSortDirection={dbSortDirection} onSort={handleDbSort} className="col-sticky min-w-[200px]">Name</SortableTableHead>

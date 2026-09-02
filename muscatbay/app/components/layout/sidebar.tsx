@@ -202,7 +202,7 @@ export function Sidebar() {
             /* Collapsed: centred logo icon doubles as expand trigger on desktop */
             <button
               onClick={toggleCollapse}
-              className="hidden md:flex mx-auto h-11 w-11 items-center justify-center transition-opacity duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+              className="hidden md:flex mx-auto w-10 h-10 items-center justify-center transition-opacity duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
               aria-label="Expand sidebar"
             >
               <Image src="/logo.png" alt="Muscat Bay" width={26} height={26} className="object-contain" priority />
@@ -226,7 +226,7 @@ export function Sidebar() {
               </Link>
               <button
                 onClick={toggleCollapse}
-                className="hidden md:flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
+                className="hidden md:flex w-7 h-7 flex-shrink-0 items-center justify-center rounded-md hover:bg-white/10 text-white/45 hover:text-white transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-secondary/50 focus-visible:outline-none"
                 aria-label="Collapse sidebar"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -245,9 +245,9 @@ export function Sidebar() {
               aria-label={group.label}
             >
               {group.label && (
-                <p className={`px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70 select-none ${isCollapsed ? "sr-only" : ""}`}>
+                <h2 className={`px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 select-none ${isCollapsed ? "sr-only" : ""}`}>
                   {group.label}
-                </p>
+                </h2>
               )}
               <ul className="space-y-0.5">
                 {group.items.map((item) => {
@@ -268,7 +268,7 @@ export function Sidebar() {
                         href={item.href}
                         aria-current={isActive ? "page" : undefined}
                         className={`
-                          group/nav flex min-h-11 items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
+                          group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg text-left transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
                           ${isActive ? "bg-white/10 text-white" : "text-white/85 hover:bg-white/[0.04] hover:text-white"}
                           ${isCollapsed ? "justify-center px-2" : ""}
                         `}
@@ -313,7 +313,7 @@ export function Sidebar() {
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
                 className={`
-                  group/nav flex min-h-11 items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
+                  group/nav flex items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60 focus-visible:ring-inset
                   ${isActive
                     ? "bg-white/10 text-white"
                     : "text-white/85 hover:bg-white/[0.04] hover:text-white"
@@ -354,7 +354,7 @@ export function Sidebar() {
           <button
             onClick={logout}
             className={`
-              group/nav w-full flex min-h-11 items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-danger/60 focus-visible:ring-inset
+              group/nav w-full flex items-center gap-3 py-2.5 px-3 rounded-lg transition-colors duration-150 ease-out relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-danger/60 focus-visible:ring-inset
               text-white/85 hover:bg-sidebar-danger/10 hover:text-sidebar-danger
               ${isCollapsed ? "justify-center px-2" : ""}
             `}

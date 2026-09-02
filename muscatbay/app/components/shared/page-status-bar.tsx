@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { AlertTriangle, CalendarClock, CheckCircle2, CircleHelp, Database, Loader2, WifiOff } from "lucide-react";
+import { AlertTriangle, CalendarClock, CheckCircle2, Loader2, Wifi, WifiOff } from "lucide-react";
 
 interface PageStatusBarProps {
     /** Whether data is connected to Supabase */
@@ -10,7 +10,7 @@ interface PageStatusBarProps {
     lastUpdated: Date | null;
     /**
      * Newest reading/record actually present in the data — the honest recency
-     * signal. When supplied it becomes the primary indicator ("Latest period
+     * signal. When supplied it becomes the primary indicator ("Data through
      * <date>") and `lastUpdated` demotes to a hover detail, because a fresh
      * fetch of a three-week-old table is not fresh data.
      */
@@ -74,8 +74,8 @@ export function PageStatusBar({
     latestDataDate,
     staleAfterDays = 2,
     locale,
-    connectedLabel = "Supabase",
-    disconnectedLabel = "No data source",
+    connectedLabel = "Live Data (Supabase)",
+    disconnectedLabel = "Demo Data (Local)",
     children,
     error,
     loading = false,
@@ -115,10 +115,11 @@ export function PageStatusBar({
                         isConnected ? "text-[var(--mb-success-text)]" : "text-[var(--mb-warning-text)]"
                     )}
                 >
-                    {isConnected ? <Database className="h-3.5 w-3.5" aria-hidden="true" /> : <WifiOff className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {isConnected ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
                     {isConnected ? connectedLabel : disconnectedLabel}
                 </span>
                 <span aria-hidden="true" className="hidden h-3 w-px bg-border sm:block" />
+                {children}
                 {isLive !== undefined && (
                     <span
                         className={cn(
@@ -135,7 +136,7 @@ export function PageStatusBar({
                                 isLive ? "bg-[var(--status-normal)] motion-safe:animate-pulse" : "bg-muted-foreground"
                             )}
                         />
-                        {isLive ? "Live" : "Delayed"}
+                        {isLive ? "Live" : "Offline"}
                     </span>
                 )}
 
@@ -151,7 +152,7 @@ export function PageStatusBar({
                         )}
                     >
                         <FreshnessIcon className="h-3 w-3 shrink-0" aria-hidden="true" />
-                        <span className="uppercase tracking-[0.06em]">Latest period</span>
+                        <span className="uppercase tracking-[0.06em]">Data through</span>
                         <time
                             dateTime={dataDate.toISOString()}
                             className="font-mono tabular-nums"
@@ -170,7 +171,7 @@ export function PageStatusBar({
                 {fetchedAt && !dataDate && (
                     <span className="inline-flex items-center gap-1.5 text-[11px]">
                         <CalendarClock className="h-3 w-3 text-muted-foreground/70" aria-hidden="true" />
-                        <span className="uppercase tracking-[0.06em] text-muted-foreground/70">Last synced</span>
+                        <span className="uppercase tracking-[0.06em] text-muted-foreground/70">Last sync</span>
                         <span suppressHydrationWarning className="font-mono tabular-nums text-foreground/80">
                             {fetchedAt}
                         </span>
@@ -181,19 +182,7 @@ export function PageStatusBar({
                         suppressHydrationWarning
                         className="text-[11px] text-muted-foreground/70"
                     >
-                        Last synced <span className="font-mono tabular-nums">{fetchedAt}</span>
-                    </span>
-                )}
-                {children && (
-                    <span
-                        className="group relative inline-flex min-h-11 min-w-11 items-center justify-center rounded-full text-muted-foreground focus-within:ring-2 focus-within:ring-secondary/50"
-                    >
-                        <button type="button" className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full" aria-label="Data source details">
-                            <CircleHelp className="h-3.5 w-3.5" aria-hidden="true" />
-                        </button>
-                        <span role="tooltip" className="pointer-events-none absolute right-0 top-full z-30 mt-2 hidden min-w-max rounded-md border border-border bg-popover px-2.5 py-1.5 text-[11px] text-popover-foreground shadow-md group-hover:block group-focus-within:block">
-                            {children}
-                        </span>
+                        synced <span className="font-mono tabular-nums">{fetchedAt}</span>
                     </span>
                 )}
             </div>

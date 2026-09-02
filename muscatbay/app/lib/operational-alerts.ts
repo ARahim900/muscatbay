@@ -15,26 +15,10 @@
  *  3. Critical plant failures — STP: irrigation reuse stopped, recovery below
  *     the operating bands, or the daily log going stale.
  *
- * FINGERPRINT POLICY — an `id` names the CONDITION, never its severity and
- * never the day it was last seen. `operational_alert_incidents` opens one
- * episode per fingerprint, so anything that moves while a fault persists
- * (the last zero-output date, the recovery band, the membership of a set of
- * expired contracts) would silently close the acknowledged episode and open a
- * fresh un-acknowledged one every evaluation pass. Concretely:
- *
- *  - Level is a COLUMN, not part of the key. `stp-recovery-below-target` moves
- *    between warning and error in place; it does not become a different alert.
- *  - Rolling "last occurrence" dates belong in the message, not the id.
- *  - A set of affected records is one incident PER RECORD, keyed by that
- *    record's own stable identity (`amc_register.agreement_id`), so renewing
- *    one contract resolves one incident and leaves the rest untouched.
- *  - A genuinely new reporting period IS a new incident: the water rules stay
- *    keyed by month (`water-loss:Mar-26`), because March's exceedance is not
- *    April's and each is acknowledged on its own.
- *
- * A cleared condition is resolved by the server-side reconciler; if it returns
- * later, a new episode opens against the same fingerprint. That is the only
- * mechanism that should ever re-raise an alert.
+ * Every alert carries a stable `id` fingerprint tied to the condition AND its
+ * period, so acknowledgements persist until the underlying condition moves
+ * (a new month, a new zero-output day, a changed contract set) — at which
+ * point a fresh fingerprint re-raises it.
  *
  * All functions are pure and take `now` injected, so they are unit-testable
  * and device-clock discipline stays in one place.
@@ -46,9 +30,6 @@ import type { WaterMeter } from "@/lib/water-data";
 import type { ContractorTracker } from "@/entities/contractor";
 import type { STPOperation } from "@/lib/mock-data";
 import { buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT } from "@/lib/water-monthly-data";
-import { STP_THRESHOLDS } from "@/lib/thresholds";
-import { assessSTPReadings, type AssessedSTPReadings } from "@/lib/stp-data-quality";
-import type { ContractDateReconciliation, ReconciledContractDates } from "@/lib/contract-reconciliation";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -63,8 +44,6 @@ export interface OperationalAlert {
     level: OperationalAlertLevel;
     /** Source module — used for icon/accent and grouping. */
     module: "water" | "contractors" | "stp";
-    /** Keeps evidence faults separate from genuine operating-performance alerts. */
-    category: "data_quality" | "process_performance" | "contract_compliance" | "water_balance";
     title: string;
     message: string;
     /** Route the operator should open to act on it. */
@@ -75,7 +54,6 @@ export interface OperationalAlert {
 export interface OperationalAlertInputs {
     waterMeters?: WaterMeter[] | null;
     contractors?: ContractorTracker[] | null;
-    contractDateReconciliation?: ContractDateReconciliation | null;
     stpOperations?: STPOperation[] | null;
     now: Date;
 }
@@ -172,7 +150,6 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 id: `water-loss-negative:${key}`,
                 level: "warning",
                 module: "water",
-                category: "water_balance",
                 title: "Water balance negative",
                 message: `${key}: consumption exceeds supply (${lossPct.toFixed(1)}%) — check the main bulk meter and reading timing.`,
                 href: "/water",
@@ -183,7 +160,6 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 id: `water-loss:${key}`,
                 level: critical ? "error" : "warning",
                 module: "water",
-                category: "water_balance",
                 title: critical ? "Water loss critically above target" : "Water loss above target",
                 message: `${key}: system loss is ${lossPct.toFixed(1)}% of supply — ${overTarget} pp above the ${TARGET_LOSS_PCT}% target (${Math.round(loss).toLocaleString("en-GB")} m³).${zoneNote}`,
                 href: "/water",
@@ -194,7 +170,6 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 id: `water-zone-loss:${key}`,
                 level: "warning",
                 module: "water",
-                category: "water_balance",
                 title: "Zone loss critically above target",
                 message: `${key}: ${criticalZones.length} zone${criticalZones.length > 1 ? "s" : ""} above ${ZONE_CRITICAL_PCT}% loss — ${capList(criticalZones.map((z) => `${z.name} ${z.lossPct.toFixed(1)}%`))}.`,
                 href: "/water",
@@ -215,43 +190,13 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
 const CONTRACT_WARN_DAYS = 60;
 
 /**
- * The register's own key for an agreement.
- *
- * A joined set of contractor NAMES used to be the fingerprint, which meant the
- * eleventh contract expiring re-keyed the incident covering the other ten and
- * discarded every acknowledgement on it. `amc_register.agreement_id` is the
- * register's primary key and is what an incident must hang on.
- *
- * The legacy `Contractor_Tracker` snapshot carries no such column, so those
- * rows fall back to contractor + service. That pair is stable while the
- * register text is, and unlike a set key it is unaffected by other rows —
- * but it is not durable across a rename, which is why a source that cannot
- * supply agreement IDs is denied resolution authority in
- * {@link evaluateOperationalAlertsWithCoverage}.
- */
-export function contractIncidentKey(contract: ContractorTracker): string {
-    const agreementId = contract.agreement_id?.trim();
-    if (agreementId) return agreementId;
-    const name = (contract.Contractor ?? "unknown-contractor").trim().toLowerCase();
-    const service = (contract["Service Provided"] ?? "unspecified-service").trim().toLowerCase();
-    return `name:${name}|${service}`;
-}
-
-/**
- * Evaluate the contractor register for expiry risk — ONE incident per
- * agreement, not one per set.
+ * Evaluate the contractor tracker for expiry risk.
  *
  * - End Date in the past while Status still reads Active → error. These are
  *   live service gaps (the register believes the service is running).
  *   Rows already marked Expired are administratively closed — documented
  *   history, not an active alert.
  * - End Date within the next 60 days on an active contract → warning.
- *
- * Both states share the fingerprint `contract-expiry:<agreement>`: a contract
- * crossing its End Date is the SAME incident escalating from warning to error,
- * so an operator who acknowledged the 12-days-out warning does not get handed
- * a fresh un-acknowledged alert the morning it lapses. Renewing one agreement
- * resolves that agreement's incident and nothing else.
  */
 export function evaluateContractAlerts(
     contractors: ContractorTracker[] | null | undefined,
@@ -260,9 +205,8 @@ export function evaluateContractAlerts(
     if (!contractors || contractors.length === 0) return [];
 
     const today = utcMidnight(now);
-    // Longest-expired first, then soonest to expire — `days` sorts both in one
-    // pass and is dropped before the alerts leave this function.
-    const ranked: Array<{ days: number; alert: OperationalAlert }> = [];
+    const expired: { name: string; service: string; end: Date }[] = [];
+    const expiring: { name: string; service: string; end: Date; days: number }[] = [];
 
     for (const c of contractors) {
         const status = (c.Status ?? "").toLowerCase();
@@ -271,73 +215,51 @@ export function evaluateContractAlerts(
         if (!end) continue;
 
         const days = Math.floor((end.getTime() - today) / 86_400_000);
-        if (days > CONTRACT_WARN_DAYS) continue;
-
         const name = c.Contractor ?? "Unknown contractor";
         const service = c["Service Provided"] ?? "";
-        const serviceNote = service ? ` (${service})` : "";
-        const expired = days < 0;
 
-        ranked.push({
-            days,
-            alert: {
-                id: `contract-expiry:${contractIncidentKey(c)}`,
-                level: expired ? "error" : "warning",
-                module: "contractors",
-                category: "contract_compliance",
-                title: expired
-                    ? `Contract expired but still marked active — ${name}`
-                    : `Contract expiring within ${CONTRACT_WARN_DAYS} days — ${name}`,
-                message: expired
-                    ? `${name}${serviceNote} ended ${fmtDateUTC(end)} (${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago) and the register still shows it active. Renew or update the register.`
-                    : `${name}${serviceNote} ends ${fmtDateUTC(end)} — ${days} day${days === 1 ? "" : "s"} away.`,
-                href: "/contractors",
-            },
+        if (days < 0) expired.push({ name, service, end });
+        else if (days <= CONTRACT_WARN_DAYS) expiring.push({ name, service, end, days });
+    }
+
+    const alerts: OperationalAlert[] = [];
+
+    if (expired.length > 0) {
+        expired.sort((a, b) => a.end.getTime() - b.end.getTime());
+        const setKey = expired.map((e) => e.name).sort().join("|");
+        alerts.push({
+            id: `contracts-expired:${setKey}`,
+            level: "error",
+            module: "contractors",
+            title: `${expired.length} contract${expired.length > 1 ? "s" : ""} expired but still marked active`,
+            message: `${capList(expired.map((e) => `${e.name} (${e.service}) ended ${fmtDateUTC(e.end)}`))}. Renew or update the register.`,
+            href: "/contractors",
         });
     }
 
-    return ranked.sort((a, b) => a.days - b.days).map((entry) => entry.alert);
-}
-
-/**
- * The stable identity for a reconciled contract.
- *
- * Prefer the AMC register's agreement ID over the contract reference string:
- * the reference is free text that a re-keyed register can restate, while the
- * agreement ID is the row's primary key.
- */
-function contractDateIncidentKey(contract: ReconciledContractDates): string {
-    const registerEvidence = contract.evidence.find((item) => item.source === "amc_register");
-    return registerEvidence?.recordId?.trim() || contract.contractRef;
-}
-
-/** Surface source disagreement without selecting or overwriting either date. */
-export function evaluateContractDateConflictAlerts(
-    reconciliation: ContractDateReconciliation | null | undefined,
-): OperationalAlert[] {
-    if (!reconciliation) return [];
-    return reconciliation.contracts
-        .filter((contract) => contract.conflictFields.length > 0)
-        .map((contract) => {
-            const sourceDates = contract.evidence.map((item) =>
-                `${item.source}: ${item.startDate ?? "start not evidenced"} to ${item.endDate ?? "end not evidenced"}`,
-            );
-            return {
-                id: `contract-date-conflict:${contractDateIncidentKey(contract)}`,
-                level: "warning" as const,
-                module: "contractors" as const,
-                category: "contract_compliance" as const,
-                title: `Contract dates conflict — ${contract.contractRef}`,
-                message: `${contract.conflictFields.join(" and ")} disagree across registers. ${capList(sourceDates)}. Verify the signed agreement/addendum; no date was overwritten.`,
-                href: "/contractors",
-            };
+    if (expiring.length > 0) {
+        expiring.sort((a, b) => a.days - b.days);
+        const setKey = expiring.map((e) => e.name).sort().join("|");
+        alerts.push({
+            id: `contracts-expiring:${setKey}`,
+            level: "warning",
+            module: "contractors",
+            title: `${expiring.length} contract${expiring.length > 1 ? "s" : ""} expiring within ${CONTRACT_WARN_DAYS} days`,
+            message: `${capList(expiring.map((e) => `${e.name} in ${e.days} day${e.days === 1 ? "" : "s"} (${fmtDateUTC(e.end)})`))}.`,
+            href: "/contractors",
         });
+    }
+
+    return alerts;
 }
 
 /* ------------------------------------------------------------------ */
 /*  3. STP critical failures                                           */
 /* ------------------------------------------------------------------ */
 
+/** Recovery bands — mirror stp-analytics (EFF_HIGH / EFF_WATCH). */
+const STP_RECOVERY_CRITICAL = 80;
+const STP_RECOVERY_WATCH = 90;
 /** Evaluation window over the most recent logged days. */
 const STP_WINDOW_DAYS = 14;
 /** Daily log older than this many days = the data pipeline itself failed. */
@@ -357,14 +279,10 @@ export function evaluateSTPAlerts(
     const days = operations
         .map((op) => {
             const date = new Date(op.date);
-            const assessment = assessSTPReadings({
-                inlet: op.inlet_sewage,
-                tse: op.tse_for_irrigation,
-                tankerTrips: op.tanker_trips,
-            });
             return {
                 date,
-                assessment,
+                inlet: Number(op.inlet_sewage) || 0,
+                tse: Number(op.tse_for_irrigation) || 0,
             };
         })
         .filter((d) => !Number.isNaN(d.date.getTime()) && d.date.getTime() <= now.getTime())
@@ -374,68 +292,30 @@ export function evaluateSTPAlerts(
 
     const alerts: OperationalAlert[] = [];
     const latest = days[days.length - 1];
+    const latestIso = latest.date.toISOString().slice(0, 10);
     const window = days.slice(-STP_WINDOW_DAYS);
 
     // Stale log — the plant may be fine, but nobody can tell.
     const staleDays = Math.floor((utcMidnight(now) - utcMidnight(latest.date)) / 86_400_000);
     if (staleDays > STP_STALE_DAYS) {
         alerts.push({
-            id: "stp-stale-log",
+            id: `stp-stale-log:${latestIso}`,
             level: "warning",
             module: "stp",
-            category: "data_quality",
             title: "STP daily log is stale",
             message: `No operations logged since ${fmtDateUTC(latest.date)} (${staleDays} days) — plant monitoring is blind until the log resumes.`,
             href: "/stp",
         });
     }
 
-    const qualityDays = window.filter((d) => d.assessment.findings.length > 0);
-    const missingDays = qualityDays.filter((d) => d.assessment.findings.some((f) => f.code.startsWith("missing_")));
-    const impossibleDays = qualityDays.filter((d) => d.assessment.findings.some((f) =>
-        f.code === "negative_inlet" || f.code === "negative_tse" ||
-        f.code === "negative_tanker_trips" || f.code === "tse_exceeds_inlet",
-    ));
-
-    if (missingDays.length > 0) {
-        const lastMissing = missingDays[missingDays.length - 1];
-        alerts.push({
-            id: "stp-missing-readings",
-            level: "warning",
-            module: "stp",
-            category: "data_quality",
-            title: "STP readings not evidenced",
-            message: `${missingDays.length} of the last ${window.length} logged days contain missing inlet, TSE or tanker evidence (most recent: ${fmtDateUTC(lastMissing.date)}). Missing values remain blank and are excluded from KPIs.`,
-            href: "/stp",
-        });
-    }
-
-    if (impossibleDays.length > 0) {
-        const lastImpossible = impossibleDays[impossibleDays.length - 1];
-        const hasExcessTse = impossibleDays.some((d) => d.assessment.findings.some((f) => f.code === "tse_exceeds_inlet"));
-        alerts.push({
-            id: "stp-impossible-readings",
-            level: "error",
-            module: "stp",
-            category: "data_quality",
-            title: "STP data-quality failure",
-            message: `${impossibleDays.length} of the last ${window.length} logged days contain physically impossible readings${hasExcessTse ? ", including TSE output above inlet (>100% recovery)" : ""} (most recent: ${fmtDateUTC(lastImpossible.date)}). These rows are excluded from recovery and economic impact.`,
-            href: "/stp",
-        });
-    }
-
-    // Reuse stopped while sewage arrives. Missing/negative readings are data
-    // quality findings above and never masquerade as a process outage.
-    const zeroOutput = window.filter((d) =>
-        d.assessment.inlet !== null && d.assessment.inlet > 0 && d.assessment.tse === 0,
-    );
+    // Reuse stopped while sewage arrived — treated effluent leaving unused.
+    const zeroOutput = window.filter((d) => d.inlet > 0 && d.tse <= 0);
     if (zeroOutput.length > 0) {
         const lastZero = zeroOutput[zeroOutput.length - 1];
         alerts.push({
-            id: "stp-zero-output",
+            id: `stp-zero-output:${lastZero.date.toISOString().slice(0, 10)}`,
             level: "error",
             module: "stp",
-            category: "process_performance",
             title: "STP irrigation output stopped",
             message: `${zeroOutput.length} of the last ${window.length} logged days had sewage inflow but zero TSE output (last: ${fmtDateUTC(lastZero.date)}) — check TSE pumps, valves and storage.`,
             href: "/stp",
@@ -443,29 +323,26 @@ export function evaluateSTPAlerts(
     }
 
     // Recovery over the window.
-    const validRecovery = window
-        .map((d) => d.assessment)
-        .filter((assessment): assessment is AssessedSTPReadings & { inlet: number; tse: number } =>
-            assessment.validForRecovery && assessment.inlet !== null && assessment.tse !== null,
-        );
-    const totalInlet = validRecovery.reduce((s, d) => s + d.inlet, 0);
-    const totalTse = validRecovery.reduce((s, d) => s + d.tse, 0);
+    const totalInlet = window.reduce((s, d) => s + d.inlet, 0);
+    const totalTse = window.reduce((s, d) => s + d.tse, 0);
     if (totalInlet > 0) {
         const recovery = (totalTse / totalInlet) * 100;
-        // One rule, two bands. Recovery drifting across the critical/watch
-        // boundary is the SAME under-performing plant, so the incident is
-        // re-levelled in place rather than closed and re-opened un-acknowledged.
-        if (recovery < STP_THRESHOLDS.RECOVERY_WATCH) {
-            const critical = recovery < STP_THRESHOLDS.RECOVERY_CRITICAL;
+        if (recovery < STP_RECOVERY_CRITICAL) {
             alerts.push({
-                id: "stp-recovery-below-target",
-                level: critical ? "error" : "warning",
+                id: `stp-low-recovery:${latestIso}`,
+                level: "error",
                 module: "stp",
-                category: "process_performance",
-                title: critical ? "STP recovery critically low" : "STP recovery below target",
-                message: critical
-                    ? `TSE recovery is ${recovery.toFixed(1)}% of inlet across ${validRecovery.length} valid days — below the ${STP_THRESHOLDS.RECOVERY_CRITICAL}% critical band. Inspect the treatment train.`
-                    : `TSE recovery is ${recovery.toFixed(1)}% of inlet across ${validRecovery.length} valid days — under the ${STP_THRESHOLDS.RECOVERY_WATCH}% operating target.`,
+                title: "STP recovery critically low",
+                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — below the ${STP_RECOVERY_CRITICAL}% critical band. Inspect the treatment train.`,
+                href: "/stp",
+            });
+        } else if (recovery < STP_RECOVERY_WATCH) {
+            alerts.push({
+                id: `stp-watch-recovery:${latestIso}`,
+                level: "warning",
+                module: "stp",
+                title: "STP recovery below target",
+                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — under the ${STP_RECOVERY_WATCH}% operating target.`,
                 href: "/stp",
             });
         }
@@ -483,149 +360,7 @@ export function evaluateOperationalAlerts(inputs: OperationalAlertInputs): Opera
     const alerts = [
         ...evaluateWaterLossAlerts(inputs.waterMeters),
         ...evaluateContractAlerts(inputs.contractors, inputs.now),
-        ...evaluateContractDateConflictAlerts(inputs.contractDateReconciliation),
         ...evaluateSTPAlerts(inputs.stpOperations, inputs.now),
     ];
     return alerts.sort((a, b) => LEVEL_RANK[a.level] - LEVEL_RANK[b.level]);
-}
-
-/* ------------------------------------------------------------------ */
-/*  Evidence coverage — who may close an incident                      */
-/* ------------------------------------------------------------------ */
-
-export type OperationalAlertModule = OperationalAlert["module"];
-
-export interface OperationalAlertEvaluation {
-    /** Every condition detected this pass. Always persisted. */
-    alerts: OperationalAlert[];
-    /** Modules whose source was readable — every alert belongs to one of these. */
-    evaluatedModules: OperationalAlertModule[];
-    /**
-     * Subset of {@link evaluatedModules} whose evidence was complete enough that
-     * the ABSENCE of an alert is a real observation. Only these may auto-resolve
-     * open incidents.
-     */
-    resolvableModules: OperationalAlertModule[];
-    /** Read modules denied resolution authority, and why. */
-    withheldResolution: Partial<Record<OperationalAlertModule, string>>;
-}
-
-/**
- * Did every meter report the month the water balance was computed from?
- *
- * A meter with the month key absent is exactly as unevidenced as one holding
- * an explicit null — the earlier check only caught the null, so a month where
- * half the register had no column at all still counted as a complete read and
- * could close an open loss incident.
- */
-function unevidencedWaterMeters(meters: WaterMeter[], monthKey: string): number {
-    return meters.filter((meter) => {
-        const value = meter.consumption?.[monthKey];
-        return value === undefined || value === null || !Number.isFinite(value);
-    }).length;
-}
-
-/** The most recent month with a computable balance (main bulk > 0), if any. */
-function latestComputableWaterMonth(meters: WaterMeter[]): string | null {
-    const data = buildMonthlyData(meters);
-    const { availableMonths } = data.meta;
-    for (let i = availableMonths.length - 1; i >= 0; i--) {
-        const key = availableMonths[i];
-        const [mon, yy] = key.split("-");
-        const monthIndex = (MONTHS as readonly string[]).indexOf(mon);
-        if (monthIndex === -1 || !yy) continue;
-        if (computePeriod(data, `20${yy}`, monthIndex).A1 > 0) return key;
-    }
-    return null;
-}
-
-/**
- * Run every rule AND report which modules earned the right to close incidents.
- *
- * The reconciler resolves an open incident when its condition is absent from a
- * fresh evaluation. That inference is only sound when the module was actually
- * evaluated on complete evidence: a register that returned rows with no dates,
- * or an STP log missing half its readings, produces FEWER alerts, not fewer
- * faults. Treating that as "condition cleared" is how a critical incident
- * disappears without anyone fixing anything.
- *
- * So evidence gaps downgrade a module from resolvable to read-only. Detected
- * alerts are still returned in full and still persisted — incomplete evidence
- * withholds the authority to CLOSE, never the duty to RAISE.
- */
-export function evaluateOperationalAlertsWithCoverage(
-    inputs: OperationalAlertInputs,
-): OperationalAlertEvaluation {
-    const evaluatedModules: OperationalAlertModule[] = [];
-    const resolvableModules: OperationalAlertModule[] = [];
-    const withheldResolution: Partial<Record<OperationalAlertModule, string>> = {};
-
-    const record = (module: OperationalAlertModule, reason: string | null) => {
-        evaluatedModules.push(module);
-        if (reason === null) resolvableModules.push(module);
-        else withheldResolution[module] = reason;
-    };
-
-    // ── water ────────────────────────────────────────────────────────────
-    const meters = inputs.waterMeters;
-    if (meters && meters.length > 0) {
-        const monthKey = latestComputableWaterMonth(meters);
-        if (monthKey === null) {
-            record("water", "No month has a main-bulk reading, so no balance was computed.");
-        } else {
-            const unevidenced = unevidencedWaterMeters(meters, monthKey);
-            record("water", unevidenced === 0
-                ? null
-                : `${unevidenced} of ${meters.length} meters have no ${monthKey} reading.`);
-        }
-    }
-
-    // ── contractors ──────────────────────────────────────────────────────
-    const contractors = inputs.contractors;
-    if (contractors && contractors.length > 0) {
-        const withoutAgreementId = contractors.filter((c) => !c.agreement_id?.trim()).length;
-        const undatedActive = contractors.filter((c) =>
-            !(c.Status ?? "").toLowerCase().includes("expired") && parseTrackerDate(c["End Date"]) === null,
-        ).length;
-
-        if (withoutAgreementId > 0) {
-            record("contractors", `${withoutAgreementId} of ${contractors.length} rows carry no agreement ID, so incidents are not durably keyed.`);
-        } else if (undatedActive > 0) {
-            record("contractors", `${undatedActive} active rows have no parseable End Date, so their expiry was never evaluated.`);
-        } else if (!inputs.contractDateReconciliation) {
-            record("contractors", "Contract date reconciliation was unavailable, so conflict incidents were not evaluated.");
-        } else {
-            record("contractors", null);
-        }
-    }
-
-    // ── stp ──────────────────────────────────────────────────────────────
-    const operations = inputs.stpOperations;
-    if (operations && operations.length > 0) {
-        const window = operations
-            .map((op) => ({ op, time: new Date(op.date).getTime() }))
-            .filter((row) => !Number.isNaN(row.time) && row.time <= inputs.now.getTime())
-            .sort((a, b) => a.time - b.time)
-            .slice(-STP_WINDOW_DAYS);
-        const incomplete = window.filter(({ op }) => assessSTPReadings({
-            inlet: op.inlet_sewage,
-            tse: op.tse_for_irrigation,
-            tankerTrips: op.tanker_trips,
-        }).findings.some((finding) => finding.code.startsWith("missing_"))).length;
-
-        if (window.length === 0) {
-            record("stp", "No logged day falls on or before the evaluation time.");
-        } else {
-            record("stp", incomplete === 0
-                ? null
-                : `${incomplete} of the last ${window.length} logged days are missing a reading.`);
-        }
-    }
-
-    return {
-        alerts: evaluateOperationalAlerts(inputs),
-        evaluatedModules,
-        resolvableModules,
-        withheldResolution,
-    };
 }

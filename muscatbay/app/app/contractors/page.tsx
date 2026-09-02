@@ -41,7 +41,6 @@ import {
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
-import { canonicalizeApprovedEmbedUrl } from "@/lib/embed-security";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { ExpiryBadge, expiryStatus } from "@/components/contractors/contract-dates";
 import { RenewalsPanel } from "@/components/contractors/renewals";
@@ -191,11 +190,6 @@ export default function ContractorsPage() {
     const [pdfLinkSaving, setPdfLinkSaving] = useState(false);
     const [pdfLinkEditing, setPdfLinkEditing] = useState(false);
     const [pdfLinkError, setPdfLinkError] = useState<string | null>(null);
-    const approvedPdfEmbed = useMemo(() => {
-        if (!pdfModal.pdfUrl) return null;
-        const approved = canonicalizeApprovedEmbedUrl(pdfModal.pdfUrl);
-        return approved?.kind === "google-drive" ? approved : null;
-    }, [pdfModal.pdfUrl]);
 
     const openPdfModal = useCallback((id: number | null, name: string, ref: string, url: string | null | undefined) => {
         setPdfModal({ isOpen: true, contractId: id, contractorName: name, contractRef: ref, pdfUrl: url });
@@ -214,14 +208,7 @@ export default function ContractorsPage() {
         if (!pdfModal.contractId) return;
         setPdfLinkSaving(true);
         setPdfLinkError(null);
-        const rawUrl = pdfLinkInput.trim();
-        const approved = rawUrl ? canonicalizeApprovedEmbedUrl(rawUrl) : null;
-        if (rawUrl && approved?.kind !== "google-drive") {
-            setPdfLinkError("Use an approved Google Drive file link.");
-            setPdfLinkSaving(false);
-            return;
-        }
-        const url = approved?.url ?? null;
+        const url = pdfLinkInput.trim() || null;
         // The write used to be fire-and-forget: a rejected update left the
         // dialog looking exactly like a successful save.
         const result = await updateContractPdfUrl(pdfModal.contractId, url);
@@ -756,7 +743,7 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        <Table aria-label="Contractor performance summary">
+                        <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead scope="col" className="w-8">#</TableHead>
@@ -906,7 +893,7 @@ export default function ContractorsPage() {
                             {/* Desktop: matrix table — the shared <Table> primitive supplies
                                 header band, zebra, hover and the sticky Year column */}
                             <div className="hidden md:block">
-                                <Table className="whitespace-nowrap" aria-label="Contract compliance matrix">
+                                <Table className="whitespace-nowrap">
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead className="col-sticky">Year</TableHead>
@@ -1083,7 +1070,7 @@ export default function ContractorsPage() {
 
                     {/* Desktop Table */}
                     <div className="hidden md:block">
-                        <Table aria-label="Contractor records">
+                        <Table>
                             <TableHeader>
                                 <TableRow>
                                     <SortableTableHead field="contractor" currentSortField={trackerSortField} currentSortDirection={trackerSortDir} onSort={handleTrackerSort}>Contractor</SortableTableHead>
@@ -1234,26 +1221,21 @@ export default function ContractorsPage() {
                     )}
 
                     {/* PDF viewer */}
-                    {pdfModal.pdfUrl && !pdfLinkEditing ? (
+                    {pdfModal.pdfUrl && !pdfLinkEditing ? (() => {
+                        const previewUrl = pdfModal.pdfUrl.includes('drive.google.com')
+                            ? pdfModal.pdfUrl.replace(/\/view(\?.*)?$/, '/preview')
+                            : pdfModal.pdfUrl;
+                        return (
                         <div className="flex flex-col gap-3">
-                            {approvedPdfEmbed ? (
                             <iframe
-                                src={approvedPdfEmbed.url}
+                                src={previewUrl}
                                 className="w-full h-[65vh] rounded-lg border border-border"
                                 title="Contract PDF"
-                                sandbox={approvedPdfEmbed.sandbox}
-                                allow={approvedPdfEmbed.allow}
-                                referrerPolicy="no-referrer"
+                                allow="autoplay"
                             />
-                            ) : (
-                                <div role="alert" className="flex min-h-64 flex-col items-center justify-center gap-2 rounded-lg border border-mb-warning bg-mb-warning-light p-6 text-center">
-                                    <FileWarning className="h-9 w-9 text-mb-warning-text" aria-hidden="true" />
-                                    <p className="text-sm font-semibold text-foreground">Preview blocked</p>
-                                    <p className="max-w-md text-xs text-mb-warning-text">Only approved Google Drive file links can be embedded. Open the source document in a new tab to review it.</p>
-                                </div>
-                            )}
                         </div>
-                    ) : !pdfLinkEditing && (
+                        );
+                    })() : !pdfLinkEditing && (
                         <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/70">
                             <FileWarning className="w-12 h-12 mb-3" />
                             <p className="text-sm font-medium">No contract document linked yet</p>
@@ -1270,9 +1252,9 @@ export default function ContractorsPage() {
                                 Edit Link
                             </button>
                         )}
-                        {approvedPdfEmbed && !pdfLinkEditing && (
+                        {pdfModal.pdfUrl && !pdfLinkEditing && (
                             <a
-                                href={approvedPdfEmbed.url}
+                                href={pdfModal.pdfUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"

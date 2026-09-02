@@ -8,7 +8,6 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { useTheme } from "@/components/providers/app-providers";
 import { Bug, ExternalLink, Loader2, Database, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { canonicalizeApprovedEmbedUrl } from "@/lib/embed-security";
 
 // AITable share link for the pest-control operations base.
 //
@@ -54,10 +53,7 @@ export default function PestControlPage() {
 
     const frameKey = `${resolvedTheme}-${attempt}`;
     const embedState: EmbedState = status?.frameKey === frameKey ? status.state : "loading";
-    const embedTheme = resolvedTheme === "dark" ? "dark" : "light";
-    const requestedEmbedUrl = `${EMBED_BASE_URL}?theme=${embedTheme}`;
-    const approvedEmbed = canonicalizeApprovedEmbedUrl(requestedEmbedUrl);
-    const embedUrl = approvedEmbed?.url ?? "about:blank";
+    const embedUrl = `${EMBED_BASE_URL}?theme=${resolvedTheme}`;
 
     // The only job of this effect is the failure timer for the current frame.
     useEffect(() => {
@@ -188,8 +184,8 @@ export default function PestControlPage() {
                                     // view works, and open links in a new tab on a user
                                     // gesture — but it cannot navigate this page away or
                                     // submit forms into our origin.
-                                    sandbox={approvedEmbed?.sandbox ?? ""}
-                                    allow={approvedEmbed?.allow}
+                                    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms"
+                                    allow="fullscreen"
                                     className={cn(
                                         "h-full w-full bg-card transition-opacity duration-300",
                                         embedState === "ready" ? "opacity-100" : "opacity-0",

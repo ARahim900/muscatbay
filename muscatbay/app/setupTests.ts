@@ -32,19 +32,6 @@ vi.mock('@supabase/supabase-js', () => ({
     })),
 }));
 
-// jsdom implements no layout, so it ships no Element.prototype.scrollIntoView.
-// components/shared/tab-navigation.tsx calls it unguarded to keep the active tab
-// in view, which is correct in a browser but throws here — and because it fires
-// from an effect, the failure surfaces as an uncaught exception in ANY test that
-// mounts a real tab strip, pointing nowhere near the cause.
-//
-// Stubbed globally rather than per-file so page-level tests can mount real
-// navigation. It is a no-op: nothing in a test can observe scroll position, so
-// there is no behaviour here worth asserting.
-if (typeof Element !== 'undefined' && !Element.prototype.scrollIntoView) {
-    Element.prototype.scrollIntoView = function scrollIntoView() {};
-}
-
 // Suppress console errors during tests (optional, remove if you want to see them)
 const originalError = console.error;
 beforeAll(() => {

@@ -122,15 +122,16 @@ function DashboardContent() {
     // produce a 'critical' item, so that filter was a dead control and the
     // dashboard read as healthy regardless of the data.
     //
-    // Acknowledgement records ownership; it does not resolve the condition.
-    // Every open incident remains visible here until the trusted evaluator
-    // records resolved_at after the source returns to normal.
+    // Acknowledged alerts are filtered OUT here, matching alerts-feed.tsx.
+    // Without this, acknowledging an alert in the bell silenced the badge but
+    // left the item on the dashboard forever, with no way to clear it.
     const activityItems = useMemo<KeyedActivityItem[]>(() => {
         const alertItems: KeyedActivityItem[] = operationalAlerts
+            .filter((a) => !a.acknowledged)
             .map((a) => ({
                 key: `alert:${a.id}`,
                 title: a.title,
-                description: a.acknowledged ? `${a.message} · Acknowledged` : a.message,
+                description: a.message,
                 type: a.level === 'error' ? 'critical' : a.level === 'warning' ? 'warning' : 'info',
                 href: a.href,
             }));

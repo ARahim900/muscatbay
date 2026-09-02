@@ -408,11 +408,11 @@ export default function ProfessionalApplicationPage() {
 
                             <div className="flex items-center justify-center gap-4 text-sm">
                                 <Link
-                                    href="/login"
+                                    href="/signup"
                                     className="flex items-center gap-1 text-muted-foreground hover:text-mb-primary"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
-                                    Back to Sign In
+                                    Back to Sign Up
                                 </Link>
                                 <span className="text-muted-foreground/70 dark:text-muted-foreground">|</span>
                                 <Link

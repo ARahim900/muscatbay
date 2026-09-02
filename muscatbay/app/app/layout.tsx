@@ -2,14 +2,10 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers/app-providers";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { Geist_Mono, Inter } from "next/font/google";
-import { getServerAuthSnapshot } from "@/lib/supabase-server";
-
-// Nonces are unique per response and the authenticated shell is server-seeded,
-// so this layout must never be emitted as a shared static document.
-export const dynamic = "force-dynamic";
 
 // Inter — the UI face for headings AND body (directed by Rahim 2026-08-31,
 // superseding the 2026-08-30 "Geist stands" decision — see BRAND_DESIGN.md §3).
@@ -115,13 +111,11 @@ export const viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const initialAuth = await getServerAuthSnapshot();
-
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
@@ -131,19 +125,12 @@ export default async function RootLayout({
       </head>
       <body className={`${interSans.className} ${interSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <RegisterSW />
-        {/* NotificationProvider is mounted by LayoutRouter, not here. It runs
-            useOperationalAlerts, which reads water, contractor and STP data and
-            opens a realtime channel — none of which a signed-out visitor is
-            entitled to. Mounted at the root it also ran on /login, /signup and
-            the public legal pages. That was invisible while every signed-in
-            role could read everything; once RLS landed, anon is denied, so the
-            public login page fired four failing reads and an unauthorised
-            WebSocket on a repeating interval. LayoutRouter already knows which
-            routes are public — that is the right place to make the decision. */}
         <Providers>
-          <LayoutRouter initialAuth={initialAuth}>
-            {children}
-          </LayoutRouter>
+          <NotificationProvider>
+            <LayoutRouter>
+              {children}
+            </LayoutRouter>
+          </NotificationProvider>
         </Providers>
       </body>
     </html>

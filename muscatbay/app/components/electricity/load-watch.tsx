@@ -29,10 +29,9 @@ import {
 import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import {
-    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst,
+    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst, type TickerStat,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
-import { OperationalBriefing, type OperationalBriefingItem } from "@/components/shared/operational-briefing";
 import { cn } from "@/lib/utils";
 import {
     buildElectricityModel, buildCategoryMetrics, buildCategoryHeatmap, buildElectricityFindings,
@@ -41,6 +40,41 @@ import {
 
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
+
+const SUMMARY_TONE_COLOR: Record<NonNullable<TickerStat["tone"]>, string> = {
+    default: "var(--primary)",
+    danger: "var(--status-danger)",
+    warning: "var(--status-warning)",
+    success: "var(--status-normal)",
+    info: "var(--primary)",
+};
+
+function SummaryStrip({ caption, items }: { caption: string; items: TickerStat[] }) {
+    return (
+        <section className="overflow-hidden rounded-[10.5px] border border-border bg-border shadow-card-standard" aria-label={caption}>
+            <div className="bg-card px-4 py-3 sm:px-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{caption}</p>
+            </div>
+            <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
+                {items.map((item) => {
+                    const tone = item.tone ?? "default";
+                    return (
+                        <div key={item.label} className="min-w-0 bg-card px-4 py-3.5 sm:px-5">
+                            <dt className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                                <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: SUMMARY_TONE_COLOR[tone] }} aria-hidden="true" />
+                                <span className="truncate">{item.label}</span>
+                            </dt>
+                            <dd className="mt-1 text-lg font-bold tracking-tight text-foreground tabular-nums sm:text-xl">
+                                {item.value}
+                            </dd>
+                            {item.title && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.title}</p>}
+                        </div>
+                    );
+                })}
+            </dl>
+        </section>
+    );
+}
 
 type CategorySortField = "urgency" | "consumption" | "cost" | "change" | "findings";
 type SortDirection = "asc" | "desc";
@@ -142,7 +176,7 @@ function CategoryTable({
                         onClick={() => onFlaggedOnlyChange(!flaggedOnly)}
                         aria-pressed={flaggedOnly}
                         className={cn(
-                            "inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
+                            "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                             flaggedOnly
                                 ? "border-primary bg-primary text-primary-foreground"
                                 : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
@@ -383,44 +417,44 @@ export function LoadWatch({
     const TrendIcon = summary.trendPct !== null && summary.trendPct < 0 ? ArrowDown : ArrowUp;
     const budget = ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR;
 
-    const briefingItems: OperationalBriefingItem[] = [
+    const tickerItems: TickerStat[] = [
         {
             icon: Zap,
             label: "Consumption",
             value: <>{num(summary.grandTotal / 1000, 1)} <span className="text-sm font-medium text-muted-foreground">MWh</span></>,
-            description: `${summary.meterCount} meters across ${model.categories.length} categories`,
+            title: `${summary.meterCount} meters across ${model.categories.length} categories`,
         },
         {
             icon: DollarSign,
             label: "Estimated cost",
             value: <>{num(summary.cost)} <span className="text-sm font-medium text-muted-foreground">OMR</span></>,
-            description: budget !== null
+            title: budget !== null
                 ? `${((summary.cost / budget) * 100).toFixed(0)}% of ${num(budget)} OMR budget`
                 : `At ${RATE} OMR/kWh`,
-            severity: budget !== null && summary.cost > budget ? "danger" : "default",
+            tone: budget !== null && summary.cost > budget ? "danger" : "default",
         },
         {
             icon: TrendIcon,
             label: "Previous month",
             value: summary.trendPct === null ? "—" : `${summary.trendPct > 0 ? "+" : ""}${summary.trendPct.toFixed(1)}%`,
-            description: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
-            severity: "info",
+            title: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
+            tone: "info",
         },
         {
             icon: summary.flaggedCount > 0 ? AlertTriangle : CheckCircle2,
             label: "Flagged meters",
             value: String(summary.flaggedCount),
-            description: summary.flaggedCount > 0
+            title: summary.flaggedCount > 0
                 ? `${attentionCategories.length} categories need review`
                 : "All categories are within tolerance",
-            severity: summary.flaggedCount > 0 ? "danger" : "success",
+            tone: summary.flaggedCount > 0 ? "danger" : "success",
         },
     ];
 
     return (
         <div className="space-y-6">
             <SectionBoundary title="Load briefing">
-                <OperationalBriefing title="Load briefing" periodLabel={currentMonth} items={briefingItems} />
+                <SummaryStrip caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
             </SectionBoundary>
 
             <SectionBoundary title="Category control board">

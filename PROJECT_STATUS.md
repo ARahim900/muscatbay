@@ -1201,34 +1201,47 @@ tables that no screen reads.
     **zero** Supabase requests and log **zero** console errors, with the sign-in
     form intact.
 
-- **Visual changes reverted at the owner's request (2026-09-02)** — the owner
-  reviewed the deployed result and asked for the **design and theme to look
-  exactly as before**, while keeping the security work. Eleven commits were
-  reverted; nothing else was touched.
-  - **Reverted:** the Water Monthly restructure (`279e058` — this is the one
-    the owner noticed: the KPI row went from six cards to four, gained a
-    briefing and moved its charts to `ChartShell`; all three are undone, so
-    Water again shows **Total Supply (A1), Distribution (A2), Consumption (A3),
-    Efficiency, Total Loss, Loss Cost Estimate**); the accent-as-text contrast
-    tokens `--mb-secondary-text` and `--mb-primary-text` with all their call
-    sites; the 44px touch-target work; the nine screen-reader table captions;
-    the HVAC/Fire Safety loading headers; and the Recharts code-splitting that
-    was bundled into the same commits.
-  - **Kept, because it is security or correctness rather than design:** every
-    RLS and invitation migration, the invitation API route and its settings
-    form, `lib/embed-security.ts`, the CSP and `robots` work, the `sql-security`
-    CI job and the SQL harness, the alert-identity and STP figure-validation
-    fixes, and the `NotificationProvider` scoping fix — that last one is now
-    *required*, since without it the public login page fires reads that RLS
-    refuses.
-  - **Consequence to be aware of:** the reverted contrast tokens were fixing
-    real WCAG AA failures — the brand teal as text measured about **1.6:1** in
-    light mode, and the brand purple **2.71:1** in dark, against a 4.5:1 floor.
-    Those failures are back. They are a legibility problem, not a security one,
-    and the owner's preference for the original look was explicit.
-  - Gates after the revert: TypeScript (web + `mobile/`), ESLint, **392** Vitest
-    tests in 49 files (the pre-existing baseline — the design tests reverted
-    with their commits), and a passing production build.
+- **Application code reverted in full to 1 September (2026-09-02)** — the owner
+  reviewed the deployed result and rejected the appearance: *"even the font you
+  have changed, even the colours even the table Design all the things."* The
+  application code is now **byte-identical to `eaa38cc`** (1 Sep 13:28 UTC, the
+  last commit before any of this work). Only `sql/` is kept, as the record of
+  migrations already applied to the live database.
+  - **Why three attempts were needed, and what I got wrong.** The first revert
+    undid my own eleven design commits and I reported the look restored. It was
+    not: the appearance had also been changed by **`464f66c` "feat: harden
+    production operations dashboard"**, which was already on
+    `codex/production-hardening` and had *never been live* — pushing that branch
+    to `main` is what put it in front of the owner. It redesigned
+    `components/shared/stats-grid.tsx`, which draws every KPI card in every
+    module, cut Water's KPI row from six cards to four, and restyled the tab
+    navigation, page status bar, table pagination and chart container. My
+    verification was also weak: a `grep -c` matched an unrelated line and I read
+    it as proof the labels were back. Reverting piecemeal after that missed the
+    dashboard, then the shared components, then the rest.
+  - **The font never changed.** Both versions load Inter through
+    `interSans.className`, and `globals.css` is byte-identical across the range.
+    What read as a font change was the typography inside the restyled shared
+    components.
+  - **Removed:** 30 files created during this work, including the alert-incidents
+    library and its API route, `lib/embed-security.ts`, `lib/stp-data-quality.ts`,
+    `lib/fire-ppm-status.ts`, `lib/contract-reconciliation.ts`, `app/robots.ts`,
+    the invitation API route and its settings form, the shared
+    `operational-briefing` component, the Playwright config and e2e specs, the
+    `scripts/security/` harness and the `quality.yml` CI workflow.
+  - **The database is untouched and still enforces everything.** RLS,
+    invitation-only signup and the role assignment are server-side; reverting
+    application code does not reopen them. That security does not depend on any
+    of the code removed here.
+  - **Two consequences to be aware of.** First, there is now **no way to invite a
+    user from the app** — the invitation route and form were part of the removed
+    set, while the database still requires an invitation to sign up, so new
+    accounts need a row added directly. Second, the accent-as-text contrast
+    tokens are gone, so the brand teal used as text is back to roughly **1.6:1**
+    in light mode and the brand purple to **2.71:1** in dark, against a 4.5:1
+    AA floor. Both were stated to the owner at the time.
+  - Gates after the revert: TypeScript (web + `mobile/`), ESLint, **322** Vitest
+    tests in 38 files (the 1 September baseline), and a passing production build.
 
 - **Roles assigned and dormant accounts removed (2026-09-02)** — on the owner's
   instruction, the account estate went from **11 admins out of 12** to **one

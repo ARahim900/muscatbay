@@ -22,6 +22,7 @@ import {
   BellOff,
   CheckCircle2,
   Info,
+  RotateCcw,
   WifiOff,
   X,
   XCircle,
@@ -52,13 +53,6 @@ const SOURCE_LABEL: Record<string, string> = {
   stp: "STP failures",
 };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  data_quality: "Data quality",
-  process_performance: "Process performance",
-  contract_compliance: "Contract compliance",
-  water_balance: "Water balance",
-};
-
 /** Compact relative time — "just now", "5m ago", "2h ago", "3d ago". */
 export function timeAgo(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
@@ -85,6 +79,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
     alertUnavailableSources,
     alertEvaluatedAt,
     acknowledgeAlert,
+    unacknowledgeAlert,
   } = useAppNotifications();
 
   // Un-acknowledged first, then acknowledged (both remain visible while live).
@@ -148,9 +143,6 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted dark:bg-white/[0.06] rounded px-1.5 py-0.5">
                         {MODULE_LABEL[alert.module] ?? alert.module}
                       </span>
-                      <span className="text-[10px] font-medium text-muted-foreground">
-                        {CATEGORY_LABEL[alert.category] ?? alert.category}
-                      </span>
                       {alert.acknowledged && (
                         <span className="text-[10px] font-medium text-muted-foreground">Acknowledged</span>
                       )}
@@ -160,18 +152,23 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                       <Link
                         href={alert.href}
                         onClick={onNavigate}
-                        className="inline-flex min-h-11 min-w-11 items-center rounded-lg px-2 text-xs font-semibold text-secondary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        className="text-xs font-semibold text-secondary hover:underline px-2 h-9 inline-flex items-center rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
                         Review
                       </Link>
-                      {!alert.acknowledged && (
+                      {alert.acknowledged ? (
+                        <button
+                          onClick={() => unacknowledgeAlert(alert.id)}
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center gap-1 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        >
+                          <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reopen
+                        </button>
+                      ) : (
                         <button
                           onClick={() => acknowledgeAlert(alert.id)}
-                          disabled={!alert.canAcknowledge}
-                          title={alert.canAcknowledge ? "Record acknowledgement" : "Acknowledgement is unavailable for this account — read-only"}
-                          className="inline-flex min-h-11 min-w-11 items-center rounded-lg px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/[0.06]"
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
-                          {alert.canAcknowledge ? "Acknowledge" : "Read-only"}
+                          Acknowledge
                         </button>
                       )}
                     </div>
@@ -213,7 +210,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                 </div>
                 <button
                   onClick={() => dismiss(n.id)}
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:bg-white/[0.06]"
+                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   aria-label={`Dismiss: ${n.title}`}
                 >
                   <X className="w-3.5 h-3.5" />

@@ -27,12 +27,13 @@ import type { OperationalAlert } from "@/lib/operational-alerts";
  * cards — and when a value is unavailable it says so instead of showing a zero.
  */
 
-/** All unresolved incidents count as current; acknowledgement is not resolution. */
+/** Alert counts, unacknowledged only — an acknowledged alert is not "current". */
 function summariseAlerts(alerts: OperationalAlert[]) {
+    const live = alerts.filter((a) => !("acknowledged" in a) || !(a as { acknowledged?: boolean }).acknowledged);
     return {
-        critical: alerts.filter((a) => a.level === "error").length,
-        warning: alerts.filter((a) => a.level === "warning").length,
-        total: alerts.length,
+        critical: live.filter((a) => a.level === "error").length,
+        warning: live.filter((a) => a.level === "warning").length,
+        total: live.length,
     };
 }
 
@@ -121,7 +122,7 @@ export function DashboardTicker({
                       label: "Needs attention",
                       value: "Nothing flagged right now",
                       tone: "success",
-                      title: "No unresolved water-loss, contract-expiry or STP alerts.",
+                      title: "No unacknowledged water-loss, contract-expiry or STP alerts.",
                   }
                 : {
                       icon: AlertTriangle,
