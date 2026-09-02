@@ -22,7 +22,7 @@ import {
     ComposedChart, BarChart, Bar, Line,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ReferenceLine,
 } from "recharts";
-import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
+import { ChartShell, SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import {
     Droplet, TrendingDown, TrendingUp, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
@@ -46,6 +46,8 @@ import {
     type WaterData, type PeriodResult, type Sel, type ZoneRow,
 } from "@/lib/water-monthly-data";
 import { useChartMotion } from "@/hooks/useReducedMotion";
+import { buildMonthlyBriefing } from "./briefing-metrics";
+import { MonthlyBriefing } from "./monthly-briefing";
 
 /* ---------- Muscat Bay Brand & Design System (mapped to app tokens) ---------- */
 const C = {
@@ -113,42 +115,64 @@ interface KpiProps {
     ic?: string;
     delta?: { up: boolean; text: string } | null;
 }
+/**
+ * One sub-panel KPI tile.
+ *
+ * Deliberately the same anatomy as the shared `StatsGrid` tile
+ * (`components/shared/stats-grid.tsx`) so a Water sub-panel tile reads
+ * identically to a KPI tile anywhere else in the app: a status accent bar along
+ * the top, the icon top-right, the trend bottom-right, and the shared
+ * `shadow-card-standard` class instead of a hand-rolled box-shadow. The accent
+ * takes the tile's own semantic colour (`ic`) — a severity token on the loss
+ * tiles, a module/chart token elsewhere — never a hex literal.
+ */
 function Kpi({ icon: Icon, label, value, unit, sub, bg, ic, delta }: KpiProps) {
+    const accent = ic ?? "var(--primary)";
     return (
-        <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW }} className="p-4 transition-shadow">
-            <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: bg, borderRadius: RADIUS.md }}>
-                        <Icon className="w-5 h-5" style={{ color: ic }} />
-                    </div>
-                    <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: C.muted }}>{label}</p>
-                        <p className="text-xl font-semibold tracking-tight leading-tight" style={{ color: C.ink }}>
-                            {value}<span className="text-xs font-medium ml-1" style={{ color: C.muted }}>{unit}</span>
-                        </p>
-                    </div>
+        <div
+            className="relative flex min-h-32 flex-col overflow-hidden p-4 shadow-card-standard transition-shadow"
+            style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card }}
+        >
+            <span className="absolute inset-x-0 top-0 h-[3px]" aria-hidden="true" style={{ backgroundColor: accent }} />
+            <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                    <p className="mb-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] sm:text-[11px]" style={{ color: C.muted }}>{label}</p>
+                    <p className="break-words text-lg font-semibold leading-tight tracking-tight tabular-nums sm:text-xl" style={{ color: C.ink }}>
+                        {value}
+                        {unit && <span className="ml-1 text-xs font-medium sm:text-sm" style={{ color: C.muted }}>{unit}</span>}
+                    </p>
+                    {sub && <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug sm:text-xs" style={{ color: C.muted }}>{sub}</p>}
                 </div>
-                {delta && (
-                    <div className={`flex items-center gap-1 text-xs font-semibold ${delta.up ? "text-mb-danger-text" : "text-mb-success-text"}`}>
-                        {delta.up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}{delta.text}
-                    </div>
-                )}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center" style={{ background: bg, borderRadius: RADIUS.md }}>
+                    <Icon className="h-5 w-5" aria-hidden="true" style={{ color: ic }} />
+                </div>
             </div>
-            {sub && <p className="text-[11px] mt-2" style={{ color: C.muted }}>{sub}</p>}
+            {delta && (
+                <div className="mt-auto flex min-h-6 items-end justify-end pt-3 text-xs">
+                    <span className={`inline-flex shrink-0 items-center font-semibold ${delta.up ? "text-mb-danger-text" : "text-mb-success-text"}`}>
+                        {delta.up
+                            ? <TrendingUp className="me-1 h-3.5 w-3.5" aria-hidden="true" />
+                            : <TrendingDown className="me-1 h-3.5 w-3.5" aria-hidden="true" />}
+                        {delta.text}
+                    </span>
+                </div>
+            )}
         </div>
     );
 }
 
+/**
+ * Framing for the sections of this dashboard that are **not** charts — the ring
+ * gauges, the reconciliation tables, the meter database and the registers.
+ * Charts use the shared `ChartShell` (title left / controls right, an honest
+ * `state`, and a one-line management note), exactly as Electricity and STP do.
+ */
 interface PanelProps {
     title: string;
     icon?: LucideIcon;
     right?: ReactNode;
     children: ReactNode;
     note?: string;
-    /** Extra classes on the panel root (e.g. `h-full flex flex-col` for equal-height rows). */
-    className?: string;
-    /** Extra classes on the panel body (e.g. `flex-1 flex flex-col` so a chart fills the height). */
-    bodyClassName?: string;
     /**
      * Render as a native `<details>` so the operator can fold the section away.
      * Used for the long, secondary sections of the Zone Analysis view — keyboard
@@ -158,12 +182,12 @@ interface PanelProps {
     /** Only meaningful with `collapsible`. */
     defaultOpen?: boolean;
 }
-function Panel({ title, icon: Icon, right, children, note, className, bodyClassName, collapsible, defaultOpen = false }: PanelProps) {
+function Panel({ title, icon: Icon, right, children, note, collapsible, defaultOpen = false }: PanelProps) {
     const shell = { background: C.card, border: `1px solid ${C.border}`, borderRadius: RADIUS.card, boxShadow: SHADOW } as const;
 
     if (collapsible) {
         return (
-            <details open={defaultOpen} className={`group ${className ?? ""}`} style={shell}>
+            <details open={defaultOpen} className="group" style={shell}>
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 [&::-webkit-details-marker]:hidden">
                     <span className="flex items-center gap-2">
                         <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-open:rotate-90" aria-hidden="true" style={{ color: C.heading }} />
@@ -173,13 +197,13 @@ function Panel({ title, icon: Icon, right, children, note, className, bodyClassN
                 </summary>
                 {note && <p className="px-4 text-[11px] mb-1" style={{ color: C.muted }}>{note}</p>}
                 {right && <div className="flex items-center justify-end px-4 pb-2">{right}</div>}
-                <div className={`px-4 pb-4 ${bodyClassName ?? ""}`}>{children}</div>
+                <div className="px-4 pb-4">{children}</div>
             </details>
         );
     }
 
     return (
-        <div className={className} style={shell}>
+        <div style={shell}>
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                     {Icon && <Icon className="w-4 h-4" aria-hidden="true" style={{ color: C.heading }} />}
@@ -187,7 +211,7 @@ function Panel({ title, icon: Icon, right, children, note, className, bodyClassN
                 </div>{right}
             </div>
             {note && <p className="px-4 text-[11px] -mt-1 mb-1" style={{ color: C.muted }}>{note}</p>}
-            <div className={`px-4 pb-4 ${bodyClassName ?? ""}`}>{children}</div>
+            <div className="px-4 pb-4">{children}</div>
         </div>
     );
 }
@@ -442,6 +466,11 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
     const trend = monthly.map((p, i) => ({ m: MONTHS[i], A1: p.A1, A3: p.A3, loss: p.loss, lossPct: p.lossPct, target: TARGET_LOSS_PCT }));
     const selM = isRangeSel(sel) ? `${MONTHS[sel[0]]}–${MONTHS[sel[1]]}` : sel != null ? MONTHS[sel] : null;
     const selectedLineMonths = isRangeSel(sel) ? [sel[0], sel[1]] : sel != null ? [sel] : [];
+    // Honest chart states: a month set in which nothing was ever recorded is
+    // "empty", not a chart of zeros. `pct()` returns 0 when the denominator is 0,
+    // so the volumes — never the derived percentage — decide this.
+    const trendHasVolume = trend.some((p) => p.A1 > 0 || p.A3 > 0);
+    const typeHasVolume = typePie.some((p) => p.value > 0);
 
     return (
         <div className="space-y-5">
@@ -482,27 +511,38 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                     chart: the standalone "Monthly Loss %" area panel restated the
                     same months, so loss % now rides a right-hand axis here
                     against the management target. */}
-                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Monthly Supply, Consumption &amp; Loss" icon={Activity}
-                    note={`Bars are volumes (m³, left axis); lines are loss as a share of supply against the ${TARGET_LOSS_PCT}% target (%, right axis).${selM ? ` Highlighted: ${selM}.` : ""}`}>
-                    <div className="flex-1 min-h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                            <ComposedChart data={trend} margin={{ top: 6, right: 4, left: -10, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
-                                <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
-                                <YAxis yAxisId="vol" tick={{ fontSize: 11, fill: C.muted }} />
-                                <YAxis yAxisId="pct" orientation="right" unit="%" width={44} tick={{ fontSize: 11, fill: C.muted }} />
-                                <Tooltip formatter={fmtBalance} contentStyle={TIP} />
-                                <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
-                                {selectedLineMonths.map((i) => <ReferenceLine key={i} yAxisId="vol" x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
-                                <Bar yAxisId="vol" dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
-                                <Bar yAxisId="vol" dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
-                                <Line yAxisId="pct" dataKey="lossPct" name={LOSS_PCT_SERIES} stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
-                                <Line yAxisId="pct" dataKey="target" name={TARGET_SERIES} stroke="var(--status-danger)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} {...chartMotion}/>
-                            </ComposedChart>
-                        </ResponsiveContainer>
-                    </div>
-                </Panel>
-                <Panel className="h-full flex flex-col" bodyClassName="flex-1 flex flex-col" title="Consumption by Type" icon={Layers} note={`Share of A3 — ${periodLabel}.`}>
+                <ChartShell
+                    className="h-full"
+                    title="Monthly Supply, Consumption & Loss"
+                    description={`Bars are volumes (m³, left axis); lines are loss as a share of supply against the ${TARGET_LOSS_PCT}% target (%, right axis).${selM ? ` Highlighted: ${selM}.` : ""}`}
+                    state={trendHasVolume ? "ready" : "empty"}
+                    emptyMessage="No supply or consumption volume is recorded for any month of this year."
+                    interpretation={`Read the bars and the loss line together: when supply holds steady while the loss line climbs above the ${TARGET_LOSS_PCT}% target, the change is in the network rather than in demand.`}
+                >
+                    <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
+                        <ComposedChart data={trend} margin={{ top: 6, right: 4, left: -10, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
+                            <XAxis dataKey="m" tick={{ fontSize: 11, fill: C.muted }} />
+                            <YAxis yAxisId="vol" tick={{ fontSize: 11, fill: C.muted }} />
+                            <YAxis yAxisId="pct" orientation="right" unit="%" width={44} tick={{ fontSize: 11, fill: C.muted }} />
+                            <Tooltip formatter={fmtBalance} contentStyle={TIP} />
+                            <Legend wrapperStyle={{ fontSize: 11, color: "var(--wm-ink)" }} />
+                            {selectedLineMonths.map((i) => <ReferenceLine key={i} yAxisId="vol" x={MONTHS[i]} stroke={C.primary} strokeDasharray="4 4" />)}
+                            <Bar yAxisId="vol" dataKey="A1" name="Supply" fill={C.supply} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                            <Bar yAxisId="vol" dataKey="A3" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={14} {...chartMotion}/>
+                            <Line yAxisId="pct" dataKey="lossPct" name={LOSS_PCT_SERIES} stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
+                            <Line yAxisId="pct" dataKey="target" name={TARGET_SERIES} stroke="var(--status-danger)" strokeWidth={1.5} strokeDasharray="5 5" dot={false} {...chartMotion}/>
+                        </ComposedChart>
+                    </ResponsiveContainer>
+                </ChartShell>
+                <ChartShell
+                    className="h-full"
+                    title="Consumption by Type"
+                    description={`Share of A3 — ${periodLabel}.`}
+                    state={typeHasVolume ? "ready" : "empty"}
+                    emptyMessage="No end-user consumption is recorded for this period."
+                    interpretation="The largest share is where a small percentage change moves the most water, so start any demand query with that category."
+                >
                     <ResponsiveContainer width="100%" height={210} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <PieChart>
                             <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={48} outerRadius={80} paddingAngle={2} {...chartMotion}>
@@ -519,7 +559,7 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                             </div>
                         ))}
                     </div>
-                </Panel>
+                </ChartShell>
             </div>
 
         </div>
@@ -587,6 +627,10 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             ...period.dcs.map((d) => ({ name: d.name, kind: "Direct connection", val: d.total })),
         ].sort((a, b) => b.val - a.val);
         const pctOfA1 = (v: number) => (A1 ? ((v / A1) * 100).toFixed(1) : "0.0");
+        // Chart states come from recorded volumes, so a period in which nothing
+        // was read renders as "empty" rather than a plot of zeros.
+        const trunkMonthlyHasVolume = tmonthly.some((p) => p.a1 > 0 || p.a2 > 0);
+        const compHasVolume = comp.some((c) => c.val > 0);
 
         return (
             <div className="space-y-5">
@@ -615,7 +659,14 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 </Panel>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <Panel title="Monthly — Main Bulk vs Reached Distribution" icon={Activity} note="Gap between the bars each month is the trunk-main loss (A1 − A2). A wildly swinging or negative gap points to meter-reading timing, not real leakage.">
+                    <ChartShell
+                        className="h-full"
+                        title="Monthly — Main Bulk vs Reached Distribution"
+                        description="Gap between the bars each month is the trunk-main loss (A1 − A2). A wildly swinging or negative gap points to meter-reading timing, not real leakage."
+                        state={trunkMonthlyHasVolume ? "ready" : "empty"}
+                        emptyMessage="No main-bulk or zone-bulk volume is recorded for any month of this year."
+                        interpretation="Judge the trunk on the trend rather than a single month: a gap that persists month after month points at the trunk mains, while a gap that appears once usually reflects reading dates."
+                    >
                         <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <ComposedChart data={tmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
@@ -629,8 +680,15 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Line dataKey="loss" name="Trunk loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
-                    </Panel>
-                    <Panel title="What makes up A2" icon={Layers} note="Every zone-bulk & direct-connection meter A1 must reconcile against. A missing or under-reading meter here shows up as trunk loss.">
+                    </ChartShell>
+                    <ChartShell
+                        className="h-full"
+                        title="What makes up A2"
+                        description="Every zone-bulk & direct-connection meter A1 must reconcile against. A missing or under-reading meter here shows up as trunk loss."
+                        state={compHasVolume ? "ready" : "empty"}
+                        emptyMessage="No zone-bulk or direct-connection meter reported a volume for this period."
+                        interpretation="The meters at the top of this chart carry most of A2, so one unread or under-reading meter there explains far more of the trunk gap than several small ones."
+                    >
                         <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <BarChart data={comp.slice(0, 10).map((c) => ({ name: c.name.length > 18 ? c.name.slice(0, 18) + "…" : c.name, val: c.val }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
@@ -640,7 +698,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Bar dataKey="val" fill={C.dist} radius={[0, 4, 4, 0]} barSize={13} {...chartMotion}/>
                             </BarChart>
                         </ResponsiveContainer>
-                    </Panel>
+                    </ChartShell>
                 </div>
 
                 <Panel collapsible defaultOpen title="A1 Reconciliation — Σ zone bulk + direct vs main bulk" icon={Layers}
@@ -729,7 +787,12 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             .filter((m) => { const c = m.y[year]; return c && (c.label === "L3" || c.label === "L4") && c.typ !== "D_Building_Bulk" && c.zone === zoneSel; })
             .map((m) => { const c = m.y[year]; const v = periodValue(c, sel); return { name: m.name, typ: (c.typ || "").replace("Residential ", ""), val: v }; })
             .sort((a, b) => (b.val ?? -Infinity) - (a.val ?? -Infinity));
-        const unread = meters.filter((m) => m.val == null).length;
+        // Meters with an actual reading. Unread meters are excluded from the
+        // "top consumers" plot rather than drawn at zero, and they also decide
+        // whether that chart has anything honest to show at all.
+        const readMeters = meters.filter((m): m is typeof m & { val: number } => m.val != null);
+        const unread = meters.length - readMeters.length;
+        const zoneMonthlyHasVolume = zmonthly.some((p) => p.Supply > 0 || p.Consumption > 0);
         const blds = period.buildings.filter((b) => b.zone === z.name);
         const worstBld = blds.reduce<typeof blds[number] | null>((w, b) => (!w || b.lossPct > w.lossPct ? b : w), null);
         const pctOf = (v: number | null) => (supply && v != null ? ((v / supply) * 100).toFixed(1) : "–");
@@ -758,7 +821,14 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                 </Panel>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <Panel title="Monthly — Supply vs Consumption" icon={Activity} note="Gap between the bars each month is the loss.">
+                    <ChartShell
+                        className="h-full"
+                        title="Monthly — Supply vs Consumption"
+                        description="Gap between the bars each month is the loss."
+                        state={zoneMonthlyHasVolume ? "ready" : "empty"}
+                        emptyMessage="No monthly supply or consumption volume is recorded for this zone."
+                        interpretation="A gap that widens month on month suggests a developing in-zone leak; a single wide month is more often an unread meter or a reading-date mismatch."
+                    >
                         <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                             <ComposedChart data={zmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
@@ -772,10 +842,17 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Line dataKey="loss" name="Loss" stroke={C.loss} strokeWidth={2.5} dot={{ r: 2 }} {...chartMotion}/>
                             </ComposedChart>
                         </ResponsiveContainer>
-                    </Panel>
-                    <Panel title="Top Individual Consumers" icon={Layers} note="Largest end-user meters in this zone for the period. Meters with no reading are excluded rather than plotted as zero.">
+                    </ChartShell>
+                    <ChartShell
+                        className="h-full"
+                        title="Top Individual Consumers"
+                        description="Largest end-user meters in this zone for the period. Meters with no reading are excluded rather than plotted as zero."
+                        state={readMeters.length > 0 ? "ready" : "empty"}
+                        emptyMessage="No end-user meter in this zone has a reading for this period."
+                        interpretation="These meters set the zone's normal demand, so an unexpected mover here is worth a meter check before a leak inspection is dispatched."
+                    >
                         <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                            <BarChart data={meters.filter((m) => m.val != null).slice(0, 10).map((m) => ({ name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name, val: m.val as number }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
+                            <BarChart data={readMeters.slice(0, 10).map((m) => ({ name: m.name.length > 18 ? m.name.slice(0, 18) + "…" : m.name, val: m.val }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
                                 <XAxis type="number" tick={{ fontSize: 10, fill: C.muted }} />
                                 <YAxis type="category" dataKey="name" tick={{ fontSize: 9.5, fill: C.ink }} width={120} />
@@ -783,7 +860,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Bar dataKey="val" fill={C.cons} radius={[0, 4, 4, 0]} barSize={13} {...chartMotion}/>
                             </BarChart>
                         </ResponsiveContainer>
-                    </Panel>
+                    </ChartShell>
                 </div>
 
                 <Panel collapsible defaultOpen title={`Individual Meters in ${z.name} (${meters.length})`} icon={Layers}
@@ -902,7 +979,14 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
             </button>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <Panel title="Loss % by Zone" icon={AlertTriangle} note="Higher = more water lost inside the zone. Pick a zone above to drill in.">
+                <ChartShell
+                    className="h-full"
+                    title="Loss % by Zone"
+                    description="Higher = more water lost inside the zone. Pick a zone above to drill in."
+                    state={real.length > 0 ? "ready" : "empty"}
+                    emptyMessage="No zone has a bulk (L2) reading for this period."
+                    interpretation={`Zones with the longest bars lose the most as a share of their own supply — work anything beyond the ${TARGET_LOSS_PCT}% target from the top of the chart down.`}
+                >
                     <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <BarChart data={bar} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
@@ -912,8 +996,15 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             <Bar dataKey="lossPct" radius={[0, 4, 4, 0]} barSize={20} {...chartMotion}>{bar.map((e, i) => <Cell key={i} fill={e.fill} />)}</Bar>
                         </BarChart>
                     </ResponsiveContainer>
-                </Panel>
-                <Panel title="Supply vs Consumption by Zone" icon={Droplet} note="The gap between the two bars is the loss.">
+                </ChartShell>
+                <ChartShell
+                    className="h-full"
+                    title="Supply vs Consumption by Zone"
+                    description="The gap between the two bars is the loss."
+                    state={real.length > 0 ? "ready" : "empty"}
+                    emptyMessage="No zone has a bulk (L2) reading for this period."
+                    interpretation="This view ranks loss by volume rather than percentage: a large zone with a modest percentage can still lose more water than a small zone with a high one."
+                >
                     <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                         <BarChart data={real.map((z) => ({ name: z.name, bulk: z.bulk, end: z.end }))} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" />
@@ -925,7 +1016,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             <Bar dataKey="end" name="Consumption" fill={C.cons} radius={[3, 3, 0, 0]} barSize={18} {...chartMotion}/>
                         </BarChart>
                     </ResponsiveContainer>
-                </Panel>
+                </ChartShell>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1039,7 +1130,14 @@ function AssetsView({ period }: { period: PeriodResult }) {
                 </div>
                 <SeverityLegend caption="Loss band:" />
             </Panel>
-            <Panel title="Direct Connections" icon={Plug} note="Meters fed straight from the main inlet, bypassing the zones.">
+            <ChartShell
+                className="h-full"
+                title="Direct Connections"
+                description="Meters fed straight from the main inlet, bypassing the zones."
+                state={dcs.length > 0 ? "ready" : "empty"}
+                emptyMessage="No direct-connection meter reported a volume for this period."
+                interpretation="Direct connections bypass the zone bulk meters, so a change here moves the system balance without appearing in any zone."
+            >
                 <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                     <BarChart data={dcs.slice(0, 10).map((d) => ({ name: d.name.length > 24 ? d.name.slice(0, 24) + "…" : d.name, total: d.total }))} layout="vertical" margin={{ top: 4, right: 30, left: 10, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--wm-track)" horizontal={false} />
@@ -1049,7 +1147,7 @@ function AssetsView({ period }: { period: PeriodResult }) {
                         <Bar dataKey="total" fill={C.accent} radius={[0, 4, 4, 0]} barSize={14} {...chartMotion}/>
                     </BarChart>
                 </ResponsiveContainer>
-            </Panel>
+            </ChartShell>
         </div>
     );
 }
@@ -1433,6 +1531,13 @@ export function WaterMonthlyDashboard({
         lossDelta = { up: period.lossPct > prevFull.lossPct, text: `${(period.lossPct - prevFull.lossPct).toFixed(1)} pp YoY` };
     }
 
+    // Briefing findings, derived from the same balance the KPI deck shows —
+    // never from a separate or invented figure.
+    const briefingMetrics = useMemo(
+        () => buildMonthlyBriefing({ data, year, nMonths, sel: periodSel, period }),
+        [data, year, nMonths, periodSel, period],
+    );
+
     // A single month whose balance is arithmetically impossible (no supply, or a
     // loss outside 0–100%). We can state *that* the figures don't reconcile; we
     // cannot know *why*, so the banner below offers candidate explanations
@@ -1469,9 +1574,17 @@ export function WaterMonthlyDashboard({
                 onReset={resetRange}
             />
 
-            {tab === "overview" && <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />}
+            {/* KPI deck and briefing are page furniture, not Overview furniture:
+                Electricity and STP both render theirs outside any tab guard, so
+                the four headline figures and the briefing stay on screen on every
+                Monthly sub-tab. */}
+            <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />
 
-            <p className="text-[11px] -mt-2 px-1" style={{ color: "var(--wm-muted)" }}>
+            <SectionBoundary title="Water briefing">
+                <MonthlyBriefing metrics={briefingMetrics} periodLabel={periodLabel} />
+            </SectionBoundary>
+
+            <p className="text-[11px] px-1" style={{ color: "var(--wm-muted)" }}>
                 NAMA Bulk Account {data.meta.mainAccount} · {data.meta.totalMeters} meters · {periodLabel}
             </p>
 
