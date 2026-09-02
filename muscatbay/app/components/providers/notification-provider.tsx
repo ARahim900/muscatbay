@@ -116,7 +116,7 @@ function PermissionBanner({
         aria-label="Notifications permission"
         className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border shadow-xl"
       >
-        <Bell className="h-5 w-5 text-secondary flex-shrink-0" aria-hidden="true" />
+        <Bell className="h-5 w-5 text-mb-secondary-text flex-shrink-0" aria-hidden="true" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-foreground">
             Enable notifications?

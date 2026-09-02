@@ -218,7 +218,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
           <Card className="bg-card rounded-xl border border-border shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-secondary" />
+                <ClipboardList className="h-4 w-4 text-mb-secondary-text" />
                 Findings by Status
               </CardTitle>
             </CardHeader>
@@ -393,7 +393,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
         <Card className="bg-card rounded-xl border border-border shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Mailbox className="h-4 w-4 text-secondary" aria-hidden="true" />
+              <Mailbox className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
               Open Actions from AMC Correspondence
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-1">

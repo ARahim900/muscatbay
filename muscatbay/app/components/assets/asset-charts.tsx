@@ -109,7 +109,7 @@ function DistributionCard({
     return (
         <div className="rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard sm:p-5">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Icon className="h-4 w-4 text-secondary" aria-hidden="true" />
+                <Icon className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
                 {title}
             </h3>
             <p className="mt-1 text-xs text-muted-foreground">{note}</p>

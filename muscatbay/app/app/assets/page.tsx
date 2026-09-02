@@ -9,7 +9,7 @@ import {
 } from "@/actions/assets";
 import type { AssetDistributions, AssetSummary } from "@/functions/api/assets";
 import { StatsGrid } from "@/components/shared/stats-grid";
-import { TableBodySkeleton, Skeleton, StatsGridSkeleton } from "@/components/shared/skeleton";
+import { TableBodySkeleton, Skeleton, StatsGridSkeleton, ChartSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabNavigation } from "@/components/shared/tab-navigation";
@@ -33,8 +33,60 @@ import { useVirtualTableRows } from "@/hooks/useVirtualTableRows";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { sortAssets, type AssetSortField } from "@/components/assets/sort";
-import { AssetAttention, AssetRegisterProfile } from "@/components/assets/asset-charts";
 import { TruncatedText } from "@/components/assets/truncated-text";
+import dynamic from "next/dynamic";
+
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// `AssetRegisterProfile` draws three LiquidBarCharts and is the route's only
+// Recharts consumer; the five register tabs are tables. Both surfaces below
+// render on the Overview tab only, and only once the register fetch has come
+// back, so the chart chunk downloads alongside the data instead of sitting in
+// first-load JS.
+//
+// `AssetAttention` carries no chart of its own, but it LIVES in the same module
+// as the distribution charts: importing it statically would pull that module
+// (and its `LiquidBarChart` → `recharts` edge) straight back into the page
+// chunk, so it is loaded from the same lazy chunk as the charts beside it.
+//
+// Each fallback is sized to the block it stands in for, so nothing shifts when
+// the chunk lands.
+const AssetAttention = dynamic(
+    () => import("@/components/assets/asset-charts").then((m) => ({ default: m.AssetAttention })),
+    {
+        loading: () => (
+            <div
+                className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4"
+                role="status"
+                aria-busy="true"
+                aria-label="Loading assets needing attention"
+            >
+                {[0, 1, 2].map(i => <Skeleton key={i} className="h-[124px] w-full rounded-[10.5px]" />)}
+            </div>
+        ),
+        ssr: false,
+    },
+);
+const AssetRegisterProfile = dynamic(
+    () => import("@/components/assets/asset-charts").then((m) => ({ default: m.AssetRegisterProfile })),
+    {
+        // Mirrors AssetRegisterProfile's own loading branch exactly.
+        loading: () => (
+            <div
+                className="grid grid-cols-1 gap-3 lg:grid-cols-3 sm:gap-4"
+                role="status"
+                aria-busy="true"
+                aria-label="Loading register profile"
+            >
+                {[0, 1, 2].map(i => (
+                    <div key={i} className="rounded-[10.5px] border border-border bg-card p-4 sm:p-5">
+                        <ChartSkeleton height="h-[240px]" />
+                    </div>
+                ))}
+            </div>
+        ),
+        ssr: false,
+    },
+);
 
 type ActiveTab = 'overview' | 'lifecycle' | 'maintenance' | 'technical' | 'financial';
 
@@ -434,11 +486,14 @@ export default function AssetsPage() {
         }
     };
 
+    // The healthy band used --secondary, which is a background TINT: as text it
+    // measures ~1.7:1 on --card in light theme. --mb-secondary-text is the same
+    // brand teal deepened to clear AA, matching the danger/warning tokens above.
     const erlColor = (n: number | null | undefined) =>
         n === null || n === undefined ? 'text-muted-foreground' :
         n <= 2  ? 'text-[var(--mb-danger-text)]' :
         n <= 5  ? 'text-[var(--mb-warning-text)]' :
-                  'text-secondary';
+                  'text-[var(--mb-secondary-text)]';
 
     // Apply client-side sort for mock/demo data (Supabase handles it server-side)
     const rows = dataSource === 'mock'

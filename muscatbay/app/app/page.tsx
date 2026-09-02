@@ -384,7 +384,7 @@ function DashboardContent() {
                                             </p>
                                             <button
                                                 onClick={() => setActivityFilter('all')}
-                                                className="text-xs text-secondary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                                                className="text-xs text-mb-secondary-text hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
                                             >
                                                 Show all updates
                                             </button>

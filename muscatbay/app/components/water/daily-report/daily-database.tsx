@@ -124,7 +124,7 @@ export function DailyDatabase({
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2 sm:pb-2 md:pb-2">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Database className="h-4 w-4 text-secondary" aria-hidden="true" />
+                    <Database className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />
                     Daily Database — {month}
                 </CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">

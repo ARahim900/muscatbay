@@ -104,9 +104,13 @@ describe("--mb-secondary-text (accent-as-text token)", () => {
             ["--popover", token("--popover", "light")],
             ["--muted", token("--muted", "light")],
             ["--mb-secondary-light", token("--mb-secondary-light", "light")],
+            // StatsGrid's secondary-variant icon sits on the cyan KPI tile wash.
+            ["--chart-bg-cyan", token("--chart-bg-cyan", "light")],
             // The electricity "Meter:" chip is bg-secondary/10 over the card.
             ["bg-secondary/10 on --card", over(accent, card, 0.1)],
             ["bg-secondary/10 on --background", over(accent, background, 0.1)],
+            // The firefighting zone/system tags are bg-secondary/15 over the card.
+            ["bg-secondary/15 on --card", over(accent, card, 0.15)],
         ];
 
         for (const [label, surface] of surfaces) {
@@ -125,8 +129,10 @@ describe("--mb-secondary-text (accent-as-text token)", () => {
             ["--card", card],
             ["--popover", token("--popover", "dark")],
             ["--muted", token("--muted", "dark")],
+            ["--chart-bg-cyan", token("--chart-bg-cyan", "dark")],
             ["bg-secondary/10 on --card", over(accent, card, 0.1)],
             ["bg-secondary/10 on --background", over(accent, background, 0.1)],
+            ["bg-secondary/15 on --card", over(accent, card, 0.15)],
         ];
 
         for (const [label, surface] of surfaces) {
@@ -182,5 +188,74 @@ describe("accent call sites use the token, not the raw tint", () => {
         const page = source("app/electricity/page.tsx");
         expect(page).toContain('<Filter className="w-3.5 h-3.5 text-mb-secondary-text"');
         expect(page).toContain('<span className="text-xs font-medium text-mb-secondary-text">Meter:</span>');
+    });
+
+    /**
+     * Shared components render on the page/card surface in every module, so one
+     * raw --secondary here reintroduces the defect app-wide. These assert the
+     * whole file is clean rather than pinning a line, which is what actually
+     * holds as the components change.
+     */
+    it.each([
+        "components/shared/findings-register.tsx",
+        "components/shared/inspection.tsx",
+        "components/shared/stats-grid.tsx",
+        "components/alerts/alerts-feed.tsx",
+        "components/dashboard/ytd-panel.tsx",
+        "components/providers/notification-provider.tsx",
+        "components/stp/plant-watch.tsx",
+        "components/hvac/overview-tab.tsx",
+        "components/firefighting/firefighting-ui.tsx",
+        "components/assets/asset-charts.tsx",
+        "components/charts/dashboard-charts.tsx",
+        "components/water/date-range-picker.tsx",
+        "components/water/daily-report/zone-watch.tsx",
+        "components/water/daily-report/daily-database.tsx",
+        "components/water/daily-report/daily-exceptions.tsx",
+        "components/water/daily-report/inline-dc-panel.tsx",
+        "components/water/daily-report/inline-zone-analytics.tsx",
+        "app/page.tsx",
+        "app/pest-control/page.tsx",
+    ])("%s carries no unqualified accent-as-text on a light surface", (file) => {
+        const text = source(file);
+        // `dark:text-secondary` is fine — it only paints on the dark surfaces
+        // where brand teal already clears AA. Bare `text-secondary` is not, and
+        // neither is `text-mb-secondary`, which is the same tint under its
+        // legacy name. `-foreground` / `-text` suffixes are excluded by the
+        // trailing lookahead: those are the correct ink tokens.
+        expect(text, `${file} colours text with the raw accent tint`)
+            .not.toMatch(/(?<!dark:(?:[\w-]+:)*)text-secondary(?![\w-])/);
+        expect(text, `${file} colours text with the --mb-secondary background tint`)
+            .not.toMatch(/text-mb-secondary(?![\w-])/);
+    });
+
+    it("keeps raw --secondary where the accent sits on the purple table header band", () => {
+        // inline-shared's SortIcon renders inside `thBase`, a solid --primary
+        // header. Same reasoning as the primary tab pill above.
+        const inlineShared = source("components/water/daily-report/inline-shared.tsx");
+        expect(inlineShared).toContain("bg-[var(--primary)] text-[var(--primary-foreground)]");
+        expect(inlineShared).toContain('<ChevronUp className="h-3.5 w-3.5 text-secondary" />');
+    });
+
+    it("keeps raw --secondary on the sidebar rail, which is dark purple in both themes", () => {
+        expect(source("components/layout/sidebar.tsx")).toContain('<span className="text-secondary">BAY</span>');
+        for (const theme of ["light", "dark"] as const) {
+            expect(contrast(token("--secondary", theme), token("--sidebar", theme))).toBeGreaterThanOrEqual(AA_TEXT);
+        }
+    });
+});
+
+describe("focus indicators read --ring, never the accent tint", () => {
+    it("the electricity meter and type selects use the house --ring focus utility", () => {
+        const page = source("app/electricity/page.tsx");
+        // BRAND_DESIGN.md §2.5: --ring is tuned per theme for the 3:1 WCAG
+        // 1.4.11 floor; --secondary at 40% alpha on a white card is not.
+        expect(page).not.toContain("ring-secondary/40");
+        expect(page).toContain(
+            "border border-border bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        );
+        expect(page).toContain(
+            "border border-secondary/40 bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        );
     });
 });

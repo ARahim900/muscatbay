@@ -824,7 +824,7 @@ export default function ElectricityPage() {
                                                 value={analysisType}
                                                 onChange={(e) => setAnalysisType(e.target.value)}
                                                 aria-label="Filter by meter type"
-                                                className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40"
+                                                className="px-2.5 py-1.5 rounded-lg border border-border bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             >
                                                 <option value="All">All ({meters.length})</option>
                                                 {meterTypes.map((t) => (
@@ -842,7 +842,7 @@ export default function ElectricityPage() {
                                                     value={selectedMeter}
                                                     onChange={(e) => setSelectedMeter(e.target.value)}
                                                     aria-label={`Select individual ${analysisType} meter`}
-                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/40 w-full max-w-full sm:max-w-[280px]"
+                                                    className="px-2.5 py-1.5 rounded-lg border border-secondary/40 bg-card text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring w-full max-w-full sm:max-w-[280px]"
                                                 >
                                                     <option value="All">All {analysisType} ({metersOfSelectedType.length})</option>
                                                     {metersOfSelectedType.map((m) => (

@@ -17,7 +17,7 @@ import {
 import type {
     AmcContractorDetails, AmcContractorExpiry, AmcContractorPricing,
 } from "@/entities/contractor";
-import { StatsGridSkeleton, TableSkeleton } from "@/components/shared/skeleton";
+import { Skeleton, StatsGridSkeleton, TableSkeleton } from "@/components/shared/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
@@ -47,7 +47,36 @@ import { ExpiryBadge, expiryStatus } from "@/components/contractors/contract-dat
 import { RenewalsPanel } from "@/components/contractors/renewals";
 import { TermsPanel } from "@/components/contractors/terms";
 import { PricingPanel } from "@/components/contractors/pricing";
-import { YearlyCostChart } from "@/components/contractors/yearly-chart";
+import dynamic from "next/dynamic";
+
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// The expense-by-year bar chart is this route's ONLY Recharts consumer — every
+// other tab is a table, a renewals list or a terms panel — so a static import
+// put ~330 kB of charting library into the first load of a page that lands on
+// the AMC Tracker tab and may never show a chart at all. It can only render on
+// the Yearly Costs tab, after the contractor fetch has resolved, so the chunk
+// arrives well before anything needs it.
+//
+// The fallback is sized to the real card: title, sub-line and the chart's own
+// 260px plot box, so the matrix below it does not jump when the chunk lands.
+const YearlyCostChart = dynamic(
+    () => import("@/components/contractors/yearly-chart").then((m) => ({ default: m.YearlyCostChart })),
+    {
+        loading: () => (
+            <div
+                className="rounded-[10.5px] border border-border bg-card p-4 shadow-card-standard sm:p-5"
+                role="status"
+                aria-busy="true"
+                aria-label="Loading expense by contract year"
+            >
+                <Skeleton className="h-5 w-52 max-w-full" />
+                <Skeleton className="mt-1 h-4 w-96 max-w-full" />
+                <Skeleton className="h-[260px] w-full rounded-[10.5px]" />
+            </div>
+        ),
+        ssr: false,
+    },
+);
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -739,7 +768,7 @@ export default function ContractorsPage() {
                                 {c.note && <p className="text-xs text-muted-foreground line-clamp-2">{c.note}</p>}
                                 <button
                                     onClick={() => openPdfModal(c.id, c.contractor, c.contract_ref || '', c.contract_pdf_url)}
-                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-secondary' : 'text-muted-foreground'}`}
+                                    className={`text-xs flex items-center gap-1 mt-2 ${c.contract_pdf_url ? 'text-mb-secondary-text' : 'text-muted-foreground'}`}
                                 >
                                     {c.contract_pdf_url ? <><FileText className="w-3 h-3" /> View Contract PDF</> : <><Link className="w-3 h-3" /> Add PDF Link</>}
                                 </button>
@@ -815,7 +844,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "Add PDF link"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-secondary hover:bg-secondary/10'
+                                                        ? 'text-mb-secondary-text hover:bg-secondary/10'
                                                         : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/60'
                                                 }`}
                                             >
@@ -876,8 +905,13 @@ export default function ContractorsPage() {
                         </div>
                     </TableToolbar>
 
-                    {/* Chart first: the shape of the spend before the detail matrix. */}
-                    <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
+                    {/* Chart first: the shape of the spend before the detail matrix.
+                        Guarded on the row count because the lazy chunk's fallback would
+                        otherwise flash a skeleton for a chart that renders nothing —
+                        YearlyCostChart returns null when there are no years. */}
+                    {matrix.rows.length > 0 && (
+                        <YearlyCostChart rows={matrix.rows.map(r => ({ year: r.year, label: r.label, total: r.total }))} />
+                    )}
 
                     {yearlyCosts.length === 0 ? (
                         <div className="bg-card rounded-xl border border-border">
@@ -1082,7 +1116,7 @@ export default function ContractorsPage() {
                                     {c.contract_pdf_url && (
                                         <button
                                             onClick={() => openPdfModal(null, c.Contractor || '', c["Service Provided"] || '', c.contract_pdf_url)}
-                                            className="text-xs text-secondary flex items-center gap-1 mt-2"
+                                            className="text-xs text-mb-secondary-text flex items-center gap-1 mt-2"
                                         >
                                             <FileText className="w-3 h-3" /> View Contract PDF
                                         </button>
@@ -1158,7 +1192,7 @@ export default function ContractorsPage() {
                                                 title={c.contract_pdf_url ? "View Contract PDF" : "No PDF uploaded"}
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
-                                                        ? 'text-secondary hover:bg-secondary/10'
+                                                        ? 'text-mb-secondary-text hover:bg-secondary/10'
                                                         : 'text-muted-foreground/70 dark:text-muted-foreground cursor-not-allowed'
                                                 }`}
                                                 disabled={!c.contract_pdf_url}

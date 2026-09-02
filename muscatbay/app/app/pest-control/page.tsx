@@ -167,7 +167,7 @@ export default function PestControlPage() {
                                         aria-label="Loading pest control database"
                                         className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-card"
                                     >
-                                        <Loader2 className="h-6 w-6 motion-safe:animate-spin text-secondary" aria-hidden="true" />
+                                        <Loader2 className="h-6 w-6 motion-safe:animate-spin text-mb-secondary-text" aria-hidden="true" />
                                         <p className="text-xs text-muted-foreground">Loading operations database…</p>
                                     </div>
                                 )}

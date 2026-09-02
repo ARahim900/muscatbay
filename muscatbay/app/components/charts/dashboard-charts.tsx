@@ -141,7 +141,7 @@ function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps)
                 >
                     <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                         <CardTitle className="flex items-center gap-2 text-base @md:text-lg">
-                            <Droplets className="h-5 w-5 text-mb-secondary" />
+                            <Droplets className="h-5 w-5 text-mb-secondary-text" />
                             Water Production Trend
                             <ArrowUpRight className="h-4 w-4 ml-auto text-muted-foreground opacity-40 group-hover/chart:opacity-100 transition-opacity" />
                         </CardTitle>

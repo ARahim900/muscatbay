@@ -83,7 +83,7 @@ function WatchPanel({
         <Card className="card-elevated">
             <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2 sm:pb-2 md:pb-2">
                 <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    {Icon && <Icon className="h-4 w-4 text-secondary" aria-hidden="true" />}
+                    {Icon && <Icon className="h-4 w-4 text-mb-secondary-text" aria-hidden="true" />}
                     {title}
                 </CardTitle>
                 {note && <p className="text-xs text-muted-foreground mt-1">{note}</p>}
