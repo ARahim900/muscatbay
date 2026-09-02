@@ -237,9 +237,11 @@ export function BottomNav() {
                   Clear all
                 </button>
               )}
+              {/* ≥44px on touch (WCAG 2.5.5), same contract as `components/ui/button.tsx`.
+                  The sheet is mobile-only, so this is nearly always a coarse pointer. */}
               <button
                 onClick={() => setOpenSheet(null)}
-                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-white/[0.06] text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="w-9 h-9 pointer-coarse:min-h-11 pointer-coarse:min-w-11 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-white/[0.06] text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 aria-label="Close menu"
               >
                 <X className="w-4 h-4" />

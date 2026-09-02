@@ -57,8 +57,12 @@ export function ExportButton<T extends object>({
             disabled={empty}
             aria-label={label}
             title={empty ? 'No rows to export' : `Download ${rows.length.toLocaleString()} row${rows.length === 1 ? '' : 's'} as CSV`}
+            /* Below `sm` the label is hidden and only the icon shows, so the
+               touch floor has to cover WIDTH as well as height — same
+               `pointer-coarse:min-h-11 pointer-coarse:min-w-11` contract as
+               `components/ui/button.tsx`. Mouse sizing is unchanged. */
             className={cn(
-                "flex items-center gap-2 px-3 py-1.5 min-h-[36px] text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
+                "flex items-center justify-center gap-2 px-3 py-1.5 min-h-[36px] pointer-coarse:min-h-11 pointer-coarse:min-w-11 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed",
                 className
             )}
         >
