@@ -13,9 +13,8 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
+    ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell,
 } from "recharts";
-import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import {
     AlertTriangle, ChevronRight, Droplets, Gauge, MapPin, TrendingUp, type LucideIcon,
 } from "lucide-react";
@@ -386,7 +385,6 @@ function ZoneDayHeatmap({
         >
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-[11px]">
-                    <caption className="sr-only">Daily water zone status and recorded distribution loss.</caption>
                     <thead>
                         <tr>
                             <th scope="col" className="sticky left-0 z-10 bg-card px-2 py-1.5 text-left font-semibold text-muted-foreground">Zone</th>

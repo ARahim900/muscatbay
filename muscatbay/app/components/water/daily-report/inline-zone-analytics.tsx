@@ -5,10 +5,9 @@
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    AreaChart, Area, XAxis, YAxis, Tooltip,
+    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
     ReferenceLine, Legend, Line,
 } from "recharts";
-import { SafeResponsiveContainer as ResponsiveContainer } from "@/components/charts/chart-container";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";

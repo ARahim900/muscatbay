@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import {
     LucideIcon, TrendingUp, TrendingDown, Minus,
-    AlertTriangle, CheckCircle2, Clock, HelpCircle, XCircle, ShieldAlert,
+    AlertTriangle, CheckCircle2, Clock, HelpCircle, XCircle,
 } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import { CountUp } from "@/components/motion/count-up";
@@ -86,25 +86,6 @@ const variantTileBg: Record<StatVariant, string> = {
     default: "var(--muted)",
 };
 
-const variantAccent: Record<StatVariant, string> = {
-    primary: "var(--primary)",
-    secondary: "var(--secondary)",
-    success: "var(--status-normal)",
-    warning: "var(--status-warning)",
-    danger: "var(--status-danger)",
-    info: "var(--status-info)",
-    water: "var(--module-water)",
-    default: "var(--muted-foreground)",
-};
-
-const DATA_QUALITY_LABEL: Record<NonNullable<StatItem["dataQuality"]>, string> = {
-    incomplete: "Incomplete data",
-    stale: "Stale data",
-    estimated: "Estimated",
-    "under-review": "Under review",
-    anomaly: "Data anomaly",
-};
-
 export function StatsGrid({ stats, className }: StatsGridProps) {
     const gridRef = useScrollAnimation<HTMLDivElement>(SCROLL_ANIMATION_CONFIG);
 
@@ -139,108 +120,121 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
 function StatTile({ stat, index }: { stat: StatItem; index: number }) {
     const justChanged = useValueChanged(stat.value);
 
-    const variant = stat.variant || "primary";
-    const iconClass = variantIconClass[variant];
-    const tileBg = stat.bgColor ?? variantTileBg[variant];
-    const accent = stat.color ?? variantAccent[variant];
+            const variant = stat.variant || "primary";
+            const iconClass = variantIconClass[variant];
+            const tileBg = stat.bgColor ?? variantTileBg[variant];
 
-    const isGoodTrend = stat.trend === 'neutral' ? false :
-        stat.invertTrend ? stat.trend === 'down' : stat.trend === 'up';
-    const isBadTrend = stat.trend === 'neutral' ? false :
-        stat.invertTrend ? stat.trend === 'up' : stat.trend === 'down';
+            // Resolve whether the current trend direction is "good" or "bad".
+            // invertTrend=true  → down is good (savings: energy, water, cost)
+            // invertTrend=false → up is good  (output: STP treated water, income)
+            const isGoodTrend = stat.trend === 'neutral' ? false :
+                stat.invertTrend
+                    ? stat.trend === 'down'
+                    : stat.trend === 'up';
 
-    const cardContent = (
-        <>
-            <span className="absolute inset-x-0 top-0 h-[3px]" style={{ backgroundColor: accent }} aria-hidden="true" />
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground sm:text-[11px]">
-                        {stat.label}
-                    </p>
-                    <h3 className={cn(
-                        "break-words text-lg font-semibold tabular-nums leading-tight tracking-tight text-foreground sm:text-xl md:text-2xl",
-                        justChanged && "mb-value-changed-ink"
-                    )}>
-                        {stat.accessibleValue && stat.accessibleValue !== stat.value ? (
-                            <>
-                                <span aria-hidden="true"><CountUp value={stat.value} delay={index * 0.06} /></span>
-                                <span className="sr-only">{stat.accessibleValue}</span>
-                            </>
-                        ) : <CountUp value={stat.value} delay={index * 0.06} />}
-                        {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground sm:text-sm">{stat.unit}</span>}
-                    </h3>
-                    {stat.subtitle && (
+            const isBadTrend = stat.trend === 'neutral' ? false :
+                stat.invertTrend
+                    ? stat.trend === 'up'
+                    : stat.trend === 'down';
+
+            const cardContent = (
+                <>
+                    {/* Icon tile on the left + label/value to its right — mirrors the
+                        water/monthly Kpi tiles (the app-wide reference). */}
+                    <div className="flex items-center gap-2.5">
+                        <div
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
+                            style={{ background: tileBg }}
+                        >
+                            <stat.icon
+                                className={cn("h-4 w-4", !stat.color && iconClass)}
+                                style={stat.color ? { color: stat.color } : undefined}
+                            />
+                        </div>
+                        <div className="min-w-0">
+                            {/* Wrap to two lines instead of truncating mid-word on
+                                narrow cards ("STP ECONOMIC I…"). */}
+                            <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
+                                {stat.label}
+                            </p>
+                            <h3 className={cn(
+                                "break-words text-lg font-semibold tabular-nums leading-tight tracking-tight text-foreground sm:text-xl",
+                                justChanged && "mb-value-changed-ink"
+                            )}>
+                                <CountUp value={stat.value} delay={index * 0.06} />
+                                {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{stat.unit}</span>}
+                            </h3>
+                        </div>
+                    </div>
+
+                    {/* Trend indicator — small text below, colored green/red */}
+                    {stat.trend && stat.trendValue && stat.trendValue !== "—" && (
+                        <div className="mt-2 sm:mt-3 flex items-center text-xs sm:text-sm">
+                            <span className={cn(
+                                "flex items-center font-medium",
+                                isGoodTrend  ? "text-[var(--mb-success-text)]" :
+                                isBadTrend   ? "text-[var(--mb-danger-text)]" :
+                                               "text-muted-foreground"
+                            )}>
+                                {stat.trend === 'up'      && <TrendingUp  size={14} className="me-1" />}
+                                {stat.trend === 'down'    && <TrendingDown size={14} className="me-1" />}
+                                {stat.trend === 'neutral' && <Minus        size={14} className="me-1" />}
+                                {stat.trendValue}
+                            </span>
+                            {(stat.trendContext ?? "vs last month") && (
+                                <span className="ms-1.5 text-xs text-muted-foreground">{stat.trendContext ?? "vs last month"}</span>
+                            )}
+                        </div>
+                    )}
+
+                    {stat.subtitle && (!stat.trendValue || stat.trendValue === "—") && (
                         <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground sm:text-xs">{stat.subtitle}</p>
                     )}
-                </div>
-                <div
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 ease-out motion-safe:group-hover/stat:-rotate-3 motion-safe:group-hover/stat:scale-105"
-                    style={{ background: tileBg }}
-                >
-                    <stat.icon
-                        className={cn("h-5 w-5", !stat.color && iconClass)}
-                        style={stat.color ? { color: stat.color } : undefined}
-                        aria-hidden="true"
-                    />
-                </div>
-            </div>
 
-            <div className="mt-auto flex min-h-6 items-end justify-between gap-2 pt-3 text-xs">
-                <div className="min-w-0">
                     {stat.status && (() => {
                         const { Icon: StatusIcon, token } = STATUS_UI[stat.status];
                         return (
-                            <span className="inline-flex items-center gap-1.5 font-medium capitalize text-muted-foreground">
-                                <StatusIcon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" style={{ color: token }} />
-                                {stat.status}
-                            </span>
+                            <div className="mt-2 flex items-center gap-1.5 text-xs">
+                                <StatusIcon
+                                    aria-hidden="true"
+                                    className="w-3.5 h-3.5 flex-shrink-0"
+                                    style={{ color: token }}
+                                />
+                                <span className="text-muted-foreground capitalize font-medium">{stat.status}</span>
+                            </div>
                         );
                     })()}
-                    {stat.dataQuality && (
-                        <span className="inline-flex items-center gap-1.5 font-medium text-[var(--mb-warning-text)]">
-                            <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                            {DATA_QUALITY_LABEL[stat.dataQuality]}
-                        </span>
+                    {stat.lastUpdated && (
+                        <p className="mt-1 text-[11px] text-muted-foreground/70 tabular-nums">Updated {stat.lastUpdated}</p>
                     )}
-                    {stat.lastUpdated && !stat.status && !stat.dataQuality && (
-                        <span className="text-[11px] tabular-nums text-muted-foreground">Updated {stat.lastUpdated}</span>
-                    )}
-                </div>
-                {stat.trend && stat.trendValue && stat.trendValue !== "—" && (
-                    <span className={cn(
-                        "ml-auto inline-flex shrink-0 items-center font-semibold",
-                        isGoodTrend ? "text-[var(--mb-success-text)]" :
-                        isBadTrend ? "text-[var(--mb-danger-text)]" : "text-muted-foreground"
-                    )}>
-                        {stat.trend === 'up' && <TrendingUp className="me-1 h-3.5 w-3.5" aria-hidden="true" />}
-                        {stat.trend === 'down' && <TrendingDown className="me-1 h-3.5 w-3.5" aria-hidden="true" />}
-                        {stat.trend === 'neutral' && <Minus className="me-1 h-3.5 w-3.5" aria-hidden="true" />}
-                        {stat.trendValue}
-                        {(stat.trendContext ?? "vs last month") && <span className="ms-1 hidden font-normal text-muted-foreground xl:inline">{stat.trendContext ?? "vs last month"}</span>}
-                    </span>
-                )}
-            </div>
-        </>
-    );
+                </>
+            );
 
-    const baseCardClassName = cn(
-        "mb-glow group/stat relative flex min-h-32 flex-col overflow-hidden rounded-xl border border-border bg-card p-4 shadow-card-standard transition-[box-shadow,border-color,transform] duration-200 ease-out hover:border-secondary/40 hover:shadow-md motion-safe:hover:-translate-y-0.5 motion-safe:active:translate-y-0",
+            const baseCardClassName = cn(
+        "mb-glow group/stat min-h-24 overflow-hidden rounded-lg border border-border bg-card p-3 shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) hover:border-secondary/40 hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] motion-safe:active:scale-[0.99] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]",
+        // Only present for the ~1.4s after this figure actually moved.
         justChanged && "mb-value-changed"
     );
 
-    const accessibleValue = stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`;
-    return stat.href ? (
-        <Link
-            href={stat.href}
-            data-glow
-            aria-label={`${stat.label}: ${accessibleValue}. View details.`}
-            className={cn(baseCardClassName, "cursor-pointer")}
-        >
-            {cardContent}
-        </Link>
-    ) : (
-        <div data-glow role="group" aria-label={`${stat.label}: ${accessibleValue}`} className={baseCardClassName}>
-            {cardContent}
-        </div>
-    );
+            return stat.href ? (
+                <Link
+                    key={stat.label}
+                    href={stat.href}
+                    data-glow
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                    className={cn(baseCardClassName, "block cursor-pointer")}
+                >
+                    {cardContent}
+                </Link>
+            ) : (
+                <div
+                    key={stat.label}
+                    data-glow
+                    role="group"
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}`}
+                    className={baseCardClassName}
+                >
+                    {cardContent}
+                </div>
+            );
 }
