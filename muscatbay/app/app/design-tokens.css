@@ -84,8 +84,12 @@
   --shadow-card-hover: var(--mb-shadow-card-hover-d);
 }
 
-/* ---------- 3. Tailwind theme — this is what generates the utilities ---------- */
-@theme inline {
+/* ---------- 3. Tailwind theme — this is what generates the utilities ----------
+   `static`: Tailwind normally emits only the theme variables a utility class
+   uses. ChartFrame's `chartTheme` reads `var(--color-chart-*)`, `--color-line`,
+   `--radius-control` … from JavaScript, so every token must exist as a real
+   CSS variable — without `static` the charts render black. */
+@theme inline static {
   /* Typeface: DM Sans via next/font (variable --font-dm-sans) */
   --font-sans: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
 

@@ -121,8 +121,8 @@ const CALLOUT = "flex items-start gap-2 rounded-card px-3 py-2 text-caption";
 /* ---------- UI atoms ---------- */
 
 /** Explanatory line under a card header — wraps freely so the 56 px header never has to. */
-function Note({ children }: { children: ReactNode }) {
-    return <p className="mb-3 text-caption text-muted">{children}</p>;
+function Note({ children, className }: { children: ReactNode; className?: string }) {
+    return <p className={cn("mb-3 text-caption text-muted", className)}>{children}</p>;
 }
 
 /**
@@ -431,7 +431,7 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                 ]}
                             >
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                                    <ComposedChart data={trend} margin={{ top: 6, right: 4, left: -10, bottom: 0 }}>
+                                    <ComposedChart data={trend} margin={{ top: 6, right: 4, left: 0, bottom: 0 }}>
                                         <CartesianGrid {...chartTheme.grid} />
                                         <XAxis dataKey="m" {...chartTheme.axis} />
                                         <YAxis yAxisId="vol" {...chartTheme.axis} />
@@ -585,7 +585,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                                 <Note>Gap between the bars each month is the trunk-main loss (A1 − A2). A wildly swinging or negative gap points to meter-reading timing, not real leakage.</Note>
                                 <ChartFrame series={3} legend={[{ label: "Main bulk (A1)", color: SERIES.supply }, { label: "Reached zones (A2)", color: SERIES.dist }, { label: "Trunk loss", color: SERIES.loss }]}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                                        <ComposedChart data={tmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
+                                        <ComposedChart data={tmonthly} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
                                             <CartesianGrid {...chartTheme.grid} />
                                             <XAxis dataKey="m" {...chartTheme.axis} />
                                             <YAxis {...chartTheme.axis} />
@@ -748,7 +748,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                             <SectionCard.Body>
                                 <ChartFrame series={3} legend={[{ label: "Supply", color: SERIES.dist }, { label: "Consumption", color: SERIES.cons }, { label: "Loss", color: SERIES.loss }]}>
                                     <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                                        <ComposedChart data={zmonthly} margin={{ top: 6, right: 8, left: -10, bottom: 0 }}>
+                                        <ComposedChart data={zmonthly} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
                                             <CartesianGrid {...chartTheme.grid} />
                                             <XAxis dataKey="m" {...chartTheme.axis} />
                                             <YAxis {...chartTheme.axis} />
@@ -926,7 +926,7 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
                         <SectionCard.Body>
                             <ChartFrame series={2} height="chart-lg" legend={[{ label: "Zone supply", color: SERIES.dist }, { label: "Consumption", color: SERIES.cons }]}>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
-                                    <BarChart data={real.map((z) => ({ name: z.name, bulk: z.bulk, end: z.end }))} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                                    <BarChart data={real.map((z) => ({ name: z.name, bulk: z.bulk, end: z.end }))} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                                         <CartesianGrid {...chartTheme.grid} />
                                         <XAxis dataKey="name" {...chartTheme.axis} interval={0} angle={-15} textAnchor="end" height={50} />
                                         <YAxis {...chartTheme.axis} />
@@ -1030,13 +1030,13 @@ function AssetsView({ period }: { period: PeriodResult }) {
                     <SectionCard.Header
                         icon={Building2}
                         title="Buildings — bulk vs apartment meters"
-                        action={<div className="flex items-center gap-2">
-                            <PanelExport onClick={() => downloadRows(blds.map((b) => { const s = sev(b.lossPct); return { Building: b.name.replace(" Building Bulk Meter", ""), Zone: b.zone, "Bulk (m3)": b.bulk.toFixed(1), "Apartments (m3)": b.sub.toFixed(1), "Loss (m3)": b.loss.toFixed(1), "Loss %": b.lossPct, Band: s.label }; }), "water-building-balance.csv")} />
-                            <RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />
-                        </div>}
+                        action={<PanelExport onClick={() => downloadRows(blds.map((b) => { const s = sev(b.lossPct); return { Building: b.name.replace(" Building Bulk Meter", ""), Zone: b.zone, "Bulk (m3)": b.bulk.toFixed(1), "Apartments (m3)": b.sub.toFixed(1), "Loss (m3)": b.loss.toFixed(1), "Loss %": b.lossPct, Band: s.label }; }), "water-building-balance.csv")} />}
                     />
                     <SectionCard.Body>
-                        <Note>Building bulk meter minus the sum of its apartment meters. A positive gap points at in-building leakage or a meter problem.</Note>
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                            <Note className="mb-0 max-w-prose">Building bulk meter minus the sum of its apartment meters. A positive gap points at in-building leakage or a meter problem.</Note>
+                            <RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />
+                        </div>
                         <div className="overflow-auto rounded-control border border-line" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
                             <table className="w-full">
                                 <caption className="sr-only">

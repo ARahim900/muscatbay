@@ -562,7 +562,7 @@ export function ZoneWatch({
                     >
                         <ChartFrame series={2} legend={[{ label: "Zone supply (L2)", color: chartTheme.series[1] }, { label: "Metered (ΣL3)", color: chartTheme.series[0] }]}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={supplyBars} margin={{ top: 4, right: 8, left: -10, bottom: 0 }}>
+                                <BarChart data={supplyBars} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                                     <CartesianGrid {...chartTheme.grid} />
                                     <XAxis dataKey="name" {...chartTheme.axis} interval={0} angle={-15} textAnchor="end" height={50} />
                                     <YAxis {...chartTheme.axis} />

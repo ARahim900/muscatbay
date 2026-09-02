@@ -1030,10 +1030,12 @@ tables that no screen reads.
 
 ## 5. In-flight work (open PRs)
 
-- **Design System v2.0 — foundation + Water (2026-09-02).** Branch
+- **#79 Design System v2.0 — foundation + Water (2026-09-02).** Branch
   `claude/supabase-service-role-setup-zgjzno` (re-pointed at `main` after its
   earlier hardening PR was closed), **draft PR — not to be merged until the
-  owner has reviewed the Vercel preview in light and dark mode.** What it
+  owner has reviewed the Vercel preview in light and dark mode**
+  (`muscatbay-git-claude-supabase-servic-76af09-arahim900s-projects.vercel.app/water`;
+  1440 px light + dark captures in `muscatbay/app/screenshots/`). What it
   carries: the owner-supplied UI kit installed per its `INSTALL.md` —
   `/DESIGN_SYSTEM.md` at the repo root (the only design reference; the two
   older documents carry SUPERSEDED banners), `app/design-tokens.css` imported

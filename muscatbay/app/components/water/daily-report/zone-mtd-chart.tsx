@@ -65,7 +65,7 @@ export function ZoneMtdChart({
                     ]}
                 >
                     <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={data} margin={{ top: 6, right: 8, left: -6, bottom: 0 }}>
+                        <ComposedChart data={data} margin={{ top: 6, right: 8, left: 0, bottom: 0 }}>
                             <CartesianGrid {...chartTheme.grid} />
                             <XAxis dataKey="label" {...chartTheme.axis} minTickGap={16} />
                             <YAxis {...chartTheme.axis} />
