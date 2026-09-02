@@ -921,11 +921,17 @@ export default function STPPage() {
                     title="STP Plant"
                     description="Water Treatment Management"
                 />
+                {/* staleAfterDays stays at the component default of 2 — stated
+                    explicitly so it reads as a decision, not an omission. Water
+                    and Electricity raise it to 45 because they are monthly
+                    datasets; the STP log is filled in daily, so a gap of more
+                    than two days is genuinely worth flagging. */}
                 <PageStatusBar
                     isConnected={isLiveData}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
                     latestDataDate={latestDataDate}
+                    staleAfterDays={2}
                     error={loadError}
                 >
                     <span className="text-[10px] text-muted-foreground">{allOperations.length} daily records</span>

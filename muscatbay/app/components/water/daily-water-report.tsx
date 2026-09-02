@@ -415,11 +415,17 @@ export function DailyWaterReport() {
 
             {reportData && (
                 <>
-                    {/* ── Section tabs (mirrors the Monthly dashboard) ────── */}
+                    {/* ── Section tabs (mirrors the Monthly dashboard) ──────
+                        Secondary/underline, because these sit one level BELOW
+                        the page's Monthly/Daily/Satellite tabs. The Monthly
+                        dashboard's equivalent tab set already declares this;
+                        omitting it here fell through to the solid primary pill
+                        and made two tab sets of the same rank look different. */}
                     <TabNavigation
                         activeTab={activeTab}
                         onTabChange={(key) => setActiveTab(key as DailyTab)}
                         tabs={DAILY_TABS}
+                        variant="secondary"
                         ariaLabel="Water daily sections"
                     />
 

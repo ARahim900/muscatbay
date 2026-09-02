@@ -11,6 +11,11 @@ on:
     paths:
       - "muscatbay/app/**"
       - ".github/workflows/quality.yml"
+  # The RLS policies decide who can read and write production data. Nothing in
+  # the app changes when they rot, so a weekly run catches drift that no PR
+  # would otherwise touch.
+  schedule:
+    - cron: "0 3 * * 1"
 
 permissions:
   contents: read
@@ -62,3 +67,27 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+
+  # Applies both security migrations to a throwaway PostgreSQL cluster and
+  # asserts who may read and write what. This is the only automated check that
+  # exercises the RLS policies themselves: every TypeScript test mocks Supabase
+  # away, so a policy could be deleted without turning a single unit test red.
+  #
+  # Independent of `verify` on purpose — a lint failure should not hide a
+  # broken access-control policy, and vice versa.
+  sql-security:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: muscatbay/app
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL 16 server binaries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-16
+
+      - name: Run RLS, invitation and alert-incident SQL tests
+        run: npm run test:sql:local
