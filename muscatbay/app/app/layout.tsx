@@ -2,7 +2,6 @@ import "./globals.css";
 
 import type { Metadata } from "next";
 import { Providers } from "@/components/providers/app-providers";
-import { NotificationProvider } from "@/components/providers/notification-provider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { Geist_Mono, Inter } from "next/font/google";
@@ -132,12 +131,19 @@ export default async function RootLayout({
       </head>
       <body className={`${interSans.className} ${interSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <RegisterSW />
+        {/* NotificationProvider is mounted by LayoutRouter, not here. It runs
+            useOperationalAlerts, which reads water, contractor and STP data and
+            opens a realtime channel — none of which a signed-out visitor is
+            entitled to. Mounted at the root it also ran on /login, /signup and
+            the public legal pages. That was invisible while every signed-in
+            role could read everything; once RLS landed, anon is denied, so the
+            public login page fired four failing reads and an unauthorised
+            WebSocket on a repeating interval. LayoutRouter already knows which
+            routes are public — that is the right place to make the decision. */}
         <Providers>
-          <NotificationProvider>
-            <LayoutRouter initialAuth={initialAuth}>
-              {children}
-            </LayoutRouter>
-          </NotificationProvider>
+          <LayoutRouter initialAuth={initialAuth}>
+            {children}
+          </LayoutRouter>
         </Providers>
       </body>
     </html>

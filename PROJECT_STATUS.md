@@ -1186,6 +1186,20 @@ tables that no screen reads.
     empty, so no new account can be created. Enforcement comes from the
     `on_auth_user_created` trigger, which is already installed — it does not
     wait on the Auth Hook.
+  - **One app-side regression surfaced by the change, found and fixed.**
+    `NotificationProvider` was mounted in the root layout, outside
+    `LayoutRouter`, so it ran on every route including `/login`, `/signup` and
+    the public legal pages. It drives `useOperationalAlerts`, which reads
+    water, contractor and STP tables and opens a realtime channel. That was
+    invisible while every signed-in role could read everything — but anon was
+    doing it too, which is precisely the hole RLS closed. Post-RLS the public
+    login page fired four failing reads plus an unauthorised WebSocket on a
+    repeating interval. The provider now wraps only the authenticated branch of
+    `LayoutRouter`, which already knew which routes are public; all six context
+    consumers live inside that branch, so no auth page loses its provider.
+    Verified in a real browser: `/login`, `/signup` and `/privacy` now issue
+    **zero** Supabase requests and log **zero** console errors, with the sign-in
+    form intact.
 - **Roles assigned and dormant accounts removed (2026-09-02)** — on the owner's
   instruction, the account estate went from **11 admins out of 12** to **one
   admin and eight viewers**. Until this, the RLS boundary applied the same day
