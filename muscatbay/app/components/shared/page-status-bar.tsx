@@ -10,7 +10,7 @@ interface PageStatusBarProps {
     lastUpdated: Date | null;
     /**
      * Newest reading/record actually present in the data — the honest recency
-     * signal. When supplied it becomes the primary indicator ("Data through
+     * signal. When supplied it becomes the primary indicator ("Latest period
      * <date>") and `lastUpdated` demotes to a hover detail, because a fresh
      * fetch of a three-week-old table is not fresh data.
      */
