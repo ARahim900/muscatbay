@@ -1292,6 +1292,27 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-02 — fix(layout): mount NotificationProvider only for authenticated routes
+- 2026-09-02 — fix(sql): correct the RLS view allowlist and anon grant, then apply to production
+- 2026-09-02 — refactor(firefighting): move the Overview charts into components/
+- 2026-09-02 — test(setup): stub scrollIntoView, which jsdom does not implement
+- 2026-09-02 — fix(a11y): add --mb-primary-text for brand purple used as text
+- 2026-09-02 — fix(a11y,perf): finish the teal-as-text sweep and split Recharts off three routes
+- 2026-09-02 — docs(brand): record --mb-secondary-text in the text-on-tint table
+- 2026-09-02 — fix(a11y): use the accent-text token in the mobile navigation
+- 2026-09-02 — feat(water): bring the Monthly dashboard onto the shared module pattern
+- 2026-09-02 — test(hvac): pin the loading header and the shared chart container
+- 2026-09-02 — fix(a11y,hvac): add an accent-as-text token, and stop HVAC losing its title
+- 2026-09-02 — test(a11y): lock in the touch-target sizes for the two icon-only controls
+- 2026-09-02 — fix(a11y): name nine data tables, and finish the touch-target pass
+- 2026-09-02 — fix(a11y): give two icon-only controls a 44px touch target
+- 2026-09-02 — ci(security): run the RLS harness in CI, and align two status affordances
+- 2026-09-02 — docs(status-bar): correct the JSDoc to the label the component renders
+- 2026-09-02 — docs(env): document the three server-only variables the app reads
+- 2026-09-02 — test(sql): local RLS + invitation harness, and fix a guard that did not guard
+- 2026-09-02 — fix(alerts,stp): stable incident identity, evidence-gated resolution, validated STP figures
+- 2026-09-02 — fix: use hobby-compatible alert schedule
+- 2026-09-02 — feat: harden production operations dashboard
 - 2026-09-01 — Remove electricity summary cards
 - 2026-08-31 — feat(design): adopt Inter as the UI typeface app-wide (web + mobile)
 - 2026-08-30 — docs(load-testing): record first executed baseline (50-concurrent run + prod DB profile)
