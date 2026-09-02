@@ -1,11 +1,20 @@
 \set ON_ERROR_STOP on
 \timing off
 
--- Test user for acknowledgement.
-INSERT INTO auth.users (id) VALUES ('11111111-1111-1111-1111-111111111111')
-    ON CONFLICT DO NOTHING;
+-- Two identities created the only way the migration permits: an invitation
+-- naming the role, consumed by the auth.users insert. Acknowledgement is gated
+-- on the profile role, so the role under test has to be the real one.
+INSERT INTO public.auth_invitations (email, role) VALUES
+    ('alerts-operator@example.test', 'operator'),
+    ('alerts-viewer@example.test', 'viewer')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO auth.users (id, email) VALUES
+    ('11111111-1111-1111-1111-111111111111', 'alerts-operator@example.test'),
+    ('11111111-1111-1111-1111-111111111112', 'alerts-viewer@example.test')
+ON CONFLICT DO NOTHING;
+
 SELECT set_config('test.uid', '11111111-1111-1111-1111-111111111111', false);
-SELECT set_config('test.role', 'operator', false);
 
 CREATE OR REPLACE FUNCTION pg_temp.assert(condition boolean, label text) RETURNS void
 LANGUAGE plpgsql AS $$
@@ -138,7 +147,7 @@ SELECT pg_temp.assert(resolved_at IS NULL AND acknowledged_at IS NOT NULL,
 FROM public.operational_alert_incidents WHERE fingerprint = 'contract-expiry:AMC-1';
 
 /* 11 ─ Acknowledgement is refused without an operator role. */
-SELECT set_config('test.role', 'viewer', false);
+SELECT set_config('test.uid', '11111111-1111-1111-1111-111111111112', false);
 DO $$
 DECLARE target uuid;
 BEGIN

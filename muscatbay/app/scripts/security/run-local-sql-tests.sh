@@ -11,11 +11,16 @@
 #   data.
 #
 # WHAT IT IS NOT
-#   `sql/tests/00-supabase-stubs.sql` provides minimal stand-ins for
-#   `auth.uid()` and the `mb_*` role helpers. That is enough to prove the
-#   reconciler's LOGIC and its GRANTS, and it is not a substitute for applying
-#   the migrations to a real staging project before production — RLS against
-#   live PostgREST is still `npm run test:rls:staging`.
+#   `sql/tests/00-supabase-stubs.sql` supplies IDENTITY and STRUCTURE only —
+#   `auth.users`, `auth.uid()`, `storage`, the Supabase roles and the core
+#   tables the migration's preflight requires. Every rule under test (role
+#   helpers, RLS policies, grants, triggers) comes from the real migration
+#   files, so the tests cannot agree with a re-statement of themselves.
+#
+#   It is still not a substitute for a staging apply: it does not run
+#   PostgREST, so HTTP-level behaviour (JWT parsing, the REST error surface,
+#   `Prefer` headers) is unverified. That remains `npm run test:rls:staging`
+#   against a real project.
 #
 # USAGE
 #   ./scripts/security/run-local-sql-tests.sh
@@ -55,8 +60,16 @@ run() { psql -h "$SOCKET_DIR" -p "$PG_PORT" -U postgres -v ON_ERROR_STOP=1 -q -f
 echo "→ applying Supabase stand-ins"
 run "$APP_DIR/sql/tests/00-supabase-stubs.sql"
 
+# Order matters: the invitation/RLS migration defines the mb_* role helpers that
+# the alert-incident policy references.
+echo "→ applying migration: 20260901_invitation_only_security_and_rls.sql"
+run "$APP_DIR/sql/migrations/20260901_invitation_only_security_and_rls.sql"
+
 echo "→ applying migration: 20260901_operational_alert_incidents.sql"
 run "$APP_DIR/sql/migrations/20260901_operational_alert_incidents.sql"
+
+echo "→ running sql/tests/rls-roles.test.sql"
+run "$APP_DIR/sql/tests/rls-roles.test.sql"
 
 echo "→ running sql/tests/alert-incidents.test.sql"
 run "$APP_DIR/sql/tests/alert-incidents.test.sql"

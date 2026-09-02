@@ -1045,15 +1045,34 @@ tables that no screen reads.
   production build, mobile `tsc` all clean.
   **The two migrations are still unapplied to the live project.**
 - **Local SQL test harness (no cost) — `npm run test:sql:local`.** The owner
-  declined a paid Supabase preview branch (USD 0.01344/hour), so the
-  alert-incident migration is now exercised against a throwaway local
-  PostgreSQL 16 cluster: `sql/tests/00-supabase-stubs.sql` provides minimal
-  `auth.uid()` / `mb_*` stand-ins, `sql/tests/alert-incidents.test.sql` asserts
-  21 behaviours (escalation keeps its acknowledgement, a read-only module
-  cannot close anything, a NULL resolution grant resolves nothing, per-agreement
-  incidents resolve independently, `anon`/`authenticated` hold no execute grant).
-  This proves the reconciler's logic and grants; it does **not** replace an RLS
-  run against live PostgREST (`npm run test:rls:staging`) before production.
+  declined a paid Supabase preview branch (USD 0.01344/hour), so **both**
+  production-security migrations are now applied to a throwaway local
+  PostgreSQL 16 cluster and asserted there — **52 assertions**, no network, no
+  live data. `sql/tests/00-supabase-stubs.sql` supplies identity and structure
+  only (`auth.users`, a session-settable `auth.uid()`, `storage`, the four
+  Supabase roles, the preflight's core tables); every rule under test comes
+  from the real migration files.
+  - `sql/tests/rls-roles.test.sql` (31) runs as the `authenticated` and `anon`
+    database roles PostgREST uses, with accounts created **through the
+    invitation flow**: uninvited/revoked/expired identities are refused,
+    Viewer reads but cannot write, Contractor sees only its `module_scope`,
+    Operator writes but cannot delete, Admin deletes, an authenticated session
+    with no profile sees nothing, `anon` may only submit a *pending*
+    professional application and cannot read it back, a user cannot change
+    their own role or widen their own scope, unlisted tables are fail-closed.
+  - `sql/tests/alert-incidents.test.sql` (21) covers the incident lifecycle and
+    the service-role-only reconciler grant.
+  - **Found and fixed a real migration bug in the process:** the
+    `contractor_contracts` guard in the RLS migration read
+    `to_regclass('public.contractor_contracts') is not null and … conrelid =
+    'public.contractor_contracts'::regclass`. SQL does not short-circuit `AND`,
+    and a `regclass` literal resolves at plan time — so the guard did not
+    guard, and the **whole migration aborted** with "relation does not exist"
+    on any database lacking that optional table. Now resolved through a
+    variable. See `sql/tests/README.md`.
+  - Still **not** a substitute for staging: there is no PostgREST here, so
+    JWT parsing and the REST error surface are unverified. Run
+    `npm run test:rls:staging` against a real project before production.
 - **Typography — Inter adoption (2026-08-31)** — draft PR from branch
   `claude/typography-font-sizing-7shsei`. On the owner's direction the UI face
   switched **Geist → Inter** (variable, with the `opsz` optical-size axis;

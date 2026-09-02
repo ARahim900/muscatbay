@@ -495,9 +495,16 @@ $professional_intake$;
 -- same Google Drive allowlist at the database boundary so direct REST writes
 -- cannot persist a javascript/data URL or an unapproved host. NOT VALID keeps
 -- legacy rows visible for controlled cleanup while protecting every new write.
+-- The `conrelid` lookup below resolves the table through a variable, not a
+-- `'public.contractor_contracts'::regclass` literal. SQL does not short-circuit
+-- AND, and a regclass literal is resolved when the expression is planned — so
+-- the earlier `to_regclass(...) is not null` test does NOT protect a literal in
+-- the same condition, and the whole migration aborted with "relation does not
+-- exist" on any database without this optional table.
 do $contract_pdf_allowlist$
+declare contract_relation oid := to_regclass('public.contractor_contracts');
 begin
-    if to_regclass('public.contractor_contracts') is not null
+    if contract_relation is not null
        and exists (
            select 1 from information_schema.columns
            where table_schema = 'public'
@@ -506,7 +513,7 @@ begin
        )
        and not exists (
            select 1 from pg_constraint
-           where conrelid = 'public.contractor_contracts'::regclass
+           where conrelid = contract_relation
              and conname = 'contractor_contract_pdf_url_approved'
        ) then
         alter table public.contractor_contracts
