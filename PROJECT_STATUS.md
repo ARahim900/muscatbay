@@ -1322,6 +1322,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-02 — revert: restore the previous design and theme, keeping the security work
 - 2026-09-02 — fix(layout): mount NotificationProvider only for authenticated routes
 - 2026-09-02 — fix(sql): correct the RLS view allowlist and anon grant, then apply to production
 - 2026-09-02 — refactor(firefighting): move the Overview charts into components/
