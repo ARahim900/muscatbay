@@ -794,7 +794,7 @@ export default function ContractorsPage() {
                                                 className={`p-1.5 rounded-md transition-colors ${
                                                     c.contract_pdf_url
                                                         ? 'text-secondary hover:bg-secondary/10'
-                                                        : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/60'
+                                                        : 'text-muted-foreground hover:bg-muted-bg dark:hover:bg-muted-bg/60'
                                                 }`}
                                             >
                                                 {c.contract_pdf_url ? <FileText className="w-4 h-4" /> : <Link className="w-4 h-4" />}
@@ -924,7 +924,7 @@ export default function ContractorsPage() {
                                                         </TableCell>
                                                     );
                                                 })}
-                                                <TableCell className="num font-bold text-primary bg-muted/40 dark:bg-muted/20">
+                                                <TableCell className="num font-bold text-primary bg-muted-bg/40 dark:bg-muted-bg/20">
                                                     {fmtOMR(row.total)}
                                                 </TableCell>
                                             </TableRow>
@@ -932,14 +932,14 @@ export default function ContractorsPage() {
                                     </TableBody>
                                     {/* Totals footer — same token-only pattern as the STP daily log */}
                                     <TableFooter>
-                                        <tr className="border-t-2 border-border bg-muted/80 dark:bg-muted/50">
+                                        <tr className="border-t-2 border-border bg-muted-bg/80 dark:bg-muted-bg/50">
                                             <td className="col-sticky whitespace-nowrap px-4 py-3 align-middle text-xs font-semibold text-foreground">Contract Total</td>
                                             {matrix.contractors.map(cn => (
                                                 <td key={cn} className="px-4 py-3 align-middle text-xs font-semibold text-right tabular-nums text-foreground">
                                                     {fmtOMR(matrix.contractorTotals[cn])}
                                                 </td>
                                             ))}
-                                            <td className="px-4 py-3 align-middle text-xs font-bold text-right tabular-nums text-primary bg-muted/60 dark:bg-muted/30">
+                                            <td className="px-4 py-3 align-middle text-xs font-bold text-right tabular-nums text-primary bg-muted-bg/60 dark:bg-muted-bg/30">
                                                 {fmtOMR(matrix.grandTotal)}
                                             </td>
                                         </tr>
@@ -1179,7 +1179,7 @@ export default function ContractorsPage() {
 
                     {/* PDF link editor */}
                     {pdfLinkEditing && pdfModal.contractId && (
-                        <div className="flex flex-col gap-3 p-4 bg-muted dark:bg-muted/50 rounded-xl">
+                        <div className="flex flex-col gap-3 p-4 bg-muted-bg dark:bg-muted-bg/50 rounded-xl">
                             <label className="text-sm font-medium text-foreground flex items-center gap-2">
                                 <Link className="w-4 h-4" />
                                 {pdfModal.pdfUrl ? 'Edit PDF Link' : 'Paste Google Drive PDF Link'}
@@ -1211,7 +1211,7 @@ export default function ContractorsPage() {
                                 {pdfModal.pdfUrl && (
                                     <button
                                         onClick={() => setPdfLinkEditing(false)}
-                                        className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
+                                        className="px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted-bg dark:hover:bg-muted-bg/60 transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -1246,7 +1246,7 @@ export default function ContractorsPage() {
                         {pdfModal.pdfUrl && !pdfLinkEditing && pdfModal.contractId && (
                             <button
                                 onClick={() => setPdfLinkEditing(true)}
-                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted/60 transition-colors"
+                                className="inline-flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-border text-muted-foreground hover:bg-muted-bg dark:hover:bg-muted-bg/60 transition-colors"
                             >
                                 <Pencil className="w-4 h-4" />
                                 Edit Link

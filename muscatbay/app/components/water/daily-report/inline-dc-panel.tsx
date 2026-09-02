@@ -1,31 +1,36 @@
 "use client";
 
-// ─── DCAnalyticsPanel + DCDailyTable — extracted verbatim from
-//     daily-water-report.tsx. Pure relocation; no behavior changes.
+// ─── DCAnalyticsPanel + DCDailyTable — the Direct Connections tab of the Daily
+//     report. Data logic unchanged; presentation is the design-system
+//     primitives (SectionCard, KpiCard, Badge, ChartFrame) and tokens only.
 
 import { useState, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, ChartFrame, chartTheme, KpiCard, SectionCard } from "@/components/ui";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
-    ReferenceLine, Legend,
+    ReferenceLine, CartesianGrid,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
-import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
 import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";
 import { DC_METERS, MAIN_BULK_ACCOUNT, ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
     type ReportData, type SortState,
-    CHART_COLORS, r2, n, DailyLossConnector, PALETTE,
-    Th, TableSearch, StatusChip, TablePagination, thBase, tdBase,
-    HierarchyStatCard,
+    CHART_COLORS, r2, n, DailyLossConnector,
+    Th, TableSearch, TablePagination, thBase, tdBase,
 } from "./inline-shared";
 import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export { DCAnalyticsPanel, DCDailyTable };
+
+/** Loose value type matching Recharts' Formatter signature. */
+type TipValue = number | string | ReadonlyArray<number | string> | undefined;
+const fmtM3 = (v: TipValue, name: number | string | undefined): [string, string] =>
+    [v == null ? "—" : `${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })} m³`, String(name)];
+
 // ─── DC Analytics Panel (mirrors ZoneAnalyticsPanel) ─────────────────────────
 
 interface DCAnalyticsPanelProps {
@@ -107,13 +112,13 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
 
             {/* ── DC heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-medium text-foreground">
+                <h2 className="text-title text-primary dark:text-fg">
                     Direct Connection Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                    <span className="text-mb-primary font-medium">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
-                    <span className="text-mb-secondary font-medium">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
-                    <span className="font-medium">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
+                <p className="mt-1 text-body text-muted">
+                    <span className="font-medium text-fg">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
+                    <span className="font-medium text-fg">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
+                    <span className="font-medium text-fg">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
                     Sales Center is counted as DC
                 </p>
             </div>
@@ -162,86 +167,75 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 />
             </div>
             {mainBulkDay == null && (
-                <p className="flex items-center justify-center gap-1.5 text-xs text-mb-warning-text">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <p className="flex items-center justify-center gap-1.5 text-caption text-warning">
+                    <AlertTriangle size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
                     No Main Bulk (<span className="meter">C43659</span>) reading for Day {selectedDay} — showing the distribution-level comparison only, not a zero supply.
                 </p>
             )}
 
             {/* ── Daily trend chart ────────────────────────────────────────── */}
-            <Card className="card-elevated">
-                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                    <CardTitle className="text-base sm:text-lg">
-                        Daily Trend — Main Bulk vs Zone Bulks + DC
-                    </CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                        Same series as the gauges above, day by day: Main Bulk (<span className="meter">C43659</span>) supply against zone bulks + direct connections,
-                        with the share of the {totalMeters} DC meters alone — {month}. Days without a main-bulk reading leave a gap in its line.
+            <SectionCard>
+                <SectionCard.Header
+                    icon={Activity}
+                    title="Daily trend — main bulk vs zone bulks + DC"
+                    description={`Same series as the gauges above, day by day — ${month}`}
+                />
+                <SectionCard.Body>
+                    <p className="mb-3 text-caption text-muted">
+                        Main Bulk (<span className="meter">C43659</span>) supply against zone bulks + direct connections,
+                        with the share of the {totalMeters} DC meters alone. Days without a main-bulk reading leave a gap in its line.
                     </p>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+                        <div className="flex h-chart items-center justify-center text-body text-muted">
                             No trend data available for direct connections
                         </div>
                     ) : (
-                        <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                        <ChartFrame
+                            series={3}
+                            height="chart-lg"
+                            legend={[
+                                { label: "DC Total", color: CHART_COLORS.gray },
+                                { label: "Zone Bulks + DC", color: CHART_COLORS.teal },
+                                { label: "Main Bulk", color: CHART_COLORS.brand },
+                            ]}
+                        >
                             <ResponsiveContainer width="100%" height="100%">
                                 <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="gradDailyDC" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.gray} stopOpacity={0.35} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.gray} stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis
-                                        dataKey="day"
-                                        axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
-                                        dy={10} interval={4}
-                                    />
-                                    <YAxis
-                                        axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
-                                        tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
-                                        label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
-                                    />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
-                                    <Legend iconType="circle" />
+                                    <CartesianGrid {...chartTheme.grid} />
+                                    <XAxis dataKey="day" {...chartTheme.axis} interval={4} />
+                                    <YAxis {...chartTheme.axis} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                                    <Tooltip formatter={fmtM3} {...chartTheme.tooltip} />
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
                                             stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 11, fill: "var(--color-muted)" }}
                                         />
                                     )}
                                     <Area
                                         type="monotone" name="DC Total" dataKey="DC Total"
-                                        stroke={CHART_COLORS.gray} fill="url(#gradDailyDC)" strokeWidth={2}
-                                        activeDot={{ r: 5, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        stroke={CHART_COLORS.gray} fill={CHART_COLORS.gray} {...chartTheme.area}
                                         {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Zone Bulks + DC" dataKey="Zone Bulks + DC"
-                                        stroke={CHART_COLORS.teal} strokeWidth={2.5} dot={{ r: 2 }}
-                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        stroke={CHART_COLORS.teal} {...chartTheme.line}
                                         {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Main Bulk" dataKey="Main Bulk"
-                                        stroke={CHART_COLORS.brand} strokeWidth={2.5} dot={{ r: 2 }}
+                                        stroke={CHART_COLORS.brand} {...chartTheme.line}
                                         connectNulls={false}
-                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
                                         {...chartMotion}
                                     />
                                 </ComposedChart>
                             </ResponsiveContainer>
-                        </div>
+                        </ChartFrame>
                     )}
-                </CardContent>
-            </Card>
+                </SectionCard.Body>
+            </SectionCard>
         </div>
     );
 }
@@ -369,40 +363,18 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
     ], [days]);
 
     return (
-        <Card className="card-elevated">
-            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                <div>
-                    <CardTitle className="text-base sm:text-lg">Direct Connection — Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        {dcMeters.length} meters — Day 1 to Day {latestDay}
-                    </p>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
-                {/* DC summary KPI cards — the shared HierarchyStatCard, so these
-                    match the other daily tiles. The hand-rolled markup they
-                    replace carried a hardcoded blue `rgba(6,81,237,…)` shadow
-                    that belonged to no palette in this app. */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    <HierarchyStatCard
-                        label="Monthly DC Total (m³)"
-                        value={n(grandTotal)}
-                        icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={PALETTE.blue}
-                    />
-                    <HierarchyStatCard
-                        label="DC Meters"
-                        value={String(dcMeters.length)}
-                        icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={PALETTE.primary}
-                    />
-                    <HierarchyStatCard
-                        label={`Active (Day ${latestDay})`}
-                        value={`${activeMeters} / ${dcMeters.length}`}
-                        icon={<Zap className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={PALETTE.mint}
-                        valueColor="var(--mb-success-text)"
-                    />
+        <SectionCard>
+            <SectionCard.Header
+                icon={Zap}
+                title="Direct connection — meters"
+                description={`${dcMeters.length} meters — Day 1 to Day ${latestDay}`}
+            />
+            <SectionCard.Body className="space-y-4">
+                {/* DC summary KPIs (KpiCard — DESIGN_SYSTEM.md §6) */}
+                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
+                    <KpiCard tone="water" icon={Droplets} label="Monthly DC total" value={n(grandTotal)} unit="m³" footnote={`Day 1 to Day ${latestDay}`} />
+                    <KpiCard icon={Activity} label="DC meters" value={String(dcMeters.length)} footnote="Direct connections on the main inlet" />
+                    <KpiCard icon={Zap} label={`Active (Day ${latestDay})`} value={`${activeMeters} / ${dcMeters.length}`} footnote="Meters with a stored reading" />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -411,90 +383,90 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 </div>
 
                 {/* Horizontally scrollable table */}
-                <div className="relative -mx-4 sm:-mx-5 md:-mx-6">
+                <div className="relative -mx-5">
                 <Table
                     role="region"
                     aria-label="Direct connection daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     style={{ minWidth: `${420 + days.length * 72}px` }}
                     data-density="compact"
                 >
                     <TableHeader>
-                        <TableRow className="border-b border-border">
+                        <TableRow className="border-b border-line">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-20 bg-[var(--primary)] min-w-[180px]"
+                                className="sticky left-0 z-20 min-w-44 bg-primary"
                             >Meter</Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                            <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-24">Account</Th>
+                            <TableHead scope="col" className={cn(thBase, "min-w-24 text-center")}>Type</TableHead>
                             {days.map(d => (
-                                <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
+                                <TableHead scope="col" key={d} className={cn(thBase, "min-w-16 px-2 text-right")}>D{d}</TableHead>
                             ))}
                             <Th
                                 sortKey="total" sort={sort} onSort={setSort}
-                                className="text-right min-w-[80px]"
+                                className="min-w-20 text-right"
                             >Total</Th>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {paginated.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground">
+                                <TableCell colSpan={colCount} className="py-10 text-center text-label text-muted">
                                     No meters found
                                 </TableCell>
                             </TableRow>
                         ) : paginated.map(meter => (
                             <TableRow
                                 key={meter.account}
-                                className="border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30 even:bg-muted/40 dark:even:bg-muted/20"
+                                className="border-b border-line transition-colors even:bg-component hover:bg-component"
                             >
-                                <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-card")}>
+                                <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-card font-medium")}>
                                     <span className="inline-flex items-center gap-2">
                                         {/* Icon distinguishes irrigation from potable; colour is a
                                             reinforcement only, so it comes from chart tokens. */}
                                         {meter.isIrr ? (
-                                            <Droplets className="h-3.5 w-3.5 shrink-0" style={{ color: CHART_COLORS.teal }} aria-hidden="true" />
+                                            <Droplets size={14} strokeWidth={2} className="shrink-0" style={{ color: CHART_COLORS.teal }} aria-hidden="true" />
                                         ) : (
-                                            <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: CHART_COLORS.amber }} aria-hidden="true" />
+                                            <Zap size={14} strokeWidth={2} className="shrink-0" style={{ color: CHART_COLORS.amber }} aria-hidden="true" />
                                         )}
                                         {meter.label}
                                     </span>
                                 </TableCell>
-                                <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{meter.account}</TableCell>
+                                <TableCell className={cn(tdBase, "meter text-muted")}>{meter.account}</TableCell>
                                 <TableCell className={cn(tdBase, "text-center")}>
-                                    <StatusChip label={meter.isIrr ? "Irrigation" : "Service"} color={meter.isIrr ? "primary" : "default"} />
+                                    <Badge tone={meter.isIrr ? "info" : "neutral"}>{meter.isIrr ? "Irrigation" : "Service"}</Badge>
                                 </TableCell>
                                 {meter.dailyValues.map((val, i) => (
-                                    <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                    <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums")}>
                                         {val === null ? (
-                                            <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                            <span className="text-muted">—</span>
                                         ) : val === 0 ? (
-                                            <span className="text-muted-foreground">0.00</span>
+                                            <span className="text-muted">0.00</span>
                                         ) : (
                                             n(val)
                                         )}
                                     </TableCell>
                                 ))}
-                                <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>
                                     {n(meter.total)}
                                 </TableCell>
                             </TableRow>
                         ))}
                         {/* ΣDC Footer */}
-                        <TableRow className="border-t-2 border-border bg-muted/60 dark:bg-muted/20">
-                            <TableCell className={cn(tdBase, "font-medium sticky left-0 z-10 bg-muted/60 dark:bg-muted/20")} colSpan={3}>
+                        <TableRow className="border-t-2 border-line bg-component">
+                            <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-component font-medium")} colSpan={3}>
                                 ΣDC Total ({dcMeters.length} meters)
                             </TableCell>
                             {dayTotals.map((t, i) => (
-                                <TableCell key={i} className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}>{n(t)}</TableCell>
+                                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}>{n(t)}</TableCell>
                             ))}
-                            <TableCell className={cn(tdBase, "text-right tabular-nums font-medium bg-muted/80 dark:bg-muted/40")}>{n(grandTotal)}</TableCell>
+                            <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>{n(grandTotal)}</TableCell>
                         </TableRow>
                     </TableBody>
                 </Table>
                 <div
-                    className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden"
+                    className="pointer-events-none absolute bottom-0 right-0 top-0 w-8 bg-linear-to-l from-card to-transparent sm:hidden"
                     aria-hidden="true"
                 />
                 </div>
@@ -509,7 +481,7 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                         onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
                     />
                 )}
-            </CardContent>
-        </Card>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }

@@ -11,7 +11,8 @@
     "lint": "eslint",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "screenshots": "tsx scripts/screenshots.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -47,8 +48,10 @@
     "eslint": "^9",
     "eslint-config-next": "^16.1.6",
     "jsdom": "^27.4.0",
+    "playwright": "^1.62.1",
     "shadcn": "^4.1.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5",
     "vitest": "^4.0.16"
   }

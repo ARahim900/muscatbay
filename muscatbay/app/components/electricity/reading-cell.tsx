@@ -194,7 +194,7 @@ export function AnomalyLegend() {
                                     l.state === "dip" && "bg-mb-info-light text-mb-info-text",
                                     l.state === "zero" && "bg-mb-warning-light text-mb-warning-text",
                                     l.state === "negative" && "bg-mb-danger-light text-mb-danger-text",
-                                    l.state === "missing" && "bg-muted text-muted-foreground",
+                                    l.state === "missing" && "bg-muted-bg text-muted-foreground",
                                 )}
                                 aria-hidden="true"
                             >

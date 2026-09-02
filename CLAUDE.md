@@ -108,9 +108,10 @@ muscatbay/app/
 - `cn()` utility for conditional class merging (clsx + tailwind-merge)
 - Dark theme by default
 - Brand colors: primary `#4E4456` (purple), accent `#A1D1D5` (soft teal)
-- **Authoritative brand spec**: `BRAND_DESIGN.md` (overrides any older tokens elsewhere)
-- Full design system also documented in `muscatbay/app/DESIGN_SYSTEM.md`
-- Fonts: **Inter** (UI/body/headings, `--font-sans`) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`, resolved through the `@theme inline` block in `app/globals.css`. Never re-declare `font-family` elsewhere. Inter is a **variable font (100–900)** loaded with its **`opsz` optical-size axis** (small text renders the text grade, large headlines the tighter Display grade — do not drop the axis), so every Tailwind weight is a genuine glyph: `font-medium` (500), `font-semibold` (600), `font-bold` (700), `font-extrabold` (800) and `font-black` (900) all render real weights — no faux synthesis. Adopted 2026-08-31 on the owner's direction, superseding Geist — decision history in `BRAND_DESIGN.md` §3. Main headline spec: Inter SemiBold (600), `text-2xl sm:text-3xl md:text-4xl`, `tracking-tight`; descriptions: Inter Regular, 14→15px, `text-muted-foreground`.
+- **The only design reference is [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (repo root, v2.0, 2026-09-02).** `BRAND_DESIGN.md` and `muscatbay/app/DESIGN_SYSTEM.md` are superseded and carry a banner saying so — do not design from them.
+- Tokens live in `app/design-tokens.css` (imported once from `app/globals.css`); primitives live in `components/ui/` (`PageHeader`, `StatusChip`, `SegmentedControl`, `Tabs`, `KpiCard`, `SectionCard`, `Badge`, `Button`, `ChartFrame`, `DateRangePicker`, `EmbedFrame`, `Breadcrumb`, barrel `@/components/ui`).
+- **Migration state:** pages move to the primitives one per session, in this order — **Water (done 2026-09-02)** → Dashboard → STP → Electricity → Contractors → Fire Safety → HVAC → Assets → Pest Control → Settings. The design lint in `eslint.config.mjs` is scoped to the migrated route + component folders; add each page's folders when you migrate it. The legacy `:root`/`.dark` tokens and `@theme` entries in `globals.css` (and the `bg-muted-bg` surface alias) exist only for the unmigrated pages and go when the last one lands.
+- Fonts: **DM Sans** (UI/body/headings, `--font-dm-sans` → `--font-sans`, weights 400/500/600/700 — weight 800 does not exist) + **Geist Mono** (meter IDs/account numbers via the `.meter` rule, `--font-mono`) — both from Google Fonts, single source of truth in `app/layout.tsx`. Never re-declare `font-family` elsewhere. Type is the seven steps in `DESIGN_SYSTEM.md` §3 (`text-display/title/body/label/caption/eyebrow/kpi`), never raw sizes.
 
 > ⚠️ **`muscatbay/app/tailwind.config.ts` is DEAD CONFIGURATION.** Tailwind 4
 > only loads a JS config via an explicit `@config` directive, and `globals.css`
@@ -263,9 +264,23 @@ Add these only on an explicit, current instruction from the owner.
   `npm run build` must all pass — and `cd mobile && npx tsc --noEmit` too if you
   touched `entities/`, `lib/` or `functions/api/`
 
+## Design rules for agents (paste verbatim into CLAUDE.md / AGENTS.md)
+
+1. Before touching any file under `app/` or `components/`, read `DESIGN_SYSTEM.md`. It is the only design reference. Ignore any other design document or skill.
+2. **Do not redesign. Replace.** Swap page-level markup for the primitives in `components/ui/` (`PageHeader`, `StatusChip`, `SegmentedControl`, `Tabs`, `KpiCard`, `SectionCard`, `Badge`, `Button`, `ChartFrame`, `DateRangePicker`, `EmbedFrame`, `Breadcrumb`) and delete the local styling you replaced. Do not change data, copy or behaviour unless the task says so.
+3. Never add a colour, font size, radius or shadow that is not a token in `app/design-tokens.css`. No `text-[…]`, `shadow-[…]`, `rounded-[…]`, `bg-[#…]`, no `blue-500`-style palette classes. `pnpm lint` enforces this; do not disable the rule.
+4. Never create a second version of a primitive. If a primitive does not fit, change the primitive (and say so in the PR), not the page.
+5. Fixed heights are not suggestions: `KpiCard` 104 px, `SectionCard` header 56 px / footer 40 px, charts 260 / 320 px. If content does not fit, shorten the content.
+6. One filled purple `Button variant="primary"` per view. Segmented control = mode; underline tabs = sections. Tabs never scroll.
+7. Breadcrumbs stay. Ticker / marquee strips do not exist. Green is status only. No emoji, no illustrations, Lucide icons only at 16 px (inline) or 20 px (tiles, nav).
+8. Every UI change is checked in light and dark mode at 1440 px. Run `pnpm screenshots` and attach `screenshots/*.png` to the PR.
+9. If the task conflicts with any rule above, stop and ask before writing code.
+
+> This repo uses npm: `pnpm lint` → `npm run lint`, `pnpm screenshots` → `npm run screenshots` (needs a running app at `APP_URL` and a logged-in `STORAGE_STATE`).
+
 ## Design Context
 
-> Full spec: [`BRAND_DESIGN.md`](./BRAND_DESIGN.md) · [`muscatbay/app/DESIGN_SYSTEM.md`](./muscatbay/app/DESIGN_SYSTEM.md). When values conflict, `BRAND_DESIGN.md` wins — **except** for the one documented case above (text-on-teal contrast) where the code is correct and the doc is not.
+> Full spec: [`DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (repo root) — the only design document. The notes below describe the users and the aesthetic direction; where anything here disagrees with `DESIGN_SYSTEM.md`, that file wins. (`BRAND_DESIGN.md` and `muscatbay/app/DESIGN_SYSTEM.md` are superseded.)
 
 ### Users
 Operations staff and facility/asset managers at Muscat Bay (water, electricity, STP, assets, contractors, HVAC, pest, fire). Secondary: executives on the dashboard. Field: tablet users in control rooms and on-site, sometimes gloved or in night-shift lighting. Live Supabase data — never assume demo mode.

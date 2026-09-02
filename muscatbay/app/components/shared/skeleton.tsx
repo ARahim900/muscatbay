@@ -11,7 +11,7 @@ export function Skeleton({ className, style }: SkeletonProps) {
     return (
         <div
             className={cn(
-                "motion-safe:animate-pulse rounded-md bg-border/80 dark:bg-muted/50",
+                "motion-safe:animate-pulse rounded-md bg-border/80 dark:bg-muted-bg/50",
                 className
             )}
             style={style}
@@ -54,7 +54,7 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
     return (
         <div className="rounded-lg border border-border/60 dark:border-border/50 overflow-hidden">
             {/* Header */}
-            <div className="bg-muted dark:bg-muted/50 px-4 py-3 border-b border-border/60 dark:border-border/50">
+            <div className="bg-muted-bg dark:bg-muted-bg/50 px-4 py-3 border-b border-border/60 dark:border-border/50">
                 <div className="flex gap-4">
                     {Array.from({ length: columns }).map((_, i) => (
                         <Skeleton key={i} className="h-4 flex-1" />
@@ -110,7 +110,7 @@ const CHART_SKELETON_BAR_HEIGHTS = [55, 72, 40, 85, 63, 48, 78, 35];
 
 export function ChartSkeleton({ height = "h-[300px]" }: { height?: string }) {
     return (
-        <div className={cn("rounded-xl border border-border/60 dark:border-border/50 bg-card dark:bg-muted/50 p-6", height)}>
+        <div className={cn("rounded-xl border border-border/60 dark:border-border/50 bg-card dark:bg-muted-bg/50 p-6", height)}>
             <div className="flex flex-col h-full">
                 <Skeleton className="h-5 w-48 mb-2" />
                 <Skeleton className="h-3 w-32 mb-6" />

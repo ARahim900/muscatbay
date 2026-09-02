@@ -66,7 +66,7 @@ export const SLA_TIERS: readonly SlaTier[] = [
     { priority: "P1 Emergency", responseTime: "3 Hours", description: "Continuous alarm, pump failure, major leak", bgClass: "bg-mb-danger-light", dotClass: "bg-mb-danger" },
     { priority: "P2 Urgent", responseTime: "8 Hours", description: "Minor leak, panel malfunction, abnormal pump noise", bgClass: "bg-mb-warning-light", dotClass: "bg-mb-warning" },
     { priority: "P3 Normal", responseTime: "24 Hours", description: "Extinguisher refilling, general maintenance", bgClass: "bg-mb-info-light", dotClass: "bg-mb-info" },
-    { priority: "P4 PPM", responseTime: "Per schedule", description: "Scheduled preventive maintenance", bgClass: "bg-muted dark:bg-muted/50", dotClass: "bg-muted-foreground" },
+    { priority: "P4 PPM", responseTime: "Per schedule", description: "Scheduled preventive maintenance", bgClass: "bg-muted-bg dark:bg-muted-bg/50", dotClass: "bg-muted-foreground" },
 ] as const;
 
 export interface ScopeCount {

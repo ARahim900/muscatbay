@@ -82,7 +82,7 @@ const CHIP_STYLES: Record<ChipColor, string> = {
     success: "bg-mb-success-light text-mb-success-text ring-mb-success/30",
     danger: "bg-mb-danger-light text-mb-danger-text ring-mb-danger/30",
     warning: "bg-mb-warning-light text-mb-warning-text ring-mb-warning/30",
-    default: "bg-muted text-muted-foreground ring-border/20",
+    default: "bg-muted-bg text-muted-foreground ring-border/20",
 };
 
 // Shape-distinct glyph per severity, so a chip never depends on colour alone

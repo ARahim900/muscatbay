@@ -200,7 +200,7 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                                 {zk ? <ZoneBadge zone={zk} /> : null}
                             </div>
                             <div className="flex items-center justify-between">
-                                <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span>
+                                <span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold", EQUIP_STATUS_CLS[e.status] || "bg-muted-bg text-muted-foreground")}>{e.status}</span>
                                 <span className="text-[11px] text-muted-foreground tabular-nums">Next: {fmtDate(e.next_maintenance)}</span>
                             </div>
                         </div>
@@ -246,7 +246,7 @@ export function EquipmentRegister({ equipment }: EquipmentRegisterProps) {
                                     <TableCell>{zk ? <ZoneBadge zone={zk} /> : <span className="text-xs text-muted-foreground">{e.zone}</span>}</TableCell>
                                     {/* Wraps rather than truncating — a title tooltip is unreachable on touch. */}
                                     <TableCell className="text-xs text-muted-foreground max-w-[220px] whitespace-normal break-words">{e.location}</TableCell>
-                                    <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", EQUIP_STATUS_CLS[e.status] || "bg-muted text-muted-foreground")}>{e.status}</span></TableCell>
+                                    <TableCell><span className={cn("inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap", EQUIP_STATUS_CLS[e.status] || "bg-muted-bg text-muted-foreground")}>{e.status}</span></TableCell>
                                     <TableCell className="text-xs font-medium text-muted-foreground">{e.priority}</TableCell>
                                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap tabular-nums">{fmtDate(e.next_maintenance)}</TableCell>
                                 </TableRow>

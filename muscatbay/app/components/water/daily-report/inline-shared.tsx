@@ -1,31 +1,28 @@
 "use client";
 
-// ─── Shared helpers, primitives, types extracted verbatim from
-//     daily-water-report.tsx to keep the main file under ~1000 LOC.
-// ─── This module preserves the ORIGINAL inline palette + behavior exactly.
-//     The sibling files (report-types.ts, report-primitives.tsx, zone-panel.tsx,
-//     dc-panel.tsx, zone-analytics.tsx) contain an enhanced parallel
-//     implementation that is intentionally NOT used here — swapping to those
-//     would alter behavior (different chart palette tokens, toggleable legend,
-//     different layout). Do not consolidate without explicit design review.
+// ─── Shared helpers, primitives, types for the Daily report ───────────────────
+//     Data processing (`processReport`, formatters) is unchanged. The visual
+//     helpers are design-system only: tokens from app/design-tokens.css, chart
+//     colours from `chartTheme`, and no local KPI tile or status chip — those
+//     are `KpiCard` and `Badge` from components/ui/ (DESIGN_SYSTEM.md §6).
 
 import { ArrowUpDown, ChevronUp, ChevronDown, Search, ArrowRight, ArrowDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { CHART_PALETTE } from "@/lib/tokens";
+import { chartTheme } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
     BUILDING_CHILD_METERS,
 } from "@/lib/water-accounts";
 
-// ─── Chart color constants (CSS variable-backed) ────────────────────────────
+// ─── Chart colours (DESIGN_SYSTEM.md §2.4, through chartTheme) ───────────────
 
 export const CHART_COLORS = {
-    loss: 'var(--chart-loss)',
-    success: 'var(--chart-success)',
-    teal: 'var(--chart-teal)',
-    brand: 'var(--chart-brand)',
-    amber: 'var(--chart-amber)',
-    gray: 'var(--chart-gray)',
+    loss: chartTheme.loss,
+    success: chartTheme.series[5],   // sage
+    teal: chartTheme.series[1],      // teal
+    brand: chartTheme.series[0],     // purple
+    amber: chartTheme.series[3],     // amber
+    gray: "var(--color-neutral)",
 } as const;
 
 /**
@@ -42,55 +39,38 @@ export function DailyLossConnector({ loss, of }: { loss: number | null; of: numb
     if (loss === null) {
         return (
             <div className="flex shrink-0 flex-col items-center justify-center">
-                <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" aria-hidden="true" />
-                <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
-                <div className="mt-2 flex flex-col items-center rounded-lg border border-dashed border-border px-3 py-1.5">
-                    <span className="whitespace-nowrap text-base font-bold text-muted-foreground sm:text-lg">—</span>
-                    <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-[11px]">
-                        no reading
-                    </span>
+                <ArrowDown size={20} strokeWidth={2} className="text-muted sm:hidden" aria-hidden="true" />
+                <ArrowRight size={20} strokeWidth={2} className="hidden text-muted sm:block" aria-hidden="true" />
+                <div className="mt-2 flex flex-col items-center rounded-control border border-dashed border-line px-3 py-1.5">
+                    <span className="whitespace-nowrap text-title text-muted">—</span>
+                    <span className="whitespace-nowrap text-eyebrow uppercase text-muted">no reading</span>
                 </div>
             </div>
         );
     }
     const v = loss;
     const isLoss = v > 0;
-    const tint = isLoss ? CHART_COLORS.loss : CHART_COLORS.success;
+    const tint = isLoss ? "var(--color-danger)" : "var(--color-success)";
     const pct = of > 0 ? Math.abs(Math.round((v / of) * 1000) / 10) : 0;
     const sign = v > 0 ? '−' : v < 0 ? '+' : '';
     const caption = v > 0 ? 'loss' : v < 0 ? 'over-read' : 'balanced';
     return (
         <div className="flex shrink-0 flex-col items-center justify-center">
-            <ArrowDown className="h-5 w-5 text-muted-foreground sm:hidden" aria-hidden="true" />
-            <ArrowRight className="hidden h-5 w-5 text-muted-foreground sm:block" aria-hidden="true" />
+            <ArrowDown size={20} strokeWidth={2} className="text-muted sm:hidden" aria-hidden="true" />
+            <ArrowRight size={20} strokeWidth={2} className="hidden text-muted sm:block" aria-hidden="true" />
             <div
-                className="mt-2 flex flex-col items-center rounded-lg border px-3 py-1.5"
-                style={{
-                    background: `color-mix(in srgb, ${tint} 12%, transparent)`,
-                    borderColor: `color-mix(in srgb, ${tint} 45%, transparent)`,
-                }}
+                className={cn("mt-2 flex flex-col items-center rounded-control px-3 py-1.5", isLoss ? "bg-danger-tint" : "bg-success-tint")}
             >
-                <span className="whitespace-nowrap text-base font-bold tabular-nums sm:text-lg" style={{ color: tint }}>
+                <span className="whitespace-nowrap text-title tabular-nums" style={{ color: tint }}>
                     {sign}{n(Math.abs(v))} m³
                 </span>
-                <span className="whitespace-nowrap text-[10px] font-semibold uppercase tracking-wide sm:text-[11px]" style={{ color: tint }}>
+                <span className="whitespace-nowrap text-eyebrow uppercase" style={{ color: tint }}>
                     {caption} · {pct}%
                 </span>
             </div>
         </div>
     );
 }
-
-// ─── Unified brand palette (Muscat Bay) ──────────────────────────────────────
-
-export const PALETTE = {
-    primary: CHART_PALETTE[0], // brand purple  — bulk headers, emphasis
-    neutral: CHART_PALETTE[1], // teal-gray     — subtle row fills
-    mint:    CHART_PALETTE[5], // sage green    — OK / in-balance / sum totals
-    blue:    CHART_PALETTE[4], // soft blue     — informational / secondary rollups
-    amber:   CHART_PALETTE[2], // amber         — mid-magnitude difference warnings
-    red:     CHART_PALETTE[3], // coral         — high-loss / out-of-tolerance
-} as const;
 
 // ─── Computed row types ───────────────────────────────────────────────────────
 
@@ -232,57 +212,13 @@ export function diffCell(diff: number | null): string {
     return (diff > 0 ? '+' : '-') + formatted;
 }
 
-// ─── Unified KPI tile for the Zone hierarchy view ────────────────────────────
+// ─── Table primitives ─────────────────────────────────────────────────────────
+// Raw HTML table elements styled with the design tokens: a sticky purple header
+// row (text-eyebrow, on-primary — DESIGN_SYSTEM.md §6 DataTable) and caption-size
+// cells, so daily tables read identically to the monthly ledgers.
 
-export function HierarchyStatCard({
-    label, value, icon, color, valueColor,
-}: {
-    label: string;
-    value: string;
-    icon: React.ReactNode;
-    color: string;
-    valueColor?: string;
-}) {
-    return (
-        <div
-            className="relative overflow-hidden bg-card p-4 sm:p-5 rounded-xl border border-border shadow-card-standard hover:shadow-md motion-safe:hover:-translate-y-0.5 transition-[box-shadow,transform] duration-200 ease-out group/stat"
-        >
-            <div
-                className="absolute top-0 left-0 right-0 h-[3px]"
-                style={{ backgroundColor: color }}
-                aria-hidden="true"
-            />
-            <div className="flex justify-between items-start gap-2">
-                <div className="min-w-0">
-                    <p className="text-muted-foreground text-[10px] sm:text-xs font-medium mb-1 uppercase tracking-wide">
-                        {label}
-                    </p>
-                    <h3
-                        className="text-lg sm:text-xl md:text-2xl font-semibold tabular-nums tracking-tight text-foreground"
-                        style={valueColor ? { color: valueColor } : undefined}
-                    >
-                        {value}
-                    </h3>
-                </div>
-                <div
-                    className="p-2 sm:p-3 rounded-lg motion-safe:group-hover/stat:scale-110 motion-safe:group-hover/stat:-rotate-3 transition-transform duration-200 ease-out flex-shrink-0"
-                    style={{ backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, color }}
-                >
-                    {icon}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ─── Modern table primitives ─────────────────────────────────────────────────
-// Uses raw HTML table elements styled inline to avoid shadcn's double-border wrapper.
-
-// Header + cell styling mirror the monthly section (the standard reference):
-// a sticky solid --primary (purple) header with white text, compact 12px cells,
-// not uppercase — so daily tables read identically to the monthly ledgers.
-export const thBase = "sticky top-0 z-10 px-3 py-2 text-left align-middle font-semibold text-[12px] whitespace-nowrap bg-[var(--primary)] text-[var(--primary-foreground)]";
-export const tdBase = "px-3 py-2 align-middle text-[12px] text-foreground";
+export const thBase = "sticky top-0 z-10 whitespace-nowrap bg-primary px-3 py-2 text-left align-middle text-eyebrow uppercase text-on-primary";
+export const tdBase = "px-3 py-2 align-middle text-caption text-fg";
 
 export type SortDir = 'asc' | 'desc' | null;
 export interface SortState { key: string; dir: SortDir }
@@ -294,10 +230,10 @@ export function nextSort(current: SortState, key: string): SortState {
 }
 
 export function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
-    if (!active || !dir) return <ArrowUpDown className="h-3 w-3 opacity-30" />;
+    if (!active || !dir) return <ArrowUpDown size={12} strokeWidth={2} className="opacity-30" aria-hidden="true" />;
     return dir === 'asc'
-        ? <ChevronUp className="h-3.5 w-3.5 text-secondary" />
-        : <ChevronDown className="h-3.5 w-3.5 text-secondary" />;
+        ? <ChevronUp size={14} strokeWidth={2} className="text-accent" aria-hidden="true" />
+        : <ChevronDown size={14} strokeWidth={2} className="text-accent" aria-hidden="true" />;
 }
 
 export function Th({
@@ -309,7 +245,7 @@ export function Th({
     const sortable = sortKey && sort && onSort;
     return (
         <th scope="col"
-            className={cn(thBase, sortable && "cursor-pointer select-none group hover:opacity-80 transition-opacity", className)}
+            className={cn(thBase, sortable && "group cursor-pointer select-none transition-opacity hover:opacity-80", className)}
             onClick={sortable ? () => onSort(nextSort(sort, sortKey)) : undefined}
         >
             <span className="inline-flex items-center gap-1">
@@ -323,48 +259,26 @@ export function Th({
 export function TableSearch({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
     return (
         <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search size={16} strokeWidth={2} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
             <input
                 type="text"
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
                 aria-label={placeholder}
-                className="h-9 w-full sm:w-64 pl-9 pr-8 text-[13px] rounded-full border border-border dark:border-border/80 bg-muted/80 dark:bg-muted/50 placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/30 focus:border-secondary/50 transition-design"
+                className="h-9 w-full rounded-control border border-line bg-card pl-9 pr-8 text-label text-fg outline-none placeholder:text-muted sm:w-64"
             />
             {value && (
                 <button
                     type="button"
                     onClick={() => onChange('')}
                     aria-label="Clear search"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted dark:text-muted-foreground/70 dark:hover:bg-muted/60 transition-colors"
+                    className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-control text-muted transition-colors hover:bg-component hover:text-fg"
                 >
-                    <span aria-hidden="true" className="text-[14px] leading-none font-medium">&times;</span>
+                    <span aria-hidden="true" className="text-body font-medium leading-none">&times;</span>
                 </button>
             )}
         </div>
-    );
-}
-
-/**
- * Status chip.
- *
- * Token-only: the `--mb-*` status pairs already flip correctly between light
- * and dark, whereas the raw Tailwind `emerald/red/amber` palette this used to
- * carry was a second, divergent status palette that ignored the app's theme.
- */
-export function StatusChip({ label, color }: { label: string; color: 'success' | 'danger' | 'warning' | 'default' | 'primary' }) {
-    const styles = {
-        success: 'bg-mb-success-light text-mb-success-text ring-mb-success/30',
-        danger: 'bg-mb-danger-light text-mb-danger-text ring-mb-danger/30',
-        warning: 'bg-mb-warning-light text-mb-warning-text ring-mb-warning/30',
-        default: 'bg-muted text-muted-foreground ring-border/20',
-        primary: 'bg-secondary text-secondary-foreground ring-secondary/60',
-    }[color];
-    return (
-        <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium ring-1 ring-inset", styles)}>
-            {label}
-        </span>
     );
 }
 
@@ -374,47 +288,38 @@ export function TablePagination({
     page: number; totalPages: number; totalItems: number;
     onPageChange: (p: number) => void; rowsPerPage: number; onRowsPerPageChange: (n: number) => void;
 }) {
+    const pageButton = "flex min-h-11 min-w-11 items-center justify-center rounded-control text-caption font-medium transition-colors sm:min-h-8 sm:min-w-8";
+    const edgeButton = "min-h-11 rounded-control border border-line px-4 text-caption font-medium text-muted transition-colors hover:bg-component disabled:cursor-not-allowed disabled:opacity-40 sm:min-h-8 sm:px-3";
     return (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-2">
-            <span className="text-[12px] text-muted-foreground tabular-nums">
+        <div className="flex flex-col items-center justify-between gap-3 px-1 py-2 sm:flex-row">
+            <span className="text-caption tabular-nums text-muted">
                 {totalItems} result{totalItems !== 1 ? 's' : ''}
             </span>
             <div className="flex items-center gap-1">
-                <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
-                    disabled={page <= 1}
-                    onClick={() => onPageChange(page - 1)}
-                >
+                <button type="button" className={edgeButton} disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
                     Prev
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
                     <button
                         key={p}
+                        type="button"
                         onClick={() => onPageChange(p)}
-                        className={cn(
-                            "flex min-h-11 min-w-11 items-center justify-center rounded-full text-[12px] font-medium transition-design sm:min-h-8 sm:min-w-8",
-                            p === page
-                                ? "bg-primary text-primary-foreground shadow-sm"
-                                : "text-muted-foreground hover:bg-muted dark:hover:bg-muted",
-                        )}
+                        aria-current={p === page ? "page" : undefined}
+                        className={cn(pageButton, p === page ? "bg-primary text-on-primary" : "text-muted hover:bg-component hover:text-fg")}
                     >
                         {p}
                     </button>
                 ))}
-                <button
-                    className="min-h-11 px-4 text-[12px] font-medium rounded-full border border-border text-muted-foreground hover:bg-muted dark:hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors sm:min-h-8 sm:px-3"
-                    disabled={page >= totalPages}
-                    onClick={() => onPageChange(page + 1)}
-                >
+                <button type="button" className={edgeButton} disabled={page >= totalPages} onClick={() => onPageChange(page + 1)}>
                     Next
                 </button>
             </div>
-            <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
+            <label className="flex items-center gap-1.5 text-caption text-muted">
                 Rows
                 <select
                     value={rowsPerPage}
                     onChange={e => onRowsPerPageChange(Number(e.target.value))}
-                    className="min-h-11 rounded-full border border-border bg-transparent text-[12px] px-3 focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer sm:min-h-8 sm:px-2"
+                    className="min-h-11 cursor-pointer rounded-control border border-line bg-card px-3 text-caption text-fg outline-none sm:min-h-8 sm:px-2"
                 >
                     {[5, 10, 15, 21].map(n => <option key={n} value={n}>{n}</option>)}
                 </select>

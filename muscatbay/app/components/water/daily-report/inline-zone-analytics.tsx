@@ -3,13 +3,12 @@
 // ─── ZoneAnalyticsPanel — the zone drill-down for the Daily report.
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-    AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-    ReferenceLine, Legend, Line,
+    ComposedChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    ReferenceLine, Line, CartesianGrid,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
-import { LiquidTooltip } from "@/components/charts/liquid-tooltip";
+import { ChartFrame, chartTheme, SectionCard } from "@/components/ui";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import {
@@ -29,6 +28,11 @@ interface ZoneAnalyticsPanelProps {
     month: string;
     activeZoneName: string;
 }
+
+/** Loose value type matching Recharts' Formatter signature. */
+type TipValue = number | string | ReadonlyArray<number | string> | undefined;
+const fmtM3 = (v: TipValue, name: number | string | undefined): [string, string] =>
+    [v == null ? "—" : `${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })} m³`, String(name)];
 
 function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZoneName }: ZoneAnalyticsPanelProps) {
     const chartMotion = useChartMotion();
@@ -89,13 +93,13 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
             {/* ── Zone heading ─────────────────────────────────────────────── */}
             <div>
-                <h2 className="text-xl font-medium text-foreground">
+                <h2 className="text-title text-primary dark:text-fg">
                     {activeZoneName} Analysis — Day {selectedDay}, {month}
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                    <span className="text-mb-secondary font-medium">L2 Bulk</span> = zone entry meter &bull;{" "}
-                    <span className="text-mb-primary font-medium">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
-                    <span style={{ color: CHART_COLORS.loss }} className="font-medium">Difference</span> = L2 &minus; ΣL3
+                <p className="mt-1 text-body text-muted">
+                    <span className="font-medium text-fg">L2 Bulk</span> = zone entry meter &bull;{" "}
+                    <span className="font-medium text-fg">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
+                    <span className="font-medium text-danger">Difference</span> = L2 &minus; ΣL3
                 </p>
             </div>
 
@@ -105,13 +109,13 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     // Honest stand-in for the gauge: an unread bulk meter is not
                     // "0 m³ entered the zone", and no loss can be derived from it.
                     <div
-                        className="flex flex-col items-center justify-center rounded-full border border-dashed border-border text-center"
+                        className="flex flex-col items-center justify-center rounded-pill border border-dashed border-line text-center"
                         style={{ width: 160, height: 160 }}
                         role="img"
                         aria-label="L2 bulk meter: no reading recorded for this day"
                     >
-                        <span className="text-sm font-semibold text-muted-foreground">No reading</span>
-                        <span className="mt-1 max-w-[120px] text-[11px] text-muted-foreground">
+                        <span className="text-label text-muted">No reading</span>
+                        <span className="mt-1 max-w-32 text-caption text-muted">
                             L2 bulk meter not read — zone loss cannot be computed
                         </span>
                     </div>
@@ -143,81 +147,62 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
             </div>
 
             {/* ── Daily trend chart ────────────────────────────────────────── */}
-            <Card className="card-elevated">
-                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                    <CardTitle className="text-base sm:text-lg">
-                        Zone Daily Consumption Trend
-                    </CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-                        Day-by-day comparison of L2 Bulk vs ΣL3 totals — {activeZoneName}, {month}
-                    </p>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-5 md:p-6 pt-0">
+            <SectionCard>
+                <SectionCard.Header
+                    title="Zone daily consumption trend"
+                    description={`Day-by-day comparison of L2 Bulk vs ΣL3 totals — ${activeZoneName}, ${month}`}
+                />
+                <SectionCard.Body>
                     {trendData.length === 0 ? (
-                        <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+                        <div className="flex h-chart items-center justify-center text-body text-muted">
                             No trend data available for this zone
                         </div>
                     ) : (
-                        <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+                        <ChartFrame
+                            series={3}
+                            height="chart-lg"
+                            legend={[
+                                { label: "L2 Bulk", color: CHART_COLORS.teal },
+                                { label: "ΣL3 Total", color: CHART_COLORS.brand },
+                                { label: "Loss", color: CHART_COLORS.loss, dashed: true },
+                            ]}
+                        >
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                    <defs>
-                                        <linearGradient id="gradDailyBulk" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.teal} stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.teal} stopOpacity={0} />
-                                        </linearGradient>
-                                        <linearGradient id="gradDailyL3" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={CHART_COLORS.brand} stopOpacity={0.4} />
-                                            <stop offset="95%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <XAxis
-                                        dataKey="day"
-                                        axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
-                                        dy={10} interval={4}
-                                    />
-                                    <YAxis
-                                        axisLine={false} tickLine={false}
-                                        tick={{ fontSize: 11, fill: "var(--chart-axis)" }}
-                                        tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v}
-                                        label={{ value: 'm³', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: "var(--chart-axis)", fontSize: 11 } }}
-                                    />
-                                    <Tooltip content={<LiquidTooltip />} cursor={{ stroke: 'var(--chart-cursor-stroke)', strokeWidth: 2 }} />
-                                    <Legend iconType="circle" />
+                                <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                    <CartesianGrid {...chartTheme.grid} />
+                                    <XAxis dataKey="day" {...chartTheme.axis} interval={4} />
+                                    <YAxis {...chartTheme.axis} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                                    <Tooltip formatter={fmtM3} {...chartTheme.tooltip} />
                                     {currentDayLabel && (
                                         <ReferenceLine
                                             x={currentDayLabel}
-                                            stroke={CHART_COLORS.brand}
+                                            stroke={chartTheme.series[0]}
                                             strokeDasharray="4 3"
                                             strokeWidth={1.5}
-                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 10, fill: CHART_COLORS.brand, fontWeight: 600 }}
+                                            label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 11, fill: "var(--color-muted)" }}
                                         />
                                     )}
                                     <Area
                                         type="monotone" name="ΣL3 Total" dataKey="ΣL3"
-                                        stroke={CHART_COLORS.brand} fill="url(#gradDailyL3)" strokeWidth={3}
-                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        stroke={CHART_COLORS.brand} fill={CHART_COLORS.brand} {...chartTheme.area}
                                         {...chartMotion}
                                     />
                                     <Line
                                         type="monotone" name="Loss" dataKey="Loss"
-                                        stroke={CHART_COLORS.loss} strokeWidth={2}
-                                        dot={false} strokeDasharray="5 5"
+                                        stroke={CHART_COLORS.loss} {...chartTheme.line} strokeDasharray="5 5"
                                         {...chartMotion}
                                     />
                                     <Area
                                         type="monotone" name="L2 Bulk" dataKey="L2 Bulk"
-                                        stroke={CHART_COLORS.teal} fill="url(#gradDailyBulk)" strokeWidth={3}
-                                        activeDot={{ r: 6, stroke: 'var(--card)', strokeWidth: 2 }}
+                                        stroke={CHART_COLORS.teal} fill={CHART_COLORS.teal} {...chartTheme.area}
                                         {...chartMotion}
                                     />
-                                </AreaChart>
+                                </ComposedChart>
                             </ResponsiveContainer>
-                        </div>
+                        </ChartFrame>
                     )}
-                </CardContent>
-            </Card>
+                </SectionCard.Body>
+            </SectionCard>
         </div>
     );
 }

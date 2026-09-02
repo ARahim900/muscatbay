@@ -42,7 +42,7 @@ function contractStatusCls(status: string): string {
   if (s.includes("active")) return "bg-mb-success-light text-mb-success-text";
   if (s.includes("expired")) return "bg-mb-danger-light text-mb-danger-text";
   if (s.includes("draft") || s.includes("pending") || s.includes("renew")) return "bg-mb-warning-light text-mb-warning-text";
-  return "bg-muted text-muted-foreground";
+  return "bg-muted-bg text-muted-foreground";
 }
 
 function actionStatusCls(status: string | null): string {
@@ -300,7 +300,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                               ? "bg-mb-success-light text-mb-success-text"
                               : q.status === "In Progress"
                               ? "bg-mb-warning-light text-mb-warning-text"
-                              : "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground"
+                              : "bg-muted-bg text-muted-foreground dark:bg-muted-bg dark:text-muted-foreground"
                           }`}
                         >
                           {q.status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
@@ -405,7 +405,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
             ) : (
               <ul className="space-y-2">
                 {openActions.map((a) => (
-                  <li key={a.id} className="flex gap-3 p-2.5 rounded-lg bg-muted dark:bg-muted/50">
+                  <li key={a.id} className="flex gap-3 p-2.5 rounded-lg bg-muted-bg dark:bg-muted-bg/50">
                     <AlertCircle className="h-4 w-4 text-mb-warning-text flex-shrink-0 mt-0.5" aria-hidden="true" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">

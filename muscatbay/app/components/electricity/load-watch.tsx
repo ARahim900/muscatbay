@@ -179,7 +179,7 @@ function CategoryTable({
                             "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                             flaggedOnly
                                 ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                                : "border-border bg-card text-muted-foreground hover:bg-muted-bg hover:text-foreground",
                         )}
                     >
                         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -282,7 +282,7 @@ function CategoryTable({
                                                 <span className="font-semibold text-foreground">{num(category.total)} kWh</span>
                                                 <span className="text-[11px] font-normal text-muted-foreground">{category.share.toFixed(0)}%</span>
                                             </div>
-                                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted-bg" aria-hidden="true">
                                                 <div className="h-full rounded-full bg-secondary" style={{ width: `${barWidth}%` }} />
                                             </div>
                                             <p className="mt-1 text-[11px] font-normal text-muted-foreground md:hidden">
@@ -321,7 +321,7 @@ function CategoryTable({
                                             type="button"
                                             onClick={() => onInspect(category.type)}
                                             aria-label={`Inspect ${category.label}`}
-                                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-bg hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
                                         >
                                             <ChevronRight className="h-4 w-4" aria-hidden="true" />
                                         </button>

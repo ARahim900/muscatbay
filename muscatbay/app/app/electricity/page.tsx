@@ -1040,7 +1040,7 @@ export default function ElectricityPage() {
                                 </div>
                             )}
                             {dbFilteredMeters.length > 1 && (
-                                <div className="rounded-[10.5px] border border-border bg-muted/60 p-4">
+                                <div className="rounded-[10.5px] border border-border bg-muted-bg/60 p-4">
                                     <p className="text-sm font-semibold text-foreground"><Gauge className="mr-1.5 inline h-3.5 w-3.5 text-module-electricity" aria-hidden="true" />Total · {dbFilteredMeters.length} meters</p>
                                     <p className="mt-1 font-mono text-sm font-semibold text-foreground">
                                         {grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })} kWh ·{' '}
@@ -1104,7 +1104,7 @@ export default function ElectricityPage() {
                                     </TableRow>
                                 )}
                                 {dbFilteredMeters.length > 1 && (
-                                    <TableRow className="bg-muted/80 dark:bg-muted/60">
+                                    <TableRow className="bg-muted-bg/80 dark:bg-muted-bg/60">
                                         <TableCell className="col-sticky strong">Total · {dbFilteredMeters.length} meters</TableCell>
                                         <TableCell />
                                         <TableCell />

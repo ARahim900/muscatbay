@@ -381,7 +381,7 @@ export default function FirefightingPage() {
                                     {CYCLES.map((c) => {
                                         const done = c.status === "completed";
                                         return (
-                                            <div key={c.key} className={cn("rounded-lg border p-3", done ? "border-secondary/30 bg-secondary/5 dark:bg-secondary/10" : "border-border bg-muted/50")}>
+                                            <div key={c.key} className={cn("rounded-lg border p-3", done ? "border-secondary/30 bg-secondary/5 dark:bg-secondary/10" : "border-border bg-muted-bg/50")}>
                                                 <div className="flex items-center justify-between">
                                                     <span className="flex items-center gap-2 text-sm font-bold text-foreground">
                                                         <span aria-hidden="true" className={cn("flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-bold text-primary-foreground", done ? "bg-secondary" : "bg-muted-foreground/60")}>{c.key}</span>
@@ -655,7 +655,7 @@ export default function FirefightingPage() {
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {contacts.map((c) => (
-                                            <div key={c.id} className="rounded-lg border border-border dark:border-border/50 bg-muted/40 dark:bg-muted/20 p-3">
+                                            <div key={c.id} className="rounded-lg border border-border dark:border-border/50 bg-muted-bg/40 dark:bg-muted-bg/20 p-3">
                                                 <p className="text-sm font-semibold text-foreground">{c.name}</p>
                                                 <p className="text-[11px] text-muted-foreground">{c.role}</p>
                                                 <div className="mt-2 space-y-1">
@@ -687,7 +687,7 @@ export default function FirefightingPage() {
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <span className="text-xs font-semibold text-foreground">{a.activity_type}</span>
                                                     <span className="text-[10px] text-muted-foreground tabular-nums">{a.ppm_period}</span>
-                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted text-muted-foreground">{a.status}</span>
+                                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-muted-bg text-muted-foreground">{a.status}</span>
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-0.5">{a.scope}</p>
                                                 {a.notes && <p className="text-[11px] text-muted-foreground/80 mt-0.5">{a.notes}</p>}
@@ -735,7 +735,7 @@ export default function FirefightingPage() {
                             <CardContent>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                                     {AMC_SCOPE_COUNTS.map((eq) => (
-                                        <div key={eq.label} className="p-3 bg-muted dark:bg-muted/50 rounded-lg text-center">
+                                        <div key={eq.label} className="p-3 bg-muted-bg dark:bg-muted-bg/50 rounded-lg text-center">
                                             <p className="text-xl font-bold text-foreground">{eq.value}</p>
                                             <p className="text-[11px] text-muted-foreground font-semibold uppercase tracking-[0.06em]">{eq.label}</p>
                                             <p className="text-[10px] text-muted-foreground">{eq.detail}</p>
@@ -783,7 +783,7 @@ export default function FirefightingPage() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {TANKER_AGREEMENTS.map((co) => (
-                                        <div key={co.company} className="p-4 bg-muted dark:bg-muted/50 rounded-lg border border-border dark:border-border/50">
+                                        <div key={co.company} className="p-4 bg-muted-bg dark:bg-muted-bg/50 rounded-lg border border-border dark:border-border/50">
                                             <div className="flex items-center justify-between mb-3">
                                                 <h4 className="text-sm font-bold text-foreground">{co.company}</h4>
                                                 <Badge className="bg-mb-success-light text-mb-success-text text-[10px]">{co.status}</Badge>

@@ -21,7 +21,7 @@ const variantDefaults: Record<EmptyVariant, { icon: LucideIcon; iconClass: strin
     "no-data": {
         icon: PackageOpen,
         iconClass: "text-muted-foreground/70",
-        bgClass: "bg-muted",
+        bgClass: "bg-muted-bg",
     },
     "no-results": {
         icon: SearchX,

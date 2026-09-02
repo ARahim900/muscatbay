@@ -127,7 +127,7 @@ function ProcessHealthTable({
                             "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                             attentionOnly
                                 ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                                : "border-border bg-card text-muted-foreground hover:bg-muted-bg hover:text-foreground",
                         )}
                     >
                         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />

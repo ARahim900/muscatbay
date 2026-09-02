@@ -1,11 +1,11 @@
 "use client";
 
-// ─── ZoneL3Table — extracted verbatim from daily-water-report.tsx ──────────────
-// Pure relocation; no behavior changes. Imports the inline palette / helpers
-// from inline-shared.tsx (NOT the enhanced versions in zone-panel.tsx).
+// ─── ZoneL3Table — the per-zone L3 meter × day matrix for the Daily report ──────
+// Data logic unchanged; presentation is the design-system primitives
+// (SectionCard, KpiCard, Badge) and the design tokens only.
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge, KpiCard, SectionCard } from "@/components/ui";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     Droplets, Building2, Activity, Home,
@@ -16,34 +16,33 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import {
     type ZoneRow, type BuildingRow, type SortState,
-    PALETTE, r2, n, diffCell,
-    HierarchyStatCard, Th, TableSearch, StatusChip,
+    r2, n, diffCell,
+    Th, TableSearch,
     TablePagination, thBase, tdBase,
 } from "./inline-shared";
 import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 
 export { ZoneL3Table };
 
-// ─── Dark-mode-aware status tokens for DOM cells ─────────────────────────────
-// PALETTE stays for chart-only / HierarchyStatCard props. For table cells we
-// route status colors through CSS variables so they auto-flip in dark mode.
-// `tint(role, pct)` builds a translucent background from the role's base var;
-// the `*Text` vars are the WCAG-tuned foreground colors (light in dark theme).
+// ─── Status tokens for DOM cells (DESIGN_SYSTEM.md §2.2) ─────────────────────
+// Table cells route status colours through the design tokens so they flip with
+// the theme. `tint(role, pct)` builds a translucent background from the role's
+// colour; the same colour is the (WCAG-tuned) foreground.
 type StatusRole = 'primary' | 'info' | 'success' | 'danger';
 const STATUS_BASE: Record<StatusRole, string> = {
-    primary: 'var(--primary)',
-    info: 'var(--mb-info)',
-    success: 'var(--mb-success)',
-    danger: 'var(--mb-danger)',
+    primary: 'var(--color-primary)',
+    info: 'var(--color-info)',
+    success: 'var(--color-success)',
+    danger: 'var(--color-danger)',
 };
 const STATUS_TEXT: Record<StatusRole, string> = {
-    primary: 'var(--primary)',
-    info: 'var(--mb-info-text)',
-    success: 'var(--mb-success-text)',
-    danger: 'var(--mb-danger-text)',
+    primary: 'var(--color-primary)',
+    info: 'var(--color-info)',
+    success: 'var(--color-success)',
+    danger: 'var(--color-danger)',
 };
 const tint = (role: StatusRole, pct: number) =>
     `color-mix(in srgb, ${STATUS_BASE[role]} ${pct}%, transparent)`;
@@ -286,41 +285,21 @@ function ZoneL3Table({
         { key: 'total', header: 'Total (m³)' },
     ], [days]);
 
+    const highZoneDiff = Math.abs(diffGrandTotal) > 20;
+
     return (
-        <Card className="card-elevated">
-            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
-                <div>
-                    <CardTitle className="text-base sm:text-lg">{zoneRow.zoneName} — L3 Meters</CardTitle>
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                        {l3Meters.length} meters — Day 1 to Day {latestDay}
-                    </p>
-                </div>
-            </CardHeader>
-            <CardContent className="p-4 sm:p-5 md:p-6 pt-0 space-y-4">
-                {/* Zone summary KPI cards — unified brand palette */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                    {/* L2 Bulk — primary purple */}
-                    <HierarchyStatCard
-                        label="L2 Bulk (m³)"
-                        value={n(l2GrandTotal)}
-                        icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={PALETTE.primary}
-                    />
-                    {/* ΣL3 — info blue */}
-                    <HierarchyStatCard
-                        label="Σ Individuals (m³)"
-                        value={n(grandTotal)}
-                        icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={PALETTE.blue}
-                    />
-                    {/* Difference — mint (ok) / red (high loss) */}
-                    <HierarchyStatCard
-                        label="Difference"
-                        value={diffCell(diffGrandTotal)}
-                        icon={<ArrowUpDown className="w-4 h-4 sm:w-5 sm:h-5" />}
-                        color={Math.abs(diffGrandTotal) > 20 ? PALETTE.red : PALETTE.mint}
-                        valueColor={Math.abs(diffGrandTotal) > 20 ? PALETTE.red : undefined}
-                    />
+        <SectionCard>
+            <SectionCard.Header
+                icon={Building2}
+                title={`${zoneRow.zoneName} — L3 meters`}
+                description={`${l3Meters.length} meters — Day 1 to Day ${latestDay}`}
+            />
+            <SectionCard.Body className="space-y-4">
+                {/* Zone summary KPIs (KpiCard — DESIGN_SYSTEM.md §6) */}
+                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
+                    <KpiCard tone="water" icon={Droplets} label="L2 bulk" value={n(l2GrandTotal)} unit="m³" footnote="Zone entry meter · month to date" />
+                    <KpiCard tone="water" icon={Activity} label="Σ Individuals" value={n(grandTotal)} unit="m³" footnote={`${l3Meters.length} L3 meters · month to date`} />
+                    <KpiCard icon={ArrowUpDown} label="Difference" value={diffCell(diffGrandTotal)} unit="m³" footnote={highZoneDiff ? "Above the 20 m³ tolerance" : "Within the 20 m³ tolerance"} />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -329,29 +308,29 @@ function ZoneL3Table({
                 </div>
 
                 {/* Horizontally scrollable table */}
-                <div className="relative -mx-4 sm:-mx-5 md:-mx-6">
+                <div className="relative -mx-5">
                 <Table
                     role="region"
                     aria-label="Zone daily readings. Scroll horizontally to view all days."
                     tabIndex={0}
-                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     style={{ minWidth: `${420 + days.length * 72}px` }}
                     data-density="compact"
                 >
                     <TableHeader>
-                        <TableRow className="border-b border-border">
+                        <TableRow className="border-b border-line">
                             <Th
                                 sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-20 bg-[var(--primary)] min-w-[150px]"
+                                className="sticky left-0 z-20 min-w-40 bg-primary"
                             >Meter</Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-[100px]">Account</Th>
-                            <TableHead scope="col" className={cn(thBase, "text-center min-w-[90px]")}>Type</TableHead>
+                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-24">Account</Th>
+                            <TableHead scope="col" className={cn(thBase, "min-w-24 text-center")}>Type</TableHead>
                             {days.map(d => (
-                                <TableHead scope="col" key={d} className={cn(thBase, "text-right min-w-[64px] px-2")}>D{d}</TableHead>
+                                <TableHead scope="col" key={d} className={cn(thBase, "min-w-16 px-2 text-right")}>D{d}</TableHead>
                             ))}
                             <Th
                                 sortKey="total" sort={sort} onSort={setSort}
-                                className="text-right min-w-[80px]"
+                                className="min-w-20 text-right"
                             >Total</Th>
                         </TableRow>
                     </TableHeader>
@@ -366,7 +345,7 @@ function ZoneL3Table({
                             }}
                         >
                             <TableCell
-                                className={cn(tdBase, "font-medium sticky left-0 z-10")}
+                                className={cn(tdBase, "sticky left-0 z-10 font-medium")}
                                 style={{
                                     backgroundColor: tint('primary', 8),
                                     color: STATUS_TEXT.primary,
@@ -374,31 +353,31 @@ function ZoneL3Table({
                                 }}
                             >
                                 <span className="inline-flex items-center gap-2">
-                                    <Droplets className="h-3.5 w-3.5 shrink-0" />
+                                    <Droplets size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
                                     {zoneRow.zoneName} Bulk (L2)
                                 </span>
                             </TableCell>
-                            <TableCell className={cn(tdBase, "font-mono text-[11px]")} style={{ color: `color-mix(in srgb, ${STATUS_TEXT.primary} 67%, transparent)` }}>
+                            <TableCell className={cn(tdBase, "meter")} style={{ color: `color-mix(in srgb, ${STATUS_TEXT.primary} 67%, transparent)` }}>
                                 {zoneConfig.l2Account}
                             </TableCell>
                             <TableCell className={cn(tdBase, "text-center")}>
-                                <StatusChip label="L2 BULK" color="primary" />
+                                <Badge tone="info">L2 BULK</Badge>
                             </TableCell>
                             {l2DayTotals.map((val, i) => (
                                 <TableCell
                                     key={i}
-                                    className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-medium")}
+                                    className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
                                     style={{ color: STATUS_TEXT.primary }}
                                 >
                                     {val === null ? (
-                                        <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                        <span className="text-muted">—</span>
                                     ) : (
                                         n(val)
                                     )}
                                 </TableCell>
                             ))}
                             <TableCell
-                                className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                className={cn(tdBase, "text-right font-medium tabular-nums")}
                                 style={{
                                     backgroundColor: tint('primary', 12),
                                     color: STATUS_TEXT.primary,
@@ -411,7 +390,7 @@ function ZoneL3Table({
                         {/* ── Individual L3 meter rows (paginated/filtered) ── */}
                         {paginated.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={colCount} className="text-center py-10 text-[13px] text-muted-foreground">
+                                <TableCell colSpan={colCount} className="py-10 text-center text-label text-muted">
                                     No meters found
                                 </TableCell>
                             </TableRow>
@@ -425,11 +404,11 @@ function ZoneL3Table({
                                 <TableRow
                                     key={meter.account}
                                     className={cn(
-                                        "border-b border-border/60 dark:border-border/60 transition-colors hover:bg-muted/70 dark:hover:bg-muted/30",
-                                        !isExpanded && "even:bg-muted/40 dark:even:bg-muted/20",
+                                        "border-b border-line transition-colors hover:bg-component",
+                                        !isExpanded && "even:bg-component",
                                     )}
                                 >
-                                    <TableCell className={cn(tdBase, "font-semibold sticky left-0 z-10 bg-card")}>
+                                    <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-card font-medium")}>
                                         <span className="inline-flex items-center gap-2">
                                             {detail ? (
                                                 <button
@@ -437,45 +416,45 @@ function ZoneL3Table({
                                                     onClick={() => toggleBuilding(meter.account)}
                                                     aria-expanded={isExpanded}
                                                     aria-label={`${isExpanded ? 'Collapse' : 'Expand'} ${detail.buildingName} L4 meters`}
-                                                    className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 -ml-1 hover:bg-muted dark:hover:bg-muted transition-colors"
+                                                    className="-ml-1 inline-flex items-center gap-1 rounded-control px-1.5 py-1 transition-colors hover:bg-component"
                                                     style={{ color: STATUS_TEXT.primary }}
                                                 >
                                                     {isExpanded
-                                                        ? <ChevronDown className="h-3.5 w-3.5 shrink-0" />
-                                                        : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
-                                                    <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                                    <span className="font-semibold">{detail.buildingName}</span>
+                                                        ? <ChevronDown size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                                                        : <ChevronRight size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />}
+                                                    <Building2 size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                                                    <span className="font-medium">{detail.buildingName}</span>
                                                 </button>
                                             ) : meter.building ? (
                                                 <>
-                                                    <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
+                                                    <Building2 size={14} strokeWidth={2} className="shrink-0 text-primary" aria-hidden="true" />
                                                     {meter.building.buildingName}
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                                    <Home size={14} strokeWidth={2} className="shrink-0 text-muted" aria-hidden="true" />
                                                     {meter.label}
-                                                    {meter.isIrrigation && <StatusChip label="IRR" color="primary" />}
+                                                    {meter.isIrrigation && <Badge tone="info">IRR</Badge>}
                                                 </>
                                             )}
                                         </span>
                                     </TableCell>
-                                    <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{meter.account}</TableCell>
+                                    <TableCell className={cn(tdBase, "meter text-muted")}>{meter.account}</TableCell>
                                     <TableCell className={cn(tdBase, "text-center")}>
-                                        <StatusChip label={meter.building ? "Building" : "Individual"} color={meter.building ? "primary" : "default"} />
+                                        <Badge tone={meter.building ? "info" : "neutral"}>{meter.building ? "Building" : "Individual"}</Badge>
                                     </TableCell>
                                     {meter.dailyValues.map((val, i) => (
-                                        <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px]")}>
+                                        <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums")}>
                                             {val === null ? (
-                                                <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                                <span className="text-muted">—</span>
                                             ) : val === 0 ? (
-                                                <span className="text-muted-foreground">0.00</span>
+                                                <span className="text-muted">0.00</span>
                                             ) : (
                                                 n(val)
                                             )}
                                         </TableCell>
                                     ))}
-                                    <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                    <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>
                                         {n(meter.total)}
                                     </TableCell>
                                 </TableRow>,
@@ -488,40 +467,37 @@ function ZoneL3Table({
                                     rows.push(
                                         <TableRow
                                             key={`${meter.account}-child-${child.account}`}
-                                            className="border-b border-border/60 dark:border-border/60 bg-muted/40 dark:bg-muted/20"
+                                            className="border-b border-line bg-component"
                                         >
                                             <TableCell
-                                                className={cn(tdBase, "pl-10 font-normal sticky left-0 z-10 text-[13px] bg-muted/40 dark:bg-muted/20")}
+                                                className={cn(tdBase, "sticky left-0 z-10 bg-component pl-10 font-normal text-label")}
                                                 style={{
                                                     boxShadow: `inset 4px 0 0 ${tint('primary', 19)}`,
                                                 }}
                                             >
-                                                <span className="inline-flex items-center gap-2 text-muted-foreground dark:text-muted-foreground/70">
+                                                <span className="inline-flex items-center gap-2 text-muted">
                                                     {idx === detail.children.length - 1
-                                                        ? <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_BASE.primary }} />
-                                                        : <span className="inline-block w-2 h-2 rounded-full bg-border dark:bg-muted" />}
+                                                        ? <span className="inline-block h-2 w-2 rounded-pill" style={{ backgroundColor: STATUS_BASE.primary }} />
+                                                        : <span className="inline-block h-2 w-2 rounded-pill bg-line" />}
                                                     {child.label}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className={cn(tdBase, "font-mono text-[11px] text-muted-foreground")}>{child.account}</TableCell>
+                                            <TableCell className={cn(tdBase, "meter text-muted")}>{child.account}</TableCell>
                                             <TableCell className={cn(tdBase, "text-center")}>
-                                                <StatusChip
-                                                    label={child.type === 'Common' ? 'Common' : 'Apartment'}
-                                                    color={child.type === 'Common' ? 'primary' : 'default'}
-                                                />
+                                                <Badge tone={child.type === 'Common' ? 'info' : 'neutral'}>{child.type === 'Common' ? 'Common' : 'Apartment'}</Badge>
                                             </TableCell>
                                             {child.dailyValues.map((val, i) => (
-                                                <TableCell key={i} className={cn(tdBase, "text-right tabular-nums px-2 text-[12px] font-normal")}>
+                                                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-normal tabular-nums")}>
                                                     {val === null ? (
-                                                        <span className="text-muted-foreground/70 dark:text-muted-foreground">—</span>
+                                                        <span className="text-muted">—</span>
                                                     ) : val === 0 ? (
-                                                        <span className="text-muted-foreground">0.00</span>
+                                                        <span className="text-muted">0.00</span>
                                                     ) : (
                                                         n(val)
                                                     )}
                                                 </TableCell>
                                             ))}
-                                            <TableCell className={cn(tdBase, "text-right tabular-nums font-semibold bg-muted/80 dark:bg-muted/40")}>
+                                            <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>
                                                 {n(child.total)}
                                             </TableCell>
                                         </TableRow>,
@@ -535,7 +511,7 @@ function ZoneL3Table({
                                         style={{ backgroundColor: tint('info', 7) }}
                                     >
                                         <TableCell
-                                            className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
+                                            className={cn(tdBase, "sticky left-0 z-10 pl-10 font-medium")}
                                             style={{
                                                 backgroundColor: tint('info', 7),
                                                 color: STATUS_TEXT.info,
@@ -548,14 +524,14 @@ function ZoneL3Table({
                                         {detail.childDayTotals.map((t, i) => (
                                             <TableCell
                                                 key={i}
-                                                className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                                className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
                                                 style={{ color: STATUS_TEXT.info }}
                                             >
                                                 {n(t)}
                                             </TableCell>
                                         ))}
                                         <TableCell
-                                            className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                            className={cn(tdBase, "text-right font-medium tabular-nums")}
                                             style={{ backgroundColor: tint('info', 12), color: STATUS_TEXT.info }}
                                         >
                                             {n(detail.childGrandTotal)}
@@ -576,7 +552,7 @@ function ZoneL3Table({
                                         }}
                                     >
                                         <TableCell
-                                            className={cn(tdBase, "pl-10 font-medium sticky left-0 z-10 text-[12px]")}
+                                            className={cn(tdBase, "sticky left-0 z-10 pl-10 font-medium")}
                                             style={{
                                                 backgroundColor: tint(diffRole, 8),
                                                 color: STATUS_TEXT[diffRole],
@@ -589,14 +565,14 @@ function ZoneL3Table({
                                         {detail.diffDayTotals.map((t, i) => (
                                             <TableCell
                                                 key={i}
-                                                className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                                className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
                                                 style={{ color: STATUS_TEXT[diffRole] }}
                                             >
                                                 {diffCell(t)}
                                             </TableCell>
                                         ))}
                                         <TableCell
-                                            className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                            className={cn(tdBase, "text-right font-medium tabular-nums")}
                                             style={{ backgroundColor: tint(diffRole, 12), color: STATUS_TEXT[diffRole] }}
                                         >
                                             {diffCell(detail.diffGrandTotal)}
@@ -617,7 +593,7 @@ function ZoneL3Table({
                             }}
                         >
                             <TableCell
-                                className={cn(tdBase, "font-medium sticky left-0 z-10")}
+                                className={cn(tdBase, "sticky left-0 z-10 font-medium")}
                                 colSpan={3}
                                 style={{
                                     backgroundColor: tint('info', 7),
@@ -630,14 +606,14 @@ function ZoneL3Table({
                             {dayTotals.map((t, i) => (
                                 <TableCell
                                     key={i}
-                                    className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                    className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
                                     style={{ color: STATUS_TEXT.info }}
                                 >
                                     {n(t)}
                                 </TableCell>
                             ))}
                             <TableCell
-                                className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                className={cn(tdBase, "text-right font-medium tabular-nums")}
                                 style={{ backgroundColor: tint('info', 12), color: STATUS_TEXT.info }}
                             >
                                 {n(grandTotal)}
@@ -646,8 +622,7 @@ function ZoneL3Table({
 
                         {/* ── Difference footer row (zone level) ─────────── */}
                         {(() => {
-                            const isHighZoneDiff = Math.abs(diffGrandTotal) > 20;
-                            const diffRole: StatusRole = isHighZoneDiff ? 'danger' : 'success';
+                            const diffRole: StatusRole = highZoneDiff ? 'danger' : 'success';
                             return (
                                 <TableRow
                                     className="border-t"
@@ -657,7 +632,7 @@ function ZoneL3Table({
                                     }}
                                 >
                                     <TableCell
-                                        className={cn(tdBase, "font-medium sticky left-0 z-10")}
+                                        className={cn(tdBase, "sticky left-0 z-10 font-medium")}
                                         colSpan={3}
                                         style={{
                                             backgroundColor: tint(diffRole, 8),
@@ -670,14 +645,14 @@ function ZoneL3Table({
                                     {diffByDay.map((t, i) => (
                                         <TableCell
                                             key={i}
-                                            className={cn(tdBase, "text-right tabular-nums font-medium px-2 text-[12px]")}
+                                            className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
                                             style={{ color: STATUS_TEXT[diffRole] }}
                                         >
                                             {diffCell(t)}
                                         </TableCell>
                                     ))}
                                     <TableCell
-                                        className={cn(tdBase, "text-right tabular-nums font-medium")}
+                                        className={cn(tdBase, "text-right font-medium tabular-nums")}
                                         style={{ backgroundColor: tint(diffRole, 12), color: STATUS_TEXT[diffRole] }}
                                     >
                                         {diffCell(diffGrandTotal)}
@@ -688,7 +663,7 @@ function ZoneL3Table({
                     </TableBody>
                 </Table>
                 <div
-                    className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent sm:hidden"
+                    className="pointer-events-none absolute bottom-0 right-0 top-0 w-8 bg-linear-to-l from-card to-transparent sm:hidden"
                     aria-hidden="true"
                 />
                 </div>
@@ -703,7 +678,7 @@ function ZoneL3Table({
                         onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
                     />
                 )}
-            </CardContent>
-        </Card>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }

@@ -162,7 +162,7 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
         }
     }, [getValueFromPointer, min, max, onValueChange]);
 
-    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 border-primary bg-card dark:border-secondary shadow-md shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
+    const thumbClass = "absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-pill border-2 border-primary bg-card dark:border-secondary shadow-card shadow-black/10 dark:shadow-black/30 hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-transform cursor-grab active:cursor-grabbing z-10";
 
     return (
         <div
@@ -173,10 +173,10 @@ function DualRangeSlider({ min, max, value, onValueChange, startLabel, endLabel 
             {/* Track background — lifted off the dark card surface (--muted #22202A is
                 nearly indistinguishable from --card #16141B) so the inactive portion of
                 the track stays visible and the active range reads as a clear contrast. */}
-            <div className="absolute inset-x-0 h-2 rounded-full bg-border dark:bg-muted-foreground/30" />
+            <div className="absolute inset-x-0 h-2 rounded-pill bg-border dark:bg-muted-foreground/30" />
             {/* Active range — brand teal is bright in both themes; pinned explicitly for dark. */}
             <div
-                className="absolute h-2 rounded-full bg-secondary"
+                className="absolute h-2 rounded-pill bg-secondary"
                 style={{ left: `${startPct}%`, right: `${100 - endPct}%` }}
             />
             {/* Start thumb */}
@@ -406,19 +406,19 @@ export function DateRangePicker({
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 {/* Left: Icon + Range Display */}
                 <div className="flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-secondary/10 dark:bg-secondary/15 mt-0.5 shrink-0">
-                        <Calendar className="w-[18px] h-[18px] text-primary dark:text-secondary" />
+                    <div className="w-9 h-9 rounded-card flex items-center justify-center bg-secondary/10 dark:bg-secondary/15 mt-0.5 shrink-0">
+                        <Calendar className="h-4 w-4 text-primary dark:text-secondary" />
                     </div>
                     <div className="space-y-0.5 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-foreground tracking-tight">Date Range</h3>
-                            <span className="inline-flex items-center px-1.5 py-px text-[10px] font-bold rounded-full bg-secondary/10 text-primary dark:bg-secondary/15 dark:text-secondary tabular-nums ring-1 ring-secondary/20 dark:ring-secondary/20">
+                            <h3 className="text-body font-semibold text-fg tracking-tight">Date Range</h3>
+                            <span className="inline-flex items-center px-1.5 py-px text-caption font-bold rounded-pill bg-secondary/10 text-primary dark:bg-secondary/15 dark:text-secondary tabular-nums ring-1 ring-secondary/20 dark:ring-secondary/20">
                                 {selectedDataMonths} mo
                             </span>
                         </div>
-                        <p className="text-[13px] text-muted-foreground leading-tight truncate">
+                        <p className="text-label text-muted leading-tight truncate">
                             <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayStartMonth)}</span>
-                            <span className="mx-1.5 text-muted-foreground/70 dark:text-muted-foreground">&rarr;</span>
+                            <span className="mx-1.5 text-muted/70 dark:text-muted">&rarr;</span>
                             <span className="font-semibold text-primary dark:text-secondary">{formatMonthWithYear(displayEndMonth)}</span>
                         </p>
                     </div>
@@ -426,13 +426,13 @@ export function DateRangePicker({
 
                 {/* Right: Direct selectors + quick presets */}
                 <div className="flex flex-wrap items-center gap-2 shrink-0 sm:justify-end">
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                    <label className="flex items-center gap-1.5 text-caption font-semibold text-muted">
                         Start
                         <select
                             aria-label="Start month selector"
                             value={activeStartIndex}
                             onChange={(e) => handleStartSelect(e.target.value)}
-                            className="min-h-9 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                            className="min-h-9 rounded-pill border border-line bg-card px-3 py-1 text-caption font-semibold text-fg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             {selectableMonthIndexes.map(index => (
                                 <option key={`start-${activeTimeline[index]}`} value={index}>
@@ -441,13 +441,13 @@ export function DateRangePicker({
                             ))}
                         </select>
                     </label>
-                    <label className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                    <label className="flex items-center gap-1.5 text-caption font-semibold text-muted">
                         End
                         <select
                             aria-label="End month selector"
                             value={activeEndIndex}
                             onChange={(e) => handleEndSelect(e.target.value)}
-                            className="min-h-9 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold text-foreground outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
+                            className="min-h-9 rounded-pill border border-line bg-card px-3 py-1 text-caption font-semibold text-fg outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             {selectableMonthIndexes.map(index => (
                                 <option key={`end-${activeTimeline[index]}`} value={index}>
@@ -461,10 +461,10 @@ export function DateRangePicker({
                             key={key}
                             onClick={() => key && applyPreset(key)}
                             className={`
-                                min-h-11 px-3 py-2 text-[11px] font-semibold rounded-md transition-all duration-200 sm:min-h-0 sm:px-2 sm:py-1
+                                min-h-11 px-3 py-2 text-caption font-semibold rounded-control transition-all duration-200 sm:min-h-0 sm:px-2 sm:py-1
                                 ${activePreset === key
                                     ? 'bg-primary/10 text-primary dark:bg-secondary/15 dark:text-secondary ring-1 ring-primary/20 dark:ring-secondary/25'
-                                    : 'text-muted-foreground hover:bg-muted dark:hover:bg-muted/50 hover:text-muted-foreground dark:hover:text-muted-foreground/70'
+                                    : 'text-muted hover:bg-component dark:hover:bg-component/50 hover:text-muted dark:hover:text-muted/70'
                                 }
                             `}
                         >
@@ -476,7 +476,7 @@ export function DateRangePicker({
                             setActivePreset(null);
                             onReset();
                         }}
-                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-md px-3 py-2 text-[11px] font-semibold text-muted-foreground transition-all duration-200 hover:bg-mb-danger-light hover:text-mb-danger-text sm:min-h-0 sm:px-2 sm:py-1"
+                        className="ml-0.5 inline-flex min-h-11 items-center gap-1 rounded-control px-3 py-2 text-caption font-semibold text-muted transition-all duration-200 hover:bg-danger-tint hover:text-danger sm:min-h-0 sm:px-2 sm:py-1"
                     >
                         <RotateCcw className="w-3 h-3" />
                         Reset
@@ -489,7 +489,7 @@ export function DateRangePicker({
                 {/* Dual-Thumb Range Slider — px-3 keeps thumbs away from Card overflow-hidden edges */}
                 <div className="px-3 overflow-visible">
                     {activeTimeline.length < 2 ? (
-                        <div className="h-2 w-full rounded-full bg-secondary" />
+                        <div className="h-2 w-full rounded-pill bg-secondary" />
                     ) : (
                         <DualRangeSlider
                             value={[activeStartIndex, activeEndIndex]}
@@ -505,7 +505,7 @@ export function DateRangePicker({
                 {/* Year badge */}
                 {displayYear && (
                     <div className="px-3 mt-3 mb-1">
-                        <span className="text-[10px] font-extrabold text-primary/50 dark:text-secondary/40 tracking-wider">
+                        <span className="text-caption font-extrabold text-primary/50 dark:text-secondary/40 tracking-wider">
                             20{displayYear}
                         </span>
                     </div>
@@ -526,19 +526,19 @@ export function DateRangePicker({
                                 disabled={!hasData}
                                 onClick={() => handleMonthClick(i)}
                                 aria-label={`${hasData ? 'Select' : 'Unavailable'} ${formatMonthWithYear(m)}`}
-                                className="relative flex min-w-0 flex-col items-center rounded-md px-1 py-1 transition-colors disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                className="relative flex min-w-0 flex-col items-center rounded-control px-1 py-1 transition-colors disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 {/* Month label */}
                                 <span
                                     className={`
-                                        text-[11px] leading-none transition-colors duration-200
+                                        text-caption leading-none transition-colors duration-200
                                         ${isEndpoint
                                             ? 'font-extrabold text-primary dark:text-secondary'
                                             : isInRange
                                                 ? 'font-semibold text-secondary dark:text-secondary/90'
                                                 : hasData
-                                                    ? 'font-medium text-muted-foreground'
-                                                    : 'font-medium text-muted-foreground/70 dark:text-muted-foreground'
+                                                    ? 'font-medium text-muted'
+                                                    : 'font-medium text-muted/70 dark:text-muted'
                                         }
                                     `}
                                 >
@@ -548,14 +548,14 @@ export function DateRangePicker({
                                 {/* Data availability dot — empty ring for months without data */}
                                 <span
                                     className={`
-                                        mt-1.5 rounded-full transition-all duration-200
+                                        mt-1.5 rounded-pill transition-all duration-200
                                         ${isEndpoint
                                             ? 'bg-primary dark:bg-secondary w-1.5 h-1.5'
                                             : isInRange && hasData
                                                 ? 'bg-secondary dark:bg-secondary/70 w-1 h-1'
                                                 : hasData
-                                                    ? 'bg-border dark:bg-muted w-1 h-1'
-                                                    : 'border border-border w-1 h-1'
+                                                    ? 'bg-border dark:bg-component w-1 h-1'
+                                                    : 'border border-line w-1 h-1'
                                         }
                                     `}
                                 />

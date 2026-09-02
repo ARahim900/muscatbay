@@ -111,7 +111,7 @@ export default function PestControlPage() {
 
                     {/* Source-attribution strip — makes it explicit that this section
                         is a connected third-party tool, not a native app page. */}
-                    <div className="flex items-center gap-2 border-y border-border/60 bg-muted/40 px-4 py-2 text-[11px] font-medium text-muted-foreground sm:px-5">
+                    <div className="flex items-center gap-2 border-y border-border/60 bg-muted-bg/40 px-4 py-2 text-[11px] font-medium text-muted-foreground sm:px-5">
                         <Database className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         <span>External data source · Powered by AITable.ai</span>
                         <span className="ms-auto hidden rounded-full bg-secondary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary dark:text-secondary sm:inline">
@@ -135,7 +135,7 @@ export default function PestControlPage() {
                                         href={embedUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                                         Open in a new tab
@@ -143,7 +143,7 @@ export default function PestControlPage() {
                                     <button
                                         type="button"
                                         onClick={retry}
-                                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                     >
                                         <RefreshCw className="h-3.5 w-3.5" aria-hidden="true" />
                                         Reload preview

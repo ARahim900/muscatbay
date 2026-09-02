@@ -62,7 +62,7 @@ export function Topbar() {
                 type="button"
                 onClick={openCommandPalette}
                 aria-label="Search modules and actions"
-                className="group flex items-center gap-2 min-w-11 h-11 sm:h-9 justify-center sm:justify-start sm:w-full sm:max-w-xs px-0 sm:px-3 rounded-lg text-muted-foreground sm:border sm:border-border sm:dark:border-white/10 sm:bg-muted/50 sm:dark:bg-white/[0.03] hover:bg-muted dark:hover:bg-white/[0.06] hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                className="group flex items-center gap-2 min-w-11 h-11 sm:h-9 justify-center sm:justify-start sm:w-full sm:max-w-xs px-0 sm:px-3 rounded-lg text-muted-foreground sm:border sm:border-border sm:dark:border-white/10 sm:bg-muted-bg/50 sm:dark:bg-white/[0.03] hover:bg-muted-bg dark:hover:bg-white/[0.06] hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
             >
                 <Search className="w-[17px] h-[17px] flex-shrink-0" aria-hidden="true" />
                 <span className="hidden sm:inline flex-1 text-start text-sm truncate">Search…</span>
@@ -78,7 +78,7 @@ export function Topbar() {
                 {/* Theme Toggle */}
                 <button
                     onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-muted dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-muted-bg dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                     aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
                     aria-pressed={resolvedTheme === "dark"}
                 >
@@ -91,7 +91,7 @@ export function Topbar() {
                 {/* Settings */}
                 <Link
                     href="/settings"
-                    className="w-11 h-11 flex items-center justify-center hover:bg-muted dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                    className="w-11 h-11 flex items-center justify-center hover:bg-muted-bg dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                     aria-label="Settings"
                 >
                     <Settings className="w-[17px] h-[17px]" />
@@ -114,7 +114,7 @@ export function Topbar() {
                                 }, 10);
                             }
                         }}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-muted-bg dark:hover:bg-white/[0.06] transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                         aria-label="User profile menu"
                         aria-expanded={isProfileOpen}
                         aria-haspopup="menu"
@@ -163,7 +163,7 @@ export function Topbar() {
                                     href="/settings"
                                     role="menuitem"
                                     onClick={() => setIsProfileOpen(false)}
-                                    className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted transition-colors duration-150"
+                                    className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted-bg transition-colors duration-150"
                                 >
                                     <Settings className="w-4 h-4 text-muted-foreground" />
                                     Settings

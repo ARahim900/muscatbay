@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { TabNavigation } from "@/components/shared/tab-navigation";
+import { Button, SectionCard, Tabs, type TabItem } from "@/components/ui";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { getDynamicMonths, findLatestMonthWithData } from "@/lib/water-data";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
@@ -13,11 +11,9 @@ import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumpt
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import {
-    ChevronLeft, ChevronRight, CalendarDays,
-    Clock, Loader2, RefreshCw, Radio,
+    ChevronLeft, ChevronRight, CalendarDays, RefreshCw,
     Gauge, MapPin, Plug, Database, ClipboardList,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 // ─── Subcomponents extracted into ./daily-report/ for maintainability.
 //     (An unused parallel implementation — zone-panel/dc-panel/zone-analytics/
@@ -88,19 +84,30 @@ function getMonthsForYear(year: string): string[] {
 
 type DailyTab = 'watch' | 'zones' | 'dc' | 'database' | 'exceptions';
 
-const DAILY_TABS: { key: DailyTab; label: string; icon: typeof Gauge }[] = [
-    { key: 'watch', label: 'Zone Watch', icon: Gauge },
-    { key: 'zones', label: 'Zone Analysis', icon: MapPin },
-    { key: 'dc', label: 'Direct Connections', icon: Plug },
-    { key: 'database', label: 'Daily Database', icon: Database },
-    { key: 'exceptions', label: 'Exceptions & Actions', icon: ClipboardList },
+const DAILY_TABS: TabItem<DailyTab>[] = [
+    { value: 'watch', label: 'Zone Watch', icon: Gauge },
+    { value: 'zones', label: 'Zone Analysis', icon: MapPin },
+    { value: 'dc', label: 'Direct Connections', icon: Plug },
+    { value: 'database', label: 'Daily Database', icon: Database },
+    { value: 'exceptions', label: 'Exceptions', icon: ClipboardList },
 ];
 
-const isDailyTab = (v: unknown): v is DailyTab => DAILY_TABS.some(t => t.key === v);
+const isDailyTab = (v: unknown): v is DailyTab => DAILY_TABS.some(t => t.value === v);
+
+/**
+ * What the page's single data-source chip should say for the Daily view. The
+ * Daily report has its own fetch and realtime channel; instead of rendering a
+ * second "Live / Offline" pill (DESIGN_SYSTEM.md §0 — no duplicate live-data
+ * information) it reports its state upward.
+ */
+export type ViewStatus = { state: 'live' | 'connecting' | 'offline'; syncedAt?: string };
+
+/** Native select in the design-system control idiom (tokens only). */
+const SELECT_CLASS = "h-9 rounded-control border border-line bg-card px-2 text-label text-fg outline-none disabled:opacity-50";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function DailyWaterReport() {
+export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status: ViewStatus) => void } = {}) {
     // Safe initial state (matches SSR output — last available month, day 1).
     // The real default ("yesterday" from the client's local clock) is applied
     // in a client-only useEffect below, to avoid SSR timezone drift where the
@@ -275,138 +282,107 @@ export function DailyWaterReport() {
         onChanged: () => fetchMonth(selectedMonth, true),
     });
 
+    // ── Report the data-source state to the page's single StatusChip ──────────
+    useEffect(() => {
+        if (!onStatusChange) return;
+        const syncedAt = lastFetched
+            ? lastFetched.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+            : undefined;
+        onStatusChange(
+            status === 'error' ? { state: 'offline', syncedAt }
+            : status === 'loading' ? { state: 'connecting', syncedAt }
+            : isLive ? { state: 'live', syncedAt }
+            : { state: 'connecting', syncedAt },
+        );
+    }, [onStatusChange, status, isLive, lastFetched]);
+
+    const selectedYear = selectedMonth.split('-')[1];
+
     // ── Controls bar ──────────────────────────────────────────────────────────
     return (
-        <div className="space-y-6 motion-safe:animate-in fade-in duration-200">
-            <Card className="card-elevated">
-                <CardContent className="p-4 sm:p-5 md:p-6">
-                    {/*
-                     * Mobile layout: two stacked rows
-                     *   row 1 → year/month + refresh + live badge
-                     *   row 2 → full-width day slider (with chevrons + label)
-                     * sm+ layout: single inline row (via `sm:contents` + `sm:order-*`)
-                     *   year/month → slider (flex-1) → refresh → live badge
-                     */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-
-                        {/* Mobile top-row group (dissolves on sm+) */}
-                        <div className="flex flex-wrap items-center gap-2 sm:contents">
-
-                            {/* Year + Month selector */}
-                            <div className="flex items-center gap-2 sm:order-1">
-                                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                                <select
-                                    aria-label="Year"
-                                    value={selectedMonth.split('-')[1]}
-                                    onChange={e => {
-                                        const yr = e.target.value;
-                                        const months = getMonthsForYear(yr);
-                                        const currentAbbrev = selectedMonth.split('-')[0];
-                                        const match = months.find(m => m.startsWith(currentAbbrev));
-                                        const next = match ?? months[months.length - 1];
-                                        setSelectedMonth(next);
-                                        setSelectedDay(getDefaultDay(next));
-                                    }}
-                                    disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                                >
-                                    {[...getAvailableYears()].reverse().map(yr => (
-                                        <option key={yr} value={yr}>20{yr}</option>
-                                    ))}
-                                </select>
-                                <select
-                                    aria-label="Month"
-                                    value={selectedMonth}
-                                    onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
-                                    disabled={status === 'loading'}
-                                    className="px-2 py-1.5 text-sm rounded-md border border-border bg-card focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
-                                >
-                                    {getMonthsForYear(selectedMonth.split('-')[1]).map(m => (
-                                        <option key={m} value={m}>{m.split('-')[0]}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Refresh + live badge — right-aligned on mobile, after slider on sm+ */}
-                            <div className="flex items-center gap-2 flex-wrap ml-auto sm:ml-0 sm:order-3">
-                                <Button
-                                    variant="outline" size="icon"
-                                    className="h-10 w-10 shrink-0"
-                                    onClick={() => fetchMonth(selectedMonth)}
-                                    disabled={status === 'loading'}
-                                    title="Refresh"
-                                >
-                                    {status === 'loading'
-                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                        : <RefreshCw className="h-4 w-4" />
-                                    }
-                                </Button>
-
-                                {/* Real-time status */}
-                                <span className={cn(
-                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-colors",
-                                    isLive
-                                        ? "bg-mb-success-light text-mb-success-text"
-                                        : "bg-muted text-muted-foreground"
-                                )}>
-                                    <Radio className={cn("h-3 w-3", isLive && "motion-safe:animate-pulse")} aria-hidden="true" />
-                                    {isLive ? "Live" : "Offline"}
-                                </span>
-
-                                {/* Loading indicator */}
-                                {status === 'loading' && (
-                                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                                        <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Loading…
-                                    </span>
-                                )}
-
-                                {/* Last fetched time */}
-                                {lastFetched && status !== 'loading' && (
-                                    <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                        <Clock className="h-3 w-3" />
-                                        Updated {lastFetched.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Day selector — own row on mobile (w-full), flex-1 inline on sm+ */}
-                        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 sm:min-w-[220px] sm:order-2 pt-1 sm:pt-0 border-t border-border/60 dark:border-border/60 sm:border-t-0">
-                            <Button
-                                variant="outline" size="icon"
-                                className="h-10 w-10 shrink-0"
-                                onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
-                                disabled={selectedDay <= 1 || status === 'loading'}
-                                aria-label="Previous day"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <div className="flex-1 min-w-0 sm:max-w-[200px]">
-                                <Slider
-                                    value={[selectedDay]}
-                                    onValueChange={handleSliderChange}
-                                    min={1} max={maxDay} step={1}
-                                    disabled={status === 'loading'}
-                                    aria-label={`Day of ${selectedMonth}`}
-                                />
-                            </div>
-                            <Button
-                                variant="outline" size="icon"
-                                className="h-10 w-10 shrink-0"
-                                onClick={() => setSelectedDay(d => Math.min(maxDay, d + 1))}
-                                disabled={selectedDay >= maxDay || status === 'loading'}
-                                aria-label="Next day"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                            <span className="text-base font-medium text-primary min-w-[80px] tabular-nums text-right">
-                                Day {selectedDay}
-                                <span className="text-muted-foreground"> / {maxDay}</span>
-                            </span>
-                        </div>
+        <div className="space-y-6">
+            <SectionCard>
+                <SectionCard.Body className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+                    {/* Year + Month selector */}
+                    <div className="flex items-center gap-2">
+                        <CalendarDays size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden="true" />
+                        <select
+                            aria-label="Year"
+                            value={selectedYear}
+                            onChange={e => {
+                                const yr = e.target.value;
+                                const months = getMonthsForYear(yr);
+                                const currentAbbrev = selectedMonth.split('-')[0];
+                                const match = months.find(m => m.startsWith(currentAbbrev));
+                                const next = match ?? months[months.length - 1];
+                                setSelectedMonth(next);
+                                setSelectedDay(getDefaultDay(next));
+                            }}
+                            disabled={status === 'loading'}
+                            className={SELECT_CLASS}
+                        >
+                            {[...getAvailableYears()].reverse().map(yr => (
+                                <option key={yr} value={yr}>20{yr}</option>
+                            ))}
+                        </select>
+                        <select
+                            aria-label="Month"
+                            value={selectedMonth}
+                            onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
+                            disabled={status === 'loading'}
+                            className={SELECT_CLASS}
+                        >
+                            {getMonthsForYear(selectedYear).map(m => (
+                                <option key={m} value={m}>{m.split('-')[0]}</option>
+                            ))}
+                        </select>
                     </div>
-                </CardContent>
-            </Card>
+
+                    {/* Day selector — own row on mobile (w-full), flex-1 inline on sm+ */}
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:min-w-64 sm:flex-1 sm:gap-3">
+                        <Button
+                            variant="secondary"
+                            icon={ChevronLeft}
+                            onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
+                            disabled={selectedDay <= 1 || status === 'loading'}
+                            aria-label="Previous day"
+                        />
+                        <div className="min-w-0 flex-1 sm:max-w-56">
+                            <Slider
+                                value={[selectedDay]}
+                                onValueChange={handleSliderChange}
+                                min={1} max={maxDay} step={1}
+                                disabled={status === 'loading'}
+                                aria-label={`Day of ${selectedMonth}`}
+                            />
+                        </div>
+                        <Button
+                            variant="secondary"
+                            icon={ChevronRight}
+                            onClick={() => setSelectedDay(d => Math.min(maxDay, d + 1))}
+                            disabled={selectedDay >= maxDay || status === 'loading'}
+                            aria-label="Next day"
+                        />
+                        <span className="min-w-20 text-right text-label tabular-nums text-fg">
+                            Day {selectedDay}
+                            <span className="text-muted"> / {maxDay}</span>
+                        </span>
+                    </div>
+
+                    {/* Refresh — the fetch/realtime state itself lives in the page header chip */}
+                    <div className="ml-auto flex items-center gap-2">
+                        <Button
+                            variant="ghost"
+                            icon={RefreshCw}
+                            loading={status === 'loading'}
+                            onClick={() => fetchMonth(selectedMonth)}
+                            title="Refresh"
+                        >
+                            Refresh
+                        </Button>
+                    </div>
+                </SectionCard.Body>
+            </SectionCard>
 
             {/* ─── Content ─────────────────────────────────────────────────── */}
             {status === 'loading' && !reportData && <LoadingState />}
@@ -416,17 +392,17 @@ export function DailyWaterReport() {
             {reportData && (
                 <>
                     {/* ── Section tabs (mirrors the Monthly dashboard) ────── */}
-                    <TabNavigation
-                        activeTab={activeTab}
-                        onTabChange={(key) => setActiveTab(key as DailyTab)}
+                    <Tabs<DailyTab>
+                        aria-label="Water daily sections"
+                        value={activeTab}
+                        onChange={setActiveTab}
                         tabs={DAILY_TABS}
-                        ariaLabel="Water daily sections"
                     />
 
                     {/* ── Zone Watch — fleet view, heatmap, leak triage ───── */}
                     {activeTab === 'watch' && (
                         <SectionBoundary title="Zone Watch">
-                        <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                        <div role="tabpanel" aria-label="Zone Watch" tabIndex={0}>
                             <ZoneWatch
                                 briefing={briefing}
                                 monthData={monthData}
@@ -441,41 +417,24 @@ export function DailyWaterReport() {
                     {/* ── Zone Analysis — per-zone drill-down ─────────────── */}
                     {activeTab === 'zones' && (
                         <SectionBoundary title="Zone Analysis">
-                        <div id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                            {/* Zone selector pills (DC now has its own tab) */}
-                            <Card className="card-elevated">
-                                <CardContent className="p-4 sm:p-5">
-                                    {/*
-                                     * Mobile: label on its own line, 2-col grid of equal-width chips
-                                     *         with generous tap targets.
-                                     * sm+   : label inline with wrap-flex pills (matches original).
-                                     */}
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-                                        <span className="text-sm font-medium text-muted-foreground sm:mr-1">
-                                            Select Zone
-                                        </span>
-                                        <div className="grid grid-cols-2 gap-2 sm:contents">
-                                            {ZONE_BULK_CONFIG.map(z => {
-                                                const isActive = z.zoneName === activeZone;
-                                                return (
-                                                    <button
-                                                        key={z.zoneName}
-                                                        onClick={() => setActiveZone(z.zoneName)}
-                                                        className={cn(
-                                                            "w-full sm:w-auto px-4 py-2.5 sm:px-3 sm:py-1.5 rounded-full text-sm font-medium transition-design border text-center whitespace-nowrap",
-                                                            isActive
-                                                                ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                                                                : "bg-card text-muted-foreground border-border hover:bg-muted"
-                                                        )}
-                                                    >
-                                                        {z.zoneName}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        <div role="tabpanel" aria-label="Zone Analysis" tabIndex={0} className="space-y-6">
+                            {/* Zone selector — the same control idiom as the Monthly zone picker */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-label text-fg">Zone</span>
+                                <span className="inline-flex h-9 items-center gap-1.5 rounded-control border border-line bg-card px-2.5">
+                                    <MapPin size={16} strokeWidth={2} aria-hidden="true" className="shrink-0 text-muted" />
+                                    <select
+                                        aria-label="Select zone"
+                                        value={activeZone}
+                                        onChange={e => setActiveZone(e.target.value)}
+                                        className="cursor-pointer bg-transparent text-label text-fg outline-none"
+                                    >
+                                        {ZONE_BULK_CONFIG.map(z => (
+                                            <option key={z.zoneName} value={z.zoneName}>{z.zoneName}</option>
+                                        ))}
+                                    </select>
+                                </span>
+                            </div>
 
                             <ZoneAnalyticsPanel
                                 reportData={reportData}
@@ -504,7 +463,7 @@ export function DailyWaterReport() {
                     {/* ── Direct Connections ──────────────────────────────── */}
                     {activeTab === 'dc' && (
                         <SectionBoundary title="Direct Connections">
-                        <div id="panel-dc" role="tabpanel" aria-labelledby="tab-dc" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+                        <div role="tabpanel" aria-label="Direct Connections" tabIndex={0} className="space-y-6">
                             <DCAnalyticsPanel
                                 reportData={reportData}
                                 monthData={monthData}
@@ -519,7 +478,7 @@ export function DailyWaterReport() {
                     {/* ── Daily Database — meter × day ledger ─────────────── */}
                     {activeTab === 'database' && (
                         <SectionBoundary title="Daily Database">
-                        <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                        <div role="tabpanel" aria-label="Daily Database" tabIndex={0}>
                             <DailyDatabase
                                 monthData={monthData}
                                 selectedDay={selectedDay}
@@ -529,10 +488,10 @@ export function DailyWaterReport() {
                         </SectionBoundary>
                     )}
 
-                    {/* ── Exceptions & Actions — daily action queue ───────── */}
+                    {/* ── Exceptions — daily action queue ─────────────────── */}
                     {activeTab === 'exceptions' && (
                         <SectionBoundary title="Exceptions">
-                        <div id="panel-exceptions" role="tabpanel" aria-labelledby="tab-exceptions" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                        <div role="tabpanel" aria-label="Exceptions" tabIndex={0}>
                             <DailyExceptions
                                 monthData={monthData}
                                 selectedDay={selectedDay}

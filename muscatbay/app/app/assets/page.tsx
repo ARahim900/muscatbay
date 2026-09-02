@@ -192,7 +192,7 @@ function CritBadge({ level }: { level?: string }) {
         Low:    'bg-mb-success-light text-mb-success-text',
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-muted text-muted-foreground'}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-muted-bg text-muted-foreground'}`}>
             {level}
         </span>
     );
@@ -205,7 +205,7 @@ function PctBar({ pct }: { pct?: number | null }) {
         : pct >= 60 ? 'bg-[var(--status-warning)]' : 'bg-secondary';
     return (
         <div className="flex items-center gap-2">
-            <div className="w-16 bg-border dark:bg-muted rounded-full h-1.5">
+            <div className="w-16 bg-border dark:bg-muted-bg rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
             <span className="text-xs font-mono text-muted-foreground">{pct.toFixed(0)}%</span>
@@ -458,7 +458,7 @@ export default function AssetsPage() {
     // Zebra striping derives from the row's index in the full list (not DOM
     // position) so it stays stable when spacer rows shift nth-child parity
     const rowCls = (i: number) =>
-        `hover:bg-secondary/5 dark:hover:bg-muted/40 ${i % 2 === 1 ? 'bg-muted/40 dark:bg-muted/20' : ''}`;
+        `hover:bg-secondary/5 dark:hover:bg-muted-bg/40 ${i % 2 === 1 ? 'bg-muted-bg/40 dark:bg-muted-bg/20' : ''}`;
 
     /** One body renderer for all five tables — skeleton / empty / virtual rows. */
     const tableBody = (cols: number, renderRow: (a: Asset, index: number) => ReactNode) => (

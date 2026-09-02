@@ -1,20 +1,19 @@
 "use client";
 
 /**
- * Exceptions & Actions — the day's auto-generated operational queue, mirroring
- * the Monthly section's register. Every row is a rule firing on the selected
+ * Exceptions — the day's auto-generated operational queue, mirroring the
+ * Monthly section's register. Every row is a rule firing on the selected
  * day's data: zone balance problems (high loss, negative balance, missing L2),
  * the rising-loss leak signature, building bulk-vs-ΣL4 mismatches, and
  * meter-level anomalies (spikes, zero-streaks).
  */
 
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, CheckCircle2, ClipboardList, XCircle } from "lucide-react";
+import { Badge, KpiCard, SectionCard } from "@/components/ui";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExportButton } from "@/components/shared/data-table";
-import { HierarchyStatCard, StatusChip, PALETTE } from "./inline-shared";
 import { buildDailyGrid, buildZoneDaySeries, buildDailyExceptions } from "./daily-metrics";
 
 export function DailyExceptions({
@@ -34,51 +33,29 @@ export function DailyExceptions({
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-                <HierarchyStatCard
-                    label="Exceptions Identified"
-                    value={String(rows.length)}
-                    icon={<ClipboardList className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    color={PALETTE.primary}
-                />
-                <HierarchyStatCard
-                    label="Critical"
-                    value={String(critical)}
-                    icon={<XCircle className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    color={PALETTE.red}
-                    valueColor={critical > 0 ? PALETTE.red : undefined}
-                />
-                <HierarchyStatCard
-                    label="Watch"
-                    value={String(watch)}
-                    icon={<AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />}
-                    color={PALETTE.amber}
-                />
+            <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
+                <KpiCard icon={ClipboardList} label="Exceptions identified" value={String(rows.length)} footnote={`Day ${selectedDay} · ${month}`} />
+                <KpiCard icon={XCircle} label="Critical" value={String(critical)} footnote="Needs validation now" />
+                <KpiCard icon={AlertTriangle} label="Watch" value={String(watch)} footnote="Monitor or verify" />
             </div>
 
-            <Card className="card-elevated">
-                <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2 sm:pb-2 md:pb-2">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                                <ClipboardList className="h-4 w-4 text-secondary" aria-hidden="true" />
-                                Exceptions &amp; Actions — {month} · Day {selectedDay}
-                            </CardTitle>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                Auto-generated from the day&apos;s readings: high-loss zones, negative balances, missing bulk
-                                readings, rising-loss leak signatures, building mismatches, consumption spikes and zero-streaks.
-                                This register identifies issues and suggests a next step — it does not assign or track them.
-                            </p>
-                        </div>
-                        <ExportButton rows={rows} filename={`water-daily-exceptions-${month}-day${selectedDay}`} />
-                    </div>
-                </CardHeader>
-                <CardContent className="p-4 sm:p-5 md:p-6 pt-2 sm:pt-2 md:pt-2">
+            <SectionCard>
+                <SectionCard.Header
+                    icon={ClipboardList}
+                    title={`Exceptions — ${month} · Day ${selectedDay}`}
+                    action={<ExportButton rows={rows} filename={`water-daily-exceptions-${month}-day${selectedDay}`} />}
+                />
+                <SectionCard.Body>
+                    <p className="mb-3 text-caption text-muted">
+                        Auto-generated from the day&apos;s readings: high-loss zones, negative balances, missing bulk
+                        readings, rising-loss leak signatures, building mismatches, consumption spikes and zero-streaks.
+                        This register identifies issues and suggests a next step — it does not assign or track them.
+                    </p>
                     {rows.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 py-10 text-center">
-                            <CheckCircle2 className="h-8 w-8 text-mb-success-text" aria-hidden="true" />
-                            <p className="text-sm font-semibold text-foreground">No exceptions for Day {selectedDay}</p>
-                            <p className="max-w-md text-xs text-muted-foreground">
+                            <CheckCircle2 size={20} strokeWidth={2} className="text-success" aria-hidden="true" />
+                            <p className="text-label text-fg">No exceptions for Day {selectedDay}</p>
+                            <p className="max-w-md text-caption text-muted">
                                 All zone balances, building balances and meters are within tolerance. Move the day slider
                                 or check the Zone Watch heatmap to review other days.
                             </p>
@@ -102,19 +79,19 @@ export function DailyExceptions({
                                 {rows.map((r, i) => (
                                     <TableRow key={`${r.Category}-${r.Item}-${i}`}>
                                         <TableCell className="whitespace-nowrap">{r.Category}</TableCell>
-                                        <TableCell className="min-w-[200px] text-foreground">{r.Item}</TableCell>
+                                        <TableCell className="min-w-48 text-fg">{r.Item}</TableCell>
                                         <TableCell>
-                                            <StatusChip label={r.Severity} color={r.Severity === "Critical" ? "danger" : "warning"} />
+                                            <Badge tone={r.Severity === "Critical" ? "danger" : "warning"}>{r.Severity}</Badge>
                                         </TableCell>
-                                        <TableCell className="num whitespace-nowrap text-foreground">{r.Value}</TableCell>
-                                        <TableCell className="min-w-[240px] text-muted-foreground">{r.Action}</TableCell>
+                                        <TableCell className="num whitespace-nowrap text-fg">{r.Value}</TableCell>
+                                        <TableCell className="min-w-60 text-muted">{r.Action}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
                         </Table>
                     )}
-                </CardContent>
-            </Card>
+                </SectionCard.Body>
+            </SectionCard>
         </div>
     );
 }

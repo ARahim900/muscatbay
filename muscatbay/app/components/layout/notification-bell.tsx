@@ -54,7 +54,7 @@ export function NotificationBell() {
             <button
                 id="notification-bell-trigger"
                 onClick={toggle}
-                className="relative w-11 h-11 flex items-center justify-center hover:bg-muted dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                className="relative w-11 h-11 flex items-center justify-center hover:bg-muted-bg dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
                 aria-label={`Alerts${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
                 aria-haspopup="dialog"
                 aria-expanded={open}
@@ -84,7 +84,7 @@ export function NotificationBell() {
                         {notifications.length > 0 && (
                             <button
                                 onClick={clearAll}
-                                className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-8 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-8 rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                             >
                                 Clear notifications
                             </button>

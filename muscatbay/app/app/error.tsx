@@ -83,7 +83,7 @@ export default function RouteError({
                 </button>
                 <button
                     onClick={() => window.location.reload()}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
                 >
                     Reload page
                 </button>

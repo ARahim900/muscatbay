@@ -4,8 +4,8 @@ import {
     Droplets, Gauge, TrendingDown, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, Minus,
     type LucideIcon,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useTickerLoop } from "@/hooks/useTickerLoop";
+import { SectionCard } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { n } from "./inline-shared";
 import type { BriefingMetrics } from "./briefing-metrics";
 
@@ -27,31 +27,44 @@ function changeVsYesterday(v: number | null): string {
 const shortZone = (z: string) => z.replace(/^Zone\s+/i, "");
 
 /**
- * One inline stat in the ticker: small icon, 10px uppercase label, value
- * beneath. Deliberately tiny — the strip summarises; the zone cards below
- * are the working surface.
+ * One briefing stat: eyebrow label with a 16 px icon, value beneath. The strip
+ * summarises; the zone table below is the working surface.
  */
 function Stat({
-    icon: Icon, label, value, valueClassName, iconColor, title,
+    icon: Icon, label, value, valueClassName, iconClassName, title,
 }: {
     icon: LucideIcon;
     label: string;
     value: React.ReactNode;
     valueClassName?: string;
-    iconColor: string;
+    iconClassName: string;
     title?: string;
 }) {
     return (
-        <li className="flex items-center gap-1.5" title={title}>
-            <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: iconColor }} aria-hidden="true" />
-            <span className="mb-ticker-label">{label}</span>
-            <span className={cn("mb-ticker-value", valueClassName)}>{value}</span>
+        <li className="min-w-0" title={title}>
+            <p className="flex items-center gap-1.5 text-eyebrow uppercase text-muted">
+                <Icon size={16} strokeWidth={2} className={cn("shrink-0", iconClassName)} aria-hidden="true" />
+                <span className="truncate">{label}</span>
+            </p>
+            <p className={cn("mt-1 text-label text-fg", valueClassName)}>{value}</p>
         </li>
     );
 }
 
-/** The run of five stats — rendered twice for the seamless ticker loop. */
-function StatRun({ metrics, duplicate, runRef }: { metrics: BriefingMetrics; duplicate?: boolean; runRef?: (n: HTMLElement | null) => void }) {
+/**
+ * Daily briefing — the five distribution-level figures for the selected day in
+ * one static card (the former news-ticker strip is gone: DESIGN_SYSTEM.md rule 7,
+ * ticker / marquee strips do not exist). Labels stay distribution-level — the
+ * daily data has no L1/NAMA account, so nothing here claims to be "network
+ * supply".
+ */
+export function DailyBriefing({
+    metrics, month, day,
+}: {
+    metrics: BriefingMetrics;
+    month: string;
+    day: number;
+}) {
     const { totalSupply, l2Total, l3Total, lossM3, lossPct, alarmCount, alarmZones, zoneCount, vsYesterdayPct, status } = metrics;
 
     const isWarning = status === "warning";
@@ -65,107 +78,69 @@ function StatRun({ metrics, duplicate, runRef }: { metrics: BriefingMetrics; dup
               : ArrowUp;
 
     return (
-        // pr matches gap-x so both copies have identical width — the −50%
-        // keyframe then lands exactly on the seam and the loop is invisible.
-        <ul
-            ref={runRef}
-            className="mb-ticker-copy flex list-none items-center gap-x-8 pr-8"
-            aria-hidden={duplicate ? "true" : undefined}
-        >
-            <Stat
-                icon={Droplets}
-                label="Water supplied today"
-                value={<>{n(totalSupply)} <span className="text-xs font-medium text-muted-foreground">m³</span></>}
-                iconColor="var(--module-water)"
-                title="Zone bulk meters plus direct connections. Daily data carries no NAMA main-bulk reading, so this is what entered the distribution network — not total network supply."
-            />
-            <Stat
-                icon={Gauge}
-                label="Recorded at meters"
-                value={
-                    <>
-                        {n(l3Total)} <span className="text-xs font-medium text-muted-foreground">of</span> {n(l2Total)}{" "}
-                        <span className="text-xs font-medium text-muted-foreground">m³</span>
-                    </>
-                }
-                iconColor="var(--status-info)"
-                title="Sum of the individual property meters, against the zone bulk meters feeding them. The difference between the two is the loss."
-            />
-            <Stat
-                icon={TrendingDown}
-                label="Unaccounted water"
-                value={
-                    lossPct === null
-                        ? `${n(lossM3)} m³ lost`
-                        : `${n(lossM3)} m³ lost · ${lossPct.toFixed(1)}% of supply`
-                }
-                // Calm by default: amber only when a zone is actually in alarm.
-                valueClassName={isWarning ? "text-mb-warning-text" : undefined}
-                iconColor={isWarning ? "var(--status-warning)" : "var(--module-water)"}
-                title="Water that entered the zones but was not recorded at any property meter — leaks, unmetered use or meter error."
-            />
-            {alarmCount > 0 ? (
-                <Stat
-                    icon={AlertTriangle}
-                    label="Zones needing attention"
-                    value={`${alarmCount} of ${zoneCount} · ${alarmZones.map(shortZone).join(", ")}`}
-                    valueClassName="text-mb-danger-text"
-                    iconColor="var(--status-danger)"
-                    title={`Above the daily loss threshold: ${alarmZones.join(", ")}`}
-                />
-            ) : (
-                <Stat
-                    icon={CheckCircle2}
-                    label="Zones needing attention"
-                    value={zoneCount > 0 ? `None — all ${zoneCount} zones normal` : "No zone data today"}
-                    valueClassName={zoneCount > 0 ? "text-mb-success-text" : undefined}
-                    iconColor={zoneCount > 0 ? "var(--status-normal)" : "var(--status-missing)"}
-                />
-            )}
-            <Stat
-                icon={TrendIcon}
-                label="Compared with yesterday"
-                value={changeVsYesterday(vsYesterdayPct)}
-                iconColor="var(--status-info)"
-                title="Change in the total water supplied, against the previous day."
-            />
-        </ul>
-    );
-}
-
-/**
- * Daily briefing — a compact news-ticker strip: a fixed caption on the left
- * and the five stats looping continuously beside it. Hovering (or tabbing
- * into) the strip pauses the loop so values stay readable; users with
- * reduced motion get a static wrapped strip instead. Labels stay
- * distribution-level — the daily data has no L1/NAMA account, so nothing
- * here claims to be "network supply".
- */
-export function DailyBriefing({
-    metrics, month, day,
-}: {
-    metrics: BriefingMetrics;
-    month: string;
-    day: number;
-}) {
-    // Same measurement as the shared ticker: the run is repeated until half
-    // the track is viewport-wide, so the loop is seamless and always moving.
-    const { viewportRef, runRef, trackProps, repeat } = useTickerLoop();
-
-    return (
-        <section aria-label="Daily briefing" className="mb-ticker-note">
-            <p className="mb-ticker-note__caption">Briefing · {month} · Day {day}</p>
-            <div className="flex min-w-0 flex-1 items-center px-3">
-                <div ref={viewportRef} className="mb-ticker-viewport min-w-0 flex-1">
-                    <div className="mb-ticker-track items-center" {...trackProps}>
-                        {/* Only the first copy is measured or read aloud; the rest
-                            exist to keep the viewport covered mid-cycle. */}
-                        {Array.from({ length: repeat * 2 }, (_, i) => (
-                            <StatRun key={i} metrics={metrics} duplicate={i > 0} runRef={i === 0 ? runRef : undefined} />
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </section>
+        <SectionCard>
+            <SectionCard.Header icon={Droplets} title={`Briefing · ${month} · Day ${day}`} />
+            <SectionCard.Body>
+                <ul className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <Stat
+                        icon={Droplets}
+                        iconClassName="text-mod-water"
+                        label="Water supplied today"
+                        value={<>{n(totalSupply)} <span className="text-caption text-muted">m³</span></>}
+                        title="Zone bulk meters plus direct connections. Daily data carries no NAMA main-bulk reading, so this is what entered the distribution network — not total network supply."
+                    />
+                    <Stat
+                        icon={Gauge}
+                        iconClassName="text-info"
+                        label="Recorded at meters"
+                        value={
+                            <>
+                                {n(l3Total)} <span className="text-caption text-muted">of</span> {n(l2Total)}{" "}
+                                <span className="text-caption text-muted">m³</span>
+                            </>
+                        }
+                        title="Sum of the individual property meters, against the zone bulk meters feeding them. The difference between the two is the loss."
+                    />
+                    <Stat
+                        icon={TrendingDown}
+                        // Calm by default: amber only when a zone is actually in alarm.
+                        iconClassName={isWarning ? "text-warning" : "text-mod-water"}
+                        label="Unaccounted water"
+                        value={
+                            lossPct === null
+                                ? `${n(lossM3)} m³ lost`
+                                : `${n(lossM3)} m³ lost · ${lossPct.toFixed(1)}% of supply`
+                        }
+                        valueClassName={isWarning ? "text-warning" : undefined}
+                        title="Water that entered the zones but was not recorded at any property meter — leaks, unmetered use or meter error."
+                    />
+                    {alarmCount > 0 ? (
+                        <Stat
+                            icon={AlertTriangle}
+                            iconClassName="text-danger"
+                            label="Zones needing attention"
+                            value={`${alarmCount} of ${zoneCount} · ${alarmZones.map(shortZone).join(", ")}`}
+                            valueClassName="text-danger"
+                            title={`Above the daily loss threshold: ${alarmZones.join(", ")}`}
+                        />
+                    ) : (
+                        <Stat
+                            icon={CheckCircle2}
+                            iconClassName={zoneCount > 0 ? "text-success" : "text-neutral"}
+                            label="Zones needing attention"
+                            value={zoneCount > 0 ? `None — all ${zoneCount} zones normal` : "No zone data today"}
+                            valueClassName={zoneCount > 0 ? "text-success" : undefined}
+                        />
+                    )}
+                    <Stat
+                        icon={TrendIcon}
+                        iconClassName="text-info"
+                        label="Compared with yesterday"
+                        value={changeVsYesterday(vsYesterdayPct)}
+                        title="Change in the total water supplied, against the previous day."
+                    />
+                </ul>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }

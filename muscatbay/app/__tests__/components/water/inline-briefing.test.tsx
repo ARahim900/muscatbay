@@ -8,8 +8,10 @@ const base: BriefingMetrics = {
     alarmCount: 0, alarmZones: [], zoneCount: 6, vsYesterdayPct: 10, status: 'normal',
 };
 
-// The ticker renders the stat run twice (the duplicate makes the loop
-// seamless), so stat queries use getAllByText; the caption appears once.
+// The briefing is a static card (the former ticker strip duplicated its stat
+// run for a seamless loop; DESIGN_SYSTEM.md rule 7 retired tickers), so every
+// stat appears exactly once. Stat queries still use getAllByText so a value
+// that also appears elsewhere in the card cannot make a wording check flaky.
 //
 // These assertions pin the *wording*, not just the numbers. The labels were
 // rewritten because the originals ("ΣL2 → ΣL3", a bare "+10.0%") were
@@ -17,7 +19,7 @@ const base: BriefingMetrics = {
 // phrasing is the feature and a regression to jargon should fail here.
 
 describe('DailyBriefing', () => {
-    it('renders the caption once and every stat label in the ticker', () => {
+    it('renders the caption once and every stat label in the briefing', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
         expect(screen.getByText(/Briefing · Mar-26 · Day 15/)).toBeInTheDocument();
         for (const label of [
@@ -38,9 +40,11 @@ describe('DailyBriefing', () => {
         }
     });
 
-    it('duplicates the stat run exactly once for the seamless loop', () => {
+    it('renders each stat exactly once — no ticker duplicate', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getAllByText('Water supplied today')).toHaveLength(2);
+        expect(screen.getAllByText('Water supplied today')).toHaveLength(1);
+        // No marquee: nothing in the card is hidden from assistive technology.
+        expect(document.querySelectorAll('[aria-hidden="true"] li')).toHaveLength(0);
     });
 
     it('states the loss in m³ and as a share of supply', () => {

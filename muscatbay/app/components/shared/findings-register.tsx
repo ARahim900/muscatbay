@@ -254,7 +254,7 @@ export function FindingsRegister({
                 "rounded-[5px] px-2.5 py-1.5 text-[11px] font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                 severityFilter === key
                     ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:text-foreground",
+                    : "bg-muted-bg text-muted-foreground hover:text-foreground",
             )}
         >
             {label} <span className="tabular-nums opacity-80">({count})</span>
@@ -350,7 +350,7 @@ export function FindingsRegister({
                                     <p className="text-sm text-foreground">
                                         {r.item}
                                         {r.occurrences && r.occurrences > 1 && (
-                                            <span className="ms-2 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                                            <span className="ms-2 inline-flex items-center rounded-full bg-muted-bg px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
                                                 ×{r.occurrences}
                                             </span>
                                         )}
@@ -397,7 +397,7 @@ export function FindingsRegister({
                                             <TableCell className="min-w-[200px] text-foreground">
                                                 {r.item}
                                                 {r.occurrences && r.occurrences > 1 && (
-                                                    <span className="ms-2 inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                                                    <span className="ms-2 inline-flex items-center rounded-full bg-muted-bg px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
                                                         ×{r.occurrences}
                                                     </span>
                                                 )}

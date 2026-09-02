@@ -64,7 +64,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(1)}
                         disabled={currentPage === 1}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="First page"
                         aria-label="First page"
                     >
@@ -73,7 +73,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                         disabled={currentPage === 1}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Previous page"
                         aria-label="Previous page"
                     >
@@ -109,7 +109,7 @@ export function TablePagination({
                                         "min-w-11 h-11 rounded-full text-sm font-medium transition-colors duration-200",
                                         currentPage === page
                                             ? "bg-primary text-primary-foreground shadow-sm"
-                                            : "border border-border hover:bg-muted text-muted-foreground"
+                                            : "border border-border hover:bg-muted-bg text-muted-foreground"
                                     )}
                                 >
                                     {page}
@@ -121,7 +121,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
                         disabled={currentPage === totalPages}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Next page"
                         aria-label="Next page"
                     >
@@ -130,7 +130,7 @@ export function TablePagination({
                     <button
                         onClick={() => onPageChange(totalPages)}
                         disabled={currentPage === totalPages}
-                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="w-11 h-11 flex items-center justify-center rounded-full border border-border hover:bg-muted-bg disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         title="Last page"
                         aria-label="Last page"
                     >

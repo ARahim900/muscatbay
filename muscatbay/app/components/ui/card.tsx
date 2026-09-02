@@ -14,7 +14,7 @@ function Card({
       data-size={size}
       className={cn(
         "bg-card rounded-xl border border-border shadow-sm",
-        "hover:shadow-md hover:bg-muted/50",
+        "hover:shadow-md hover:bg-muted-bg/50",
         "transition-[background-color,box-shadow,transform] duration-200 ease-out",
         "text-card-foreground gap-6 overflow-hidden py-6 text-sm",
         "has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4",
