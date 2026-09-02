@@ -52,13 +52,28 @@ describe('chart-bearing routes keep Recharts out of first-load JS', () => {
         expect(src.match(/loading:/g) ?? []).toHaveLength(lazyCount);
     });
 
-    it('firefighting pulls the shared chart container from inside the lazy chunk', () => {
+    it('firefighting loads its Overview chart module lazily', () => {
         const src = source('app/firefighting/page.tsx');
 
-        // chart-container imports Recharts itself, so a static import here would
-        // put the library straight back into the page chunk.
+        // Both overview-charts and the shared chart container import Recharts,
+        // so a static import of either here puts the library straight back into
+        // the page chunk.
+        expect(src).not.toMatch(/import[^;]*?from\s+["']@\/components\/firefighting\/overview-charts["']/);
         expect(src).not.toMatch(/import[^;]*?from\s+["']@\/components\/charts\/chart-container["']/);
-        expect(src).toContain('import("@/components/charts/chart-container")');
+        expect(src).toContain('import("@/components/firefighting/overview-charts")');
+    });
+
+    it('the firefighting chart module lives under components/, not beside the route', () => {
+        // CLAUDE.md: `app/` holds routes only, and every module has exactly one
+        // home under `components/<module>/`.
+        const charts = source('components/firefighting/overview-charts.tsx');
+
+        expect(charts).toMatch(STATIC_RECHARTS);
+        // …and mounts through the shared container, never Recharts' own.
+        expect(charts).toContain('ChartContainer minHeight={260}');
+        // The rendered element, not the word — the comment above it names
+        // ResponsiveContainer to explain why it is not used.
+        expect(charts).not.toMatch(/<ResponsiveContainer/);
     });
 
     it('contractors loads the yearly cost chart lazily', () => {

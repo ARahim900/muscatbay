@@ -23,7 +23,6 @@ import { cn } from "@/lib/utils";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import dynamic from "next/dynamic";
-import { CHART_PALETTE } from "@/lib/tokens";
 import {
     ShieldCheck, AlertTriangle, CheckCircle, Clock,
     Calendar, FileText, Info, Building2, LayoutGrid, Layers, Users,
@@ -43,13 +42,12 @@ import {
     REFERENCE_NOTE, SLA_TIERS, TANKER_AGREEMENTS, TANKER_DISCHARGE_RATE,
 } from "@/components/firefighting/contract-reference";
 import {
-    CARD_TITLE, CHART_TOOLTIP_STYLE, CycleBadge, EQUIP_STATUS_CHART_COLORS,
+    CARD_TITLE, CycleBadge,
     ReferenceChip, SectionHeading, SystemTag, ZoneBadge,
     equipZoneKey,
 } from "@/components/firefighting/firefighting-ui";
 import { EquipmentRegister } from "@/components/firefighting/equipment-register";
 import { IssuesRegister } from "@/components/firefighting/issues-register";
-import { useChartMotion, type ChartMotionProps } from "@/hooks/useReducedMotion";
 
 // Maintenance tracker filter option lists (dropdowns operate on display labels).
 const CYCLE_OPTIONS = CYCLES.map((c) => c.label);
@@ -97,37 +95,15 @@ interface FirefightingPageCache {
     lastUpdated: Date;
 }
 
-// ─── Recharts is loaded on demand ──────────────────────────────────────────
-// The two Overview plots are this route's only Recharts consumers — Maintenance
-// is a table and Contract & Team is reference cards — so importing the library
-// at module scope put ~330 kB of charting code into the first load of a page
-// whose first paint is a header, four KPI cards and two registers. Neither plot
-// can render before the fire-safety fetch resolves (the loading branch below
-// holds the route until then), so the chunk arrives alongside the data rather
-// than blocking first-load JS.
-//
-// `dynamic()` needs a real `import()` for the bundler to cut a chunk, and these
-// plots have no component module of their own, so the loader assembles them
-// from the two modules it pulls. Both have to come from inside the loader: the
-// shared chart container imports Recharts itself, so importing it statically up
-// here would drag the library straight back into the page chunk.
-//
-// That container is what replaced Recharts' own ResponsiveContainer. It defers
-// the plot until a ResizeObserver reports a real box and enforces a minHeight
-// floor, so the 260px wrapper is now a belt-and-braces measure rather than the
-// only thing standing between these charts and a silent width(-1)/height(-1)
-// blank render.
-interface EquipmentChartsProps {
-    byZone: { zone: string; count: number }[];
-    byStatus: { status: string; count: number }[];
-    motion: ChartMotionProps;
-}
-
 /**
- * Stand-in sized to the real pair: same cards, same titles, same 260px plots.
- * Carries no live-region role of its own — the two places it renders (the lazy
- * chunk's fallback and the page-level loading branch) each own one, and nesting
- * them would announce the same wait twice.
+ * Stand-in sized to the real pair in components/firefighting/overview-charts:
+ * same cards, same titles, same 260px plots, so nothing shifts when the chunk
+ * lands. It stays here rather than beside the charts precisely because it must
+ * be reachable without loading them.
+ *
+ * It carries no live-region role of its own — the two places it renders (the
+ * lazy chunk's fallback and the page-level loading branch) each own one, and
+ * nesting them would announce the same wait twice.
  */
 function EquipmentChartsFallback() {
     return (
@@ -152,74 +128,19 @@ function EquipmentChartsFallback() {
     );
 }
 
-const EquipmentCharts = dynamic<EquipmentChartsProps>(
-    async () => {
-        const [{ ChartContainer }, { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend }] =
-            await Promise.all([
-                import("@/components/charts/chart-container"),
-                import("recharts"),
-            ]);
-
-        function EquipmentChartsImpl({ byZone, byStatus, motion }: EquipmentChartsProps) {
-            return (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className={CARD_TITLE}><Building2 className="h-4 w-4 text-primary" aria-hidden="true" /> Equipment by Zone</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[260px]">
-                                <ChartContainer minHeight={260}>
-                                    <BarChart data={byZone} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" />
-                                        <XAxis dataKey="zone" tick={{ fontSize: 11, fill: "var(--chart-axis)" }} />
-                                        <YAxis tick={{ fontSize: 11, fill: "var(--chart-axis)" }} allowDecimals={false} />
-                                        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                                        <Bar dataKey="count" fill="var(--chart-inlet)" radius={[4, 4, 0, 0]} name="Equipment" {...motion} />
-                                    </BarChart>
-                                </ChartContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className={CARD_TITLE}><ShieldCheck className="h-4 w-4 text-secondary" aria-hidden="true" /> Equipment by Status</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-[260px]">
-                                <ChartContainer minHeight={260}>
-                                    <PieChart>
-                                        <Pie
-                                            data={byStatus}
-                                            cx="50%"
-                                            cy="50%"
-                                            innerRadius={55}
-                                            outerRadius={90}
-                                            paddingAngle={2}
-                                            dataKey="count"
-                                            nameKey="status"
-                                            label={(props) => `${props.name}: ${props.value}`}
-                                            labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
-                                            {...motion}
-                                        >
-                                            {byStatus.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={EQUIP_STATUS_CHART_COLORS[entry.status] || CHART_PALETTE[index % CHART_PALETTE.length]} />
-                                            ))}
-                                        </Pie>
-                                        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
-                                        <Legend verticalAlign="bottom" height={36} iconSize={10} formatter={(value: string) => <span className="text-xs text-muted-foreground">{value}</span>} />
-                                    </PieChart>
-                                </ChartContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-            );
-        }
-
-        return { default: EquipmentChartsImpl };
-    },
+// ─── Recharts is loaded on demand ──────────────────────────────────────────
+// The two Overview plots are this route's only Recharts consumers — Maintenance
+// is a table and Contract & Team is reference cards — so importing them eagerly
+// put ~330 kB of charting code into the first load of a page whose first paint
+// is a header, four KPI cards and two registers. They cannot render before the
+// fire-safety fetch resolves (the loading branch below holds the route until
+// then), so the chunk arrives alongside the data rather than blocking first-load
+// JS. Same pattern as Dashboard, STP, Electricity and HVAC.
+//
+// The shared ChartContainer is a Recharts consumer too, so it is imported by
+// overview-charts.tsx and stays behind this boundary with the plots.
+const EquipmentCharts = dynamic(
+    () => import("@/components/firefighting/overview-charts").then((m) => ({ default: m.EquipmentCharts })),
     {
         loading: () => (
             <div role="status" aria-busy="true" aria-label="Loading equipment charts">
@@ -231,7 +152,6 @@ const EquipmentCharts = dynamic<EquipmentChartsProps>(
 );
 
 export default function FirefightingPage() {
-    const chartMotion = useChartMotion();
     const [activeTab, setActiveTab] = useState<TabKey>("overview");
     // Seed from the session cache so revisits render instantly (silent refresh below)
     const [cached] = useState(() => getPageCache<FirefightingPageCache>(FIREFIGHTING_CACHE_KEY));
@@ -493,7 +413,7 @@ export default function FirefightingPage() {
                     {/* Charts — equipment by zone + by status (live register) */}
                     {equipment.length > 0 && (
                         <SectionBoundary title="Equipment Charts">
-                            <EquipmentCharts byZone={equipByZoneChart} byStatus={equipByStatusChart} motion={chartMotion} />
+                            <EquipmentCharts byZone={equipByZoneChart} byStatus={equipByStatusChart} />
                         </SectionBoundary>
                     )}
 

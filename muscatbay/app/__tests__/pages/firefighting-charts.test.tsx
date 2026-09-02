@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import FirefightingPage from '@/app/firefighting/page';
 import { clearPageCache } from '@/lib/page-cache';
 import type { FireSafetyData } from '@/actions/fire-safety';
 
+// Renders the real route, so it also proves the page's next/dynamic wiring
+// resolves to components/firefighting/overview-charts.
+//
 // Stands in for the shared container: jsdom has no layout, so the assertion is
 // that both plots are handed to it — not what Recharts would draw. If either
 // chart ever goes back to Recharts' own ResponsiveContainer (no deferred mount,
@@ -43,12 +46,8 @@ vi.mock('@/hooks/useSupabaseRealtime', () => ({
 }));
 
 describe('/firefighting — Overview charts', () => {
-    // The real tab strip mounts in this test (unlike the loading-state one) and
-    // scrolls the active tab into view; jsdom ships no scrollIntoView.
-    beforeAll(() => {
-        Element.prototype.scrollIntoView ??= () => {};
-    });
-
+    // This test mounts the real tab strip (the loading-state one does not), which
+    // calls scrollIntoView — stubbed globally in setupTests.ts.
     beforeEach(() => {
         clearPageCache();
     });
