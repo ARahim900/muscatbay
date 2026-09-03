@@ -57,9 +57,10 @@ function claimAutoReload(): boolean {
         window.sessionStorage.setItem(key, String(Date.now()));
         return true;
     } catch {
-        // Storage blocked (private mode, quota) — reload once anyway; the
-        // fallback copy still explains what happened.
-        return true;
+        // Storage blocked (private mode, quota): without a durable claim an
+        // automatic reload could repeat on every load, so offer the manual
+        // button instead.
+        return false;
     }
 }
 

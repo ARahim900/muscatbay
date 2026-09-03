@@ -143,7 +143,8 @@ describe('buildZoneDayBreakdown', () => {
         const b = buildZoneDayBreakdown(grid, FM, 1, 2);
         expect(b).toMatchObject({ l2: 100, l3Sum: 55, loss: 45, hasData: true });
         expect(b.bars.map(x => [x.key, x.label, x.value, x.kind])).toEqual([
-            ['loss', 'Unmetered loss', 45, 'loss'],
+            // 13 meters were not read — the loss bar says so, because their use sits inside it.
+            ['loss', 'Unmetered (13 unread)', 45, 'loss'],
             [FM.l3Accounts[0], 'Big', 30, 'meter'],
             [FM.l3Accounts[1], 'Mid', 20, 'meter'],
             ['other', `Other (${FM.l3Accounts.length - 2} meters)`, 5, 'other'],
@@ -152,6 +153,16 @@ describe('buildZoneDayBreakdown', () => {
         expect(b.otherCount).toBe(FM.l3Accounts.length - 2);
         expect(b.unread).toBe(FM.l3Accounts.length - 4);
         expect(b.bars[0].shareOfSupply).toBe(45);
+    });
+
+    it('labels the loss plainly when every meter was read', () => {
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100)),
+            ...FM.l3Accounts.map((a, i) => row(a, days(i === 0 ? 30 : 1))),
+        ]);
+        const b = buildZoneDayBreakdown(grid, FM, 1);
+        expect(b.unread).toBe(0);
+        expect(b.bars.find(x => x.kind === 'loss')).toMatchObject({ label: 'Unmetered loss', value: 54 });
     });
 
     it('shows no loss bar and no share of supply when the bulk was not read', () => {

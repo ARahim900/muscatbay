@@ -386,10 +386,12 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 {/* Horizontally scrollable table */}
                 <div className="relative -mx-5">
                 <Table
-                    role="region"
-                    aria-label="Direct connection daily readings. Scroll horizontally to view all days."
-                    tabIndex={0}
-                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    containerProps={{
+                        role: "region",
+                        "aria-label": "Direct connection daily readings. Scroll horizontally to view all days.",
+                        tabIndex: 0,
+                        className: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                    }}
                     style={{ minWidth: `${420 + days.length * 72}px` }}
                     data-density="compact"
                 >

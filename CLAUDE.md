@@ -125,8 +125,9 @@ muscatbay/app/
 > `BRAND_DESIGN.md` §2.3/§8 give text-on-teal as `#FFFFFF` (~1.5:1), which
 > contradicts that same doc's own §10 accessibility table; `globals.css` uses
 > `--secondary-foreground: #1F2937` (~10:1) and that is what to follow.
-> (The former Geist-vs-Inter font conflict was resolved 2026-08-31 — the app
-> now ships **Inter**, and `BRAND_DESIGN.md` §3 records the decision.)
+> (The former Geist-vs-Inter font conflict was resolved 2026-08-31 in favour of
+> Inter; Design System v2.0 then replaced Inter with **DM Sans** app-wide on
+> 2026-09-02 — the Fonts line above and `DESIGN_SYSTEM.md` §3 are authoritative.)
 
 ### Components
 - **UI primitives**: shadcn/ui (base-vega style) in `components/ui/`

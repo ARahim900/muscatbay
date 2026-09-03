@@ -102,7 +102,7 @@ const isDailyTab = (v: unknown): v is DailyTab => DAILY_TABS.some(t => t.value =
 export type ViewStatus = { state: 'live' | 'connecting' | 'offline'; syncedAt?: string };
 
 /** Native select in the design-system control idiom (tokens only). */
-const SELECT_CLASS = "h-9 rounded-control border border-line bg-card px-2 text-label text-fg outline-none disabled:opacity-50";
+const SELECT_CLASS = "h-9 rounded-control border border-line bg-card px-2 text-label text-fg outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-50";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -426,7 +426,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                         aria-label="Select zone"
                                         value={activeZone}
                                         onChange={e => setActiveZone(e.target.value)}
-                                        className="cursor-pointer bg-transparent text-label text-fg outline-none"
+                                        className="cursor-pointer rounded-control bg-transparent text-label text-fg outline-none focus-visible:ring-2 focus-visible:ring-accent"
                                     >
                                         {ZONE_BULK_CONFIG.map(z => (
                                             <option key={z.zoneName} value={z.zoneName}>{z.zoneName}</option>

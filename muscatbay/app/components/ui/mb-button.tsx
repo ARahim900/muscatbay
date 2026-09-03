@@ -29,7 +29,8 @@ export function Button({ variant = 'secondary', size = 'md', icon: Icon, loading
   return (
     <button type="button" disabled={disabled || loading} {...rest}
       className={cn('inline-flex items-center justify-center rounded-control transition-colors duration-200',
-        'disabled:cursor-not-allowed disabled:opacity-50', variants[variant], sizes[size], className)}>
+        // Same touch target as the app-wide Button: 44 px on coarse pointers, whatever the size.
+        'pointer-coarse:min-h-11 disabled:cursor-not-allowed disabled:opacity-50', variants[variant], sizes[size], className)}>
       {loading ? <Loader2 size={iconSize} className="animate-spin" aria-hidden />
                : Icon && <Icon size={iconSize} strokeWidth={2} aria-hidden />}
       {children}

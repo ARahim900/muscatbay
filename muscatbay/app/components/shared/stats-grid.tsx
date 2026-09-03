@@ -225,7 +225,9 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                     key={stat.label}
                     href={stat.href}
                     data-glow
-                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                    // The trend sentence only when a trend exists — a tile without one
+                    // must not announce "No change compared to last period".
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}.${stat.trend ? ` ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period.` : ''} Click to view details.`}
                     className={cn(baseCardClassName, "block cursor-pointer")}
                 >
                     {cardContent}

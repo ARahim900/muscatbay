@@ -9,11 +9,11 @@ const designRules = {
     'no-restricted-syntax': ['error',
       {
         // arbitrary values: text-[13px], shadow-[...], rounded-[...], h-[104px], bg-[#4E4456]
-        selector: "Literal[value=/\\b(text|shadow|rounded|h|w|p|px|py|m|mx|my|gap|leading|tracking)-\\[/]",
+        selector: "Literal[value=/\\b(bg|border|ring|text|shadow|rounded|h|w|p|px|py|m|mx|my|gap|leading|tracking)-\\[/]",
         message: 'Arbitrary Tailwind value. Use a token from DESIGN_SYSTEM.md (text-title, shadow-card, rounded-card, h-kpi …).',
       },
       {
-        selector: "TemplateElement[value.raw=/\\b(text|shadow|rounded|h|w|p|px|py|m|mx|my|gap|leading|tracking)-\\[/]",
+        selector: "TemplateElement[value.raw=/\\b(bg|border|ring|text|shadow|rounded|h|w|p|px|py|m|mx|my|gap|leading|tracking)-\\[/]",
         message: 'Arbitrary Tailwind value in a template string. Use a design token.',
       },
       {

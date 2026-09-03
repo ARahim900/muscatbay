@@ -21,9 +21,17 @@ type Props = {
   theme?: 'light' | 'dark';
 };
 
+/** Append `key=value` to the query string, ahead of any `#fragment`, so the provider actually receives it. */
+function withQueryParam(src: string, key: string, value: string): string {
+  const hash = src.indexOf('#');
+  const base = hash === -1 ? src : src.slice(0, hash);
+  const fragment = hash === -1 ? '' : src.slice(hash);
+  return `${base}${base.includes('?') ? '&' : '?'}${key}=${encodeURIComponent(value)}${fragment}`;
+}
+
 export function EmbedFrame({ title, description, icon, src, openHref, themeParam, theme = 'light' }: Props) {
   const [ready, setReady] = useState(false);
-  const url = themeParam ? `${src}${src.includes('?') ? '&' : '?'}${themeParam}=${theme}` : src;
+  const url = themeParam ? withQueryParam(src, themeParam, theme) : src;
 
   return (
     <SectionCard>

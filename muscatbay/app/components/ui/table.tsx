@@ -2,9 +2,24 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+type TableProps = React.ComponentProps<"table"> & {
+  /**
+   * Props for the scroll container (`.ops-table-shell`, `overflow-x: auto`).
+   * A wide table that scrolls sideways is a scrollable region, so give the
+   * SHELL the landmark and keyboard focus (`role="region"`, `aria-label`,
+   * `tabIndex={0}`) — never the `<table>` itself, where a `role` would replace
+   * the native table semantics assistive technology relies on.
+   */
+  containerProps?: React.ComponentProps<"div">;
+};
+
+function Table({ className, containerProps, ...props }: TableProps) {
   return (
-    <div data-slot="table-container" className="ops-table-shell">
+    <div
+      data-slot="table-container"
+      {...containerProps}
+      className={cn("ops-table-shell", containerProps?.className)}
+    >
       <table
         data-slot="table"
         className={cn("ops-table", className)}

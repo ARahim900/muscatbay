@@ -6,11 +6,13 @@ import { ChevronRight, Home } from 'lucide-react';
 type Crumb = { label: string; href?: string };
 
 export function Breadcrumb({ items }: { items: Crumb[] }) {
+  // Only three crumbs render; the last RENDERED one is the current page.
+  const shown = items.slice(0, 3);
   return (
     <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-1.5 text-label text-muted">
       <Home size={14} strokeWidth={2} aria-hidden />
-      {items.slice(0, 3).map((c, i) => {
-        const last = i === items.length - 1;
+      {shown.map((c, i) => {
+        const last = i === shown.length - 1;
         return (
           <span key={c.label} className="flex items-center gap-1.5">
             {i > 0 && <ChevronRight size={14} strokeWidth={2} aria-hidden />}

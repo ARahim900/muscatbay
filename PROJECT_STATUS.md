@@ -34,7 +34,7 @@ in one Next.js app backed by Supabase.
 | Stack | Next.js 16 · React 19 · TypeScript 5 · Tailwind 4 · Recharts 3 · GSAP 3 (+ ScrollTrigger) · shadcn/ui · PWA (service worker `public/sw.js`, cache `muscatbay-v6`) |
 | Design system | **v2.0 (2026-09-02)** — [`/DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) is the only design reference (`BRAND_DESIGN.md` and `muscatbay/app/DESIGN_SYSTEM.md` are superseded). Tokens: `app/design-tokens.css` (DM Sans, seven type steps, three radii, two shadows, status/module/chart colours); primitives: `components/ui/` (`KpiCard`, `SectionCard`, `PageHeader`, `StatusChip`, `SegmentedControl`, `Tabs`, `Badge`, `Button`, `ChartFrame`, `DateRangePicker`, `EmbedFrame`, `Breadcrumb`); enforcement: `eslint.design-rules.mjs` (scoped to migrated folders) + `npm run screenshots`. Pages migrate **one per session, in order: Water (done 2026-09-02) → Dashboard → STP → Electricity → Contractors → Fire Safety → HVAC → Assets → Pest Control → Settings**; the legacy tokens in `globals.css` stay only for the unmigrated pages |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (332 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-09-03 |
+| Tests / checks | Vitest (334 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-09-03 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -518,6 +518,15 @@ stops at last month" problem is structurally closed:
   "Where the water went" composition chart (see the Water — Daily row in §2).
   `buildZoneWatch` still sums `l2 ?? 0` for the fleet table's MTD columns —
   same missing-as-zero shape, flagged here for the Zone Watch session.
+- **Daily module convention — ΣL3 counts an unread L3 meter as 0** (raised by
+  CodeRabbit on PR #79, 2026-09-03). `buildZoneDaySeries`, `processReport` (the
+  gauges), the L3 table, the Exceptions register and the new day-composition
+  chart all sum the L3 meters that were read and compute loss as L2 − ΣL3, so
+  an unread meter's use sits inside the unmetered figure. Declaring the balance
+  "not computable" whenever any one of a zone's 17–81 meters is missing would
+  blank most days, so the convention stands for now; the composition chart's
+  loss bar is labelled "Unmetered (n unread)" and its footer counts the unread
+  meters. Whether to change the convention module-wide is the owner's call.
 - **Google sign-in ships dark until its provider is enabled in Supabase
   (2026-08-28).** `/login` and `/signup` now carry a "Continue with Google"
   button (`components/auth/google-sign-in-button.tsx` →
@@ -1130,7 +1139,22 @@ tables that no screen reads.
   left half is the new "Where the water went — Day N" bar chart (largest L3
   meters, "Other", and the unmetered loss ranked together) — 332 tests, new
   pure-function and render tests, screenshots
-  `water-daily-zone-analysis-{light,dark}.png` added.
+  `water-daily-zone-analysis-{light,dark}.png` added. **Round 7 (2026-09-03,
+  CodeRabbit review after the PR left draft, 11 findings):** fixed — the
+  stale-build boundary no longer auto-reloads when sessionStorage is blocked
+  (a reload could have repeated on every load; manual button instead, with a
+  test), `Breadcrumb` marks the last rendered crumb as current, `EmbedFrame`
+  puts the theme parameter before any `#fragment`, the two wide Water tables
+  moved `role="region"`/`tabIndex` from the `<table>` to the scroll shell (new
+  `containerProps` on the shared `Table`), the Year/Month/zone selects got a
+  visible focus ring, a linked KPI tile no longer announces "No change" when
+  it has no trend, the design lint now catches `bg-[…]`/`border-[…]`/`ring-[…]`,
+  the kit `Button` gained the 44 px coarse-pointer target, and the stale Inter
+  note in `CLAUDE.md` was corrected. Answered, not applied — the CSS spinner /
+  skeleton pulse stay (GSAP is the scroll-choreography tool; the global
+  reduced-motion rule already stops them), the kit `Button` consolidates with
+  the legacy shadcn one when the last page migrates (documented deviation),
+  and the ΣL3 convention (§4).
   Left for the per-page migration sessions (all pre-existing,
   listed in §4): five card treatments and three radii across the unmigrated
   pages, the STP-only `variant="secondary"` top strip, KPI rows placed four

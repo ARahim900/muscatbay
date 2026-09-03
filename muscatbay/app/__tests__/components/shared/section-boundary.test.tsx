@@ -67,6 +67,20 @@ describe('SectionBoundary', () => {
         expect(screen.getByText('HVAC Overview needs the latest version of the app')).toBeInTheDocument();
     });
 
+    it('never reloads automatically when sessionStorage is blocked — the claim could not be recorded', () => {
+        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+            throw new Error('SecurityError: storage is disabled');
+        });
+        const reload = vi.fn();
+        render(
+            <SectionBoundary title="Plant Watch" reload={reload}>
+                <Boom error={chunkError()} />
+            </SectionBoundary>,
+        );
+        expect(reload).not.toHaveBeenCalled();
+        expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
+    });
+
     it('offers a manual reload instead of looping when the automatic one is already spent', () => {
         window.sessionStorage.setItem(`mb:chunk-reload:${window.location.pathname}`, String(Date.now()));
         const reload = vi.fn();

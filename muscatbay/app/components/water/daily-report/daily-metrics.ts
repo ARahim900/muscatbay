@@ -363,7 +363,11 @@ export function buildZoneDayBreakdown(
         });
     }
     if (loss !== null && loss > 0) {
-        bars.push({ key: "loss", label: "Unmetered loss", value: loss, kind: "loss", shareOfSupply: share(loss) });
+        // ΣL3 follows the Daily module's convention (series, gauges, table,
+        // Exceptions register): an unread L3 meter contributes 0, so its use
+        // sits inside the unmetered figure. The bar says so when it applies.
+        const label = unread > 0 ? `Unmetered (${unread} unread)` : "Unmetered loss";
+        bars.push({ key: "loss", label, value: loss, kind: "loss", shareOfSupply: share(loss) });
     }
     bars.sort((a, b) => b.value - a.value);
 
