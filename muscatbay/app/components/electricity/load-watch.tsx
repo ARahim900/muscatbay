@@ -3,7 +3,7 @@
 /**
  * Load Watch — the Electricity section's inspection-first landing, modelled on
  * the Water Zone Watch. It answers "which system is drawing abnormally, and
- * which meters do I check?" from one screen: a compact briefing strip, a
+ * which meters do I check?" from one screen: a briefing row of KPI tiles, a
  * severity-first category table, a category×month heatmap that shows when a
  * category's draw spiked — and whose cells drill
  * straight through to that category's meters for that month — and the
@@ -28,8 +28,12 @@ import {
 } from "@/components/ui/table";
 import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
+// Briefing figures render on the app-wide StatsGrid tile (the HVAC card) so
+// Electricity's headline row looks like Water's and STP's — owner ruling,
+// DESIGN_SYSTEM.md §7 ("every module's KPI row is the same StatsGrid tile").
+import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
 import {
-    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst, type TickerStat,
+    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
@@ -40,41 +44,6 @@ import {
 
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
-
-const SUMMARY_TONE_COLOR: Record<NonNullable<TickerStat["tone"]>, string> = {
-    default: "var(--primary)",
-    danger: "var(--status-danger)",
-    warning: "var(--status-warning)",
-    success: "var(--status-normal)",
-    info: "var(--primary)",
-};
-
-function SummaryStrip({ caption, items }: { caption: string; items: TickerStat[] }) {
-    return (
-        <section className="overflow-hidden rounded-[10.5px] border border-border bg-border shadow-card-standard" aria-label={caption}>
-            <div className="bg-card px-4 py-3 sm:px-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{caption}</p>
-            </div>
-            <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
-                {items.map((item) => {
-                    const tone = item.tone ?? "default";
-                    return (
-                        <div key={item.label} className="min-w-0 bg-card px-4 py-3.5 sm:px-5">
-                            <dt className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                                <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: SUMMARY_TONE_COLOR[tone] }} aria-hidden="true" />
-                                <span className="truncate">{item.label}</span>
-                            </dt>
-                            <dd className="mt-1 text-lg font-bold tracking-tight text-foreground tabular-nums sm:text-xl">
-                                {item.value}
-                            </dd>
-                            {item.title && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.title}</p>}
-                        </div>
-                    );
-                })}
-            </dl>
-        </section>
-    );
-}
 
 type CategorySortField = "urgency" | "consumption" | "cost" | "change" | "findings";
 type SortDirection = "asc" | "desc";
@@ -417,44 +386,53 @@ export function LoadWatch({
     const TrendIcon = summary.trendPct !== null && summary.trendPct < 0 ? ArrowDown : ArrowUp;
     const budget = ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR;
 
-    const tickerItems: TickerStat[] = [
+    // The same four figures the old briefing strip carried, on the app-wide
+    // tile. The month that used to sit in the strip's caption now leads the
+    // first subtitle so nothing is lost. Colour = meaning: cost turns danger
+    // only when it exceeds the configured budget; flagged meters are danger
+    // when any exist and success when none do.
+    const briefingStats: StatItem[] = [
         {
             icon: Zap,
             label: "Consumption",
-            value: <>{num(summary.grandTotal / 1000, 1)} <span className="text-sm font-medium text-muted-foreground">MWh</span></>,
-            title: `${summary.meterCount} meters across ${model.categories.length} categories`,
+            value: num(summary.grandTotal / 1000, 1),
+            unit: "MWh",
+            subtitle: `${currentMonth} · ${summary.meterCount} meters across ${model.categories.length} categories`,
+            variant: "primary",
         },
         {
             icon: DollarSign,
             label: "Estimated cost",
-            value: <>{num(summary.cost)} <span className="text-sm font-medium text-muted-foreground">OMR</span></>,
-            title: budget !== null
+            value: num(summary.cost),
+            unit: "OMR",
+            subtitle: budget !== null
                 ? `${((summary.cost / budget) * 100).toFixed(0)}% of ${num(budget)} OMR budget`
                 : `At ${RATE} OMR/kWh`,
-            tone: budget !== null && summary.cost > budget ? "danger" : "default",
+            variant: budget !== null && summary.cost > budget ? "danger" : "info",
         },
         {
             icon: TrendIcon,
             label: "Previous month",
             value: summary.trendPct === null ? "—" : `${summary.trendPct > 0 ? "+" : ""}${summary.trendPct.toFixed(1)}%`,
-            title: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
-            tone: "info",
+            accessibleValue: summary.trendPct === null ? "No previous month in range" : undefined,
+            subtitle: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
+            variant: "info",
         },
         {
             icon: summary.flaggedCount > 0 ? AlertTriangle : CheckCircle2,
             label: "Flagged meters",
             value: String(summary.flaggedCount),
-            title: summary.flaggedCount > 0
+            subtitle: summary.flaggedCount > 0
                 ? `${attentionCategories.length} categories need review`
                 : "All categories are within tolerance",
-            tone: summary.flaggedCount > 0 ? "danger" : "success",
+            variant: summary.flaggedCount > 0 ? "danger" : "success",
         },
     ];
 
     return (
         <div className="space-y-6">
             <SectionBoundary title="Load briefing">
-                <SummaryStrip caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
+                <StatsGrid stats={briefingStats} />
             </SectionBoundary>
 
             <SectionBoundary title="Category control board">
