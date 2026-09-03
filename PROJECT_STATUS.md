@@ -1491,6 +1491,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-03 — feat(design): Design System v2.0 foundation + Water page migration (#79)
 - 2026-09-02 — revert: return the application code to its 1 September state
 - 2026-09-02 — revert(ui): restore the KPI card, Water dashboard and daily report to their previous look
 - 2026-09-02 — revert: restore the previous design and theme, keeping the security work
