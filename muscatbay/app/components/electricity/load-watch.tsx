@@ -33,7 +33,7 @@ import { SectionBoundary } from "@/components/shared/section-boundary";
 // DESIGN_SYSTEM.md §7 ("every module's KPI row is the same StatsGrid tile").
 import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
 import {
-    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst,
+    MetricHeatmap, SeverityChip, SEV_UI, worstFirst,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ import {
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
-type CategorySortField = "urgency" | "consumption" | "cost" | "change" | "findings";
+type CategorySortField = "urgency" | "consumption" | "cost" | "findings";
 type SortDirection = "asc" | "desc";
 
 const SEVERITY_RANK: Record<CategoryRow["severity"], number> = {
@@ -93,8 +93,6 @@ function compareCategories(a: CategoryRow, b: CategoryRow, field: CategorySortFi
         case "consumption":
         case "cost":
             return a.total - b.total;
-        case "change":
-            return (a.trendPct ?? Number.NEGATIVE_INFINITY) - (b.trendPct ?? Number.NEGATIVE_INFINITY);
         case "findings":
             return a.flaggedCount - b.flaggedCount || SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
     }
@@ -194,16 +192,6 @@ function CategoryTable({
                                 Cost (OMR)
                             </SortableTableHead>
                             <SortableTableHead
-                                field="change"
-                                currentSortField={sortField}
-                                currentSortDirection={sortDirection}
-                                onSort={(field) => onSort(field as CategorySortField)}
-                                align="right"
-                                className="num hidden min-w-[130px] md:table-cell"
-                            >
-                                6-month trend
-                            </SortableTableHead>
-                            <SortableTableHead
                                 field="findings"
                                 currentSortField={sortField}
                                 currentSortDirection={sortDirection}
@@ -217,8 +205,6 @@ function CategoryTable({
                     </TableHeader>
                     <TableBody>
                         {rows.map((category) => {
-                            const trend = category.trendPct;
-                            const TrendIcon = trend !== null && trend < 0 ? ArrowDown : ArrowUp;
                             const findingSummary = describeFindings(category);
                             const barWidth = (category.total / maxCategoryTotal) * 100;
 
@@ -255,27 +241,12 @@ function CategoryTable({
                                                 <div className="h-full rounded-full bg-secondary" style={{ width: `${barWidth}%` }} />
                                             </div>
                                             <p className="mt-1 text-[11px] font-normal text-muted-foreground md:hidden">
-                                                {num(category.total * RATE)} OMR · {trend === null ? "no trend" : `${trend > 0 ? "+" : ""}${trend.toFixed(0)}%`}
+                                                {num(category.total * RATE)} OMR
                                             </p>
                                         </div>
                                     </TableCell>
                                     <TableCell className="num hidden whitespace-nowrap md:table-cell">
                                         {num(category.total * RATE)}
-                                    </TableCell>
-                                    <TableCell className="num hidden md:table-cell">
-                                        <div className="ms-auto flex w-[115px] items-center justify-end gap-2">
-                                            <Sparkline values={category.monthTotals.slice(-6)} stroke="var(--chart-brand)" className="w-16" />
-                                            <span className="inline-flex min-w-10 items-center justify-end gap-0.5 whitespace-nowrap">
-                                                {trend === null ? (
-                                                    <span className="text-muted-foreground">—</span>
-                                                ) : (
-                                                    <>
-                                                        <TrendIcon className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                                                        {trend > 0 ? "+" : ""}{trend.toFixed(0)}%
-                                                    </>
-                                                )}
-                                            </span>
-                                        </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
                                         <span
