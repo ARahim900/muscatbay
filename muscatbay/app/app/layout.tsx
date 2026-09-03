@@ -5,26 +5,24 @@ import { Providers } from "@/components/providers/app-providers";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
-import { Geist_Mono, Inter } from "next/font/google";
+import { DM_Sans, Geist_Mono } from "next/font/google";
 
-// Inter — the UI face for headings AND body (directed by Rahim 2026-08-31,
-// superseding the 2026-08-30 "Geist stands" decision — see BRAND_DESIGN.md §3).
-// Variable font (100–900), so font-medium/semibold/bold AND font-extrabold (800)
-// and font-black (900) are all genuine weights — nothing synthesises a faux weight.
-// The `opsz` axis loads Inter's optical-size range (14–32): small UI text renders
-// the text grade, large headlines automatically get the Display grade with its
-// tighter built-in spacing — the "UI-optimised" behaviour Inter is designed for.
-const interSans = Inter({
+// DM Sans — the app typeface (DESIGN_SYSTEM.md §1, v2.0, 2026-09-02).
+// Variable font, four weights (400 / 500 / 600 / 700 — weight 800 does not exist
+// in the design system), exposed as --font-dm-sans, which app/design-tokens.css
+// maps to --font-sans. It goes on <body>: the theme provider rewrites the
+// class list on <html>, so a font variable there could be lost.
+const dmSans = DM_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
   display: "swap",
-  variable: "--font-sans",
-  axes: ["opsz"],
 });
 
 // Geist Mono — meter IDs, account numbers and other genuine mono content
 // (wired to --font-mono and consumed by the .meter rule in globals.css).
-// Deliberately kept through the Inter switch: the brand framework prescribes
-// no monospace face, and tabular identifiers need one.
+// Deliberately kept: the design system prescribes no monospace face, and
+// tabular identifiers need one.
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   display: "swap",
@@ -123,7 +121,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />
       </head>
-      <body className={`${interSans.className} ${interSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
         <RegisterSW />
         <Providers>
           <NotificationProvider>

@@ -68,7 +68,7 @@ type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 
 export function ChartViewToggle({ value, onChange }: { value: ChartView; onChange: (v: ChartView) => void }) {
     return (
-        <div className="flex items-center gap-0.5 rounded-lg bg-muted p-0.5">
+        <div className="flex items-center gap-0.5 rounded-lg bg-muted-bg p-0.5">
             {(["daily", "monthly"] as const).map((v) => (
                 <button
                     key={v}

@@ -103,7 +103,7 @@ function ModuleGrid({ modules }: { modules: ModuleCoverage[] }) {
                     <li key={mod.key}>
                         <Link
                             href={mod.href}
-                            className="group/mod flex h-full flex-col gap-2 rounded-lg border border-border bg-muted/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            className="group/mod flex h-full flex-col gap-2 rounded-lg border border-border bg-muted-bg/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                             <div className="flex items-center gap-2 min-w-0">
                                 <Icon
@@ -179,7 +179,7 @@ export function ModuleCoverageSection({ modules, loading }: ModuleCoverageSectio
                         {[0, 1, 2, 3, 4].map((i) => (
                             <div
                                 key={i}
-                                className="h-[104px] rounded-lg border border-border bg-muted/60 motion-safe:animate-pulse"
+                                className="h-[104px] rounded-lg border border-border bg-muted-bg/60 motion-safe:animate-pulse"
                             />
                         ))}
                     </div>

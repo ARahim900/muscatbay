@@ -1,6 +1,22 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import design from "./eslint.design-rules.mjs";
+
+// Design-system enforcement (DESIGN_SYSTEM.md §8). The rule itself is the
+// verbatim kit file; only its scope is narrowed here. Pages are migrated one
+// per session — Water → Dashboard → STP → Electricity → Contractors →
+// Fire Safety → HVAC → Assets → Pest Control → Settings — and each migrated
+// page's route folder and component folder are ADDED to this list in the same
+// PR. When the last page lands, drop the `files` override so the kit's default
+// (`app/**`, `components/**`) applies to everything.
+const designRules = {
+  ...design,
+  files: [
+    "app/water/**/*.{ts,tsx}",
+    "components/water/**/*.{ts,tsx}",
+  ],
+};
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -46,6 +62,7 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": "warn",
     },
   },
+  designRules,
 ]);
 
 export default eslintConfig;

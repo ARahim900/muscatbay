@@ -56,7 +56,7 @@ function TermsCard({ item }: { item: AmcContractorDetails }) {
                 <Fact label="Contact person" value={item.contact_person} />
             </dl>
 
-            <section className="mt-4 rounded-[7px] border border-border/60 bg-muted/40 p-3 dark:bg-muted/20">
+            <section className="mt-4 rounded-[7px] border border-border/60 bg-muted-bg/40 p-3 dark:bg-muted-bg/20">
                 <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <Timer className="h-3 w-3" aria-hidden="true" /> Response times (SLA)
                 </p>
@@ -66,7 +66,7 @@ function TermsCard({ item }: { item: AmcContractorDetails }) {
                 </dl>
             </section>
 
-            <section className="mt-3 rounded-[7px] border border-border/60 bg-muted/40 p-3 dark:bg-muted/20">
+            <section className="mt-3 rounded-[7px] border border-border/60 bg-muted-bg/40 p-3 dark:bg-muted-bg/20">
                 <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <Wallet className="h-3 w-3" aria-hidden="true" /> Commercial terms
                 </p>

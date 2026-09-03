@@ -30,7 +30,7 @@ export function ActiveFilterPills({ pills }: ActiveFilterPillsProps) {
                             ? "bg-card border-border text-foreground/80"
                             : pill.colorClass
                                 ? pill.colorClass
-                                : "bg-muted border-border/80 text-foreground/80"
+                                : "bg-muted-bg border-border/80 text-foreground/80"
                     )}
                 >
                     {pill.color && (

@@ -43,8 +43,8 @@ import { SectionBoundary } from "@/components/shared/section-boundary";
 const DashboardCharts = dynamic(() => import("@/components/charts/dashboard-charts"), {
     loading: () => (
         <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted/50" />
-            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted/50" />
+            <div className="card-elevated col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted-bg/50" />
+            <div className="card-elevated col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-border/50 dark:bg-muted-bg/50" />
         </div>
     ),
     ssr: false,
@@ -98,14 +98,14 @@ function DashboardSkeleton() {
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full" aria-busy="true" aria-live="polite">
             <span className="sr-only">Loading dashboard…</span>
-            <div className="h-56 sm:h-64 rounded-[var(--radius)] bg-muted motion-safe:animate-pulse" />
+            <div className="h-56 sm:h-64 rounded-[var(--radius)] bg-muted-bg motion-safe:animate-pulse" />
             <div className="grid gap-4 sm:gap-5 md:gap-6 grid-cols-1 lg:grid-cols-7">
-                <div className="col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted" />
-                <div className="col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted" />
+                <div className="col-span-1 lg:col-span-4 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted-bg" />
+                <div className="col-span-1 lg:col-span-3 h-[300px] motion-safe:animate-pulse rounded-xl bg-muted-bg" />
             </div>
-            <div className="h-[220px] rounded-xl bg-muted motion-safe:animate-pulse" />
-            <div className="h-[260px] rounded-xl bg-muted motion-safe:animate-pulse" />
-            <div className="h-[240px] rounded-xl bg-muted motion-safe:animate-pulse" />
+            <div className="h-[220px] rounded-xl bg-muted-bg motion-safe:animate-pulse" />
+            <div className="h-[260px] rounded-xl bg-muted-bg motion-safe:animate-pulse" />
+            <div className="h-[240px] rounded-xl bg-muted-bg motion-safe:animate-pulse" />
         </div>
     );
 }
@@ -313,7 +313,7 @@ function DashboardContent() {
                         <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                                 <CardTitle>Latest Updates</CardTitle>
-                                <div role="group" aria-label="Filter updates by type" className="flex items-center gap-1 bg-muted p-1 rounded-lg">
+                                <div role="group" aria-label="Filter updates by type" className="flex items-center gap-1 bg-muted-bg p-1 rounded-lg">
                                     {(['all', 'critical', 'warning', 'info'] as const).map(filter => (
                                         <button
                                             key={filter}
@@ -360,7 +360,7 @@ function DashboardContent() {
                                             </>
                                         );
 
-                                        const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border hover:bg-card hover:border-border/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+                                        const itemClassName = "flex items-center gap-3 p-3 rounded-lg bg-muted-bg/60 border border-border hover:bg-card hover:border-border/80 group/activity motion-safe:hover:-translate-y-0.5 transition-[background-color,border-color,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
                                         return activityHref ? (
                                             <Link

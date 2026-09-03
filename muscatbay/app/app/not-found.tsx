@@ -24,7 +24,7 @@ export default function NotFound() {
             <div className="max-w-md space-y-5 text-center">
                 <span
                     aria-hidden="true"
-                    className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted"
+                    className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted-bg"
                 >
                     <SearchX className="h-7 w-7 text-muted-foreground" />
                 </span>
@@ -43,7 +43,7 @@ export default function NotFound() {
                         <Link
                             key={href}
                             href={href}
-                            className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                            className="inline-flex min-h-11 items-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-muted-bg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                         >
                             {label}
                         </Link>

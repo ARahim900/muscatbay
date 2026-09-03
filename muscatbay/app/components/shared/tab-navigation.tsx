@@ -208,7 +208,7 @@ export function TabNavigation({ tabs, activeTab, onTabChange, className, variant
                 ref={listRef}
                 className={cn(
                     "relative inline-flex items-center gap-1.5 sm:gap-3 p-1 sm:p-1.5 rounded-xl overflow-x-auto max-w-full scroll-px-4",
-                    "bg-muted/80",
+                    "bg-muted-bg/80",
                     "border border-border/60",
                     "shadow-sm",
                     useMobileSelect && "hidden sm:inline-flex"

@@ -182,7 +182,7 @@ export default function SettingsPage() {
                             </p>
                         </div>
                         <div className="w-full sm:w-48 flex-shrink-0">
-                            <div className="h-2 rounded-full bg-border dark:bg-muted overflow-hidden">
+                            <div className="h-2 rounded-full bg-border dark:bg-muted-bg overflow-hidden">
                                 <div
                                     className="h-full rounded-full bg-secondary transition-all duration-500"
                                     style={{ width: `${completionPct}%` }}
@@ -350,7 +350,7 @@ export default function SettingsPage() {
                                             id="email"
                                             value={user?.email || ""}
                                             disabled
-                                            className="bg-muted text-muted-foreground"
+                                            className="bg-muted-bg text-muted-foreground"
                                         />
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-1">
@@ -441,11 +441,11 @@ export default function SettingsPage() {
                                         aria-labelledby="push-toggle-label"
                                         aria-describedby="push-toggle-description"
                                         onClick={togglePush}
-                                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 hover:bg-muted/60 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg cursor-pointer transition-colors duration-200 hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                                     >
                                         <span
                                             aria-hidden="true"
-                                            className={`block h-6 w-11 rounded-full relative transition-colors duration-200 ${pushEnabled ? 'bg-sidebar' : 'bg-muted'}`}
+                                            className={`block h-6 w-11 rounded-full relative transition-colors duration-200 ${pushEnabled ? 'bg-sidebar' : 'bg-muted-bg'}`}
                                         >
                                             <span className={`absolute top-1 start-1 block h-4 w-4 rounded-full bg-card shadow-sm transition-transform duration-200 ${pushEnabled ? 'rtl:-translate-x-5 translate-x-5' : 'translate-x-0'}`} />
                                         </span>

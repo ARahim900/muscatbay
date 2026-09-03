@@ -209,23 +209,26 @@ export default function GulfExpertPage() {
         </div>
       )}
 
-      <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} ariaLabel="HVAC sections" />
 
-      {activeTab === "overview" && (
-        <SectionBoundary title="HVAC Overview">
-          <OverviewTab data={data} />
-        </SectionBoundary>
-      )}
-      {activeTab === "findings" && (
-        <SectionBoundary title="PPM Findings">
-          <FindingsTab findings={data.findings} />
-        </SectionBoundary>
-      )}
-      {activeTab === "recurring" && (
-        <SectionBoundary title="Recurring Issues">
-          <RecurringTab issues={data.recurringIssues} />
-        </SectionBoundary>
-      )}
+      {/* One tabpanel for the active tab — its id is what each tab's aria-controls points at. */}
+      <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
+        {activeTab === "overview" && (
+          <SectionBoundary title="HVAC Overview">
+            <OverviewTab data={data} />
+          </SectionBoundary>
+        )}
+        {activeTab === "findings" && (
+          <SectionBoundary title="PPM Findings">
+            <FindingsTab findings={data.findings} />
+          </SectionBoundary>
+        )}
+        {activeTab === "recurring" && (
+          <SectionBoundary title="Recurring Issues">
+            <RecurringTab issues={data.recurringIssues} />
+          </SectionBoundary>
+        )}
+      </div>
     </div>
   );
 }

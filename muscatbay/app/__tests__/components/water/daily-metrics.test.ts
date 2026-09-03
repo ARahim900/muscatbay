@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
     buildDailyGrid, gridValue, dailySeverity, buildZoneDaySeries, buildZoneWatch,
-    buildZoneMtd, buildNetworkDaySeries, buildDailyExceptions,
+    buildZoneDayBreakdown, buildNetworkDaySeries, buildDailyExceptions,
     risingLossStreak, detectSpike, zeroStreak, wasActiveBefore,
     type DayValues, type ZoneDayPoint,
 } from '@/components/water/daily-report/daily-metrics';
@@ -131,18 +131,75 @@ describe('buildZoneDaySeries / buildZoneWatch', () => {
     });
 });
 
-describe('buildZoneMtd / buildNetworkDaySeries', () => {
+describe('buildZoneDayBreakdown', () => {
+    it('ranks the largest meters, folds the rest into Other and ranks the loss alongside', () => {
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100)),
+            row(FM.l3Accounts[0], days(30), 'Big'),
+            row(FM.l3Accounts[1], days(20), 'Mid'),
+            row(FM.l3Accounts[2], days(5), 'Small'),
+            row(FM.l3Accounts[3], days(0), 'Idle'),
+        ]);
+        const b = buildZoneDayBreakdown(grid, FM, 1, 2);
+        expect(b).toMatchObject({ l2: 100, l3Sum: 55, loss: 45, hasData: true });
+        expect(b.bars.map(x => [x.key, x.label, x.value, x.kind])).toEqual([
+            // 13 meters were not read — the loss bar says so, because their use sits inside it.
+            ['loss', 'Unmetered (13 unread)', 45, 'loss'],
+            [FM.l3Accounts[0], 'Big', 30, 'meter'],
+            [FM.l3Accounts[1], 'Mid', 20, 'meter'],
+            ['other', `Other (${FM.l3Accounts.length - 2} meters)`, 5, 'other'],
+        ]);
+        // Small, Idle and every unread meter fold into Other; only unread ones count as unread.
+        expect(b.otherCount).toBe(FM.l3Accounts.length - 2);
+        expect(b.unread).toBe(FM.l3Accounts.length - 4);
+        expect(b.bars[0].shareOfSupply).toBe(45);
+    });
+
+    it('labels the loss plainly when every meter was read', () => {
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100)),
+            ...FM.l3Accounts.map((a, i) => row(a, days(i === 0 ? 30 : 1))),
+        ]);
+        const b = buildZoneDayBreakdown(grid, FM, 1);
+        expect(b.unread).toBe(0);
+        expect(b.bars.find(x => x.kind === 'loss')).toMatchObject({ label: 'Unmetered loss', value: 54 });
+    });
+
+    it('shows no loss bar and no share of supply when the bulk was not read', () => {
+        const grid = buildDailyGrid([row(FM.l3Accounts[0], days(12), 'Only')]);
+        const b = buildZoneDayBreakdown(grid, FM, 1);
+        expect(b).toMatchObject({ l2: null, loss: null, l3Sum: 12, hasData: true });
+        expect(b.bars.some(x => x.kind === 'loss')).toBe(false);
+        expect(b.bars[0]).toMatchObject({ key: FM.l3Accounts[0], label: 'Only', value: 12, shareOfSupply: null });
+    });
+
+    it('omits the loss bar when meters read more than the bulk, and is empty with no readings', () => {
+        const over = buildZoneDayBreakdown(
+            buildDailyGrid([row(FM.l2Account, days(10)), row(FM.l3Accounts[0], days(14))]), FM, 1,
+        );
+        expect(over.loss).toBe(-4);
+        expect(over.bars.some(x => x.kind === 'loss')).toBe(false);
+
+        const empty = buildZoneDayBreakdown(buildDailyGrid([row(FM.l2Account, days(null))]), FM, 1);
+        expect(empty.hasData).toBe(false);
+        expect(empty.bars).toEqual([]);
+        expect(empty.unread).toBe(FM.l3Accounts.length);
+    });
+
+    it('names a building bulk by its curated building name, like the L3 table', () => {
+        const zone3a = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+        const building = BUILDING_CONFIG.find(b => b.zone === '3A')!;
+        const grid = buildDailyGrid([row(building.bulkAccount, days(9), 'db name')]);
+        expect(buildZoneDayBreakdown(grid, zone3a, 1).bars[0].label).toBe(building.buildingName);
+    });
+});
+
+describe('buildNetworkDaySeries', () => {
     const grid = buildDailyGrid([
         row(FM.l2Account, days(100, 50)),
         row(FM.l3Accounts[0], days(80, 40)),
     ]);
     const series = buildZoneDaySeries(grid);
-
-    it('accumulates supply, metered and loss', () => {
-        const mtd = buildZoneMtd(series.find(s => s.zoneName === 'Zone FM')!);
-        expect(mtd[1]).toMatchObject({ day: 2, cumSupply: 150, cumMetered: 120, cumLoss: 30 });
-        expect(mtd[1].label).toBe('D02');
-    });
 
     it('sums all zones into the network trend and skips no-data days', () => {
         const net = buildNetworkDaySeries(series, 2);

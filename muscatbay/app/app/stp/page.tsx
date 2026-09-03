@@ -6,7 +6,9 @@ import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supaba
 import { STP_RATES } from "@/lib/config";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
-import { HierarchyStatGrid } from "@/components/shared/hierarchy-stat-card";
+// KPI row: the app-wide StatsGrid tile (the HVAC card) — owner decision
+// 2026-09-02 that every module's KPI cards look the same.
+import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -807,6 +809,7 @@ export default function STPPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                ariaLabel="STP sections"
                 variant="secondary"
                 tabs={[
                     { key: "watch", label: "Plant Watch", icon: Gauge },
@@ -814,7 +817,7 @@ export default function STPPage() {
                 ]}
             />
 
-            <HierarchyStatGrid stats={stats} />
+            <StatsGrid stats={stats} />
 
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}
@@ -1047,7 +1050,7 @@ export default function STPPage() {
                                 composed a raw hex with string alpha suffixes
                                 (`${STP_COLOR}50`), which cannot follow the theme. */}
                             {monthTotals && (
-                                <div className="space-y-3 rounded-xl border border-border bg-muted/60 p-4">
+                                <div className="space-y-3 rounded-xl border border-border bg-muted-bg/60 p-4">
                                     <p className="text-sm font-semibold text-foreground">
                                         <Activity className="mr-1.5 inline h-3.5 w-3.5 text-module-stp" aria-hidden="true" />
                                         Monthly Total — {dailyOperations.length} day{dailyOperations.length !== 1 ? 's' : ''}
@@ -1135,7 +1138,7 @@ export default function STPPage() {
                                     const cell = "px-4 sm:px-6 py-4 align-middle text-sm font-semibold text-right tabular-nums text-foreground";
                                     return (
                                         <TableFooter>
-                                            <tr className="border-t-2 border-border bg-muted/80 dark:bg-muted/50">
+                                            <tr className="border-t-2 border-border bg-muted-bg/80 dark:bg-muted-bg/50">
                                                 <td className="whitespace-nowrap px-4 py-4 align-middle text-sm font-semibold text-foreground sm:px-6">
                                                     <span className="inline-flex items-center gap-2">
                                                         <Activity className="h-3.5 w-3.5 shrink-0 text-module-stp" aria-hidden="true" />
@@ -1152,7 +1155,7 @@ export default function STPPage() {
                                                 <td className={cell}>{monthTotals.totalTrips}</td>
                                                 <td className={cell}>{monthTotals.totalIncome.toFixed(1)}</td>
                                                 <td className={cell}>{monthTotals.totalSavings.toFixed(1)}</td>
-                                                <td className={`${cell} bg-muted/60 dark:bg-muted/30 text-primary dark:text-foreground`}>{monthTotals.totalImpact.toFixed(1)}</td>
+                                                <td className={`${cell} bg-muted-bg/60 dark:bg-muted-bg/30 text-primary dark:text-foreground`}>{monthTotals.totalImpact.toFixed(1)}</td>
                                             </tr>
                                         </TableFooter>
                                     );

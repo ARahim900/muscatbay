@@ -79,7 +79,7 @@ export function ElectricityAnalysisView({
 }: AnalysisViewProps) {
     const chartMotion = useChartMotion();
     return (
-        <div id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
+        <div id="panel-data" role="tabpanel" aria-labelledby="tab-data" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
             {/* Filtered Stats Grid */}
             <StatsGrid stats={analysisData.stats} />
 

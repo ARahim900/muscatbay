@@ -32,7 +32,7 @@ export const CHART_TOOLTIP_STYLE = {
 export const STATUS_CFG: Record<PpmStatus, { label: string; icon: LucideIcon; cls: string; dot: string }> = {
     done: { label: "Completed", icon: CheckCircle, cls: "bg-mb-success-light text-mb-success-text", dot: "bg-[var(--status-normal)]" },
     scheduled: { label: "Scheduled", icon: Calendar, cls: "bg-primary/10 text-primary dark:text-muted-foreground/80", dot: "bg-primary" },
-    upcoming: { label: "Upcoming", icon: Clock, cls: "bg-muted text-muted-foreground", dot: "bg-border dark:bg-muted-foreground" },
+    upcoming: { label: "Upcoming", icon: Clock, cls: "bg-muted-bg text-muted-foreground", dot: "bg-border dark:bg-muted-foreground" },
     fault: { label: "Fault", icon: XCircle, cls: "bg-mb-danger-light text-mb-danger-text", dot: "bg-[var(--status-danger)]" },
     no_access: { label: "No Access", icon: AlertTriangle, cls: "bg-mb-warning-light text-mb-warning-text", dot: "bg-[var(--status-warning)]" },
 };
@@ -110,7 +110,7 @@ export function ZoneBadge({ zone, withScope = false }: { zone: ZoneKey; withScop
 
 export function CycleBadge({ cycle }: { cycle: Cycle }) {
     return (
-        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted text-foreground dark:text-muted-foreground/80 whitespace-nowrap">
+        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted-bg text-foreground dark:text-muted-foreground/80 whitespace-nowrap">
             <span aria-hidden="true" className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">{cycle}</span>
             Cycle {cycle}
         </span>
@@ -130,7 +130,7 @@ export function PpmStatusBadge({ status }: { status: PpmStatus }) {
 
 export function SystemTag({ label }: { label: string }) {
     return (
-        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide", SYSTEM_TAG[label] || "bg-muted text-muted-foreground")}>
+        <span className={cn("px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide", SYSTEM_TAG[label] || "bg-muted-bg text-muted-foreground")}>
             {label}
         </span>
     );
@@ -167,7 +167,7 @@ export function SectionHeading({
  */
 export function ReferenceChip({ asOf }: { asOf: string }) {
     return (
-        <span className="inline-flex items-center gap-1.5 rounded-[5px] bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5 rounded-[5px] bg-muted-bg px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
             Contract reference · as of {asOf}
         </span>
     );

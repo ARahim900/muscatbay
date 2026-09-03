@@ -747,6 +747,7 @@ export default function ElectricityPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                ariaLabel="Electricity sections"
                 tabs={[
                     { key: "watch", label: "Load Watch", icon: Gauge },
                     { key: "data", label: "Meters & Data", icon: Database },
@@ -915,7 +916,8 @@ export default function ElectricityPage() {
 
                 return (
                     <SectionBoundary title="Meter consumption & anomalies">
-                    <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    {/* Labelled region, not a second tabpanel: the "data" tab controls the analysis view above. */}
+                    <div role="region" aria-label="Meter consumption and anomalies" className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Toolbar — title + subtitle live inside it, matching the STP
                             Daily Operations Log reference. This single table replaces the
                             former "Monthly Breakdown" plus the separate anomaly table. */}
@@ -1040,7 +1042,7 @@ export default function ElectricityPage() {
                                 </div>
                             )}
                             {dbFilteredMeters.length > 1 && (
-                                <div className="rounded-[10.5px] border border-border bg-muted/60 p-4">
+                                <div className="rounded-[10.5px] border border-border bg-muted-bg/60 p-4">
                                     <p className="text-sm font-semibold text-foreground"><Gauge className="mr-1.5 inline h-3.5 w-3.5 text-module-electricity" aria-hidden="true" />Total · {dbFilteredMeters.length} meters</p>
                                     <p className="mt-1 font-mono text-sm font-semibold text-foreground">
                                         {grandRangeTotal.toLocaleString('en-US', { maximumFractionDigits: 0 })} kWh ·{' '}
@@ -1104,7 +1106,7 @@ export default function ElectricityPage() {
                                     </TableRow>
                                 )}
                                 {dbFilteredMeters.length > 1 && (
-                                    <TableRow className="bg-muted/80 dark:bg-muted/60">
+                                    <TableRow className="bg-muted-bg/80 dark:bg-muted-bg/60">
                                         <TableCell className="col-sticky strong">Total · {dbFilteredMeters.length} meters</TableCell>
                                         <TableCell />
                                         <TableCell />

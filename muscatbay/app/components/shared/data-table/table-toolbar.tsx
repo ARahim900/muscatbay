@@ -93,7 +93,7 @@ export function DensityToggle({ density, onChange, className }: DensityTogglePro
                         "flex items-center justify-center w-8 h-8 pointer-coarse:min-h-11 pointer-coarse:min-w-11 transition-colors duration-150",
                         density === value
                             ? "bg-primary text-primary-foreground"
-                            : "text-muted-foreground/70 hover:bg-muted hover:text-foreground"
+                            : "text-muted-foreground/70 hover:bg-muted-bg hover:text-foreground"
                     )}
                 >
                     <Icon />

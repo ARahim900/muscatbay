@@ -11,14 +11,12 @@ import type { WaterMeter } from "@/lib/water-data";
 import { fetchWaterMeters, type NegativeReading, type DerivedMonth } from "@/functions/api/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 
-// Shared layout / shell
-import { PageHeader } from "@/components/shared/page-header";
-import { PageStatusBar } from "@/components/shared/page-status-bar";
+// Design-system primitives (DESIGN_SYSTEM.md §6) + the shared render boundary
+import { Badge, Breadcrumb, Button, PageHeader, SectionCard, SegmentedControl, StatusChip } from "@/components/ui";
 import { SectionBoundary } from "@/components/shared/section-boundary";
-import { TabNavigation } from "@/components/shared/tab-navigation";
-import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
-import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/shared/skeleton";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import type { ViewStatus } from "@/components/water/daily-water-report";
 
 // All three dashboard views are loaded on demand (Supabase-wired).
 //
@@ -33,12 +31,12 @@ const WaterMonthlyDashboard = dynamic(
     () => import("@/components/water/monthly/water-monthly-dashboard").then((m) => ({ default: m.WaterMonthlyDashboard })),
     {
         loading: () => (
-            <div className="space-y-5" role="status" aria-busy="true" aria-label="Loading monthly water analysis">
-                {/* section tabs · period filter card · KPI row · first panel */}
-                <Skeleton className="h-10 w-full max-w-2xl rounded-lg" />
-                <Skeleton className="h-[124px] w-full rounded-[10.5px]" />
-                <StatsGridSkeleton count={6} />
-                <ChartSkeleton height="h-[400px]" />
+            <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading monthly water analysis">
+                {/* KPI row · period control · section tabs · first card */}
+                <KpiRowSkeleton />
+                <Skeleton className="h-11 w-full rounded-card" />
+                <Skeleton className="h-10 w-full max-w-2xl rounded-control" />
+                <Skeleton className="h-chart-lg w-full rounded-card" />
             </div>
         ),
         ssr: false,
@@ -46,12 +44,12 @@ const WaterMonthlyDashboard = dynamic(
 );
 const DailyWaterReport = dynamic(
     () => import("@/components/water/daily-water-report").then((m) => ({ default: m.DailyWaterReport })),
-    { loading: () => <Skeleton className="h-96 w-full rounded-xl" />, ssr: false },
+    { loading: () => <Skeleton className="h-96 w-full rounded-card" />, ssr: false },
 );
 // Satellite View hosts a maplibre engine — browser-only by nature.
 const SatelliteView = dynamic(
     () => import("@/components/water/satellite/satellite-view").then((m) => ({ default: m.SatelliteView })),
-    { loading: () => <Skeleton className="h-[75vh] w-full rounded-xl" />, ssr: false },
+    { loading: () => <Skeleton className="h-embed w-full rounded-card" />, ssr: false },
 );
 
 type DashboardView = "monthly" | "daily" | "satellite";
@@ -71,6 +69,21 @@ interface WaterPageCache {
     derivedMonths?: DerivedMonth[];
 }
 
+/** "12:34" for the status chip — the transport recency, shown as "Synced 12:34". */
+const timeLabel = (d: Date | null): string | undefined =>
+    d ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : undefined;
+
+/** Six 104 px tiles — the exact footprint of the KPI row, so nothing shifts. */
+function KpiRowSkeleton() {
+    return (
+        <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-kpi w-full rounded-card" />
+            ))}
+        </div>
+    );
+}
+
 /**
  * Honest failure state.
  *
@@ -82,38 +95,35 @@ interface WaterPageCache {
  */
 function WaterErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
     return (
-        <div
-            role="alert"
-            className="flex flex-col items-center justify-center gap-3 rounded-[10.5px] border border-mb-danger bg-mb-danger-light px-4 py-14 text-center"
-        >
-            <AlertTriangle className="h-9 w-9 text-mb-danger-text" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-foreground">Water data could not be loaded</h2>
-            <p className="max-w-md text-sm text-mb-danger-text">{message}</p>
-            <p className="max-w-md text-xs text-muted-foreground">
-                No figures are shown for this period — nothing is estimated or substituted. Retry once the
-                connection is restored.
-            </p>
-            <Button onClick={onRetry} variant="outline" className="mt-1 gap-2">
-                <RefreshCw className="h-4 w-4" aria-hidden="true" /> Retry
-            </Button>
-        </div>
+        <SectionCard>
+            <SectionCard.Header icon={AlertTriangle} title="Water data could not be loaded" />
+            <SectionCard.Body>
+                <div role="alert" className="flex flex-col items-start gap-3 rounded-card bg-danger-tint p-4 text-danger">
+                    <p className="text-body">{message}</p>
+                    <p className="text-caption">
+                        No figures are shown for this period — nothing is estimated or substituted. Retry once the
+                        connection is restored.
+                    </p>
+                    <Button variant="secondary" icon={RefreshCw} onClick={onRetry}>Retry</Button>
+                </div>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }
 
 /** Benign "connected, but there is nothing to show yet" state. */
 function WaterEmptyState({ onRetry }: { onRetry: () => void }) {
     return (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-[10.5px] border border-border bg-card px-4 py-14 text-center">
-            <DatabaseZap className="h-9 w-9 text-muted-foreground" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-foreground">No water meters found</h2>
-            <p className="max-w-md text-sm text-muted-foreground">
-                The database is reachable but returned no meters. Once meters and monthly readings are
-                loaded they will appear here.
-            </p>
-            <Button onClick={onRetry} variant="outline" className="mt-1 gap-2">
-                <RefreshCw className="h-4 w-4" aria-hidden="true" /> Check again
-            </Button>
-        </div>
+        <SectionCard>
+            <SectionCard.Header icon={DatabaseZap} title="No water meters found" />
+            <SectionCard.Body className="flex flex-col items-start gap-3">
+                <p className="max-w-prose text-body text-muted">
+                    The database is reachable but returned no meters. Once meters and monthly readings are
+                    loaded they will appear here.
+                </p>
+                <Button variant="secondary" icon={RefreshCw} onClick={onRetry}>Check again</Button>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }
 
@@ -128,6 +138,10 @@ export default function WaterPage() {
     const [negatives, setNegatives] = useState<NegativeReading[]>([]);
     const [derivedMonths, setDerivedMonths] = useState<DerivedMonth[]>(cached?.derivedMonths ?? []);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(cached?.lastUpdated ?? null);
+    // The Daily view has its own fetch + realtime channel; it reports them here
+    // so the page keeps ONE data-source chip (DESIGN_SYSTEM.md §0 — no duplicate
+    // "live data" information).
+    const [dailyStatus, setDailyStatus] = useState<ViewStatus | null>(null);
 
     // Stable fetch function — used both on mount and by the real-time handler
     const fetchWaterData = useCallback(async (silent = false) => {
@@ -191,81 +205,77 @@ export default function WaterPage() {
         saveFilterPreferences("water", { dashboardView });
     }, [dashboardView]);
 
-    if (isLoading) {
-        return (
-            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full motion-safe:animate-in motion-safe:fade-in duration-200" role="status" aria-busy="true" aria-label="Loading water system data">
-                {/* Header skeleton */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Skeleton className="h-4 w-20" />
-                            <Skeleton className="h-4 w-4" />
-                            <Skeleton className="h-4 w-16" />
-                        </div>
-                        <Skeleton className="h-9 w-64" />
-                        <Skeleton className="h-4 w-96" />
-                    </div>
-                    <Skeleton className="h-8 w-32 rounded-full" />
-                </div>
-                {/* Tabs skeleton */}
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 w-36 rounded-lg" />
-                    <Skeleton className="h-10 w-36 rounded-lg" />
-                </div>
-                {/* Stats + chart skeleton */}
-                <StatsGridSkeleton />
-                <StatsGridSkeleton />
-                <ChartSkeleton height="h-[350px]" />
-            </div>
-        );
-    }
-
     const hasData = waterMeters.length > 0;
 
+    // One chip, four states. "connecting" also covers "data loaded, realtime
+    // channel still handshaking" — it never claims live until the channel is.
+    // The Daily view owns its own fetch, so while it is showing, its status wins
+    // even if the monthly read has failed.
+    const status: ViewStatus = isLoading
+        ? { state: "connecting" }
+        : dashboardView === "daily" && dailyStatus
+            ? dailyStatus
+            : error
+                ? { state: "offline", syncedAt: timeLabel(lastUpdated) }
+                : { state: isLive ? "live" : "connecting", syncedAt: timeLabel(lastUpdated) };
+
+    // Monthly and Satellite both render from the monthly fetch; Daily does not.
+    // A failed or empty monthly read therefore blocks those two views only —
+    // the mode switch stays on screen so the daily report remains reachable.
+    const monthlyBlocked = Boolean(error) || !hasData;
+
     return (
-        <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-6">
+            {/* Breadcrumb → PageHeader (DESIGN_SYSTEM.md §5) */}
+            <div>
+                <Breadcrumb items={[{ label: "Dashboard", href: "/" }, { label: "Water" }]} />
                 <PageHeader
-                    title="Water System Analysis"
-                    description="Comprehensive water consumption and loss analysis across the network"
+                    title="Water"
+                    description="Consumption and loss across the network"
+                    accent="water"
+                    status={
+                        <div className="flex items-center gap-2">
+                            {negatives.length > 0 && (
+                                <span
+                                    title={negatives
+                                        .slice(0, 10)
+                                        .map((r) => `${r.label} (${r.account}) ${r.month}: ${r.value} m³`)
+                                        .join("\n")}
+                                >
+                                    <Badge tone="warning" icon={AlertTriangle}>
+                                        {negatives.length} negative reading{negatives.length === 1 ? "" : "s"}
+                                    </Badge>
+                                </span>
+                            )}
+                            <StatusChip state={status.state} syncedAt={status.syncedAt} />
+                        </div>
+                    }
                 />
-                <PageStatusBar
-                    isConnected={!error && hasData}
-                    isLive={isLive}
-                    lastUpdated={lastUpdated}
-                    loading={isLoading}
-                    error={error}
-                    disconnectedLabel="No live data"
-                >
-                    {negatives.length > 0 && (
-                        <span
-                            className="inline-flex items-center gap-1.5 rounded-full bg-mb-warning-light px-2.5 py-1 text-[11px] font-semibold text-mb-warning-text"
-                            title={negatives
-                                .slice(0, 10)
-                                .map((r) => `${r.label} (${r.account}) ${r.month}: ${r.value} m³`)
-                                .join("\n")}
-                        >
-                            <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                            {negatives.length} negative reading{negatives.length === 1 ? "" : "s"}
-                        </span>
-                    )}
-                </PageStatusBar>
             </div>
 
-            {error && <WaterErrorState message={error} onRetry={retry} />}
-            {!error && !hasData && <WaterEmptyState onRetry={retry} />}
+            {isLoading && (
+                <div className="space-y-6" role="status" aria-busy="true" aria-label="Loading water system data">
+                    <Skeleton className="h-9 w-72 rounded-control" />
+                    <KpiRowSkeleton />
+                    <Skeleton className="h-11 w-full rounded-card" />
+                    <Skeleton className="h-10 w-full max-w-2xl rounded-control" />
+                    <Skeleton className="h-chart-lg w-full rounded-card" />
+                </div>
+            )}
 
-            {!error && hasData && (
+            {!isLoading && (
                 <>
-                    {/* View switching tabs — solid-pill (primary) style, matching the section tabs */}
-                    <TabNavigation
-                        activeTab={dashboardView}
-                        onTabChange={(key) => setDashboardView(key as DashboardView)}
-                        tabs={[
-                            { key: "monthly", label: "Monthly", icon: BarChart3 },
-                            { key: "daily", label: "Daily", icon: CalendarDays },
-                            { key: "satellite", label: "Satellite View", icon: Satellite },
+                    {/* PRIMARY mode switch: Monthly / Daily / Satellite — always
+                        rendered once loading ends, so a failed monthly read never
+                        locks the operator out of the daily report. */}
+                    <SegmentedControl<DashboardView>
+                        aria-label="View mode"
+                        value={dashboardView}
+                        onChange={setDashboardView}
+                        options={[
+                            { value: "monthly", label: "Monthly", icon: BarChart3 },
+                            { value: "daily", label: "Daily", icon: CalendarDays },
+                            { value: "satellite", label: "Satellite", icon: Satellite },
                         ]}
                     />
 
@@ -274,31 +284,30 @@ export default function WaterPage() {
                         panel instead of blanking the whole route into
                         app/error.tsx. The Daily view's sections carry their own
                         boundaries internally. */}
-                    {dashboardView === "monthly" && (
-                        <div id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <div id={`panel-${dashboardView}`} role="tabpanel" aria-labelledby={`tab-${dashboardView}`} tabIndex={0}>
+                        {/* Daily Dashboard View — its own fetch, so it renders even when the monthly read failed */}
+                        {dashboardView === "daily" && (
+                            <SectionBoundary title="Daily water report">
+                                <DailyWaterReport onStatusChange={setDailyStatus} />
+                            </SectionBoundary>
+                        )}
+
+                        {dashboardView !== "daily" && error && <WaterErrorState message={error} onRetry={retry} />}
+                        {dashboardView !== "daily" && !error && !hasData && <WaterEmptyState onRetry={retry} />}
+
+                        {dashboardView === "monthly" && !monthlyBlocked && (
                             <SectionBoundary title="Monthly water analysis">
                                 <WaterMonthlyDashboard waterMeters={waterMeters} derivedMonths={derivedMonths} />
                             </SectionBoundary>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Daily Dashboard View */}
-                    {dashboardView === "daily" && (
-                        <div id="panel-daily" role="tabpanel" aria-labelledby="tab-daily" tabIndex={0} className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
-                            <SectionBoundary title="Daily water report">
-                                <DailyWaterReport />
-                            </SectionBoundary>
-                        </div>
-                    )}
-
-                    {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
-                    {dashboardView === "satellite" && (
-                        <div id="panel-satellite" role="tabpanel" aria-labelledby="tab-satellite" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                        {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
+                        {dashboardView === "satellite" && !monthlyBlocked && (
                             <SectionBoundary title="Satellite network view">
                                 <SatelliteView waterMeters={waterMeters} derivedMonths={derivedMonths} />
                             </SectionBoundary>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </>
             )}
         </div>

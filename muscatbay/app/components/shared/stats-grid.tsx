@@ -116,8 +116,12 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
  * Split out of the grid so each tile can watch its own value: `useValueChanged`
  * is a hook, and the grid renders these in a map. Extracting the tile is what
  * lets a single figure mark itself when it moves, instead of the whole deck.
+ *
+ * Exported so the design-system `KpiCard` (components/ui/kpi-card.tsx) renders
+ * this exact tile — the owner's decision on 2026-09-02: every module's KPI card
+ * is the HVAC tile, nothing else.
  */
-function StatTile({ stat, index }: { stat: StatItem; index: number }) {
+export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
     const justChanged = useValueChanged(stat.value);
 
             const variant = stat.variant || "primary";
@@ -221,7 +225,9 @@ function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                     key={stat.label}
                     href={stat.href}
                     data-glow
-                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}. ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period. Click to view details.`}
+                    // The trend sentence only when a trend exists — a tile without one
+                    // must not announce "No change compared to last period".
+                    aria-label={`${stat.label}: ${stat.accessibleValue ?? `${stat.value}${stat.unit ? ` ${stat.unit}` : ''}`}.${stat.trend ? ` ${stat.trend === 'up' ? 'Up' : stat.trend === 'down' ? 'Down' : 'No change'} ${stat.trendValue || ''} compared to last period.` : ''} Click to view details.`}
                     className={cn(baseCardClassName, "block cursor-pointer")}
                 >
                     {cardContent}

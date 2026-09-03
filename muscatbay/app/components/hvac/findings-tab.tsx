@@ -44,7 +44,7 @@ function getPriorityColor(priority: string) {
   if (p === "critical") return "bg-mb-danger-light text-mb-danger-text";
   if (p === "high") return "bg-mb-stale-light text-mb-stale-text";
   if (p === "medium") return "bg-mb-warning-light text-mb-warning-text";
-  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
+  return "bg-muted-bg text-muted-foreground dark:bg-muted-bg dark:text-muted-foreground";
 }
 
 function getStatusColor(status: string) {
@@ -53,7 +53,7 @@ function getStatusColor(status: string) {
   if (s.includes("awaiting")) return "bg-mb-warning-light text-mb-warning-text";
   if (s === "open") return "bg-mb-danger-light text-mb-danger-text";
   if (s === "quoted") return "bg-mb-info-light text-mb-info-text";
-  return "bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground";
+  return "bg-muted-bg text-muted-foreground dark:bg-muted-bg dark:text-muted-foreground";
 }
 
 export function FindingsTab({ findings }: FindingsTabProps) {

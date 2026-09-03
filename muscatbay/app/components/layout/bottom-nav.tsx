@@ -216,7 +216,7 @@ export function BottomNav() {
           style={{
             transform: openSheet !== null ? "translateY(0)" : "translateY(calc(100% + 8rem))",
           }}
-          className="w-full max-w-md max-h-[65vh] flex flex-col rounded-3xl bg-card dark:bg-muted shadow-2xl border border-border dark:border-white/10 overflow-hidden pointer-events-auto motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out"
+          className="w-full max-w-md max-h-[65vh] flex flex-col rounded-3xl bg-card dark:bg-muted-bg shadow-2xl border border-border dark:border-white/10 overflow-hidden pointer-events-auto motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out"
         >
           {/* Sheet header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-white/10 flex-shrink-0">
@@ -232,14 +232,14 @@ export function BottomNav() {
               {renderedSheet === "alerts" && notifications.length > 0 && (
                 <button
                   onClick={clearAll}
-                  className="text-xs font-medium text-muted-foreground hover:text-foreground px-2.5 h-9 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground px-2.5 h-9 rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   Clear all
                 </button>
               )}
               <button
                 onClick={() => setOpenSheet(null)}
-                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted dark:hover:bg-white/[0.06] text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-muted-bg dark:hover:bg-white/[0.06] text-muted-foreground transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 aria-label="Close menu"
               >
                 <X className="w-4 h-4" />
@@ -262,12 +262,12 @@ export function BottomNav() {
                         group flex items-center gap-3 p-3 rounded-2xl border transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none
                         ${active
                           ? "border-secondary/45 bg-secondary/[0.07]"
-                          : "border-border dark:border-white/10 hover:bg-muted/60 dark:hover:bg-white/[0.05]"
+                          : "border-border dark:border-white/10 hover:bg-muted-bg/60 dark:hover:bg-white/[0.05]"
                         }
                       `}
                       aria-current={active ? "page" : undefined}
                     >
-                      <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted dark:bg-white/[0.06]">
+                      <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted-bg dark:bg-white/[0.06]">
                         <NavLinkIcon icon={item.icon} className={`w-5 h-5 ${item.accent}`} />
                       </span>
                       <span className={`text-sm leading-tight ${active ? "font-semibold text-foreground" : "font-medium text-foreground/85"}`}>
@@ -306,7 +306,7 @@ export function BottomNav() {
             {renderedSheet === "profile" && (
               <div className="space-y-3">
                 {/* Identity */}
-                <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/60 dark:bg-white/[0.04]">
+                <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted-bg/60 dark:bg-white/[0.04]">
                   <Avatar className="w-11 h-11 border-2 border-border dark:border-white/10">
                     <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
@@ -323,7 +323,7 @@ export function BottomNav() {
                 {/* Appearance */}
                 <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border dark:border-white/10">
                   <span className="text-sm font-medium text-foreground">Appearance</span>
-                  <div className="flex items-center gap-1 p-1 rounded-xl bg-muted dark:bg-white/[0.06]" role="group" aria-label="Theme">
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-muted-bg dark:bg-white/[0.06]" role="group" aria-label="Theme">
                     <button
                       onClick={() => setTheme("light")}
                       aria-pressed={resolvedTheme === "light"}
@@ -353,10 +353,10 @@ export function BottomNav() {
                 {canOpenSettings && (
                   <Link
                     href="/settings"
-                    className="flex items-center gap-3 p-3 rounded-2xl border border-border dark:border-white/10 hover:bg-muted/60 dark:hover:bg-white/[0.05] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-border dark:border-white/10 hover:bg-muted-bg/60 dark:hover:bg-white/[0.05] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     aria-current={onSettingsRoute ? "page" : undefined}
                   >
-                    <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted dark:bg-white/[0.06]">
+                    <span className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl bg-muted-bg dark:bg-white/[0.06]">
                       <Settings className="w-5 h-5 text-foreground/80" />
                     </span>
                     <span className="flex-1 text-sm font-medium text-foreground">Settings</span>
@@ -389,7 +389,7 @@ export function BottomNav() {
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.75rem)" }}
       >
         <nav
-          className="w-full max-w-md rounded-[26px] bg-card/95 dark:bg-muted/90 backdrop-blur-xl border border-border/70 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_34px_rgba(0,0,0,0.55)]"
+          className="w-full max-w-md rounded-[26px] bg-card/95 dark:bg-muted-bg/90 backdrop-blur-xl border border-border/70 dark:border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_34px_rgba(0,0,0,0.55)]"
           aria-label="Mobile navigation"
         >
           <div className="flex items-stretch justify-around h-16 px-1.5">

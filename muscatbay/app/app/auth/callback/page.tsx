@@ -399,7 +399,7 @@ function AuthCallbackContent() {
                             </div>
 
                             {/* Contextual Tips — proactive error prevention */}
-                            <div className="rounded-lg bg-muted dark:bg-muted/50 p-3.5 space-y-2">
+                            <div className="rounded-lg bg-muted-bg dark:bg-muted-bg/50 p-3.5 space-y-2">
                                 <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                                     <Info className="h-3.5 w-3.5" />
                                     <span>Common causes</span>
@@ -407,7 +407,7 @@ function AuthCallbackContent() {
                                 <ul className="space-y-1.5 text-xs text-muted-foreground" aria-label="Common causes for this error">
                                     {config.tips.map((tip) => (
                                         <li key={tip} className="flex items-start gap-2">
-                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-border dark:bg-muted shrink-0" aria-hidden="true" />
+                                            <span className="mt-1.5 w-1 h-1 rounded-full bg-border dark:bg-muted-bg shrink-0" aria-hidden="true" />
                                             <span>{tip}</span>
                                         </li>
                                     ))}

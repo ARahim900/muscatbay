@@ -46,7 +46,7 @@ export function YtdPanel({ metrics }: { metrics: YtdMetric[] }) {
                             <li key={m.key}>
                                 <Link
                                     href={m.href}
-                                    className="group/ytd flex h-full flex-col gap-1 rounded-lg border border-border bg-muted/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                    className="group/ytd flex h-full flex-col gap-1 rounded-lg border border-border bg-muted-bg/60 p-3 transition-[background-color,border-color] duration-150 hover:bg-card hover:border-border/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 >
                                     <div className="flex items-center gap-2 min-w-0">
                                         <span className="min-w-0 flex-1 truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">

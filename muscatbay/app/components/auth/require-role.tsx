@@ -86,7 +86,7 @@ export function RequireRole({ module, children }: RequireRoleProps) {
     return (
         <div className="flex items-center justify-center min-h-[60vh] px-6">
             <div role="alert" className="max-w-md text-center space-y-4">
-                <div className="w-14 h-14 mx-auto rounded-2xl bg-muted flex items-center justify-center">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-muted-bg flex items-center justify-center">
                     <ShieldOff className="w-7 h-7 text-muted-foreground" aria-hidden="true" />
                 </div>
                 <div className="space-y-1">

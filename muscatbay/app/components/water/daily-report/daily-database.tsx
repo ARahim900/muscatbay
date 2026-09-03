@@ -9,11 +9,11 @@
  */
 
 import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Database, Filter, MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Badge, Button, SectionCard } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { TableSearch, StatusChip, thBase, tdBase, n } from "./inline-shared";
+import { TableSearch, thBase, tdBase, n } from "./inline-shared";
 import { ExportButton } from "@/components/shared/data-table";
 import { buildDailyGrid, detectSpike, zeroStreak, wasActiveBefore, type DayValues } from "./daily-metrics";
 
@@ -41,24 +41,24 @@ function rowFlags(values: DayValues, day: number): string[] {
     return flags;
 }
 
-/** Small select in the daily filter idiom (used for zone / level). */
+/** Small select in the design-system control idiom (used for zone / level). */
 function LedgerSelect({
     icon: Icon, value, onChange, options, ariaLabel,
 }: {
     icon: typeof MapPin; value: string; onChange: (v: string) => void; options: string[]; ariaLabel: string;
 }) {
     return (
-        <div className="flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5">
-            <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span className="inline-flex h-9 items-center gap-1.5 rounded-control border border-line bg-card px-2.5">
+            <Icon size={16} strokeWidth={2} className="shrink-0 text-muted" aria-hidden="true" />
             <select
                 aria-label={ariaLabel}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="bg-transparent text-sm text-foreground focus:outline-none"
+                className="bg-transparent text-label text-fg outline-none"
             >
                 {options.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
-        </div>
+        </span>
     );
 }
 
@@ -121,53 +121,45 @@ export function DailyDatabase({
     }));
 
     return (
-        <Card className="card-elevated">
-            <CardHeader className="card-elevated-header p-4 sm:p-5 md:p-6 pb-2 sm:pb-2 md:pb-2">
-                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-                    <Database className="h-4 w-4 text-secondary" aria-hidden="true" />
-                    Daily Database — {month}
-                </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">
+        <SectionCard>
+            <SectionCard.Header
+                icon={Database}
+                title={`Daily database — ${month}`}
+                description={`${filtered.length} meters · Day ${selectedDay} highlighted`}
+                action={<ExportButton rows={exportRows} filename={`water-daily-database-${month}-day${selectedDay}`} />}
+            />
+            <SectionCard.Body className="space-y-3">
+                <p className="text-caption text-muted">
                     Every meter&apos;s day-by-day readings for the month. Flags are computed for the selected day:
                     missing reading, spike vs the trailing 7-day average, or a zero-streak on a previously active meter.
                 </p>
-            </CardHeader>
-            <CardContent className="space-y-3 p-4 sm:p-5 md:p-6 pt-2 sm:pt-2 md:pt-2">
+
                 {/* Toolbar */}
                 <div className="flex flex-wrap items-center gap-2">
                     <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account…" />
                     <LedgerSelect icon={MapPin} value={zone} onChange={setZone} options={zoneOpts} ariaLabel="Filter by zone" />
                     <LedgerSelect icon={Filter} value={level} onChange={setLevel} options={levelOpts} ariaLabel="Filter by level" />
-                    <button
-                        type="button"
+                    <Button
+                        variant={issuesOnly ? "primary" : "secondary"}
+                        size="sm"
                         onClick={() => setIssuesOnly((v) => !v)}
                         aria-pressed={issuesOnly}
-                        className={cn(
-                            "rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors",
-                            issuesOnly
-                                ? "border-mb-danger-text/40 bg-mb-danger-light text-mb-danger-text"
-                                : "border-border text-muted-foreground hover:bg-muted",
-                        )}
                     >
                         Issues only
-                    </button>
-                    <ExportButton rows={exportRows} filename={`water-daily-database-${month}-day${selectedDay}`} />
-                    <span className="ml-auto text-[12px] font-medium text-muted-foreground tabular-nums">
-                        {filtered.length} meters · Day {selectedDay} highlighted
-                    </span>
+                    </Button>
                 </div>
 
                 {/* Ledger */}
-                <div className="overflow-hidden rounded-[10.5px] border border-border">
+                <div className="overflow-hidden rounded-control border border-line">
                     <div className="overflow-auto" style={{ maxHeight: 600 }}>
                         <table
-                            className="w-full border-collapse text-[11px]"
+                            className="w-full border-collapse"
                             style={{ minWidth: `${560 + days.length * 58}px` }}
                         >
                             <thead>
                                 <tr>
                                     {/* Corner cell sticks on both axes (thBase already pins top). */}
-                                    <th scope="col" className={cn(thBase, "left-0 z-20 min-w-[160px]")}>Meter</th>
+                                    <th scope="col" className={cn(thBase, "left-0 z-20 min-w-40")}>Meter</th>
                                     <th scope="col" className={thBase}>Account</th>
                                     <th scope="col" className={thBase}>Zone</th>
                                     <th scope="col" className={cn(thBase, "text-center")}>Lvl</th>
@@ -177,19 +169,19 @@ export function DailyDatabase({
                                         <th
                                             scope="col"
                                             key={d}
-                                            className={cn(thBase, "min-w-[54px] px-2 text-right tabular-nums")}
-                                            style={d === selectedDay ? { background: "var(--secondary)", color: "var(--primary)" } : undefined}
+                                            className={cn(thBase, "min-w-14 px-2 text-right tabular-nums")}
+                                            style={d === selectedDay ? { background: "var(--color-accent)", color: "var(--color-primary)" } : undefined}
                                         >
                                             D{d}
                                         </th>
                                     ))}
-                                    <th scope="col" className={cn(thBase, "min-w-[76px] text-right")}>MTD</th>
+                                    <th scope="col" className={cn(thBase, "min-w-20 text-right")}>MTD</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="[&>tr]:h-11">
                                 {filtered.length === 0 && (
                                     <tr>
-                                        <td colSpan={7 + days.length} className="py-10 text-center text-[13px] text-muted-foreground">
+                                        <td colSpan={7 + days.length} className="py-10 text-center text-label text-muted">
                                             No meters match the current filters.
                                         </td>
                                     </tr>
@@ -198,43 +190,41 @@ export function DailyDatabase({
                                     const zebra = i % 2 === 1;
                                     const hasIssue = r.flags.length > 0;
                                     return (
-                                        <tr key={r.account} className={cn("border-b border-border/60", zebra && "bg-muted/40 dark:bg-muted/20")}>
+                                        <tr key={r.account} className={cn("border-b border-line", zebra && "bg-component")}>
                                             <td
-                                                className={cn(tdBase, "sticky left-0 z-10 whitespace-nowrap font-semibold text-foreground")}
+                                                className={cn(tdBase, "sticky left-0 z-10 whitespace-nowrap font-medium")}
                                                 // Opaque background so scrolled columns never bleed through.
-                                                style={{ background: zebra ? "color-mix(in srgb, var(--muted) 40%, var(--card))" : "var(--card)" }}
+                                                style={{ background: zebra ? "var(--color-component)" : "var(--color-card)" }}
                                             >
                                                 {r.meterName}
                                             </td>
-                                            <td className={cn(tdBase, "meter whitespace-nowrap text-muted-foreground")}>{r.account}</td>
-                                            <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.zone}</td>
+                                            <td className={cn(tdBase, "meter whitespace-nowrap text-muted")}>{r.account}</td>
+                                            <td className={cn(tdBase, "whitespace-nowrap text-muted")}>{r.zone}</td>
                                             <td className={cn(tdBase, "text-center")}>
-                                                <StatusChip label={r.label} color={r.label === "L2" || r.label === "L1" ? "primary" : "default"} />
+                                                <Badge tone={r.label === "L2" || r.label === "L1" ? "info" : "neutral"}>{r.label}</Badge>
                                             </td>
-                                            <td className={cn(tdBase, "whitespace-nowrap text-muted-foreground")}>{r.type}</td>
+                                            <td className={cn(tdBase, "whitespace-nowrap text-muted")}>{r.type}</td>
                                             <td className={cn(tdBase, "whitespace-nowrap")}>
-                                                <StatusChip
-                                                    label={hasIssue ? r.flags.join(" · ") : "Normal"}
-                                                    color={hasIssue ? (r.flags.includes("Missing") ? "danger" : "warning") : "success"}
-                                                />
+                                                <Badge tone={hasIssue ? (r.flags.includes("Missing") ? "danger" : "warning") : "success"}>
+                                                    {hasIssue ? r.flags.join(" · ") : "Normal"}
+                                                </Badge>
                                             </td>
                                             {days.map((d) => {
                                                 const v = r.values[d - 1];
                                                 return (
                                                     <td
                                                         key={d}
-                                                        className={cn(tdBase, "px-2 text-right tabular-nums", d === selectedDay && "font-bold")}
-                                                        style={d === selectedDay ? { background: "var(--row-hover)" } : undefined}
+                                                        className={cn(tdBase, "px-2 text-right tabular-nums", d === selectedDay && "bg-accent-tint font-medium")}
                                                     >
                                                         {v == null
-                                                            ? <span className="text-muted-foreground/60">·</span>
+                                                            ? <span className="text-muted">·</span>
                                                             : v === 0
-                                                                ? <span className="text-muted-foreground">0</span>
+                                                                ? <span className="text-muted">0</span>
                                                                 : n(v)}
                                                     </td>
                                                 );
                                             })}
-                                            <td className={cn(tdBase, "bg-muted/60 text-right font-semibold tabular-nums text-foreground dark:bg-muted/30")}>
+                                            <td className={cn(tdBase, "text-right font-medium tabular-nums")}>
                                                 {n(r.mtd)}
                                             </td>
                                         </tr>
@@ -244,7 +234,7 @@ export function DailyDatabase({
                         </table>
                     </div>
                 </div>
-            </CardContent>
-        </Card>
+            </SectionCard.Body>
+        </SectionCard>
     );
 }

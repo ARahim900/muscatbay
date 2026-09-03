@@ -1,0 +1,175 @@
+/* ------------------------------------------------------------------
+   Muscat Bay Operations — design tokens (Tailwind CSS 4, CSS-first)
+   Import ONCE from app/globals.css:   @import "./design-tokens.css";
+   Every colour, radius, shadow and type step in the app lives here.
+   ------------------------------------------------------------------ */
+
+/* `@import "tailwindcss"` lives in app/globals.css (it must be imported once,
+   before this file). */
+
+/* The app toggles <html class="light|dark">. Make Tailwind's `dark:`
+   variant follow that class instead of the OS media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------- 1. Raw palette (never used directly in components) ---------- */
+:root {
+  --mb-purple:        #4E4456;
+  --mb-purple-hover:  #3A3341;
+  --mb-purple-light:  #5C5166;
+  --mb-teal:          #A1D1D5;
+
+  --mb-bg-l:          #F7F8F9;   --mb-bg-d:          #0A090C;
+  --mb-card-l:        #FFFFFF;   --mb-card-d:        #16141B;
+  --mb-component-l:   #F0F2F4;   --mb-component-d:   #1E1C26;
+  --mb-line-l:        #E5E7EB;   --mb-line-d:        rgba(255,255,255,.10);
+  --mb-fg-l:          #0A0A0A;   --mb-fg-d:          #F1F5F9;
+  --mb-muted-l:       #6B7280;   --mb-muted-d:       #9CA3AF;
+  --mb-accent-tint-l: #E8F1EF;   --mb-accent-tint-d: rgba(161,209,213,.14);
+  --mb-sidebar-l:     #423846;   --mb-sidebar-d:     #3B3240;
+
+  --mb-success-l: #2E7D42; --mb-success-d: #9FD6AE; --mb-success-tint-l: #E9F5EC; --mb-success-tint-d: rgba(132,181,159,.16);
+  --mb-warning-l: #9A6B00; --mb-warning-d: #F0D08A; --mb-warning-tint-l: #FDF5E6; --mb-warning-tint-d: rgba(232,192,100,.16);
+  --mb-danger-l:  #B03A2E; --mb-danger-d:  #F0A8A8; --mb-danger-tint-l:  #FCEAEA; --mb-danger-tint-d:  rgba(214,122,122,.16);
+  --mb-info-l:    #2F5F9E; --mb-info-d:    #A9C6E6; --mb-info-tint-l:    #EBF1FA; --mb-info-tint-d:    rgba(107,154,196,.16);
+  --mb-neutral-l: #6B7280; --mb-neutral-d: #9CA3AF; --mb-neutral-tint-l: #F0F1F3; --mb-neutral-tint-d: rgba(255,255,255,.06);
+
+  --mb-shadow-card-l:       0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06);
+  --mb-shadow-card-hover-l: 0 2px 4px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.08);
+  --mb-shadow-card-d:       0 4px 12px rgba(0,0,0,.30), 0 2px 4px rgba(0,0,0,.20);
+  --mb-shadow-card-hover-d: 0 8px 24px rgba(0,0,0,.40), 0 4px 8px rgba(0,0,0,.25);
+}
+
+/* ---------- 2. Semantic tokens — light is the default ---------- */
+:root, .light {
+  color-scheme: light;
+  --color-bg:            var(--mb-bg-l);
+  --color-card:          var(--mb-card-l);
+  --color-component:     var(--mb-component-l);
+  --color-line:          var(--mb-line-l);
+  --color-fg:            var(--mb-fg-l);
+  --color-muted:         var(--mb-muted-l);
+  --color-accent-tint:   var(--mb-accent-tint-l);
+  --color-sidebar:       var(--mb-sidebar-l);
+  --color-primary-hover: var(--mb-purple-hover);
+
+  --color-success: var(--mb-success-l); --color-success-tint: var(--mb-success-tint-l);
+  --color-warning: var(--mb-warning-l); --color-warning-tint: var(--mb-warning-tint-l);
+  --color-danger:  var(--mb-danger-l);  --color-danger-tint:  var(--mb-danger-tint-l);
+  --color-info:    var(--mb-info-l);    --color-info-tint:    var(--mb-info-tint-l);
+  --color-neutral: var(--mb-neutral-l); --color-neutral-tint: var(--mb-neutral-tint-l);
+
+  --shadow-card:       var(--mb-shadow-card-l);
+  --shadow-card-hover: var(--mb-shadow-card-hover-l);
+}
+
+.dark {
+  color-scheme: dark;
+  --color-bg:            var(--mb-bg-d);
+  --color-card:          var(--mb-card-d);
+  --color-component:     var(--mb-component-d);
+  --color-line:          var(--mb-line-d);
+  --color-fg:            var(--mb-fg-d);
+  --color-muted:         var(--mb-muted-d);
+  --color-accent-tint:   var(--mb-accent-tint-d);
+  --color-sidebar:       var(--mb-sidebar-d);
+  --color-primary-hover: var(--mb-purple-light);
+
+  --color-success: var(--mb-success-d); --color-success-tint: var(--mb-success-tint-d);
+  --color-warning: var(--mb-warning-d); --color-warning-tint: var(--mb-warning-tint-d);
+  --color-danger:  var(--mb-danger-d);  --color-danger-tint:  var(--mb-danger-tint-d);
+  --color-info:    var(--mb-info-d);    --color-info-tint:    var(--mb-info-tint-d);
+  --color-neutral: var(--mb-neutral-d); --color-neutral-tint: var(--mb-neutral-tint-d);
+
+  --shadow-card:       var(--mb-shadow-card-d);
+  --shadow-card-hover: var(--mb-shadow-card-hover-d);
+}
+
+/* ---------- 3. Tailwind theme — this is what generates the utilities ----------
+   `static`: Tailwind normally emits only the theme variables a utility class
+   uses. ChartFrame's `chartTheme` reads `var(--color-chart-*)`, `--color-line`,
+   `--radius-control` … from JavaScript, so every token must exist as a real
+   CSS variable — without `static` the charts render black. */
+@theme inline static {
+  /* Typeface: DM Sans via next/font (variable --font-dm-sans) */
+  --font-sans: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Colours → bg-card, text-muted, border-line, bg-primary, text-on-primary … */
+  --color-bg:            var(--color-bg);
+  --color-card:          var(--color-card);
+  --color-component:     var(--color-component);
+  --color-line:          var(--color-line);
+  --color-fg:            var(--color-fg);
+  --color-muted:         var(--color-muted);
+  --color-primary:       var(--mb-purple);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-on-primary:    #FFFFFF;
+  --color-accent:        var(--mb-teal);
+  --color-accent-tint:   var(--color-accent-tint);
+  --color-sidebar:       var(--color-sidebar);
+
+  --color-success: var(--color-success); --color-success-tint: var(--color-success-tint);
+  --color-warning: var(--color-warning); --color-warning-tint: var(--color-warning-tint);
+  --color-danger:  var(--color-danger);  --color-danger-tint:  var(--color-danger-tint);
+  --color-info:    var(--color-info);    --color-info-tint:    var(--color-info-tint);
+  --color-neutral: var(--color-neutral); --color-neutral-tint: var(--color-neutral-tint);
+
+  /* Module accents → text-mod-water, bg-mod-water/10 … */
+  --color-mod-water:       #3B7ED2;
+  --color-mod-electricity: #D4A843;
+  --color-mod-stp:         #5FA88A;
+  --color-mod-assets:      #8B7F94;
+  --color-mod-contractors: #6B9AC4;
+  --color-mod-hvac:        #C99A4B;
+  --color-mod-pest:        #84B59F;
+  --color-mod-fire:        #C96B6B;
+
+  /* Chart series → used by ChartFrame, not by className */
+  --color-chart-1: #4E4456;
+  --color-chart-2: #A1D1D5;
+  --color-chart-3: #3B7ED2;
+  --color-chart-4: #D4A843;
+  --color-chart-5: #8B6DB0;
+  --color-chart-6: #5FA88A;
+  --color-chart-loss: #C96B6B;
+
+  /* Type scale → text-display, text-title, text-body, text-label, text-caption, text-eyebrow, text-kpi */
+  --text-display: 28px; --text-display--line-height: 34px; --text-display--font-weight: 700; --text-display--letter-spacing: -0.02em;
+  --text-title:   16px; --text-title--line-height:   22px; --text-title--font-weight:   600; --text-title--letter-spacing:   -0.01em;
+  --text-body:    14px; --text-body--line-height:    21px; --text-body--font-weight:    400;
+  --text-label:   13px; --text-label--line-height:   18px; --text-label--font-weight:   500;
+  --text-caption: 12px; --text-caption--line-height: 16px; --text-caption--font-weight: 400;
+  --text-eyebrow: 11px; --text-eyebrow--line-height: 14px; --text-eyebrow--font-weight: 600; --text-eyebrow--letter-spacing: 0.08em;
+  --text-kpi:     24px; --text-kpi--line-height:     28px; --text-kpi--font-weight:     700; --text-kpi--letter-spacing:     -0.01em;
+
+  /* Radii → rounded-card, rounded-control, rounded-pill */
+  --radius-card:    10.5px;
+  --radius-control: 6px;
+  --radius-pill:    9999px;
+
+  /* Shadows → shadow-card, shadow-card-hover */
+  --shadow-card:       var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+
+  /* Fixed component heights → h-kpi, h-card-header, h-card-footer, h-chart, h-chart-lg, h-header */
+  --spacing-kpi:         104px;
+  --spacing-card-header: 56px;
+  --spacing-card-footer: 40px;
+  --spacing-chart:       260px;
+  --spacing-chart-lg:    320px;
+  --spacing-header:      64px;
+  --spacing-embed:       720px;
+
+  /* Motion */
+  --ease-design: cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ---------- 4. Base ---------- */
+@layer base {
+  html { accent-color: var(--mb-teal); }
+  body { background: var(--color-bg); color: var(--color-fg); font-family: var(--font-sans); font-size: 14px; line-height: 21px; }
+  h1, h2, h3, h4 { color: var(--mb-purple); letter-spacing: -0.01em; }
+  .dark h1, .dark h2, .dark h3, .dark h4 { color: var(--color-fg); }
+  :focus-visible { outline: 2px solid var(--mb-teal); outline-offset: 2px; }
+  * { transition-timing-function: var(--ease-design); }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+}

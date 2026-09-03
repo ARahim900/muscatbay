@@ -125,7 +125,7 @@ export function MultiSelectDropdown({
                                         key={option}
                                         role="option"
                                         aria-selected={isChecked}
-                                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted cursor-pointer min-h-[44px] transition-colors duration-100"
+                                        className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-muted-bg cursor-pointer min-h-[44px] transition-colors duration-100"
                                     >
                                         <input
                                             type="checkbox"

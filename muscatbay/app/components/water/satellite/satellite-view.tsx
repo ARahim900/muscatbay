@@ -103,7 +103,7 @@ export function SatelliteView({ waterMeters, derivedMonths }: SatelliteViewProps
     if (!payload) {
         return (
             <div role="status" aria-busy="true" aria-label="Loading satellite view">
-                <Skeleton className="h-[75vh] w-full rounded-[10.5px]" />
+                <Skeleton className="h-embed w-full rounded-card" />
             </div>
         );
     }
@@ -111,8 +111,8 @@ export function SatelliteView({ waterMeters, derivedMonths }: SatelliteViewProps
     return (
         <div className="space-y-2">
             {payload.unparented.length > 0 && (
-                <p className="flex items-center gap-2 rounded-[10.5px] border border-mb-warning bg-mb-warning-light px-3 py-2 text-xs text-mb-warning-text">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                <p className="flex items-center gap-2 rounded-card bg-warning-tint px-3 py-2 text-caption text-warning">
+                    <AlertTriangle size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
                     {payload.unparented.length} apartment meter{payload.unparented.length === 1 ? "" : "s"} reference a
                     building bulk that is not in the register — excluded from building roll-ups, listed in the console.
                 </p>
@@ -122,7 +122,8 @@ export function SatelliteView({ waterMeters, derivedMonths }: SatelliteViewProps
                 ref={frameRef}
                 src={ENGINE_URL}
                 title="Muscat Bay water network — satellite view"
-                className="h-[75vh] min-h-[520px] w-full rounded-[10.5px] border border-border bg-neutral-950"
+                // Fixed 720 px — the EmbedFrame height for external tools (DESIGN_SYSTEM.md §6).
+                className="h-embed w-full rounded-card border border-line bg-component"
             />
         </div>
     );

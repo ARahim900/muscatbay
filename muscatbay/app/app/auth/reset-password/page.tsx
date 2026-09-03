@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
 
     if (verifying) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-muted">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-muted-bg">
                 <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">Verifying reset link...</p>
             </div>
@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
 
     if (error && !loading && !password) { // Show error state if session check failed
         return (
-            <div className="min-h-screen flex items-center justify-center bg-muted p-4">
+            <div className="min-h-screen flex items-center justify-center bg-muted-bg p-4">
                 <div className="max-w-md w-full bg-card p-8 rounded-xl shadow-lg border border-mb-danger/30">
                     <h2 className="text-xl font-bold text-destructive mb-2">Reset Password Error</h2>
                     <p className="text-muted-foreground mb-6">{error}</p>

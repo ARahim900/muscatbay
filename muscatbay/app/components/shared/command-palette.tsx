@@ -176,7 +176,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                         aria-controls="command-list"
                         aria-activedescendant={filtered[activeIdx] ? `cmd-${filtered[activeIdx].id}` : undefined}
                     />
-                    <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted text-muted-foreground border border-border">
+                    <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono bg-muted-bg text-muted-foreground border border-border">
                         ESC
                     </kbd>
                 </div>
@@ -204,7 +204,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                                 onClick={() => cmd.run()}
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors",
-                                    active ? "bg-muted text-foreground" : "text-foreground/85 hover:bg-muted/60"
+                                    active ? "bg-muted-bg text-foreground" : "text-foreground/85 hover:bg-muted-bg/60"
                                 )}
                             >
                                 <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
@@ -218,7 +218,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                     })}
                 </ul>
 
-                <div className="hidden sm:flex items-center justify-between gap-2 px-4 py-2 border-t border-border text-[10px] text-muted-foreground bg-muted/30">
+                <div className="hidden sm:flex items-center justify-between gap-2 px-4 py-2 border-t border-border text-[10px] text-muted-foreground bg-muted-bg/30">
                     <span className="font-mono">Currently on: {pathname || "—"}</span>
                     <span className="flex items-center gap-2">
                         <kbd className="px-1.5 py-0.5 rounded font-mono bg-card border border-border">↑↓</kbd>

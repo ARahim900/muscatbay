@@ -1,5 +1,10 @@
 # Muscat Bay — Brand & Design System
 
+> ⚠️ **SUPERSEDED on 2026-09-02 by [`/DESIGN_SYSTEM.md`](./DESIGN_SYSTEM.md) (v2.0).**
+> That file is now the only design reference for the app; this document is kept
+> for history and must not be used to make design decisions. Where the two
+> disagree, `/DESIGN_SYSTEM.md` wins.
+
 > **App:** Muscat Bay Operations Dashboard  
 > **URL:** [muscatbay.live](https://muscatbay.live)  
 > **Purpose:** Utility management and operations monitoring platform for Muscat Bay  

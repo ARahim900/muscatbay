@@ -192,7 +192,7 @@ function CritBadge({ level }: { level?: string }) {
         Low:    'bg-mb-success-light text-mb-success-text',
     };
     return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-muted text-muted-foreground'}`}>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold ${colors[level] || 'bg-muted-bg text-muted-foreground'}`}>
             {level}
         </span>
     );
@@ -205,7 +205,7 @@ function PctBar({ pct }: { pct?: number | null }) {
         : pct >= 60 ? 'bg-[var(--status-warning)]' : 'bg-secondary';
     return (
         <div className="flex items-center gap-2">
-            <div className="w-16 bg-border dark:bg-muted rounded-full h-1.5">
+            <div className="w-16 bg-border dark:bg-muted-bg rounded-full h-1.5">
                 <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${Math.min(pct, 100)}%` }} />
             </div>
             <span className="text-xs font-mono text-muted-foreground">{pct.toFixed(0)}%</span>
@@ -415,10 +415,10 @@ export default function AssetsPage() {
         const live = dataSource === 'supabase';
         const totalItems = live ? (summary.total || totalCount) : totalCount;
         return [
-            { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "water" as const },
+            { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "primary" as const },
             { label: "ACTIVE / WORKING",   value: (live ? summary.workingStatus : assets.filter(a => ['Active', 'Working'].includes(a.status)).length).toString(), subtitle: "Status = Working / Active", icon: ClipboardCheck, variant: "success" as const },
             { label: "HIGH CRITICALITY",   value: (live ? summary.highCriticality : assets.filter(a => a.criticalityLevel === 'High').length).toString(), subtitle: "Criticality = High", icon: AlertTriangle, variant: "danger" as const },
-            { label: "WITH AMC CONTRACTOR", value: (live ? summary.amcCovered : assets.filter(a => a.amcContractor).length).toString(), subtitle: "AMC contractor recorded", icon: Wrench, variant: "water" as const },
+            { label: "WITH AMC CONTRACTOR", value: (live ? summary.amcCovered : assets.filter(a => a.amcContractor).length).toString(), subtitle: "AMC contractor recorded", icon: Wrench, variant: "info" as const },
             { label: "RESERVE FUND LINKED", value: (live ? summary.boqCoverage : assets.filter(a => a.boqProjectRef).length).toString(), subtitle: "Assets with BOQ reference", icon: FileText, variant: "success" as const },
             { label: "NEEDS VERIFICATION",  value: (live ? summary.toVerify : assets.filter(a => a.status === 'TO VERIFY').length).toString(), subtitle: "Status = TO VERIFY", icon: ShieldAlert, variant: "warning" as const },
         ];
@@ -458,7 +458,7 @@ export default function AssetsPage() {
     // Zebra striping derives from the row's index in the full list (not DOM
     // position) so it stays stable when spacer rows shift nth-child parity
     const rowCls = (i: number) =>
-        `hover:bg-secondary/5 dark:hover:bg-muted/40 ${i % 2 === 1 ? 'bg-muted/40 dark:bg-muted/20' : ''}`;
+        `hover:bg-secondary/5 dark:hover:bg-muted-bg/40 ${i % 2 === 1 ? 'bg-muted-bg/40 dark:bg-muted-bg/20' : ''}`;
 
     /** One body renderer for all five tables — skeleton / empty / virtual rows. */
     const tableBody = (cols: number, renderRow: (a: Asset, index: number) => ReactNode) => (
@@ -520,7 +520,7 @@ export default function AssetsPage() {
             </div>
 
             {/* Tabs */}
-            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} ariaLabel="Asset sections" />
 
             <div className="space-y-4">
                 {/* KPI cards — skeleton until the first fetch resolves so we never

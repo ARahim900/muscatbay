@@ -140,7 +140,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-medium text-foreground leading-snug">{alert.title}</p>
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted dark:bg-white/[0.06] rounded px-1.5 py-0.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted-bg dark:bg-white/[0.06] rounded px-1.5 py-0.5">
                         {MODULE_LABEL[alert.module] ?? alert.module}
                       </span>
                       {alert.acknowledged && (
@@ -159,14 +159,14 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                       {alert.acknowledged ? (
                         <button
                           onClick={() => unacknowledgeAlert(alert.id)}
-                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center gap-1 rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center gap-1 rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                           <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reopen
                         </button>
                       ) : (
                         <button
                           onClick={() => acknowledgeAlert(alert.id)}
-                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center rounded-lg hover:bg-muted/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         >
                           Acknowledge
                         </button>
@@ -210,7 +210,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                 </div>
                 <button
                   onClick={() => dismiss(n.id)}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted-bg dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   aria-label={`Dismiss: ${n.title}`}
                 >
                   <X className="w-3.5 h-3.5" />
@@ -239,7 +239,7 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
             </>
           ) : (
             <>
-              <div className="w-12 h-12 rounded-full bg-muted dark:bg-white/[0.06] flex items-center justify-center mb-3">
+              <div className="w-12 h-12 rounded-full bg-muted-bg dark:bg-white/[0.06] flex items-center justify-center mb-3">
                 <BellOff className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
               </div>
               <p className="text-sm font-medium text-foreground">

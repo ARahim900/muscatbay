@@ -126,7 +126,7 @@ export function PageStatusBar({
                             "inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors",
                             isLive
                                 ? "bg-[color-mix(in_oklab,var(--status-normal)_15%,transparent)] text-[var(--mb-success-text)]"
-                                : "bg-muted text-muted-foreground"
+                                : "bg-muted-bg text-muted-foreground"
                         )}
                     >
                         <span

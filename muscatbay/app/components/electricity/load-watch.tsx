@@ -3,7 +3,7 @@
 /**
  * Load Watch — the Electricity section's inspection-first landing, modelled on
  * the Water Zone Watch. It answers "which system is drawing abnormally, and
- * which meters do I check?" from one screen: a compact briefing strip, a
+ * which meters do I check?" from one screen: a briefing row of KPI tiles, a
  * severity-first category table, a category×month heatmap that shows when a
  * category's draw spiked — and whose cells drill
  * straight through to that category's meters for that month — and the
@@ -28,8 +28,12 @@ import {
 } from "@/components/ui/table";
 import { ExportButton, SortableTableHead, TableToolbar, type ExportColumn } from "@/components/shared/data-table";
 import { SectionBoundary } from "@/components/shared/section-boundary";
+// Briefing figures render on the app-wide StatsGrid tile (the HVAC card) so
+// Electricity's headline row looks like Water's and STP's — owner ruling,
+// DESIGN_SYSTEM.md §7 ("every module's KPI row is the same StatsGrid tile").
+import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
 import {
-    MetricHeatmap, SeverityChip, SEV_UI, Sparkline, worstFirst, type TickerStat,
+    MetricHeatmap, SeverityChip, SEV_UI, worstFirst,
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
@@ -41,42 +45,7 @@ import {
 const RATE = ELECTRICITY_RATES.RATE_PER_KWH;
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
-const SUMMARY_TONE_COLOR: Record<NonNullable<TickerStat["tone"]>, string> = {
-    default: "var(--primary)",
-    danger: "var(--status-danger)",
-    warning: "var(--status-warning)",
-    success: "var(--status-normal)",
-    info: "var(--primary)",
-};
-
-function SummaryStrip({ caption, items }: { caption: string; items: TickerStat[] }) {
-    return (
-        <section className="overflow-hidden rounded-[10.5px] border border-border bg-border shadow-card-standard" aria-label={caption}>
-            <div className="bg-card px-4 py-3 sm:px-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">{caption}</p>
-            </div>
-            <dl className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
-                {items.map((item) => {
-                    const tone = item.tone ?? "default";
-                    return (
-                        <div key={item.label} className="min-w-0 bg-card px-4 py-3.5 sm:px-5">
-                            <dt className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-                                <item.icon className="h-3.5 w-3.5 shrink-0" style={{ color: SUMMARY_TONE_COLOR[tone] }} aria-hidden="true" />
-                                <span className="truncate">{item.label}</span>
-                            </dt>
-                            <dd className="mt-1 text-lg font-bold tracking-tight text-foreground tabular-nums sm:text-xl">
-                                {item.value}
-                            </dd>
-                            {item.title && <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{item.title}</p>}
-                        </div>
-                    );
-                })}
-            </dl>
-        </section>
-    );
-}
-
-type CategorySortField = "urgency" | "consumption" | "cost" | "change" | "findings";
+type CategorySortField = "urgency" | "consumption" | "cost" | "findings";
 type SortDirection = "asc" | "desc";
 
 const SEVERITY_RANK: Record<CategoryRow["severity"], number> = {
@@ -124,8 +93,6 @@ function compareCategories(a: CategoryRow, b: CategoryRow, field: CategorySortFi
         case "consumption":
         case "cost":
             return a.total - b.total;
-        case "change":
-            return (a.trendPct ?? Number.NEGATIVE_INFINITY) - (b.trendPct ?? Number.NEGATIVE_INFINITY);
         case "findings":
             return a.flaggedCount - b.flaggedCount || SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity];
     }
@@ -179,7 +146,7 @@ function CategoryTable({
                             "inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60",
                             flaggedOnly
                                 ? "border-primary bg-primary text-primary-foreground"
-                                : "border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground",
+                                : "border-border bg-card text-muted-foreground hover:bg-muted-bg hover:text-foreground",
                         )}
                     >
                         <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -225,16 +192,6 @@ function CategoryTable({
                                 Cost (OMR)
                             </SortableTableHead>
                             <SortableTableHead
-                                field="change"
-                                currentSortField={sortField}
-                                currentSortDirection={sortDirection}
-                                onSort={(field) => onSort(field as CategorySortField)}
-                                align="right"
-                                className="num hidden min-w-[130px] md:table-cell"
-                            >
-                                6-month trend
-                            </SortableTableHead>
-                            <SortableTableHead
                                 field="findings"
                                 currentSortField={sortField}
                                 currentSortDirection={sortDirection}
@@ -248,8 +205,6 @@ function CategoryTable({
                     </TableHeader>
                     <TableBody>
                         {rows.map((category) => {
-                            const trend = category.trendPct;
-                            const TrendIcon = trend !== null && trend < 0 ? ArrowDown : ArrowUp;
                             const findingSummary = describeFindings(category);
                             const barWidth = (category.total / maxCategoryTotal) * 100;
 
@@ -282,31 +237,16 @@ function CategoryTable({
                                                 <span className="font-semibold text-foreground">{num(category.total)} kWh</span>
                                                 <span className="text-[11px] font-normal text-muted-foreground">{category.share.toFixed(0)}%</span>
                                             </div>
-                                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                                            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-muted-bg" aria-hidden="true">
                                                 <div className="h-full rounded-full bg-secondary" style={{ width: `${barWidth}%` }} />
                                             </div>
                                             <p className="mt-1 text-[11px] font-normal text-muted-foreground md:hidden">
-                                                {num(category.total * RATE)} OMR · {trend === null ? "no trend" : `${trend > 0 ? "+" : ""}${trend.toFixed(0)}%`}
+                                                {num(category.total * RATE)} OMR
                                             </p>
                                         </div>
                                     </TableCell>
                                     <TableCell className="num hidden whitespace-nowrap md:table-cell">
                                         {num(category.total * RATE)}
-                                    </TableCell>
-                                    <TableCell className="num hidden md:table-cell">
-                                        <div className="ms-auto flex w-[115px] items-center justify-end gap-2">
-                                            <Sparkline values={category.monthTotals.slice(-6)} stroke="var(--chart-brand)" className="w-16" />
-                                            <span className="inline-flex min-w-10 items-center justify-end gap-0.5 whitespace-nowrap">
-                                                {trend === null ? (
-                                                    <span className="text-muted-foreground">—</span>
-                                                ) : (
-                                                    <>
-                                                        <TrendIcon className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                                                        {trend > 0 ? "+" : ""}{trend.toFixed(0)}%
-                                                    </>
-                                                )}
-                                            </span>
-                                        </div>
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
                                         <span
@@ -321,7 +261,7 @@ function CategoryTable({
                                             type="button"
                                             onClick={() => onInspect(category.type)}
                                             aria-label={`Inspect ${category.label}`}
-                                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
+                                            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted-bg hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary/60"
                                         >
                                             <ChevronRight className="h-4 w-4" aria-hidden="true" />
                                         </button>
@@ -417,44 +357,53 @@ export function LoadWatch({
     const TrendIcon = summary.trendPct !== null && summary.trendPct < 0 ? ArrowDown : ArrowUp;
     const budget = ELECTRICITY_TARGETS.MONTHLY_BUDGET_OMR;
 
-    const tickerItems: TickerStat[] = [
+    // The same four figures the old briefing strip carried, on the app-wide
+    // tile. The month that used to sit in the strip's caption now leads the
+    // first subtitle so nothing is lost. Colour = meaning: cost turns danger
+    // only when it exceeds the configured budget; flagged meters are danger
+    // when any exist and success when none do.
+    const briefingStats: StatItem[] = [
         {
             icon: Zap,
             label: "Consumption",
-            value: <>{num(summary.grandTotal / 1000, 1)} <span className="text-sm font-medium text-muted-foreground">MWh</span></>,
-            title: `${summary.meterCount} meters across ${model.categories.length} categories`,
+            value: num(summary.grandTotal / 1000, 1),
+            unit: "MWh",
+            subtitle: `${currentMonth} · ${summary.meterCount} meters across ${model.categories.length} categories`,
+            variant: "primary",
         },
         {
             icon: DollarSign,
             label: "Estimated cost",
-            value: <>{num(summary.cost)} <span className="text-sm font-medium text-muted-foreground">OMR</span></>,
-            title: budget !== null
+            value: num(summary.cost),
+            unit: "OMR",
+            subtitle: budget !== null
                 ? `${((summary.cost / budget) * 100).toFixed(0)}% of ${num(budget)} OMR budget`
                 : `At ${RATE} OMR/kWh`,
-            tone: budget !== null && summary.cost > budget ? "danger" : "default",
+            variant: budget !== null && summary.cost > budget ? "danger" : "info",
         },
         {
             icon: TrendIcon,
             label: "Previous month",
             value: summary.trendPct === null ? "—" : `${summary.trendPct > 0 ? "+" : ""}${summary.trendPct.toFixed(1)}%`,
-            title: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
-            tone: "info",
+            accessibleValue: summary.trendPct === null ? "No previous month in range" : undefined,
+            subtitle: model.prevMonth ? `Compared with ${model.prevMonth}` : "No previous month in range",
+            variant: "info",
         },
         {
             icon: summary.flaggedCount > 0 ? AlertTriangle : CheckCircle2,
             label: "Flagged meters",
             value: String(summary.flaggedCount),
-            title: summary.flaggedCount > 0
+            subtitle: summary.flaggedCount > 0
                 ? `${attentionCategories.length} categories need review`
                 : "All categories are within tolerance",
-            tone: summary.flaggedCount > 0 ? "danger" : "success",
+            variant: summary.flaggedCount > 0 ? "danger" : "success",
         },
     ];
 
     return (
         <div className="space-y-6">
             <SectionBoundary title="Load briefing">
-                <SummaryStrip caption={`Load briefing · ${currentMonth}`} items={tickerItems} />
+                <StatsGrid stats={briefingStats} />
             </SectionBoundary>
 
             <SectionBoundary title="Category control board">

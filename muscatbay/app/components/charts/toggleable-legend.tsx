@@ -67,7 +67,7 @@ export function ToggleableLegendContent({
                             aria-label={`${dimmed ? "Show" : "Hide"} ${label}`}
                             className={cn(
                                 "inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium",
-                                "text-foreground/80 hover:bg-muted",
+                                "text-foreground/80 hover:bg-muted-bg",
                                 "transition-colors duration-150",
                                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                                 dimmed && "opacity-40"

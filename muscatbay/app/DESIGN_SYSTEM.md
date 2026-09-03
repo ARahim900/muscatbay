@@ -1,5 +1,10 @@
 # Muscat Bay Design System
 
+> ⚠️ **SUPERSEDED on 2026-09-02 by [`/DESIGN_SYSTEM.md`](../../DESIGN_SYSTEM.md) (v2.0, repo root).**
+> That file is now the only design reference; the tokens live in
+> `app/design-tokens.css` and the primitives in `components/ui/`. This document
+> is kept for history only and must not be used to make design decisions.
+
 > Developer-facing reference for the visual system. The authoritative *brand* spec lives in [`/BRAND_DESIGN.md`](../../BRAND_DESIGN.md). The AI agent design context lives in [`/.impeccable.md`](../../.impeccable.md). When values conflict across docs, `BRAND_DESIGN.md` wins.
 
 This document describes what *actually* ships in this app — what to import, which tokens to use, and which patterns to follow when adding new UI.
