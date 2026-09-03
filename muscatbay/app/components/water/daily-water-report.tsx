@@ -30,7 +30,6 @@ import { computeBriefing } from "./daily-report/briefing-metrics";
 // ─── Daily section tabs (zone-first: no L1/NAMA daily account exists, so the
 //     section is organised around the L2-vs-ΣL3 balance where leaks show up).
 import { ZoneWatch } from "./daily-report/zone-watch";
-import { ZoneMtdChart } from "./daily-report/zone-mtd-chart";
 import { DailyDatabase } from "./daily-report/daily-database";
 import { DailyExceptions } from "./daily-report/daily-exceptions";
 
@@ -442,12 +441,6 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                 selectedDay={selectedDay}
                                 month={selectedMonth}
                                 activeZoneName={activeZone}
-                            />
-                            <ZoneMtdChart
-                                monthData={monthData}
-                                activeZoneName={activeZone}
-                                selectedDay={selectedDay}
-                                month={selectedMonth}
                             />
                             <ZoneL3Table
                                 key={activeZone}

@@ -13,8 +13,9 @@ import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import {
     type ReportData,
-    CHART_COLORS, r2, DailyLossConnector,
+    CHART_COLORS, r2, n, DailyLossConnector,
 } from "./inline-shared";
+import { ZoneDayBreakdownChart } from "./zone-day-breakdown-chart";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
 export { ZoneAnalyticsPanel };
@@ -88,6 +89,39 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
     const currentDayLabel = trendData.find(d => d.dayNum === selectedDay)?.day;
 
+    // Month-to-date balance for the trend card's footer. Only days with a bulk
+    // reading enter BOTH sums, so an unread L2 day is skipped rather than
+    // counted as 0 supply (missing ≠ zero). This replaced the separate
+    // cumulative-balance chart on 2026-09-03 at the owner's request.
+    const mtd = useMemo(() => {
+        let supply = 0;
+        let metered = 0;
+        let days = 0;
+        for (const d of trendData) {
+            if (d['L2 Bulk'] === null) continue;
+            supply += d['L2 Bulk'];
+            metered += d['ΣL3'];
+            days++;
+        }
+        const loss = r2(supply - metered);
+        return { supply: r2(supply), loss, days, pct: supply > 0 ? (loss / supply) * 100 : null };
+    }, [trendData]);
+
+    const mtdFooter: { tone: 'neutral' | 'success' | 'warning' | 'danger'; text: string } = (() => {
+        if (mtd.days === 0) {
+            return { tone: 'neutral', text: 'No bulk readings this month — the month-to-date balance cannot be computed' };
+        }
+        // One line in a 40 px footer at half width: keep it under ~80 characters.
+        // The supply total itself is in the L2 Bulk tile directly below.
+        const over = `${mtd.days} day${mtd.days === 1 ? '' : 's'} with a bulk reading`;
+        if (mtd.loss < 0) {
+            return { tone: 'warning', text: `Month to date: ΣL3 exceeds the bulk by ${n(Math.abs(mtd.loss))} m³ · ${over} · check meters` };
+        }
+        const share = mtd.pct !== null ? ` · ${mtd.pct.toFixed(1)}% of supply` : '';
+        const tone = mtd.pct !== null && mtd.pct >= 25 ? 'danger' : mtd.pct !== null && mtd.pct >= 10 ? 'warning' : 'success';
+        return { tone, text: `Month to date: ${n(mtd.loss)} m³ unmetered${share} · ${over}` };
+    })();
+
     return (
         <div className="space-y-6">
 
@@ -146,7 +180,20 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 />
             </div>
 
-            {/* ── Daily trend chart ────────────────────────────────────────── */}
+            {/* ── Half-width pair: where the day's water went (left) and the
+                   daily trend (right). Both are SectionCards with a header and
+                   a footer, so the fixed slots keep them the same height. ──── */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="min-w-0">
+                <ZoneDayBreakdownChart
+                    monthData={monthData}
+                    activeZoneName={activeZoneName}
+                    selectedDay={selectedDay}
+                    month={month}
+                />
+            </div>
+
+            <div className="min-w-0">
             <SectionCard>
                 <SectionCard.Header
                     title="Zone daily consumption trend"
@@ -160,15 +207,16 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     ) : (
                         <ChartFrame
                             series={3}
-                            height="chart-lg"
+                            height="chart"
                             legend={[
                                 { label: "L2 Bulk", color: CHART_COLORS.teal },
                                 { label: "ΣL3 Total", color: CHART_COLORS.brand },
                                 { label: "Loss", color: CHART_COLORS.loss, dashed: true },
                             ]}
                         >
-                            <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
+                                {/* Right margin leaves room for the "Day N" marker label when the last day is selected. */}
+                                <ComposedChart data={trendData} margin={{ top: 10, right: 24, left: 0, bottom: 0 }}>
                                     <CartesianGrid {...chartTheme.grid} />
                                     <XAxis dataKey="day" {...chartTheme.axis} interval={4} />
                                     <YAxis {...chartTheme.axis} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
@@ -202,7 +250,10 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                         </ChartFrame>
                     )}
                 </SectionCard.Body>
+                <SectionCard.Footer tone={mtdFooter.tone}>{mtdFooter.text}</SectionCard.Footer>
             </SectionCard>
+            </div>
+            </div>
         </div>
     );
 }

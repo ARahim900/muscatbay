@@ -16,6 +16,7 @@
 
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
+    type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 
@@ -274,31 +275,99 @@ export function buildZoneWatch(series: ZoneDaySeries[], day: number): ZoneWatchR
     });
 }
 
-// ─── Month-to-date cumulative series (per zone) ───────────────────────────────
+// ─── Where one day's zone supply went (composition) ──────────────────────────
+//
+// The daily trend answers "when"; this answers "who". The L2 bulk reading is
+// split into the zone's largest individual (L3) meters, the remainder folded
+// into one "Other" bar, and the unmetered balance (L2 − ΣL3) ranked alongside
+// them — so when the loss outranks every meter, that is visible at a glance.
 
-export interface MtdPoint {
-    day: number;
-    /** Axis label, e.g. "D07". */
+export type BreakdownKind = "meter" | "other" | "loss";
+
+export interface BreakdownBar {
+    /** Stable key: account number, "other" or "loss". */
+    key: string;
     label: string;
-    cumSupply: number;
-    cumMetered: number;
-    cumLoss: number;
+    value: number;
+    kind: BreakdownKind;
+    /** value / L2 × 100; null when the bulk was not read or read 0. */
+    shareOfSupply: number | null;
 }
 
-export function buildZoneMtd(series: ZoneDaySeries): MtdPoint[] {
-    let cs = 0;
-    let cm = 0;
-    return series.points.map((p) => {
-        cs += p.l2 ?? 0;
-        cm += p.l3Sum;
-        return {
-            day: p.day,
-            label: `D${String(p.day).padStart(2, "0")}`,
-            cumSupply: r2(cs),
-            cumMetered: r2(cm),
-            cumLoss: r2(cs - cm),
-        };
-    });
+export interface ZoneDayBreakdown {
+    /** Ranked largest first. Empty when nothing was read that day. */
+    bars: BreakdownBar[];
+    l2: number | null;
+    /** Σ of the zone's L3 meters, nulls counted as 0 (same rule as the series). */
+    l3Sum: number;
+    /** L2 − ΣL3; null when L2 is missing. Negative = meters read more than the bulk. */
+    loss: number | null;
+    /** L3 meters with no reading on the day. */
+    unread: number;
+    /** Meters folded into the "Other" bar. */
+    otherCount: number;
+    /** True when the day has any reading (L2 or any L3). */
+    hasData: boolean;
+}
+
+/** Curated building names for the L3 accounts that are building bulks. */
+const BUILDING_NAME_BY_BULK = new Map(BUILDING_CONFIG.map((b) => [b.bulkAccount, b.buildingName]));
+
+/**
+ * @param topN  Named bars before the rest collapses into "Other". Only meters
+ *              with a positive reading are named; zero and unread meters always
+ *              fold into "Other" so a zone of idle meters does not list zeros.
+ */
+export function buildZoneDayBreakdown(
+    grid: DailyGrid,
+    zone: ZoneBulkConfig,
+    day: number,
+    topN = 6,
+): ZoneDayBreakdown {
+    const l2raw = gridValue(grid, zone.l2Account, day);
+    const l2 = l2raw !== null ? r2(l2raw) : null;
+
+    const meters = zone.l3Accounts.map((account) => ({
+        account,
+        label: BUILDING_NAME_BY_BULK.get(account) ?? grid.names.get(account) ?? account,
+        value: gridValue(grid, account, day),
+    }));
+    const unread = meters.filter((m) => m.value === null).length;
+    const hasData = l2 !== null || unread < meters.length;
+    const l3Sum = r2(meters.reduce((s, m) => s + (m.value ?? 0), 0));
+    const loss = l2 !== null ? r2(l2 - l3Sum) : null;
+    const share = (v: number): number | null => (l2 !== null && l2 > 0 ? r2((v / l2) * 100) : null);
+
+    const named = meters
+        .filter((m) => m.value !== null && m.value > 0)
+        .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+        .slice(0, topN);
+    const namedKeys = new Set(named.map((m) => m.account));
+    const rest = meters.filter((m) => !namedKeys.has(m.account));
+
+    const bars: BreakdownBar[] = named.map((m) => ({
+        key: m.account,
+        label: m.label,
+        value: r2(m.value ?? 0),
+        kind: "meter",
+        shareOfSupply: share(m.value ?? 0),
+    }));
+    if (rest.length > 0) {
+        const otherValue = r2(rest.reduce((s, m) => s + (m.value ?? 0), 0));
+        bars.push({
+            key: "other",
+            label: `Other (${rest.length} meter${rest.length === 1 ? "" : "s"})`,
+            value: otherValue,
+            kind: "other",
+            shareOfSupply: share(otherValue),
+        });
+    }
+    if (loss !== null && loss > 0) {
+        bars.push({ key: "loss", label: "Unmetered loss", value: loss, kind: "loss", shareOfSupply: share(loss) });
+    }
+    bars.sort((a, b) => b.value - a.value);
+
+    return { bars: hasData ? bars : [], l2, l3Sum, loss, unread, otherCount: rest.length, hasData };
 }
 
 // ─── Network daily trend (all zones combined) ────────────────────────────────
