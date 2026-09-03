@@ -9,10 +9,11 @@
  * from the `WaterMeter[]` the page fetches via `getWaterMetersFromSupabase`.
  *
  * Presentation: every block is one of the design-system primitives in
- * `components/ui/` (DESIGN_SYSTEM.md §6 — `KpiCard`, `SectionCard`, `Tabs`,
- * `DateRangePicker`, `ChartFrame`, `Badge`, `Button`) and every colour, radius,
- * shadow and type step is a token from `app/design-tokens.css`. The prototype's
- * local `--wm-*` palette, inline card shells and hand-rolled tabs are gone.
+ * `components/ui/` (DESIGN_SYSTEM.md §6 — `SectionCard`, `Tabs`,
+ * `DateRangePicker`, `ChartFrame`, `Badge`, `Button`) plus the app-wide
+ * `StatsGrid` KPI row, and every colour, radius, shadow and type step is a
+ * token from `app/design-tokens.css`. The prototype's local `--wm-*` palette,
+ * inline card shells and hand-rolled tabs are gone.
  *
  * @module components/water/monthly/water-monthly-dashboard
  */
@@ -20,16 +21,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import {
     ResponsiveContainer, ComposedChart, BarChart, Bar, Line,
-    XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ReferenceLine,
+    XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ReferenceLine, Legend,
 } from "recharts";
 import {
     Droplet, AlertTriangle, Activity,
     Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
-    BarChart3, Database, List, ChevronDown, ChevronUp, CalendarClock, type LucideIcon,
+    BarChart3, Database, List, ChevronDown, ChevronUp, type LucideIcon,
 } from "lucide-react";
 
-import { Badge, Button, ChartFrame, chartTheme, DateRangePicker, KpiCard, SectionCard, Tabs } from "@/components/ui";
+import { Badge, Button, ChartFrame, chartTheme, DateRangePicker, SectionCard, Tabs } from "@/components/ui";
+// The KPI row is the app-wide StatsGrid tile (the HVAC card) — owner decision 2026-09-02.
+import { StatsGrid, type StatItem, type StatVariant } from "@/components/shared/stats-grid";
+import { CHART_PALETTE } from "@/lib/tokens";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
 import type { WaterMeter } from "@/lib/water-data";
@@ -52,7 +56,8 @@ const SERIES = {
     loss: chartTheme.loss,
     target: chartTheme.target,
 } as const;
-const PIE_SERIES = chartTheme.series;
+/** Severity tone → the KPI tile variant that carries the same colour. */
+const TONE_VARIANT: Record<StatusTone, StatVariant> = { success: "success", warning: "warning", danger: "danger", neutral: "default" };
 
 /* ---------- level colours (token-only) ----------
  * The hierarchy-level chip in the meter database tints with the level while the
@@ -333,23 +338,29 @@ const yearOf = (m: string): string => `20${m.split("-")[1]}`;
 function WaterSummary({ period, lossDelta, periodLabel }: Pick<OverviewProps, "period" | "lossDelta" | "periodLabel">) {
     const efficiency = pct(period.A3, period.A1);
     const lossCost = Math.max(0, period.loss) * LOSS_RATE_OMR;
-    return (
-        <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-3">
-            <KpiCard tone="water" icon={Droplet} label="Total supply (A1)" value={fmt(period.A1)} unit="m³" footnote={periodLabel} />
-            <KpiCard tone="water" icon={Droplet} label="Distribution (A2)" value={fmt(period.A2)} unit="m³" footnote="Zone bulk + direct" />
-            <KpiCard tone="water" icon={CheckCircle2} label="Consumption (A3)" value={fmt(period.A3)} unit="m³" footnote="Billed at end-user" />
-            <KpiCard icon={Gauge} label="Efficiency" value={efficiency.toFixed(1)} unit="%" footnote={`Target ≥ ${100 - TARGET_LOSS_PCT}%`} />
-            <KpiCard
-                icon={AlertTriangle}
-                label="Total loss"
-                value={fmt(period.loss)}
-                unit="m³"
-                footnote={`${period.lossPct}% of supply`}
-                trend={lossDelta ? { value: lossDelta.text, direction: lossDelta.up ? "up" : "down", good: !lossDelta.up } : undefined}
-            />
-            <KpiCard icon={FileSpreadsheet} label="Loss cost estimate" value={fmt(lossCost)} unit="OMR" footnote={`${LOSS_RATE_OMR} OMR / m³ assumption`} />
-        </div>
-    );
+    // Same six tiles, same variants (colour = meaning) as every other module's KPI row.
+    const stats: StatItem[] = [
+        { label: "Total Supply (A1)", value: fmt(period.A1), unit: "m³", subtitle: periodLabel, icon: Droplet, variant: "water" },
+        { label: "Distribution (A2)", value: fmt(period.A2), unit: "m³", subtitle: "Zone bulk + direct", icon: Droplet, variant: "info" },
+        { label: "Consumption (A3)", value: fmt(period.A3), unit: "m³", subtitle: "Billed at end-user", icon: CheckCircle2, variant: "success" },
+        { label: "Efficiency", value: efficiency.toFixed(1), unit: "%", subtitle: `Target ≥ ${100 - TARGET_LOSS_PCT}%`, icon: Gauge, variant: "success" },
+        {
+            label: "Total Loss",
+            value: fmt(period.loss),
+            unit: "m³",
+            subtitle: `${period.lossPct}% of supply`,
+            icon: AlertTriangle,
+            variant: "danger",
+            ...(lossDelta && {
+                trend: lossDelta.up ? "up" as const : "down" as const,
+                trendValue: lossDelta.text,
+                trendContext: "",
+                invertTrend: true,
+            }),
+        },
+        { label: "Loss Cost Estimate", value: fmt(lossCost), unit: "OMR", subtitle: `${LOSS_RATE_OMR} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
+    ];
+    return <StatsGrid stats={stats} />;
 }
 
 /* ================= OVERVIEW ================= */
@@ -395,7 +406,8 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                     description={`Supply → distribution → consumption · ${periodLabel} · target loss ≤ ${TARGET_LOSS_PCT}%`}
                 />
                 <SectionCard.Body>
-                    <div className="flex items-center justify-center gap-1 overflow-x-auto pb-1 sm:gap-3">
+                    {/* `safe` centring: when the flow is wider than the card (phones) it aligns to the start so the first ring stays reachable by scrolling. */}
+                    <div className="flex items-center justify-center-safe gap-1 overflow-x-auto pb-1 sm:gap-3">
                         <RingGauge frac={1} color={SERIES.dist} big={fmt(t.A1)} small="m³" label="A1 · Supply" caption="total entering" />
                         <LossLink label="trunk" v={t.stage1} of={t.A1} />
                         <RingGauge frac={a2f} color={SERIES.supply} big={fmt(t.A2)} small="m³" label="A2 · Distribution" caption="reaches zones" />
@@ -455,29 +467,31 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                     <SectionCard>
                         <SectionCard.Header icon={Layers} title="Consumption by type" description={`Share of A3 · ${periodLabel}`} />
                         <SectionCard.Body>
-                            {/* Donut rule: no labels on the ring — the legend table beside carries the shares. */}
-                            <ChartFrame series={1}>
+                            {/* Same donut as the HVAC "Findings by status" chart (owner reference,
+                                2026-09-02): labelled slices, the app's chart palette, legend below. */}
+                            <ChartFrame series={1} height="chart-lg">
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0} initialDimension={{ width: 1, height: 1 }}>
                                     <PieChart>
-                                        <Pie data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={56} outerRadius={92} paddingAngle={2} {...chartMotion}>
-                                            {typePie.map((e, i) => <Cell key={i} fill={PIE_SERIES[i % PIE_SERIES.length]} />)}
+                                        <Pie
+                                            data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%"
+                                            innerRadius={60} outerRadius={100} paddingAngle={2}
+                                            label={(props: { name?: string | number; percent?: number }) => `${props.name}: ${Math.round((props.percent ?? 0) * 100)}%`}
+                                            labelLine={{ stroke: "var(--color-muted)", strokeWidth: 1 }}
+                                            {...chartMotion}
+                                        >
+                                            {typePie.map((e, i) => <Cell key={i} fill={CHART_PALETTE[i % CHART_PALETTE.length]} />)}
                                         </Pie>
                                         <Tooltip formatter={(v, n, p) => [`${fmt(Number(v))} m³ (${p?.payload?.pct}%)`, n]} {...chartTheme.tooltip} />
+                                        <Legend
+                                            verticalAlign="bottom"
+                                            height={36}
+                                            iconSize={10}
+                                            formatter={(value: string) => <span className="text-caption text-muted">{value}</span>}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </ChartFrame>
-                            <ul className="mt-3 space-y-1 text-caption">
-                                {typePie.slice(0, 6).map((x, i) => (
-                                    <li key={i} className="flex items-center justify-between">
-                                        <span className="flex items-center gap-1.5 text-fg"><span className="h-2.5 w-2.5 rounded-control" style={{ background: PIE_SERIES[i % PIE_SERIES.length] }} />{x.name}</span>
-                                        <span className="font-medium tabular-nums text-muted">{x.pct}%</span>
-                                    </li>
-                                ))}
-                            </ul>
                         </SectionCard.Body>
-                        <SectionCard.Footer>
-                            {typePie.slice(0, 3).map((x) => `${x.name} ${x.pct}%`).join(" · ")}
-                        </SectionCard.Footer>
                     </SectionCard>
                 </div>
             </div>
@@ -551,12 +565,12 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
         return (
             <div className="space-y-6">
                 {picker}
-                <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
-                    <KpiCard tone="water" icon={Droplet} label="Main bulk supply (A1)" value={fmt(A1)} unit="m³" footnote="NAMA L1 — total entering" />
-                    <KpiCard tone="water" icon={Plug} label="Reached distribution (A2)" value={fmt(A2)} unit="m³" footnote="Σ zone bulk + direct" />
-                    <KpiCard icon={AlertTriangle} label="Trunk loss" value={fmt(trunkLoss)} unit="m³" footnote="A1 − A2 · before any zone" />
-                    <KpiCard icon={Gauge} label="Trunk loss %" value={String(trunkPct)} unit="%" footnote={ts.label} />
-                </div>
+                <StatsGrid stats={[
+                    { label: "Main bulk supply (A1)", value: fmt(A1), unit: "m³", subtitle: "NAMA L1 — total entering", icon: Droplet, variant: "water" },
+                    { label: "Reached distribution (A2)", value: fmt(A2), unit: "m³", subtitle: "Σ zone bulk + direct", icon: Plug, variant: "info" },
+                    { label: "Trunk loss", value: fmt(trunkLoss), unit: "m³", subtitle: "A1 − A2 · before any zone", icon: AlertTriangle, variant: "danger" },
+                    { label: "Trunk loss %", value: String(trunkPct), unit: "%", subtitle: ts.label, icon: Gauge, variant: TONE_VARIANT[tst.tone] },
+                ]} />
 
                 <SectionCard>
                     <SectionCard.Header icon={Droplet} title="Main bulk vs reached distribution" />
@@ -718,12 +732,12 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
         return (
             <div className="space-y-6">
                 {picker}
-                <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
-                    <KpiCard tone="water" icon={Droplet} label="Zone supply" value={fmt(supply)} unit="m³" footnote="L2 bulk meter" />
-                    <KpiCard tone="water" icon={CheckCircle2} label="Individual use" value={fmt(cons)} unit="m³" footnote={`${z.meters} meters`} />
-                    <KpiCard icon={AlertTriangle} label="Zone loss" value={fmt(loss)} unit="m³" footnote="supply − individual" />
-                    <KpiCard icon={Gauge} label="Loss %" value={String(z.lossPct)} unit="%" footnote={s.label} />
-                </div>
+                <StatsGrid stats={[
+                    { label: "Zone supply", value: fmt(supply), unit: "m³", subtitle: "L2 bulk meter", icon: Droplet, variant: "water" },
+                    { label: "Individual use", value: fmt(cons), unit: "m³", subtitle: `${z.meters} meters`, icon: CheckCircle2, variant: "success" },
+                    { label: "Zone loss", value: fmt(loss), unit: "m³", subtitle: "supply − individual", icon: AlertTriangle, variant: "danger" },
+                    { label: "Loss %", value: String(z.lossPct), unit: "%", subtitle: s.label, icon: Gauge, variant: TONE_VARIANT[sevStyle(s).tone] },
+                ]} />
 
                 <SectionCard>
                     <SectionCard.Header icon={Droplet} title={`${z.name} — supply vs individual consumption`} />
@@ -1295,11 +1309,11 @@ function ExceptionsView({ rows, year }: { rows: ExceptionRow[]; year: string }) 
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
-                <KpiCard icon={ClipboardList} label="Exceptions identified" value={String(rows.length)} footnote="Auto-generated from selected period" />
-                <KpiCard icon={XCircle} label="Critical" value={String(critical)} footnote="Needs validation now" />
-                <KpiCard icon={AlertTriangle} label="Watch" value={String(watch)} footnote="Monitor or verify" />
-            </div>
+            <StatsGrid stats={[
+                { label: "Exceptions Identified", value: String(rows.length), subtitle: "Auto-generated from selected period", icon: ClipboardList, variant: "primary" },
+                { label: "Critical", value: String(critical), subtitle: "Needs validation now", icon: XCircle, variant: "danger" },
+                { label: "Watch", value: String(watch), subtitle: "Monitor or verify", icon: AlertTriangle, variant: "warning" },
+            ]} />
             <SectionCard>
                 <SectionCard.Header
                     icon={ClipboardList}
@@ -1526,31 +1540,13 @@ export function WaterMonthlyDashboard({
 
             <DateRangePicker months={monthKeys} value={pickerValue} onChange={handleRangeChange} />
 
+            {/* Provenance for month-to-date months stays visible (never-fabricate rule)
+                but as part of this caption — the owner retired the blue callout box
+                on 2026-09-02. The official import replaces the figures automatically. */}
             <p className="text-caption text-muted">
                 NAMA Bulk Account {data.meta.mainAccount} · {data.meta.totalMeters} meters · {periodLabel}
+                {derivedMonthsShown.map((d) => ` · ${formatDerivedMonth(d.month)} is month-to-date (daily readings through day ${d.throughDay})`).join("")}
             </p>
-
-            {/* Provenance note for month-to-date months. The official monthly
-                import for a month lands a few days into the next month; until
-                then the month's figures are sums of the real daily readings.
-                Shown only when a derived month sits in the displayed year, so
-                browsing history stays quiet. */}
-            {derivedMonthsShown.length > 0 && (
-                <div role="note" className={cn(CALLOUT, "bg-info-tint text-info")}>
-                    <CalendarClock size={16} strokeWidth={2} className="mt-px shrink-0" aria-hidden="true" />
-                    <span>
-                        {derivedMonthsShown.map((d, i) => (
-                            <span key={d.month}>
-                                {i > 0 && "; "}
-                                <b>{formatDerivedMonth(d.month)} is month-to-date</b> — summed from the daily meter
-                                readings through day {d.throughDay}
-                            </span>
-                        ))}
-                        . The official monthly readings have not been imported yet; when they arrive they will
-                        replace these figures automatically.
-                    </span>
-                </div>
-            )}
 
             {anomaly && (
                 <div role="alert" className={cn(CALLOUT, "bg-danger-tint text-danger")}>
@@ -1568,32 +1564,35 @@ export function WaterMonthlyDashboard({
             <Tabs<SectionKey> aria-label="Water monthly sections" value={tab} onChange={setTab} tabs={sectionTabs} />
 
             {/* Each section is isolated: a render failure in one must not take
-                down the whole Water page. */}
-            {tab === "overview" && (
-                <SectionBoundary title="Overview">
-                    <Overview data={data} period={period} monthly={monthly} sel={periodSel} year={year} nMonths={nMonths} lossDelta={lossDelta} periodLabel={periodLabel} />
-                </SectionBoundary>
-            )}
-            {tab === "zones" && (
-                <SectionBoundary title="Zone Analysis">
-                    <ZonesView data={data} period={period} monthly={monthly} sel={periodSel} nMonths={nMonths} year={year} />
-                </SectionBoundary>
-            )}
-            {tab === "assets" && (
-                <SectionBoundary title="Assets & Connections">
-                    <AssetsView period={period} />
-                </SectionBoundary>
-            )}
-            {tab === "meters" && (
-                <SectionBoundary title="Main Database">
-                    <MetersView data={data} year={year} sel={periodSel} nMonths={nMonths} />
-                </SectionBoundary>
-            )}
-            {tab === "exceptions" && (
-                <SectionBoundary title="Exceptions">
-                    <ExceptionsView rows={exceptionRows} year={year} />
-                </SectionBoundary>
-            )}
+                down the whole Water page. The wrapper is the tab panel the strip's
+                buttons point at (aria-controls="panel-<key>"). */}
+            <div id={`panel-${tab}`} role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={0}>
+                {tab === "overview" && (
+                    <SectionBoundary title="Overview">
+                        <Overview data={data} period={period} monthly={monthly} sel={periodSel} year={year} nMonths={nMonths} lossDelta={lossDelta} periodLabel={periodLabel} />
+                    </SectionBoundary>
+                )}
+                {tab === "zones" && (
+                    <SectionBoundary title="Zone Analysis">
+                        <ZonesView data={data} period={period} monthly={monthly} sel={periodSel} nMonths={nMonths} year={year} />
+                    </SectionBoundary>
+                )}
+                {tab === "assets" && (
+                    <SectionBoundary title="Assets & Connections">
+                        <AssetsView period={period} />
+                    </SectionBoundary>
+                )}
+                {tab === "meters" && (
+                    <SectionBoundary title="Main Database">
+                        <MetersView data={data} year={year} sel={periodSel} nMonths={nMonths} />
+                    </SectionBoundary>
+                )}
+                {tab === "exceptions" && (
+                    <SectionBoundary title="Exceptions">
+                        <ExceptionsView rows={exceptionRows} year={year} />
+                    </SectionBoundary>
+                )}
+            </div>
 
             <footer className="text-caption text-muted">
                 Water balance — <b>A1</b> Main Bulk (NAMA L1) → <b>A2</b> Zone Bulk + Direct Connections (L2 + DC) → <b>A3</b> Individual meters + DC

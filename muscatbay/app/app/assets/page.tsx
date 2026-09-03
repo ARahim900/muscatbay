@@ -415,10 +415,10 @@ export default function AssetsPage() {
         const live = dataSource === 'supabase';
         const totalItems = live ? (summary.total || totalCount) : totalCount;
         return [
-            { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "water" as const },
+            { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "primary" as const },
             { label: "ACTIVE / WORKING",   value: (live ? summary.workingStatus : assets.filter(a => ['Active', 'Working'].includes(a.status)).length).toString(), subtitle: "Status = Working / Active", icon: ClipboardCheck, variant: "success" as const },
             { label: "HIGH CRITICALITY",   value: (live ? summary.highCriticality : assets.filter(a => a.criticalityLevel === 'High').length).toString(), subtitle: "Criticality = High", icon: AlertTriangle, variant: "danger" as const },
-            { label: "WITH AMC CONTRACTOR", value: (live ? summary.amcCovered : assets.filter(a => a.amcContractor).length).toString(), subtitle: "AMC contractor recorded", icon: Wrench, variant: "water" as const },
+            { label: "WITH AMC CONTRACTOR", value: (live ? summary.amcCovered : assets.filter(a => a.amcContractor).length).toString(), subtitle: "AMC contractor recorded", icon: Wrench, variant: "info" as const },
             { label: "RESERVE FUND LINKED", value: (live ? summary.boqCoverage : assets.filter(a => a.boqProjectRef).length).toString(), subtitle: "Assets with BOQ reference", icon: FileText, variant: "success" as const },
             { label: "NEEDS VERIFICATION",  value: (live ? summary.toVerify : assets.filter(a => a.status === 'TO VERIFY').length).toString(), subtitle: "Status = TO VERIFY", icon: ShieldAlert, variant: "warning" as const },
         ];
@@ -520,7 +520,7 @@ export default function AssetsPage() {
             </div>
 
             {/* Tabs */}
-            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+            <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} ariaLabel="Asset sections" />
 
             <div className="space-y-4">
                 {/* KPI cards — skeleton until the first fetch resolves so we never

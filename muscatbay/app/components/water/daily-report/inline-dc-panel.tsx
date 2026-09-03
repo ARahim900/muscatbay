@@ -5,7 +5,8 @@
 //     primitives (SectionCard, KpiCard, Badge, ChartFrame) and tokens only.
 
 import { useState, useMemo, useEffect } from "react";
-import { Badge, ChartFrame, chartTheme, KpiCard, SectionCard } from "@/components/ui";
+import { Badge, ChartFrame, chartTheme, SectionCard } from "@/components/ui";
+import { StatsGrid } from "@/components/shared/stats-grid";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -370,12 +371,12 @@ function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[
                 description={`${dcMeters.length} meters — Day 1 to Day ${latestDay}`}
             />
             <SectionCard.Body className="space-y-4">
-                {/* DC summary KPIs (KpiCard — DESIGN_SYSTEM.md §6) */}
-                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
-                    <KpiCard tone="water" icon={Droplets} label="Monthly DC total" value={n(grandTotal)} unit="m³" footnote={`Day 1 to Day ${latestDay}`} />
-                    <KpiCard icon={Activity} label="DC meters" value={String(dcMeters.length)} footnote="Direct connections on the main inlet" />
-                    <KpiCard icon={Zap} label={`Active (Day ${latestDay})`} value={`${activeMeters} / ${dcMeters.length}`} footnote="Meters with a stored reading" />
-                </div>
+                {/* DC summary KPIs — the app-wide StatsGrid tile */}
+                <StatsGrid stats={[
+                    { label: "Monthly DC Total", value: n(grandTotal), unit: "m³", subtitle: `Day 1 to Day ${latestDay}`, icon: Droplets, variant: "info" },
+                    { label: "DC Meters", value: String(dcMeters.length), subtitle: "Direct connections on the main inlet", icon: Activity, variant: "primary" },
+                    { label: `Active (Day ${latestDay})`, value: `${activeMeters} / ${dcMeters.length}`, subtitle: "Meters with a stored reading", icon: Zap, variant: "success" },
+                ]} />
 
                 <div className="flex flex-wrap items-center gap-2">
                     <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />

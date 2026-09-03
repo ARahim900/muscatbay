@@ -747,6 +747,7 @@ export default function ElectricityPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                ariaLabel="Electricity sections"
                 tabs={[
                     { key: "watch", label: "Load Watch", icon: Gauge },
                     { key: "data", label: "Meters & Data", icon: Database },
@@ -915,7 +916,8 @@ export default function ElectricityPage() {
 
                 return (
                     <SectionBoundary title="Meter consumption & anomalies">
-                    <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0} className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
+                    {/* Labelled region, not a second tabpanel: the "data" tab controls the analysis view above. */}
+                    <div role="region" aria-label="Meter consumption and anomalies" className="space-y-4 motion-safe:animate-in motion-safe:fade-in duration-200">
                         {/* Toolbar — title + subtitle live inside it, matching the STP
                             Daily Operations Log reference. This single table replaces the
                             former "Monthly Breakdown" plus the separate anomaly table. */}

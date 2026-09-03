@@ -199,7 +199,7 @@ export default function FirefightingPage() {
     }, [equipment]);
 
     const stats = useMemo(() => [
-        { label: "DESIGNATED ZONES", value: String(ZONES.length), subtitle: "Z1 · Z3 · Z5 · Village Sq", icon: Layers, variant: "water" as const },
+        { label: "DESIGNATED ZONES", value: String(ZONES.length), subtitle: "Z1 · Z3 · Z5 · Village Sq", icon: Layers, variant: "info" as const },
         { label: "PPM CYCLES / YEAR", value: String(CYCLES.length), subtitle: "BEC AMC · every ~4 months", icon: Calendar, variant: "primary" as const },
         { label: "CYCLES COMPLETE", value: `${completedCycles} / ${CYCLES.length}`, subtitle: "Year 1 · Dec & Apr done", icon: CheckCircle, variant: "success" as const },
         { label: "OPEN ISSUES", value: openIssues.length.toString(), subtitle: "Defects & access items", icon: AlertTriangle, variant: openIssues.length > 0 ? "danger" as const : "success" as const },
@@ -292,6 +292,7 @@ export default function FirefightingPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={(k) => setActiveTab(k as TabKey)}
+                ariaLabel="Fire safety sections"
                 tabs={[
                     { key: "overview", label: "Overview", icon: LayoutGrid },
                     { key: "ppm", label: "Maintenance", icon: ClipboardList },
@@ -299,6 +300,8 @@ export default function FirefightingPage() {
                 ]}
             />
 
+            {/* One tabpanel for the active tab — its id is what each tab's aria-controls points at. */}
+            <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
             {/* ══════════ OVERVIEW ══════════ */}
             {activeTab === "overview" && (
                 <div className="space-y-6 motion-safe:animate-in motion-safe:fade-in duration-200">
@@ -804,6 +807,7 @@ export default function FirefightingPage() {
                     </SectionBoundary>
                 </div>
             )}
+            </div>
         </div>
     );
 }

@@ -116,8 +116,12 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
  * Split out of the grid so each tile can watch its own value: `useValueChanged`
  * is a hook, and the grid renders these in a map. Extracting the tile is what
  * lets a single figure mark itself when it moves, instead of the whole deck.
+ *
+ * Exported so the design-system `KpiCard` (components/ui/kpi-card.tsx) renders
+ * this exact tile — the owner's decision on 2026-09-02: every module's KPI card
+ * is the HVAC tile, nothing else.
  */
-function StatTile({ stat, index }: { stat: StatItem; index: number }) {
+export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
     const justChanged = useValueChanged(stat.value);
 
             const variant = stat.variant || "primary";

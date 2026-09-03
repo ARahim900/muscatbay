@@ -1,9 +1,14 @@
-// components/ui/SegmentedControl.tsx
+// components/ui/segmented-control.tsx
 // PRIMARY mode switch (Monthly / Daily / Satellite). Max 4 options.
-// Filled purple active pill on a tinted track, 36px. Arrow keys move selection.
-// This is visually distinct from <Tabs> on purpose — never use one for the other.
+// Renders the app-wide pill strip (`TabNavigation`, primary variant): a filled
+// purple pill that slides under the selected option on a bordered, shadowed
+// track — the same control STP, Electricity and HVAC use, so the mode switch
+// reads as selectable buttons on every module page.
+// Owner decision 2026-09-02 (review of the Water preview): the kit's flat
+// 36 px strip "did not give the impression of buttons that can be selected".
+'use client';
 import type { LucideIcon } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { TabNavigation } from '@/components/shared/tab-navigation';
 
 export type SegOption<T extends string> = { value: T; label: string; icon?: LucideIcon };
 
@@ -16,27 +21,14 @@ type Props<T extends string> = {
 };
 
 export function SegmentedControl<T extends string>({ options, value, onChange, className, ...a11y }: Props<T>) {
-  const onKey = (e: React.KeyboardEvent) => {
-    const i = options.findIndex(o => o.value === value);
-    if (e.key === 'ArrowRight') onChange(options[(i + 1) % options.length].value);
-    if (e.key === 'ArrowLeft') onChange(options[(i - 1 + options.length) % options.length].value);
-  };
   return (
-    <div role="radiogroup" aria-label={a11y['aria-label']} onKeyDown={onKey}
-      className={cn('inline-flex h-9 items-center gap-1 rounded-control bg-component p-1', className)}>
-      {options.slice(0, 4).map(({ value: v, label, icon: Icon }) => {
-        const active = v === value;
-        return (
-          <button key={v} type="button" role="radio" aria-checked={active} tabIndex={active ? 0 : -1}
-            onClick={() => onChange(v)}
-            className={cn(
-              'inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-control px-3 text-label transition-colors duration-200',
-              active ? 'bg-primary text-on-primary shadow-card' : 'text-muted hover:text-fg')}>
-            {Icon && <Icon size={16} strokeWidth={2} aria-hidden />}
-            {label}
-          </button>
-        );
-      })}
-    </div>
+    <TabNavigation
+      variant="primary"
+      className={className}
+      ariaLabel={a11y['aria-label']}
+      tabs={options.slice(0, 4).map(({ value: v, label, icon }) => ({ key: v, label, icon }))}
+      activeTab={value}
+      onTabChange={(key) => onChange(key as T)}
+    />
   );
 }

@@ -6,7 +6,9 @@ import { getSTPOperationsFromSupabase, isSupabaseConfigured } from "@/lib/supaba
 import { STP_RATES } from "@/lib/config";
 import { StatsGridSkeleton, ChartSkeleton, Skeleton } from "@/components/shared/skeleton";
 import { PageHeader } from "@/components/shared/page-header";
-import { HierarchyStatGrid } from "@/components/shared/hierarchy-stat-card";
+// KPI row: the app-wide StatsGrid tile (the HVAC card) — owner decision
+// 2026-09-02 that every module's KPI cards look the same.
+import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -807,6 +809,7 @@ export default function STPPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                ariaLabel="STP sections"
                 variant="secondary"
                 tabs={[
                     { key: "watch", label: "Plant Watch", icon: Gauge },
@@ -814,7 +817,7 @@ export default function STPPage() {
                 ]}
             />
 
-            <HierarchyStatGrid stats={stats} />
+            <StatsGrid stats={stats} />
 
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}

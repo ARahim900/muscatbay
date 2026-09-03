@@ -621,6 +621,7 @@ export default function ContractorsPage() {
             <TabNavigation
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
+                ariaLabel="Contractor sections"
                 tabs={[
                     { key: 'tracker', label: 'AMC Tracker', icon: List },
                     { key: 'renewals', label: 'Renewals', icon: CalendarClock },
@@ -630,6 +631,8 @@ export default function ContractorsPage() {
                 ]}
             />
 
+            {/* One tabpanel for the active tab — its id is what each tab's aria-controls points at. */}
+            <div id={`panel-${activeTab}`} role="tabpanel" aria-labelledby={`tab-${activeTab}`} tabIndex={0}>
             {/* ═══════════════════ TAB: RENEWALS ═══════════════════ */}
             {activeTab === 'renewals' && (
                 <SectionBoundary title="Contract renewals">
@@ -1162,6 +1165,7 @@ export default function ContractorsPage() {
                 </div>
                 </SectionBoundary>
             )}
+            </div>
 
             {/* ═══════════════════ CONTRACT PDF MODAL ═══════════════════ */}
             <Dialog open={pdfModal.isOpen} onOpenChange={(open) => { if (!open) closePdfModal(); }}>

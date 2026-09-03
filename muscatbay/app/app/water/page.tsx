@@ -209,13 +209,20 @@ export default function WaterPage() {
 
     // One chip, four states. "connecting" also covers "data loaded, realtime
     // channel still handshaking" — it never claims live until the channel is.
+    // The Daily view owns its own fetch, so while it is showing, its status wins
+    // even if the monthly read has failed.
     const status: ViewStatus = isLoading
         ? { state: "connecting" }
-        : error
-            ? { state: "offline", syncedAt: timeLabel(lastUpdated) }
-            : dashboardView === "daily" && dailyStatus
-                ? dailyStatus
+        : dashboardView === "daily" && dailyStatus
+            ? dailyStatus
+            : error
+                ? { state: "offline", syncedAt: timeLabel(lastUpdated) }
                 : { state: isLive ? "live" : "connecting", syncedAt: timeLabel(lastUpdated) };
+
+    // Monthly and Satellite both render from the monthly fetch; Daily does not.
+    // A failed or empty monthly read therefore blocks those two views only —
+    // the mode switch stays on screen so the daily report remains reachable.
+    const monthlyBlocked = Boolean(error) || !hasData;
 
     return (
         <div className="space-y-6">
@@ -256,12 +263,11 @@ export default function WaterPage() {
                 </div>
             )}
 
-            {!isLoading && error && <WaterErrorState message={error} onRetry={retry} />}
-            {!isLoading && !error && !hasData && <WaterEmptyState onRetry={retry} />}
-
-            {!isLoading && !error && hasData && (
+            {!isLoading && (
                 <>
-                    {/* PRIMARY mode switch: Monthly / Daily / Satellite */}
+                    {/* PRIMARY mode switch: Monthly / Daily / Satellite — always
+                        rendered once loading ends, so a failed monthly read never
+                        locks the operator out of the daily report. */}
                     <SegmentedControl<DashboardView>
                         aria-label="View mode"
                         value={dashboardView}
@@ -278,25 +284,30 @@ export default function WaterPage() {
                         panel instead of blanking the whole route into
                         app/error.tsx. The Daily view's sections carry their own
                         boundaries internally. */}
-                    {dashboardView === "monthly" && (
-                        <SectionBoundary title="Monthly water analysis">
-                            <WaterMonthlyDashboard waterMeters={waterMeters} derivedMonths={derivedMonths} />
-                        </SectionBoundary>
-                    )}
+                    <div id={`panel-${dashboardView}`} role="tabpanel" aria-labelledby={`tab-${dashboardView}`} tabIndex={0}>
+                        {/* Daily Dashboard View — its own fetch, so it renders even when the monthly read failed */}
+                        {dashboardView === "daily" && (
+                            <SectionBoundary title="Daily water report">
+                                <DailyWaterReport onStatusChange={setDailyStatus} />
+                            </SectionBoundary>
+                        )}
 
-                    {/* Daily Dashboard View */}
-                    {dashboardView === "daily" && (
-                        <SectionBoundary title="Daily water report">
-                            <DailyWaterReport onStatusChange={setDailyStatus} />
-                        </SectionBoundary>
-                    )}
+                        {dashboardView !== "daily" && error && <WaterErrorState message={error} onRetry={retry} />}
+                        {dashboardView !== "daily" && !error && !hasData && <WaterEmptyState onRetry={retry} />}
 
-                    {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
-                    {dashboardView === "satellite" && (
-                        <SectionBoundary title="Satellite network view">
-                            <SatelliteView waterMeters={waterMeters} derivedMonths={derivedMonths} />
-                        </SectionBoundary>
-                    )}
+                        {dashboardView === "monthly" && !monthlyBlocked && (
+                            <SectionBoundary title="Monthly water analysis">
+                                <WaterMonthlyDashboard waterMeters={waterMeters} derivedMonths={derivedMonths} />
+                            </SectionBoundary>
+                        )}
+
+                        {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
+                        {dashboardView === "satellite" && !monthlyBlocked && (
+                            <SectionBoundary title="Satellite network view">
+                                <SatelliteView waterMeters={waterMeters} derivedMonths={derivedMonths} />
+                            </SectionBoundary>
+                        )}
+                    </div>
                 </>
             )}
         </div>

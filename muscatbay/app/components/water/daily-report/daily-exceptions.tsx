@@ -10,7 +10,8 @@
 
 import { useMemo } from "react";
 import { AlertTriangle, CheckCircle2, ClipboardList, XCircle } from "lucide-react";
-import { Badge, KpiCard, SectionCard } from "@/components/ui";
+import { Badge, SectionCard } from "@/components/ui";
+import { StatsGrid } from "@/components/shared/stats-grid";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ExportButton } from "@/components/shared/data-table";
@@ -33,11 +34,11 @@ export function DailyExceptions({
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
-                <KpiCard icon={ClipboardList} label="Exceptions identified" value={String(rows.length)} footnote={`Day ${selectedDay} · ${month}`} />
-                <KpiCard icon={XCircle} label="Critical" value={String(critical)} footnote="Needs validation now" />
-                <KpiCard icon={AlertTriangle} label="Watch" value={String(watch)} footnote="Monitor or verify" />
-            </div>
+            <StatsGrid stats={[
+                { label: "Exceptions Identified", value: String(rows.length), subtitle: `Day ${selectedDay} · ${month}`, icon: ClipboardList, variant: "primary" },
+                { label: "Critical", value: String(critical), subtitle: "Needs validation now", icon: XCircle, variant: "danger" },
+                { label: "Watch", value: String(watch), subtitle: "Monitor or verify", icon: AlertTriangle, variant: "warning" },
+            ]} />
 
             <SectionCard>
                 <SectionCard.Header

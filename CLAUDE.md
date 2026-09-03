@@ -270,8 +270,8 @@ Add these only on an explicit, current instruction from the owner.
 2. **Do not redesign. Replace.** Swap page-level markup for the primitives in `components/ui/` (`PageHeader`, `StatusChip`, `SegmentedControl`, `Tabs`, `KpiCard`, `SectionCard`, `Badge`, `Button`, `ChartFrame`, `DateRangePicker`, `EmbedFrame`, `Breadcrumb`) and delete the local styling you replaced. Do not change data, copy or behaviour unless the task says so.
 3. Never add a colour, font size, radius or shadow that is not a token in `app/design-tokens.css`. No `text-[…]`, `shadow-[…]`, `rounded-[…]`, `bg-[#…]`, no `blue-500`-style palette classes. `pnpm lint` enforces this; do not disable the rule.
 4. Never create a second version of a primitive. If a primitive does not fit, change the primitive (and say so in the PR), not the page.
-5. Fixed heights are not suggestions: `KpiCard` 104 px, `SectionCard` header 56 px / footer 40 px, charts 260 / 320 px. If content does not fit, shorten the content.
-6. One filled purple `Button variant="primary"` per view. Segmented control = mode; underline tabs = sections. Tabs never scroll.
+5. Fixed heights are not suggestions: `SectionCard` header 56 px / footer 40 px, charts 260 / 320 px. If content does not fit, shorten the content. KPI tiles are the app-wide `StatsGrid` tile (the HVAC card, auto height, colour = meaning) — never a second tile style (owner ruling 2026-09-02, `DESIGN_SYSTEM.md` §7).
+6. One filled purple `Button variant="primary"` per view. `SegmentedControl` (purple pill strip) = mode; `Tabs` (STP-style card-pill strip) = sections — both render the app-wide `TabNavigation` strip, never a flat underline. Tabs never scroll.
 7. Breadcrumbs stay. Ticker / marquee strips do not exist. Green is status only. No emoji, no illustrations, Lucide icons only at 16 px (inline) or 20 px (tiles, nav).
 8. Every UI change is checked in light and dark mode at 1440 px. Run `pnpm screenshots` and attach `screenshots/*.png` to the PR.
 9. If the task conflicts with any rule above, stop and ask before writing code.

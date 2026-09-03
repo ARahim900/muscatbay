@@ -402,7 +402,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     {/* ── Zone Watch — fleet view, heatmap, leak triage ───── */}
                     {activeTab === 'watch' && (
                         <SectionBoundary title="Zone Watch">
-                        <div role="tabpanel" aria-label="Zone Watch" tabIndex={0}>
+                        <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0}>
                             <ZoneWatch
                                 briefing={briefing}
                                 monthData={monthData}
@@ -417,7 +417,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     {/* ── Zone Analysis — per-zone drill-down ─────────────── */}
                     {activeTab === 'zones' && (
                         <SectionBoundary title="Zone Analysis">
-                        <div role="tabpanel" aria-label="Zone Analysis" tabIndex={0} className="space-y-6">
+                        <div id="panel-zones" role="tabpanel" aria-labelledby="tab-zones" tabIndex={0} className="space-y-6">
                             {/* Zone selector — the same control idiom as the Monthly zone picker */}
                             <div className="flex flex-wrap items-center gap-2">
                                 <span className="text-label text-fg">Zone</span>
@@ -463,7 +463,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     {/* ── Direct Connections ──────────────────────────────── */}
                     {activeTab === 'dc' && (
                         <SectionBoundary title="Direct Connections">
-                        <div role="tabpanel" aria-label="Direct Connections" tabIndex={0} className="space-y-6">
+                        <div id="panel-dc" role="tabpanel" aria-labelledby="tab-dc" tabIndex={0} className="space-y-6">
                             <DCAnalyticsPanel
                                 reportData={reportData}
                                 monthData={monthData}
@@ -478,7 +478,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     {/* ── Daily Database — meter × day ledger ─────────────── */}
                     {activeTab === 'database' && (
                         <SectionBoundary title="Daily Database">
-                        <div role="tabpanel" aria-label="Daily Database" tabIndex={0}>
+                        <div id="panel-database" role="tabpanel" aria-labelledby="tab-database" tabIndex={0}>
                             <DailyDatabase
                                 monthData={monthData}
                                 selectedDay={selectedDay}
@@ -491,7 +491,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     {/* ── Exceptions — daily action queue ─────────────────── */}
                     {activeTab === 'exceptions' && (
                         <SectionBoundary title="Exceptions">
-                        <div role="tabpanel" aria-label="Exceptions" tabIndex={0}>
+                        <div id="panel-exceptions" role="tabpanel" aria-labelledby="tab-exceptions" tabIndex={0}>
                             <DailyExceptions
                                 monthData={monthData}
                                 selectedDay={selectedDay}

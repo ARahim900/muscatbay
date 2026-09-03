@@ -11,11 +11,13 @@
 
 - [ ] Page uses `PageHeader` with a `StatusChip`; the title does not wrap at 1280 px.
 - [ ] Breadcrumb is present above the header on every module page.
-- [ ] Mode switch (if any) is a `SegmentedControl`; section switch (if any) is `Tabs`. Never the same component for both. Tabs never scroll.
-- [ ] Every KPI is a `KpiCard`; every card in a grid is the same height; no KPI label wraps.
+- [ ] Mode switch (if any) is a `SegmentedControl` (purple pill strip); section switch (if any) is `Tabs` (card-pill strip, as on STP Plant). Both are the app-wide pill strip, never a flat underline. Tabs never scroll.
+- [ ] Every KPI is the app-wide `StatsGrid` tile (the HVAC card): icon in a tinted tile, eyebrow label, value + unit, one subtitle / trend line; colour follows the KPI's meaning. No second tile style anywhere.
 - [ ] Every content block is a `SectionCard`; its header is one title line plus at most one description line.
 - [ ] Exactly **one** filled purple button per view.
-- [ ] Charts go through `ChartFrame`; legends are hidden for single-series charts; no labels drawn on donut rings.
+- [ ] Charts go through `ChartFrame`; legends are hidden for single-series charts; donuts are the HVAC donut (labelled slices, `CHART_PALETTE`, legend below).
+- [ ] Filters are visible controls: bordered, shadowed buttons and selects; the active preset is filled purple. No flat text-only controls.
+- [ ] No informational callout boxes above the content (the owner retired the blue "month-to-date" box on 2026-09-02); provenance goes in a caption line.
 - [ ] No arbitrary Tailwind values (`text-[…]`, `shadow-[…]`, `rounded-[…]`, `bg-[#…]`) and no Tailwind palette colours (`blue-500`, `slate-900`…). `pnpm lint` passes.
 - [ ] No ticker / marquee strips. No duplicate "live data" information.
 - [ ] Checked in light **and** dark mode; screenshot at 1440 px attached to the PR.
@@ -132,7 +134,7 @@ Two shadows. Three radii. That is the whole list.
 | Content max-width | 1536 px, padding 24 px (≥ 1024) / 40 px (≥ 1280) |
 | Vertical rhythm | 24 px between blocks; 14 px gap inside card grids |
 | Grid | 12 columns. Card rows are 6 + 6, 8 + 4 or 12. KPI rows are 3 or 4 across |
-| Fixed heights | `PageHeader` 64 px · `SegmentedControl` 36 px · `Tabs` 40 px · `KpiCard` 104 px · `SectionCard` header 56 px · footer 40 px · chart body 260 px (half width) / 320 px (full width) |
+| Fixed heights | `PageHeader` 64 px · `SegmentedControl` / `Tabs` = the 44 px pill strip · KPI tile hugs its content (`StatsGrid`, min 96 px — no fixed height, no empty space) · `SectionCard` header 56 px · footer 40 px · chart body 260 px (half width) / 320 px (full width) |
 
 Every page, top to bottom: **Breadcrumb → PageHeader → SegmentedControl (optional) → KPI row → Tabs (optional) → SectionCards**.
 
@@ -147,14 +149,14 @@ One way to do each thing. Do not create a second version of any of these on a pa
 | `Breadcrumb` | `Dashboard › Water` above the header | Deeper than 3 levels |
 | `PageHeader` | Title (`text-display`) + one description line + right-hand slot for one `StatusChip` | Wrapping titles — shorten the title instead |
 | `StatusChip` | Data-source state: `live` · `stale` · `offline` · `connecting` | Two chips, or "Connected" next to "Offline" |
-| `SegmentedControl` | **Primary** mode switch (Monthly / Daily / Satellite) — filled purple active pill on a tinted track, 36 px | More than 4 options |
-| `Tabs` | **Secondary** section switch — underline style, 40 px, accent underline | Scrolling; more than 6 tabs (use fewer sections) |
-| `KpiCard` | 104 px tile: icon tile · eyebrow label · `text-kpi` value + unit · one footnote | Wrapped labels; coloured borders; growing height |
+| `SegmentedControl` | **Primary** mode switch (Monthly / Daily / Satellite) — renders the app-wide `TabNavigation` **primary** strip: a filled purple pill that slides under the selected option on a bordered, shadowed track (reads as buttons that can be pressed) | More than 4 options; a flat strip with no track |
+| `Tabs` | **Secondary** section switch — renders the app-wide `TabNavigation` **secondary** strip (raised card pill + teal underline), exactly as the STP Plant sections | Scrolling; more than 6 tabs (use fewer sections); underline-only tabs |
+| `KpiCard` / `StatsGrid` | The ONE KPI tile — `components/shared/stats-grid.tsx` (the HVAC card): icon in a tinted tile, eyebrow label, value + unit, one subtitle or trend line; `variant` = meaning (`primary` purple, `info` blue, `success` green, `warning` amber, `danger` red, `water` blue). Rows render `<StatsGrid stats={…}/>`; `KpiCard` renders the same tile singly | Fixed heights with empty space; module-coloured icon tiles; a second tile style |
 | `SectionCard` (`.Header` / `.Body` / `.Footer`) | Any content block. Header 56 px fixed; footer 40 px fixed | Insight text or status lines in the header |
 | `Badge` | Status pill: tint + text, 22 px | Filled saturated colours |
 | `Button` | `primary` · `secondary` (outline) · `ghost` · `danger`; sizes `sm` 28 · `md` 36 · `lg` 40 | 44 px buttons on desktop; two primaries in one view |
-| `ChartFrame` | Recharts theme: series palette, dashed horizontal grid only, no axis lines, 12 px ticks, card-style tooltip, legend below and hidden when series = 1 | Raw Recharts defaults |
-| `DateRangePicker` | Presets (3M · 6M · 1Y · YTD) + start / end month selects, 44 px tall, helper text "8 months available" | Three separate period controls on one page |
+| `ChartFrame` | Recharts theme: series palette, dashed horizontal grid only, no axis lines, 12 px ticks, card-style tooltip, legend below and hidden when series = 1. **Donuts** follow the HVAC "Findings by status" chart: inner 60 / outer 100, labelled slices with label lines, `CHART_PALETTE` from `lib/tokens`, Recharts legend below | Raw Recharts defaults; an unlabelled ring with a side list |
+| `DateRangePicker` | ONE period control: preset buttons (3M · 6M · 1Y · YTD) and From / To month selects, every one a bordered, shadowed control; the preset matching the range is filled purple; helper text "8 of 8 months selected" | Three separate period controls on one page; text-only presets; borderless selects |
 | `EmbedFrame` | Framed iframe for external tools (Pest Control / AITable): `SectionCard` chrome, fixed 720 px, open-in-new-tab action, theme passed via URL param | Letting the embedded tool's header dictate the page |
 | `DataTable` | Purple header row (`text-eyebrow`, on-primary), 44 px rows, zebra `--color-component`, sticky header | Coloured row borders as status; use a `Badge` cell |
 
@@ -162,7 +164,31 @@ One way to do each thing. Do not create a second version of any of these on a pa
 
 ## 7. Page-specific rulings (from the 2026-09-02 audit)
 
-- **Water:** Monthly / Daily / Satellite → `SegmentedControl`. Overview / Zone Analysis / Assets & Connections / Main Database / Exceptions → `Tabs` (5 tabs, no scroll). Loss call-out uses `danger` tint + text tokens (readable in dark).
+- **Water:** Monthly / Daily / Satellite → `SegmentedControl` (purple pill strip). Overview / Zone Analysis / Assets & Connections / Main Database / Exceptions → `Tabs` (5 card-pill tabs, no scroll). KPI row = `StatsGrid` with the six historical tiles (Total Supply A1 `water`, Distribution A2 `info`, Consumption A3 `success`, Efficiency `success`, Total Loss `danger` with the MoM/YoY trend, Loss Cost Estimate `warning`). Loss call-out uses `danger` tint + text tokens (readable in dark). No "month-to-date" callout box — that provenance is one clause in the caption line under the period control.
+
+### Owner review — 2026-09-02 (Vercel preview of PR #79, the first Water migration)
+
+The owner compared the migrated Water page with the rest of the app and ruled:
+
+1. **Consistency beats the kit's new looks.** Water must look like HVAC and STP, not the other way round. The kit's flat 36 px segmented strip, underline tabs, fixed-height 104 px KPI tile and text-only presets are retired; the primitives now render the app-wide strip (`TabNavigation`) and tile (`StatsGrid`).
+2. **KPI colours follow meaning, not module** — the HVAC scheme (purple / blue / green / amber / red icon tiles).
+3. **Filters must look pressable** — bordered, shadowed buttons and selects; the active preset filled.
+4. **Donuts are the HVAC donut** (labelled slices, `CHART_PALETTE`, legend below).
+5. **No blue informational callout boxes** above content.
+6. **Section switches are the STP style** (secondary card-pill strip); the mode switch is the primary purple-pill strip.
+7. **Every module's KPI row is the same `StatsGrid` tile** — STP's `HierarchyStatGrid` was switched back the same day.
+
+Sections 5–6 above already reflect these rulings. Anything in the kit's original files that contradicts them is superseded.
+
+### QA round — 2026-09-03 (static audit of all ten pages + browser crawl of every route)
+
+Three rules came out of the fixes, and apply to every page from now on:
+
+- **One `role="tabpanel"` per page, always present for the active tab.** `TabNavigation` mints `id="tab-<key>"` and `aria-controls="panel-<key>"`; the page renders exactly one wrapper `id="panel-<activeKey>" role="tabpanel" aria-labelledby="tab-<activeKey>" tabIndex={0}` around the active body (Water, Assets, Contractors, HVAC, Fire Safety, Electricity, STP, Settings all do). Every strip passes a page-specific `ariaLabel` ("Water daily sections", "STP sections"…), never the default.
+- **A failed read blocks only the views that read it.** The mode switch (`SegmentedControl`) stays on screen in the error and empty states; a view with its own fetch (Water Daily) still renders. Never hide navigation behind a data error.
+- **Module accents never colour another module's KPI tile.** `variant="water"` belongs to Water only; a count is `primary`, a secondary figure `info`, and status tiles use `success` / `warning` / `danger`.
+
+Findings the audit left for each page's own migration session are listed in `PROJECT_STATUS.md` §4.
 - **Dashboard:** hero grid keeps its dark-on-purple treatment but uses `KpiCard` proportions. Remove the estate briefing ticker. Chart cards use `SectionCard` with equal heights; insight lines move to the footer. "Year to date" and "Latest updates" lose the empty toolbar rows. Latest updates becomes a 2-up grid or list rows so titles do not truncate.
 - **Electricity / STP:** remove the load / plant briefing tickers. KPI strips become `KpiCard` rows. Status badges use tinted `Badge`. Coloured row borders on tables are removed.
 - **STP:** the coloured-top-strip KPI variant is retired.

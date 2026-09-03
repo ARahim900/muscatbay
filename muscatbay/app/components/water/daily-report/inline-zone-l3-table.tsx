@@ -5,7 +5,8 @@
 // (SectionCard, KpiCard, Badge) and the design tokens only.
 
 import { useState, useCallback, useMemo, useEffect } from "react";
-import { Badge, KpiCard, SectionCard } from "@/components/ui";
+import { Badge, SectionCard } from "@/components/ui";
+import { StatsGrid } from "@/components/shared/stats-grid";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
     Droplets, Building2, Activity, Home,
@@ -295,12 +296,12 @@ function ZoneL3Table({
                 description={`${l3Meters.length} meters — Day 1 to Day ${latestDay}`}
             />
             <SectionCard.Body className="space-y-4">
-                {/* Zone summary KPIs (KpiCard — DESIGN_SYSTEM.md §6) */}
-                <div className="grid grid-cols-2 gap-3.5 md:grid-cols-3">
-                    <KpiCard tone="water" icon={Droplets} label="L2 bulk" value={n(l2GrandTotal)} unit="m³" footnote="Zone entry meter · month to date" />
-                    <KpiCard tone="water" icon={Activity} label="Σ Individuals" value={n(grandTotal)} unit="m³" footnote={`${l3Meters.length} L3 meters · month to date`} />
-                    <KpiCard icon={ArrowUpDown} label="Difference" value={diffCell(diffGrandTotal)} unit="m³" footnote={highZoneDiff ? "Above the 20 m³ tolerance" : "Within the 20 m³ tolerance"} />
-                </div>
+                {/* Zone summary KPIs — the app-wide StatsGrid tile */}
+                <StatsGrid stats={[
+                    { label: "L2 Bulk", value: n(l2GrandTotal), unit: "m³", subtitle: "Zone entry meter · month to date", icon: Droplets, variant: "primary" },
+                    { label: "Σ Individuals", value: n(grandTotal), unit: "m³", subtitle: `${l3Meters.length} L3 meters · month to date`, icon: Activity, variant: "info" },
+                    { label: "Difference", value: diffCell(diffGrandTotal), unit: "m³", subtitle: highZoneDiff ? "Above the 20 m³ tolerance" : "Within the 20 m³ tolerance", icon: ArrowUpDown, variant: highZoneDiff ? "danger" : "success" },
+                ]} />
 
                 <div className="flex flex-wrap items-center gap-2">
                     <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
