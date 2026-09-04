@@ -1558,6 +1558,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-04 — fix(ui): header parity, dark-mode chart tokens and mobile on Design System v2.0 (#80)
 - 2026-09-03 — feat(design): Design System v2.0 foundation + Water page migration (#79)
 - 2026-09-02 — revert: return the application code to its 1 September state
 - 2026-09-02 — revert(ui): restore the KPI card, Water dashboard and daily report to their previous look
