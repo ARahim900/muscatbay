@@ -469,6 +469,18 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Closed 2026-09-04 — chart series legible in dark mode.** The 2026-09-03
+  technical audit (`docs/audits/2026-09-03-technical-audit.md`) found brand
+  purple `#4E4456` rendering at 1.99:1 on the dark card, so the primary series
+  of every purple chart (`chartTheme.series[0]` on Water; legacy
+  `--chart-brand` on the STP inlet area, dashboard STP bars and Electricity)
+  vanished in the control room's primary theme. `app/design-tokens.css` now
+  routes `--color-chart-1/3/5` through the semantic layer with dark values
+  `#8B7F94` / `#6B9AC4` / `#A98BD1` (light values unchanged), and
+  `globals.css` `.dark` lifts `--chart-brand` to the `#8B7F94` that
+  `--chart-5` already used. All seven v2 series clear 4.5:1 on `#16141B`.
+  Recorded in `DESIGN_SYSTEM.md` §2.4. The rest of the audit's findings
+  (12 P1, 19 P2, 9 P3) remain open and are listed in that report.
 - **Design-system migration in progress (2026-09-02).** Only Water is on
   v2.0. Until the last page migrates, `app/globals.css` keeps the legacy
   `:root` / `.dark` variables and `@theme` entries, plus a `bg-muted-bg`

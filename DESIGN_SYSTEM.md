@@ -90,6 +90,8 @@ Status dots use the text colour; badges use tint background + text colour. Every
 
 `#4E4456` purple · `#A1D1D5` teal · `#3B7ED2` water blue · `#D4A843` amber · `#8B6DB0` violet · `#5FA88A` sage. Loss / negative `#C96B6B`. Target lines `#9A6B00` dashed. Axis text `--color-muted`. Grid `--color-line`.
 
+**Dark mode (added 2026-09-04).** Three series lift on the dark card so a 2 px line stays visible: purple `#4E4456` → `#8B7F94`, water blue `#3B7ED2` → `#6B9AC4`, violet `#8B6DB0` → `#A98BD1`. Teal, amber, sage and loss are unchanged in both modes. Every series now clears 4.5:1 on `#16141B`; brand purple was 1.99:1 before. The legacy `--chart-brand` in `globals.css` lifts to the same `#8B7F94` as `--chart-5`, so the STP, Dashboard and Electricity charts get the same fix until they migrate.
+
 ---
 
 ## 3. Typography — seven steps, nothing else
