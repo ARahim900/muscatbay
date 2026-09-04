@@ -51,21 +51,24 @@ export function PageHeader({ title, description, className, showBreadcrumbs = tr
     return (
         <div ref={headerRef} className={cn("flex flex-col gap-2", className)}>
             {showBreadcrumbs && <Breadcrumbs className="mb-1" />}
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            {/* Proportions are the kit header's (components/ui/page-header.tsx), so
+                the pages still on this legacy component sit at the same height and
+                type size as /water. The title used to scale to text-4xl (36px) and
+                was free to wrap, which is why "Electricity Monitoring" and
+                "Fire Safety Management" ran to two lines while "Water" did not.
+                One display step, truncated, capped at 60% of the row — shorten a
+                title rather than reintroducing the wrap. DESIGN_SYSTEM.md §3/§5. */}
+            <div className="flex flex-col gap-4 md:h-header md:flex-row md:items-center md:justify-between md:gap-6">
                 <div
-                    className={cn("transition-design", accentColor && "border-s-[3px] ps-3")}
+                    className={cn("min-w-0 transition-design md:max-w-[60%]", accentColor && "border-s-[3px] ps-4")}
                     style={accentColor ? { borderColor: accentColor } : undefined}
                 >
-                    {/* Main headline — Inter SemiBold at the display end of the opsz axis;
-                        tracking-tight (-0.025em) matches Inter's recommended tightening at
-                        these sizes. 600 (not 700) keeps every heading in the app on one
-                        weight — BRAND_DESIGN.md §3 "Heading Rule". */}
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight md:leading-[1.15]">{title}</h1>
+                    <h1 className="text-display truncate text-primary dark:text-fg">{title}</h1>
                     {description && (
-                        <p className="text-sm sm:text-[0.9375rem] text-muted-foreground mt-1.5 sm:mt-2 leading-relaxed max-w-prose">{description}</p>
+                        <p className="text-body truncate text-muted-foreground">{description}</p>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex shrink-0 items-center gap-2">
                     {action && (
                         <Button onClick={action.onClick}>
                             {action.icon && <action.icon className="me-2 h-4 w-4" />}

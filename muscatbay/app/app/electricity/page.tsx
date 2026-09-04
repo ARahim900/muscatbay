@@ -73,7 +73,6 @@ const ratePerKWh = ELECTRICITY_RATES.RATE_PER_KWH;
 const ELECTRICITY_CACHE_KEY = "electricity:page";
 interface ElectricityPageCache {
     meters: MeterReading[];
-    readingsCount: number;
     lastUpdated: Date;
 }
 
@@ -108,7 +107,6 @@ export default function ElectricityPage() {
     const [loading, setLoading] = useState(!cached);
     const [dataSource, setDataSource] = useState<"supabase" | "mock">(cached ? "supabase" : "mock");
     const [debugError, setDebugError] = useState<string | null>(null);
-    const [readingsCount, setReadingsCount] = useState<number>(cached?.readingsCount ?? 0);
     const getMeterTypeColor = (type: string): BadgeColor => {
         const t = type.toLowerCase();
         if (t.includes('main') || t.includes('incomer') || t.includes('bulk')) return 'blue';
@@ -166,18 +164,14 @@ export default function ElectricityPage() {
                 setDebugError(null);
                 const now = new Date();
                 setLastUpdated(now);
-                const totalReadings = supabaseData.reduce((sum, m) => sum + Object.keys(m.readings).length, 0);
-                if (!silent) setReadingsCount(totalReadings);
                 setPageCache<ElectricityPageCache>(ELECTRICITY_CACHE_KEY, {
                     meters: supabaseData,
-                    readingsCount: totalReadings,
                     lastUpdated: now,
                 });
             } else if (!silent) {
                 // Configured but empty: a real problem with the live table, not
                 // a cue to quietly swap in demo meters.
                 setMeters([]);
-                setReadingsCount(0);
                 setDataSource("supabase");
                 setDebugError(
                     "Supabase returned no electricity meters. Showing no data rather than demo figures — " +
@@ -189,7 +183,6 @@ export default function ElectricityPage() {
                 const message = e instanceof Error ? e.message : "Unknown error";
                 console.warn("Supabase load error:", message);
                 setMeters([]);
-                setReadingsCount(0);
                 setDataSource("supabase");
                 setDebugError(`Could not load electricity meters from Supabase: ${message}`);
             }
@@ -728,7 +721,7 @@ export default function ElectricityPage() {
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
-                    title="Electricity Monitoring"
+                    title="Electricity"
                     description="Track power consumption and costs across all meters"
                 />
                 <PageStatusBar
@@ -737,10 +730,7 @@ export default function ElectricityPage() {
                     lastUpdated={lastUpdated}
                     latestDataDate={latestDataDate}
                     error={debugError ? `Error: ${debugError}` : null}
-                >
-
-                    {dataSource === 'supabase' && <span className="text-[10px] text-muted-foreground">{readingsCount} readings</span>}
-                </PageStatusBar>
+                />
             </div>
 
             {/* Inspection-first: Load Watch leads; analysis + database consolidate into one tab */}

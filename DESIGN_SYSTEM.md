@@ -202,6 +202,25 @@ Findings the audit left for each page's own migration session are listed in `PRO
 - **Settings:** replace the "Authenticated" pill with the standard `StatusChip`; forms use `Button md`.
 - **Breadcrumbs:** kept on every page (decision 2026-09-02).
 
+### Header parity — 2026-09-04 (owner report)
+
+The owner compared `/water`, `/electricity` and `/stp` and ruled that **every
+module header must sit at Water's proportions**. Rather than wait for each
+page's migration, the two shared legacy components were brought to the kit's
+geometry, which fixes all eight unmigrated pages at once:
+
+- `components/shared/page-header.tsx` — `md:h-header` (64 px), one
+  `text-display` title, `truncate` on title and description, `md:max-w-[60%]`.
+  The title no longer scales to 36 px and no longer wraps: **shorten the title
+  instead**, and keep it identical to the sidebar name.
+- `components/shared/page-status-bar.tsx` — renders exactly one `StatusChip`.
+  The old cluster ("Live Data (Supabase)" + record count + LIVE badge + "DATA
+  THROUGH …" pill + seconds-precision sync time) is retired under §6. Data
+  staleness outranks realtime state, so a 65-day-old table reads `stale` even
+  while the socket is healthy; realtime being down maps to `connecting`, as
+  `/water` already does. Record counts and per-page connected/disconnected
+  labels do not belong in the header.
+
 ---
 
 ## 8. Enforcement

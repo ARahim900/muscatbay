@@ -189,8 +189,6 @@ export default function GulfExpertPage() {
           isConnected={dataSource === "supabase"}
           isLive={isLive}
           lastUpdated={lastUpdated}
-          connectedLabel="Connected"
-          disconnectedLabel="No Connection"
         />
       </div>
 

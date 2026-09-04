@@ -469,6 +469,33 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Closed 2026-09-04 — every module header now matches Water's.** Reported by
+  the owner from `/water`, `/electricity` and `/stp` side by side: Water fitted
+  on one row while Electricity ran the title onto two lines ("Electricity /
+  Monitoring") beside a status cluster three times the height of Water's chip.
+  Two shared components caused it on all eight legacy pages, so both were fixed
+  once rather than page by page:
+  - `components/shared/page-header.tsx` scaled its `h1` to `text-4xl` (36 px) and
+    let the title and description wrap freely. It now uses the kit header's
+    proportions — `md:h-header` (64 px), one `text-display` step, `truncate`,
+    `md:max-w-[60%]` — so a long title is shortened rather than wrapped.
+  - `components/shared/page-status-bar.tsx` rendered "Live Data (Supabase)" + a
+    record count + a LIVE/Offline badge + a "DATA THROUGH …" pill + a
+    to-the-second sync time. `DESIGN_SYSTEM.md` §6 allows one chip, and
+    `StatusChip` was written to replace exactly that cluster (its own header
+    comment says so); the pages had simply never adopted it. The bar now maps
+    its props onto a single `StatusChip`, following the state mapping `/water`
+    already uses, with data staleness outranking realtime state. **The recency
+    warning is kept, not dropped** — Electricity still reads "Data to 01 Jul ·
+    65 d behind" on an amber dot, now inside the one chip.
+  Page titles were shortened to the sidebar names, closing backlog item (f):
+  "Electricity Monitoring" → **Electricity**, "Assets Register" → **Assets**,
+  "Contractor Management" → **Contractors**, "Fire Safety Management" → **Fire
+  Safety**. Two Title Case descriptions moved to sentence case. Dropped from the
+  headers: the `{n} readings` / `{n} daily records` counts and the per-page
+  `connectedLabel` / `disconnectedLabel` overrides (provenance belongs in a
+  caption, §0). Electricity's orphaned `readingsCount` state and cache field went
+  with them. `eslint`, `tsc`, 334 tests and `next build` all green.
 - **Closed 2026-09-04 — `mobile/` moved onto Design System v2.0.** The
   2026-09-03 audit found the Expo app running a fork of the pre-v2 palette,
   citing the superseded `BRAND_DESIGN.md` as authoritative. Status colours were
