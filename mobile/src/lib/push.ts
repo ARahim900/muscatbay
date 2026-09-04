@@ -23,6 +23,7 @@ import { Platform } from 'react-native';
 import { EAS_PROJECT_ID } from '~/adapters/env';
 import { getSupabaseClient } from '~/adapters/supabase-client';
 import { isExpoGo } from '~/lib/runtime';
+import { BRAND } from '~/theme/tokens';
 
 export type PushRegistrationStatus = 'registered' | 'skipped' | 'denied' | 'error';
 
@@ -50,7 +51,7 @@ export async function configureNotificationHandler(): Promise<void> {
       await Notifications.setNotificationChannelAsync('operational-alerts', {
         name: 'Operational alerts',
         importance: Notifications.AndroidImportance.HIGH,
-        lightColor: '#A1D1D5',
+        lightColor: BRAND.teal,
       });
     }
   } catch (error) {

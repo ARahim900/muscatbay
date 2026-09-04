@@ -46,7 +46,7 @@ export default function LockScreen() {
         <Lock size={26} color={colors.primaryForeground} />
       </View>
 
-      <View className="items-center gap-1.5">
+      <View className="items-center gap-2">
         <Text variant="title">Muscat Bay Operations is locked</Text>
         <Text variant="caption" className="text-center">
           {user?.email

@@ -2,7 +2,7 @@
  * Muscat Bay — NativeWind v4 / Tailwind 3 config.
  *
  * Colour values live in `src/global.css` as RGB-channel CSS variables so both
- * themes and the `/opacity` modifier work. See BRAND_DESIGN.md for the spec.
+ * themes and the `/opacity` modifier work. See DESIGN_SYSTEM.md for the spec.
  */
 const withAlpha = (variable) => `rgb(var(${variable}) / <alpha-value>)`;
 
@@ -76,13 +76,14 @@ module.exports = {
           3: withAlpha('--chart-3'),
           4: withAlpha('--chart-4'),
           5: withAlpha('--chart-5'),
+          6: withAlpha('--chart-6'),
           axis: withAlpha('--chart-axis'),
           loss: withAlpha('--chart-loss'),
           success: withAlpha('--chart-success'),
         },
       },
       borderRadius: {
-        // BRAND_DESIGN.md §5 — cards 10.5px, inputs 7px, chips/buttons 5px.
+        // DESIGN_SYSTEM.md §4 — cards 10.5px, inputs 7px, chips/buttons 5px.
         sm: '5px',
         md: '7px',
         lg: '10.5px',
@@ -100,14 +101,18 @@ module.exports = {
         mono: ['GeistMono_400Regular'],
       },
       fontSize: {
-        // BRAND_DESIGN.md §3 type scale.
-        xs: ['12.25px', { lineHeight: '20px' }],
-        sm: ['14px', { lineHeight: '20px' }],
-        base: ['14px', { lineHeight: '21px' }],
-        lg: ['15px', { lineHeight: '20px' }],
-        xl: ['15.75px', { lineHeight: '24.5px' }],
-        '2xl': ['24px', { lineHeight: '24px' }],
-        '3xl': ['30px', { lineHeight: '32px' }],
+        // DESIGN_SYSTEM.md §3 type scale. The fractional sizes this file used to
+        // carry (12.25 / 15.75 / 24.5px) came from scaling the web's old rem
+        // steps; they are now the real steps. A full move to the seven named
+        // steps on DM Sans is a separate job — it needs the font package — so
+        // the Inter families below stay as they are.
+        xs: ['12px', { lineHeight: '16px' }], // caption
+        sm: ['13px', { lineHeight: '18px' }], // label
+        base: ['14px', { lineHeight: '21px' }], // body
+        lg: ['16px', { lineHeight: '22px' }], // title
+        xl: ['16px', { lineHeight: '22px' }], // title
+        '2xl': ['24px', { lineHeight: '28px' }], // kpi
+        '3xl': ['28px', { lineHeight: '34px' }], // display
       },
     },
   },

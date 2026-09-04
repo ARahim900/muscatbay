@@ -2,7 +2,7 @@
  * Small categorical bar chart, drawn with `react-native-svg`.
  *
  * Recharts / GSAP / shadcn do not run in React Native, so charts here are hand
- * drawn against the same `--chart-*` palette (BRAND_DESIGN.md §2.9). Deliberate
+ * drawn against the same `--chart-*` palette (DESIGN_SYSTEM.md §2.4). Deliberate
  * constraints, because a phone chart that tries to be a desktop chart is worse
  * than no chart:
  *   • no animation — an operator glancing at a KPI does not need motion;

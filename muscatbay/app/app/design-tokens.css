@@ -37,6 +37,15 @@
   --mb-shadow-card-hover-l: 0 2px 4px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.08);
   --mb-shadow-card-d:       0 4px 12px rgba(0,0,0,.30), 0 2px 4px rgba(0,0,0,.20);
   --mb-shadow-card-hover-d: 0 8px 24px rgba(0,0,0,.40), 0 4px 8px rgba(0,0,0,.25);
+
+  /* Chart series that need a dark-mode lift. Brand purple #4E4456 reads 1.99:1
+     on the dark card (#16141B) — a 2 px line disappears. The lifted values keep
+     each hue and clear 4.5:1 on the dark card (purple 4.84, blue 6.13, violet
+     6.35); the light values are unchanged. Teal, amber, sage and loss already
+     pass in both modes (≥ 5:1 on dark) and are not switched. */
+  --mb-chart-1-l: #4E4456; --mb-chart-1-d: #8B7F94;
+  --mb-chart-3-l: #3B7ED2; --mb-chart-3-d: #6B9AC4;
+  --mb-chart-5-l: #8B6DB0; --mb-chart-5-d: #A98BD1;
 }
 
 /* ---------- 2. Semantic tokens — light is the default ---------- */
@@ -60,6 +69,10 @@
 
   --shadow-card:       var(--mb-shadow-card-l);
   --shadow-card-hover: var(--mb-shadow-card-hover-l);
+
+  --color-chart-1: var(--mb-chart-1-l);
+  --color-chart-3: var(--mb-chart-3-l);
+  --color-chart-5: var(--mb-chart-5-l);
 }
 
 .dark {
@@ -82,6 +95,10 @@
 
   --shadow-card:       var(--mb-shadow-card-d);
   --shadow-card-hover: var(--mb-shadow-card-hover-d);
+
+  --color-chart-1: var(--mb-chart-1-d);
+  --color-chart-3: var(--mb-chart-3-d);
+  --color-chart-5: var(--mb-chart-5-d);
 }
 
 /* ---------- 3. Tailwind theme — this is what generates the utilities ----------
@@ -123,12 +140,14 @@
   --color-mod-pest:        #84B59F;
   --color-mod-fire:        #C96B6B;
 
-  /* Chart series → used by ChartFrame, not by className */
-  --color-chart-1: #4E4456;
+  /* Chart series → used by ChartFrame, not by className.
+     1, 3 and 5 follow the theme (see the semantic block above); the rest are
+     legible on both cards and stay constant. */
+  --color-chart-1: var(--color-chart-1);
   --color-chart-2: #A1D1D5;
-  --color-chart-3: #3B7ED2;
+  --color-chart-3: var(--color-chart-3);
   --color-chart-4: #D4A843;
-  --color-chart-5: #8B6DB0;
+  --color-chart-5: var(--color-chart-5);
   --color-chart-6: #5FA88A;
   --color-chart-loss: #C96B6B;
 

@@ -282,8 +282,8 @@ export default function FirefightingPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <PageHeader
-                    title="Fire Safety Management"
-                    description="Fire-safety assets, preventive maintenance compliance and open issues"
+                    title="Fire Safety"
+                    description="Assets, PPM compliance and open issues"
                 />
                 <PageStatusBar isConnected={connected} isLive={isLive} lastUpdated={lastUpdated} error={error} />
             </div>

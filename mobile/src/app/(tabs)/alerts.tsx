@@ -23,10 +23,11 @@ import { Text } from '~/components/ui/text';
 import { loadAlerts } from '~/features/data/queries';
 import { useAsyncData } from '~/hooks/use-async-data';
 import { MODULES_BY_KEY } from '~/lib/modules';
-import { STATUS_COLORS } from '~/theme/tokens';
+import { useTheme } from '~/theme/theme-provider';
 
 export default function AlertsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { data, error, loading, refreshing, refresh } = useAsyncData(loadAlerts, []);
 
   if (loading && !data) {
@@ -59,7 +60,7 @@ export default function AlertsScreen() {
 
       {alerts.length === 0 && failedSources.length === 0 ? (
         <Card className="items-center gap-2 py-8">
-          <CheckCircle2 size={24} color={STATUS_COLORS.normal} />
+          <CheckCircle2 size={24} color={colors.status.normal} />
           <Text variant="heading">No conditions flagged</Text>
           <Text variant="caption" className="text-center">
             Water loss is within target, no active contract is past its end date, and the STP daily
@@ -80,7 +81,7 @@ export default function AlertsScreen() {
             onPress={() => {
               if (module) router.push(`/module/${module.key}`);
             }}
-            className="gap-2.5">
+            className="gap-3">
             <View className="flex-row items-start justify-between gap-3">
               <Text variant="heading" className="flex-1">
                 {alert.title}
@@ -93,7 +94,7 @@ export default function AlertsScreen() {
             </Text>
 
             {module ? (
-              <View className="flex-row items-center gap-1.5">
+              <View className="flex-row items-center gap-2">
                 <View
                   style={{ backgroundColor: module.accent }}
                   className="h-1.5 w-1.5 rounded-full"

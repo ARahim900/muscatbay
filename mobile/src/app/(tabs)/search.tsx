@@ -156,7 +156,7 @@ export default function SearchScreen() {
           key={result.id}
           accessibilityLabel={`${KIND_LABEL[result.kind]}: ${result.title}. Open ${result.moduleKey} module.`}
           onPress={() => router.push(`/module/${result.moduleKey}`)}
-          className="gap-1.5">
+          className="gap-2">
           <View className="flex-row items-center gap-2">
             <View
               style={{ backgroundColor: KIND_COLOR[result.kind] }}

@@ -4,7 +4,7 @@ import '~/global.css';
 // re-exports all 18 Inter instances and Metro then bundles every one of them
 // (megabytes of unused TTFs). These five are the only faces the app renders.
 // Inter for UI text mirrors the web app (Rahim's 2026-08-31 direction — see
-// BRAND_DESIGN.md §3); Geist Mono stays for meter IDs and account numbers.
+// DESIGN_SYSTEM.md §3); Geist Mono stays for meter IDs and account numbers.
 import { GeistMono_400Regular } from '@expo-google-fonts/geist-mono/400Regular';
 import { Inter_400Regular } from '@expo-google-fonts/inter/400Regular';
 import { Inter_500Medium } from '@expo-google-fonts/inter/500Medium';

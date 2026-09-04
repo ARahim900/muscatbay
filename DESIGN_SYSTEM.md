@@ -90,6 +90,8 @@ Status dots use the text colour; badges use tint background + text colour. Every
 
 `#4E4456` purple · `#A1D1D5` teal · `#3B7ED2` water blue · `#D4A843` amber · `#8B6DB0` violet · `#5FA88A` sage. Loss / negative `#C96B6B`. Target lines `#9A6B00` dashed. Axis text `--color-muted`. Grid `--color-line`.
 
+**Dark mode (added 2026-09-04).** Three series lift on the dark card so a 2 px line stays visible: purple `#4E4456` → `#8B7F94`, water blue `#3B7ED2` → `#6B9AC4`, violet `#8B6DB0` → `#A98BD1`. Teal, amber, sage and loss are unchanged in both modes. Every series now clears 4.5:1 on `#16141B`; brand purple was 1.99:1 before. The legacy `--chart-brand` in `globals.css` lifts to the same `#8B7F94` as `--chart-5`, so the STP, Dashboard and Electricity charts get the same fix until they migrate.
+
 ---
 
 ## 3. Typography — seven steps, nothing else
@@ -199,6 +201,25 @@ Findings the audit left for each page's own migration session are listed in `PRO
 - **Pest Control:** `EmbedFrame` around the AITable embed. Pass `?theme=` when AITable supports it; otherwise leave the embed light and rely on the frame to hold the page's look.
 - **Settings:** replace the "Authenticated" pill with the standard `StatusChip`; forms use `Button md`.
 - **Breadcrumbs:** kept on every page (decision 2026-09-02).
+
+### Header parity — 2026-09-04 (owner report)
+
+The owner compared `/water`, `/electricity` and `/stp` and ruled that **every
+module header must sit at Water's proportions**. Rather than wait for each
+page's migration, the two shared legacy components were brought to the kit's
+geometry, which fixes all eight unmigrated pages at once:
+
+- `components/shared/page-header.tsx` — `md:h-header` (64 px), one
+  `text-display` title, `truncate` on title and description, `md:max-w-[60%]`.
+  The title no longer scales to 36 px and no longer wraps: **shorten the title
+  instead**, and keep it identical to the sidebar name.
+- `components/shared/page-status-bar.tsx` — renders exactly one `StatusChip`.
+  The old cluster ("Live Data (Supabase)" + record count + LIVE badge + "DATA
+  THROUGH …" pill + seconds-precision sync time) is retired under §6. Data
+  staleness outranks realtime state, so a 65-day-old table reads `stale` even
+  while the socket is healthy; realtime being down maps to `connecting`, as
+  `/water` already does. Record counts and per-page connected/disconnected
+  labels do not belong in the header.
 
 ---
 

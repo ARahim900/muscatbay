@@ -469,6 +469,73 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Closed 2026-09-04 — every module header now matches Water's.** Reported by
+  the owner from `/water`, `/electricity` and `/stp` side by side: Water fitted
+  on one row while Electricity ran the title onto two lines ("Electricity /
+  Monitoring") beside a status cluster three times the height of Water's chip.
+  Two shared components caused it on all eight legacy pages, so both were fixed
+  once rather than page by page:
+  - `components/shared/page-header.tsx` scaled its `h1` to `text-4xl` (36 px) and
+    let the title and description wrap freely. It now uses the kit header's
+    proportions — `md:h-header` (64 px), one `text-display` step, `truncate`,
+    `md:max-w-[60%]` — so a long title is shortened rather than wrapped.
+  - `components/shared/page-status-bar.tsx` rendered "Live Data (Supabase)" + a
+    record count + a LIVE/Offline badge + a "DATA THROUGH …" pill + a
+    to-the-second sync time. `DESIGN_SYSTEM.md` §6 allows one chip, and
+    `StatusChip` was written to replace exactly that cluster (its own header
+    comment says so); the pages had simply never adopted it. The bar now maps
+    its props onto a single `StatusChip`, following the state mapping `/water`
+    already uses, with data staleness outranking realtime state. **The recency
+    warning is kept, not dropped** — Electricity still reads "Data to 01 Jul ·
+    65 d behind" on an amber dot, now inside the one chip.
+  Page titles were shortened to the sidebar names, closing backlog item (f):
+  "Electricity Monitoring" → **Electricity**, "Assets Register" → **Assets**,
+  "Contractor Management" → **Contractors**, "Fire Safety Management" → **Fire
+  Safety**. Two Title Case descriptions moved to sentence case. Dropped from the
+  headers: the `{n} readings` / `{n} daily records` counts and the per-page
+  `connectedLabel` / `disconnectedLabel` overrides (provenance belongs in a
+  caption, §0). Electricity's orphaned `readingsCount` state and cache field went
+  with them. `eslint`, `tsc`, 334 tests and `next build` all green.
+- **Closed 2026-09-04 — `mobile/` moved onto Design System v2.0.** The
+  2026-09-03 audit found the Expo app running a fork of the pre-v2 palette,
+  citing the superseded `BRAND_DESIGN.md` as authoritative. Status colours were
+  the stock saturated set (`#22C55E`, `#F59E0B`, `#EF4444`, `#3B82F6`) with **no
+  dark variants at all**, so a status icon measured 2.1–2.8:1 on a light card —
+  below the 3:1 floor for non-text contrast — while the app's own contract
+  promises a visible shape cue. `src/global.css` and `src/theme/tokens.ts` now
+  carry the §2.2 muted status pairs per theme (4.7–6.5:1 light, 7.2–12.3:1
+  dark), the §2.3 module accents (electricity, STP, HVAC and fire had all
+  drifted), and the §2.4 six-series chart palette including the same dark lift
+  for series 1/3/5 the web got the same day. `STATUS_COLORS` was a flat constant
+  and is now per-theme, reached through `useTheme().colors.status`;
+  `presentation()` takes a theme and `useStatusPresentation()` is the hook form.
+  Because §2.2 defines five status colours, `stale` and `missing` map onto the
+  warning and neutral tokens rather than inventing a sixth — `stale` took a
+  **Clock** icon so it stays shape-distinct from `warning`, which now shares its
+  colour. Also fixed in the same pass: the destructive button was white on
+  `#D67A7A` (3.0:1) and is now white on `#B03A2E` (6.0:1) in both themes; the
+  dashboard's "Open" affordance was a bare `<Text onPress>` about 34pt tall in
+  `--ring` (3.5:1 light) and is now a 44pt `Pressable` with a haptic and a
+  themed link colour (8.6:1 light, 11.9:1 dark); 33 half-step spacing utilities
+  moved onto the 4/8 grid; the status-pill icon went 13px → the systems's 16px;
+  and the last five hardcoded hexes left the components. **Deferred, and still
+  open:** the app is on Inter, not DM Sans, and `title`/`heading` now share the
+  16px step — moving to the seven named steps (page title at `text-display`
+  28px, KPI weight 700) needs the DM Sans font package and is a separate job.
+  `mobile/` has no working ESLint config (`expo lint` tries to fetch one), so
+  `npx tsc --noEmit` remains the only gate there.
+- **Closed 2026-09-04 — chart series legible in dark mode.** The 2026-09-03
+  technical audit (`docs/audits/2026-09-03-technical-audit.md`) found brand
+  purple `#4E4456` rendering at 1.99:1 on the dark card, so the primary series
+  of every purple chart (`chartTheme.series[0]` on Water; legacy
+  `--chart-brand` on the STP inlet area, dashboard STP bars and Electricity)
+  vanished in the control room's primary theme. `app/design-tokens.css` now
+  routes `--color-chart-1/3/5` through the semantic layer with dark values
+  `#8B7F94` / `#6B9AC4` / `#A98BD1` (light values unchanged), and
+  `globals.css` `.dark` lifts `--chart-brand` to the `#8B7F94` that
+  `--chart-5` already used. All seven v2 series clear 4.5:1 on `#16141B`.
+  Recorded in `DESIGN_SYSTEM.md` §2.4. The rest of the audit's findings
+  (12 P1, 19 P2, 9 P3) remain open and are listed in that report.
 - **Design-system migration in progress (2026-09-02).** Only Water is on
   v2.0. Until the last page migrates, `app/globals.css` keeps the legacy
   `:root` / `.dark` variables and `@theme` entries, plus a `bg-muted-bg`

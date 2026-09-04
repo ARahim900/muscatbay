@@ -777,7 +777,7 @@ export default function STPPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
                     title="STP Plant"
-                    description="Water Treatment Management"
+                    description="Treatment performance and daily operations"
                 />
                 <PageStatusBar
                     isConnected={isLiveData}
@@ -785,9 +785,7 @@ export default function STPPage() {
                     lastUpdated={lastUpdated}
                     latestDataDate={latestDataDate}
                     error={loadError}
-                >
-                    <span className="text-[10px] text-muted-foreground">{allOperations.length} daily records</span>
-                </PageStatusBar>
+                />
             </div>
 
             {/* Rows the sanitizer removed. Dropping them is correct (a reading

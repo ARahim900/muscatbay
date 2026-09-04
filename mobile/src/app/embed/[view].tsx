@@ -135,7 +135,7 @@ export default function EmbeddedViewScreen() {
       <Stack.Screen options={{ title: entry.view.title }} />
       <View className="flex-1 bg-background" style={{ paddingBottom: insets.bottom }}>
         {/* Honest framing, always visible — this is the website, not a native screen. */}
-        <View className="border-b border-border bg-card px-4 py-2.5">
+        <View className="border-b border-border bg-card px-4 py-3">
           <Text variant="caption">
             {entry.module.title} · web view. This page is still the muscatbay.work interface,
             embedded here until it is rebuilt natively.

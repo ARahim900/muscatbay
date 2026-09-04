@@ -34,13 +34,13 @@ export default function ModulesScreen() {
             key={module.key}
             accessibilityLabel={`Open ${module.title}. ${module.blurb}`}
             onPress={() => router.push(`/module/${module.key}`)}
-            className="flex-row items-center gap-3.5">
+            className="flex-row items-center gap-4">
             <View
               style={{ backgroundColor: `${module.accent}22` }}
               className="h-10 w-10 items-center justify-center rounded-md">
               <Icon size={20} color={module.accent} />
             </View>
-            <View className="flex-1 gap-0.5">
+            <View className="flex-1 gap-1">
               <Text variant="heading">{module.title}</Text>
               <Text variant="caption" numberOfLines={2}>
                 {module.blurb}

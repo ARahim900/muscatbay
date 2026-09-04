@@ -507,8 +507,8 @@ export default function AssetsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
-                    title="Assets Register"
-                    description="Master asset register — lifecycle, maintenance and financial data across all disciplines"
+                    title="Assets"
+                    description="Register, lifecycle and maintenance across all disciplines"
                 />
                 <PageStatusBar
                     isConnected={dataSource === 'supabase'}

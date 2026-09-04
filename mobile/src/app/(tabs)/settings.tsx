@@ -71,7 +71,7 @@ export default function SettingsScreen() {
 
       {/* ── Theme ─────────────────────────────────────────────────── */}
       <Card className="gap-3">
-        <View className="gap-0.5">
+        <View className="gap-1">
           <Text variant="heading">Appearance</Text>
           <Text variant="caption">
             Dark is the default for control rooms and night shifts; light is fully supported.
@@ -107,7 +107,7 @@ export default function SettingsScreen() {
       {/* ── Biometric lock ────────────────────────────────────────── */}
       <Card className="gap-3">
         <View className="flex-row items-center gap-3">
-          <View className="flex-1 gap-0.5">
+          <View className="flex-1 gap-1">
             <Text variant="heading">{biometrics?.label ?? 'Biometric unlock'}</Text>
             <Text variant="caption">
               {biometrics === null
@@ -138,7 +138,7 @@ export default function SettingsScreen() {
       {/* ── Notifications ─────────────────────────────────────────── */}
       <Card className="gap-3">
         <View className="flex-row items-center gap-3">
-          <View className="flex-1 gap-0.5">
+          <View className="flex-1 gap-1">
             <Text variant="heading">Operational alerts</Text>
             <Text variant="caption">
               Push a notification when a water-loss, contract-expiry or plant-failure condition is

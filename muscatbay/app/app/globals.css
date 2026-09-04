@@ -449,8 +449,13 @@
   --row-hover: color-mix(in srgb, var(--secondary) 7%, transparent);
   --row-zebra: color-mix(in srgb, var(--card) 93%, var(--muted));
 
-  /* Chart colors — lighter variants for dark backgrounds */
+  /* Chart colors — lighter variants for dark backgrounds.
+     --chart-brand is the same brand purple as --chart-5 (#4D445D, 2.0:1 on the
+     dark card) and drives the STP inlet area, the dashboard STP bars and the
+     Electricity brand series — it lifts with --chart-5 so those charts stay
+     visible in the control room's primary theme. */
   --chart-5: #8B7F94;
+  --chart-brand: #8B7F94;
   --chart-inlet: #9B8FA6;
   --chart-axis: #94A3B8;
   --chart-cursor-stroke: rgba(255, 255, 255, 0.12);

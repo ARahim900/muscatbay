@@ -6,7 +6,7 @@
  * RLS policies behind it). Adding a module here without adding it to
  * `ROLE_MODULES` on the web is a compile error, which is the point.
  *
- * Accent colours come from BRAND_DESIGN.md §2.8 and are used ONLY for the
+ * Accent colours come from DESIGN_SYSTEM.md §2.3 and are used ONLY for the
  * module icon and its chart series — never for page chrome.
  */
 import {

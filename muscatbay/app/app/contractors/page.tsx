@@ -588,18 +588,17 @@ export default function ContractorsPage() {
                 {/* No primary action: the app has no contractor-creation flow, and
                     a button wired to nothing is worse than no button. */}
                 <PageHeader
-                    title="Contractor Management"
-                    description="Contracts, renewals, commercial terms and year-by-year costs"
+                    title="Contractors"
+                    description="Contracts, renewals, terms and year-by-year costs"
                 />
-                {/* There is no demo dataset for contractors — say "no live data"
-                    rather than implying a local fallback that does not exist. */}
+                {/* There is no demo dataset for contractors: a failed read shows
+                    "Offline", never a local fallback that does not exist. */}
                 <PageStatusBar
                     isConnected={dataSource === 'supabase'}
                     isLive={isLive}
                     lastUpdated={lastUpdated}
                     error={error}
                     loading={firstLoad}
-                    disconnectedLabel="No Live Data"
                 />
             </div>
 
