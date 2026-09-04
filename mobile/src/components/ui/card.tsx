@@ -1,6 +1,6 @@
 /**
  * Card surface — `--card` background, `--border` hairline, 10.5px radius
- * (BRAND_DESIGN.md §8). Flat by default: elevation is reserved for things that
+ * (DESIGN_SYSTEM.md §4). Flat by default: elevation is reserved for things that
  * genuinely sit above the page, not for decoration.
  */
 import { Pressable, View, type ViewProps } from 'react-native';

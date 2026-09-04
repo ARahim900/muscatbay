@@ -7,10 +7,18 @@
  *
  * This is the exact same split the web app makes with `lib/tokens.ts`, and the
  * same rule applies: these hexes MIRROR `src/global.css` and must be changed
- * together. Authoritative spec: repo-root `BRAND_DESIGN.md`.
+ * together. Authoritative spec: repo-root `DESIGN_SYSTEM.md` (v2.0).
+ * (`BRAND_DESIGN.md`, cited by earlier versions of this file, is superseded.)
+ *
+ * Status and chart colours are per-theme records, not flat constants: the v2
+ * status palette is muted, and a colour that reads on white does not read on
+ * `#16141B`. Reach them through `useTheme().colors`, never by importing a
+ * single hex.
  */
 
 export type ThemeName = 'light' | 'dark';
+
+export type StatusKey = 'normal' | 'warning' | 'danger' | 'info' | 'stale' | 'missing';
 
 interface Palette {
   background: string;
@@ -30,7 +38,26 @@ interface Palette {
   sidebar: string;
   sidebarForeground: string;
   chartAxis: string;
-  chart5: string;
+  /**
+   * DESIGN_SYSTEM.md §2.2. Muted, never saturated, and AA in both themes —
+   * the old stock `#22C55E` / `#EF4444` set measured ~2.3:1 as an icon on a
+   * light card and had no dark variant at all.
+   *
+   * `stale` and `missing` map onto the warning and neutral tokens: §2.2 defines
+   * five status colours and adding a sixth would invent one outside the system.
+   * Nothing is lost — `StatusPill` always renders a shape-distinct icon and its
+   * own label ("Stale", "No data"), so colour never carries the meaning alone.
+   */
+  status: Record<StatusKey, string>;
+  /**
+   * DESIGN_SYSTEM.md §2.4, in series order. Purple, water blue and violet lift
+   * in dark mode so a 2px line stays visible on `#16141B` (brand purple is
+   * 1.99:1 there); teal, amber and sage read in both themes and stay constant.
+   * Mirrors the web fix in `app/design-tokens.css`.
+   */
+  chartSeries: readonly string[];
+  chartLoss: string;
+  chartSuccess: string;
 }
 
 export const PALETTE: Record<ThemeName, Palette> = {
@@ -52,7 +79,17 @@ export const PALETTE: Record<ThemeName, Palette> = {
     sidebar: '#423846',
     sidebarForeground: '#E4E4E7',
     chartAxis: '#6B7280',
-    chart5: '#4D445D',
+    status: {
+      normal: '#2E7D42',
+      warning: '#9A6B00',
+      danger: '#B03A2E',
+      info: '#2F5F9E',
+      stale: '#9A6B00',
+      missing: '#6B7280',
+    },
+    chartSeries: ['#4E4456', '#A1D1D5', '#3B7ED2', '#D4A843', '#8B6DB0', '#5FA88A'],
+    chartLoss: '#C96B6B',
+    chartSuccess: '#5FA88A',
   },
   dark: {
     background: '#0A090C',
@@ -72,40 +109,43 @@ export const PALETTE: Record<ThemeName, Palette> = {
     ring: '#A1D1D5',
     sidebar: '#3B3240',
     sidebarForeground: '#E4E4E7',
-    chartAxis: '#94A3B8',
-    chart5: '#8B7F94',
+    chartAxis: '#9CA3AF',
+    status: {
+      normal: '#9FD6AE',
+      warning: '#F0D08A',
+      danger: '#F0A8A8',
+      info: '#A9C6E6',
+      stale: '#F0D08A',
+      missing: '#9CA3AF',
+    },
+    chartSeries: ['#8B7F94', '#A1D1D5', '#6B9AC4', '#D4A843', '#A98BD1', '#5FA88A'],
+    chartLoss: '#C96B6B',
+    chartSuccess: '#5FA88A',
   },
 };
 
-/** BRAND_DESIGN.md §2.6 — identical in both themes. Never used without an icon + label. */
-export const STATUS_COLORS = {
-  normal: '#22C55E',
-  warning: '#F59E0B',
-  danger: '#EF4444',
-  info: '#3B82F6',
-  stale: '#F97316',
-  missing: '#94A3B8',
-} as const;
-
-export type StatusKey = keyof typeof STATUS_COLORS;
-
-/** BRAND_DESIGN.md §2.8 — icons and chart series only, never page chrome. */
+/**
+ * DESIGN_SYSTEM.md §2.3 — icons and chart series only, never page chrome.
+ * Identical in both themes, so this one stays a flat constant and may be read
+ * outside a React tree (`lib/modules.ts` builds its module table at import).
+ */
 export const MODULE_COLORS = {
   water: '#3B7ED2',
-  electricity: '#E8A838',
-  stp: '#10B981',
+  electricity: '#D4A843',
+  stp: '#5FA88A',
   assets: '#8B7F94',
   contractors: '#6B9AC4',
-  hvac: '#E8C064',
+  hvac: '#C99A4B',
   pest: '#84B59F',
-  fire: '#D67A7A',
+  fire: '#C96B6B',
 } as const;
 
-/** BRAND_DESIGN.md §2.9 categorical chart palette. */
-export const CHART_SERIES = ['#6B9AC4', '#A1D1D5', '#E8C064', '#84B59F', '#4D445D'] as const;
+/**
+ * The two brand hues (DESIGN_SYSTEM.md §1), for the handful of places that need
+ * a colour outside a React tree and outside either theme — the Android
+ * notification-channel LED, for one.
+ */
+export const BRAND = { purple: '#4E4456', teal: '#A1D1D5' } as const;
 
-export const CHART_LOSS = '#D67A7A';
-export const CHART_SUCCESS = '#84B59F';
-
-/** BRAND_DESIGN.md §5. */
+/** DESIGN_SYSTEM.md §4. */
 export const RADIUS = { card: 10.5, input: 7, chip: 5 } as const;

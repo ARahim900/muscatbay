@@ -1,5 +1,5 @@
 /**
- * Button — 5px radius, weight 500 (BRAND_DESIGN.md §8).
+ * Button — 5px radius, weight 500 (DESIGN_SYSTEM.md §4/§6).
  *
  * Minimum 48pt height rather than the 44pt floor: field users are often gloved
  * or working one-handed on a tablet in a plant room.
@@ -9,6 +9,7 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
 import * as haptics from '~/lib/haptics';
+import { useTheme } from '~/theme/theme-provider';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
@@ -23,7 +24,7 @@ const LABEL: Record<Variant, string> = {
   primary: 'text-primary-foreground',
   secondary: 'text-secondary-foreground',
   ghost: 'text-foreground',
-  destructive: 'text-primary-foreground',
+  destructive: 'text-destructive-foreground',
 };
 
 export interface ButtonProps {
@@ -46,6 +47,13 @@ export function Button({
   className,
 }: ButtonProps) {
   const inactive = disabled || loading;
+  const { colors } = useTheme();
+  const spinner =
+    variant === 'ghost'
+      ? undefined
+      : variant === 'secondary'
+        ? colors.secondaryForeground
+        : colors.primaryForeground;
 
   return (
     <Pressable
@@ -64,7 +72,7 @@ export function Button({
         className,
       )}>
       {loading ? (
-        <ActivityIndicator size="small" color={variant === 'ghost' ? undefined : '#FFFFFF'} />
+        <ActivityIndicator size="small" color={spinner} />
       ) : (
         <>
           {icon ? <View>{icon}</View> : null}

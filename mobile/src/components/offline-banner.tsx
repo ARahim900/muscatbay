@@ -11,10 +11,11 @@ import { View } from 'react-native';
 
 import { Text } from '~/components/ui/text';
 import { useConnectivity } from '~/hooks/use-connectivity';
-import { STATUS_COLORS } from '~/theme/tokens';
+import { useTheme } from '~/theme/theme-provider';
 
 export function OfflineBanner() {
   const { online, limited } = useConnectivity();
+  const { colors } = useTheme();
 
   // `null` means the probe has not resolved yet — do not accuse the network.
   if (online === null || online) return null;
@@ -27,8 +28,8 @@ export function OfflineBanner() {
   return (
     <View
       accessibilityRole="alert"
-      className="flex-row items-center gap-2.5 border-b border-status-stale/30 bg-status-stale/10 px-4 py-2.5">
-      <Icon size={16} color={STATUS_COLORS.stale} />
+      className="flex-row items-center gap-3 border-b border-status-stale/30 bg-status-stale/10 px-4 py-3">
+      <Icon size={16} color={colors.status.stale} />
       <Text variant="caption" className="flex-1 text-foreground/85">
         {detail}
       </Text>

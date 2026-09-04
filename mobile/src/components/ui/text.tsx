@@ -4,7 +4,7 @@
  * Inter ships to React Native as one font file per weight, so weight is chosen
  * by family (`font-sans-semibold`) rather than by `fontWeight`. Routing every
  * label through these components keeps that detail in one place and keeps the
- * type scale (BRAND_DESIGN.md §3) consistent across screens.
+ * type scale (DESIGN_SYSTEM.md §3) consistent across screens.
  */
 import { Text as RNText, type TextProps as RNTextProps } from 'react-native';
 
@@ -13,7 +13,7 @@ import { cn } from '~/lib/cn';
 type Variant = 'display' | 'title' | 'heading' | 'body' | 'label' | 'caption' | 'mono';
 
 const VARIANTS: Record<Variant, string> = {
-  // KPI values: 24px / 600. BRAND_DESIGN.md §3 "KPI Value Rule".
+  // KPI values: 24px / 600. DESIGN_SYSTEM.md §3 "KPI Value Rule".
   display: 'font-sans-semibold text-2xl text-foreground',
   title: 'font-sans-semibold text-xl text-foreground',
   heading: 'font-sans-semibold text-lg text-foreground',

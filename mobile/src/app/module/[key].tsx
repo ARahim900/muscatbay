@@ -97,8 +97,8 @@ function EmbeddedLinks({ module }: { module: ModuleDefinition }) {
   if (module.embeds.length === 0) return null;
 
   return (
-    <View className="gap-2.5 pt-2">
-      <View className="gap-0.5">
+    <View className="gap-3 pt-2">
+      <View className="gap-1">
         <Text variant="heading">Full analysis</Text>
         <Text variant="caption">
           These open the muscatbay.work page inside the app, signed in as you. They are the web view
@@ -113,7 +113,7 @@ function EmbeddedLinks({ module }: { module: ModuleDefinition }) {
           onPress={() => router.push(`/embed/${view.id}`)}
           className="flex-row items-center gap-3">
           <ExternalLink size={17} color={module.accent} />
-          <View className="flex-1 gap-0.5">
+          <View className="flex-1 gap-1">
             <Text variant="body" className="font-sans-medium">
               {view.title}
             </Text>
@@ -187,7 +187,7 @@ function WaterModule({ module }: { module: ModuleDefinition }) {
           </KpiGrid>
 
           {data.negatives > 0 ? (
-            <Card className="gap-1.5 border-status-warning/30 bg-status-warning/5">
+            <Card className="gap-2 border-status-warning/30 bg-status-warning/5">
               <Text variant="heading">{data.negatives} negative readings in the source</Text>
               <Text variant="caption">
                 Physically impossible values are shown as recorded, not rewritten to zero — they
@@ -196,7 +196,7 @@ function WaterModule({ module }: { module: ModuleDefinition }) {
             </Card>
           ) : null}
 
-          <View className="gap-2.5">
+          <View className="gap-3">
             <Text variant="heading">Zones by loss</Text>
             {data.zones.length === 0 ? (
               <EmptyState title="No zone readings for this period" />
@@ -272,14 +272,14 @@ function ElectricityModule({ module }: { module: ModuleDefinition }) {
             </Card>
           ) : null}
 
-          <View className="gap-2.5">
+          <View className="gap-3">
             <Text variant="heading">Highest consumers · {data.period ?? '—'}</Text>
             {data.top.length === 0 ? (
               <EmptyState title="No readings for the latest month" />
             ) : (
               data.top.map((meter) => (
                 <Card key={meter.id} className="flex-row items-center gap-3">
-                  <View className="flex-1 gap-0.5">
+                  <View className="flex-1 gap-1">
                     <Text variant="body" numberOfLines={1}>
                       {meter.name}
                     </Text>
@@ -306,6 +306,7 @@ function ElectricityModule({ module }: { module: ModuleDefinition }) {
 /* ------------------------------------------------------------------ */
 
 function StpModule({ module }: { module: ModuleDefinition }) {
+  const { colors } = useTheme();
   const { data, error, loading, refreshing, refresh } = useAsyncData(loadStpSummary, []);
 
   return (
@@ -353,7 +354,7 @@ function StpModule({ module }: { module: ModuleDefinition }) {
                   },
                   {
                     name: 'TSE for irrigation',
-                    color: '#A1D1D5',
+                    color: colors.chartSeries[1],
                     values: data.daily.map((d) => d.tse),
                     dashed: true,
                   },
@@ -414,12 +415,12 @@ function ContractorsModule({ module }: { module: ModuleDefinition }) {
             />
           </KpiGrid>
 
-          <View className="gap-2.5">
+          <View className="gap-3">
             <Text variant="heading">Soonest to expire</Text>
             {data.rows.slice(0, 12).map((row, index) => (
               <Card key={`${row.contractor}-${index}`} className="gap-2">
                 <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-1 gap-0.5">
+                  <View className="flex-1 gap-1">
                     <Text variant="body" className="font-sans-medium">
                       {row.contractor}
                     </Text>
@@ -533,7 +534,7 @@ function HvacModule({ module }: { module: ModuleDefinition }) {
           </KpiGrid>
 
           {data.truncated ? (
-            <Card className="gap-1.5 border-status-warning/30 bg-status-warning/5">
+            <Card className="gap-2 border-status-warning/30 bg-status-warning/5">
               <Text variant="heading">Partial read</Text>
               <Text variant="caption">
                 The findings table hit the paging safety ceiling, so these counts are lower than the

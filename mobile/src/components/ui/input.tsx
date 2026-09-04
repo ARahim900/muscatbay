@@ -1,5 +1,5 @@
 /**
- * Text field — 7px radius (BRAND_DESIGN.md §5), tokenised border and
+ * Text field — 7px radius (DESIGN_SYSTEM.md §4), tokenised border and
  * placeholder colour, focus ring in `--ring`.
  */
 import { forwardRef, useState } from 'react';
@@ -24,7 +24,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
   const [focused, setFocused] = useState(false);
 
   return (
-    <View className="gap-1.5">
+    <View className="gap-2">
       <Text variant="label">{label}</Text>
       <TextInput
         ref={ref}

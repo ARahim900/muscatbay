@@ -11,7 +11,6 @@ import { Card } from '~/components/ui/card';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
 import * as haptics from '~/lib/haptics';
-import { STATUS_COLORS } from '~/theme/tokens';
 import { useTheme } from '~/theme/theme-provider';
 
 export function LoadingState({ label = 'Loading live data…' }: { label?: string }) {
@@ -55,10 +54,11 @@ export function ErrorState({
   onRetry,
   className,
 }: ErrorStateProps) {
+  const { colors } = useTheme();
   return (
     <Card className={cn('gap-3 border-status-danger/30 bg-status-danger/5', className)}>
       <View className="flex-row items-center gap-2">
-        <AlertOctagon size={18} color={STATUS_COLORS.danger} />
+        <AlertOctagon size={18} color={colors.status.danger} />
         <Text variant="heading" className="flex-1">
           {title}
         </Text>
@@ -75,7 +75,7 @@ export function ErrorState({
             onRetry();
           }}
           className="min-h-[44px] flex-row items-center justify-center gap-2 rounded-sm bg-primary px-4 active:opacity-80">
-          <RefreshCw size={15} color="#FFFFFF" />
+          <RefreshCw size={16} color={colors.primaryForeground} />
           <Text className="font-sans-medium text-sm text-primary-foreground">Retry</Text>
         </Pressable>
       ) : null}
@@ -85,10 +85,11 @@ export function ErrorState({
 
 /** Inline note for a partial failure — some sources loaded, some did not. */
 export function PartialDataNote({ sources }: { sources: string[] }) {
+  const { colors } = useTheme();
   if (sources.length === 0) return null;
   return (
     <View className="flex-row items-center gap-2 rounded-sm border border-status-stale/30 bg-status-stale/10 px-3 py-2">
-      <AlertOctagon size={14} color={STATUS_COLORS.stale} />
+      <AlertOctagon size={16} color={colors.status.stale} />
       <Text variant="caption" className="flex-1 text-foreground/80">
         {sources.join(', ')} could not be read, so this view is incomplete. It is not evidence that
         nothing is wrong.

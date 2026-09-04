@@ -80,7 +80,7 @@ export function PairedLines({ series, height = 110, caption }: PairedLinesProps)
 
       <View className="flex-row flex-wrap items-center gap-x-4 gap-y-1">
         {populated.map((s) => (
-          <View key={s.name} className="flex-row items-center gap-1.5">
+          <View key={s.name} className="flex-row items-center gap-2">
             <View
               style={{ backgroundColor: s.color, opacity: s.dashed ? 0.7 : 1 }}
               className="h-0.5 w-4 rounded-full"

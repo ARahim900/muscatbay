@@ -8,7 +8,7 @@
 import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { useCallback } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { MiniBars } from '~/components/charts/mini-bars';
 import { PairedLines } from '~/components/charts/paired-lines';
@@ -22,10 +22,13 @@ import { loadDashboard } from '~/features/data/queries';
 import { useSession } from '~/features/auth/session-provider';
 import { useAsyncData } from '~/hooks/use-async-data';
 import { formatCompact, formatNumber, formatPercent } from '~/lib/format';
+import * as haptics from '~/lib/haptics';
+import { useTheme } from '~/theme/theme-provider';
 import { MODULE_COLORS } from '~/theme/tokens';
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user, canAccess } = useSession();
   const { data, error, loading, refreshing, refresh } = useAsyncData(loadDashboard, []);
 
@@ -76,7 +79,7 @@ export default function DashboardScreen() {
             : `${alerts.length} open alerts, ${criticalAlerts} critical. Open the alerts tab.`
         }
         className="flex-row items-center gap-3">
-        <View className="flex-1 gap-1.5">
+        <View className="flex-1 gap-2">
           <Text variant="label">Operational alerts</Text>
           {alerts.length === 0 ? (
             <StatusPill status="normal" label="No conditions flagged" />
@@ -97,7 +100,7 @@ export default function DashboardScreen() {
 
       {/* ── Water ─────────────────────────────────────────────────── */}
       {canAccess('water') ? (
-        <View className="gap-2.5">
+        <View className="gap-3">
           <SectionHeader
             title="Water"
             detail={water.period ? `Balance for ${water.period}` : 'No computable month yet'}
@@ -135,7 +138,7 @@ export default function DashboardScreen() {
 
       {/* ── Electricity ───────────────────────────────────────────── */}
       {canAccess('electricity') ? (
-        <View className="gap-2.5">
+        <View className="gap-3">
           <SectionHeader
             title="Electricity"
             detail={electricity.period ? `Latest month ${electricity.period}` : 'No readings'}
@@ -188,7 +191,7 @@ export default function DashboardScreen() {
 
       {/* ── STP ───────────────────────────────────────────────────── */}
       {canAccess('stp') ? (
-        <View className="gap-2.5">
+        <View className="gap-3">
           <SectionHeader
             title="STP Plant"
             detail={
@@ -233,7 +236,7 @@ export default function DashboardScreen() {
                       },
                       {
                         name: 'TSE for irrigation',
-                        color: '#A1D1D5',
+                        color: colors.chartSeries[1],
                         values: stp.daily.map((d) => d.tse),
                         dashed: true,
                       },
@@ -248,7 +251,7 @@ export default function DashboardScreen() {
       ) : null}
 
       {/* ── Register health ───────────────────────────────────────── */}
-      <View className="gap-2.5">
+      <View className="gap-3">
         <Text variant="heading">Registers</Text>
         <KpiGrid>
           {canAccess('contractors') ? (
@@ -297,6 +300,17 @@ export default function DashboardScreen() {
   );
 }
 
+/**
+ * A section title with its "Open" affordance.
+ *
+ * The affordance is a real `Pressable` at the 44pt floor the rest of this app
+ * enforces — it used to be a bare `<Text onPress>` whose target was about 34pt
+ * tall and only as wide as the word, which is the one control on this screen a
+ * gloved thumb could miss. It also carries the tap haptic every other pressable
+ * here gives, and `text-ring` was swapped for a link colour that passes AA in
+ * both themes: the light ring `#4A8E93` was 3.5:1 on the page, under the 4.5:1
+ * floor for body text.
+ */
 function SectionHeader({
   title,
   detail,
@@ -306,18 +320,30 @@ function SectionHeader({
   detail: string;
   onPress: () => void;
 }) {
+  const { theme, colors } = useTheme();
+  // Brand purple carries the link in light mode (8.9:1 on the page) and brand
+  // teal in dark (12:1); each is unreadable in the other theme.
+  const link = theme === 'dark' ? colors.secondary : colors.primary;
+
   return (
-    <View className="flex-row items-end justify-between">
-      <View className="flex-1 gap-0.5">
+    <View className="flex-row items-end justify-between gap-3">
+      <View className="flex-1 gap-1">
         <Text variant="heading">{title}</Text>
         <Text variant="caption">{detail}</Text>
       </View>
-      <Text
+      <Pressable
         accessibilityRole="button"
-        onPress={onPress}
-        className="py-2 pl-3 font-sans-medium text-sm text-ring">
-        Open
-      </Text>
+        accessibilityLabel={`Open ${title}`}
+        onPress={() => {
+          haptics.tap();
+          onPress();
+        }}
+        className="min-h-[44px] flex-row items-center gap-1 rounded-sm px-3 active:bg-muted">
+        <Text className="font-sans-medium text-sm" style={{ color: link }}>
+          Open
+        </Text>
+        <ChevronRight size={16} color={link} />
+      </Pressable>
     </View>
   );
 }

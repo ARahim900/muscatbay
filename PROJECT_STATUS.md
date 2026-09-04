@@ -469,6 +469,34 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Closed 2026-09-04 — `mobile/` moved onto Design System v2.0.** The
+  2026-09-03 audit found the Expo app running a fork of the pre-v2 palette,
+  citing the superseded `BRAND_DESIGN.md` as authoritative. Status colours were
+  the stock saturated set (`#22C55E`, `#F59E0B`, `#EF4444`, `#3B82F6`) with **no
+  dark variants at all**, so a status icon measured 2.1–2.8:1 on a light card —
+  below the 3:1 floor for non-text contrast — while the app's own contract
+  promises a visible shape cue. `src/global.css` and `src/theme/tokens.ts` now
+  carry the §2.2 muted status pairs per theme (4.7–6.5:1 light, 7.2–12.3:1
+  dark), the §2.3 module accents (electricity, STP, HVAC and fire had all
+  drifted), and the §2.4 six-series chart palette including the same dark lift
+  for series 1/3/5 the web got the same day. `STATUS_COLORS` was a flat constant
+  and is now per-theme, reached through `useTheme().colors.status`;
+  `presentation()` takes a theme and `useStatusPresentation()` is the hook form.
+  Because §2.2 defines five status colours, `stale` and `missing` map onto the
+  warning and neutral tokens rather than inventing a sixth — `stale` took a
+  **Clock** icon so it stays shape-distinct from `warning`, which now shares its
+  colour. Also fixed in the same pass: the destructive button was white on
+  `#D67A7A` (3.0:1) and is now white on `#B03A2E` (6.0:1) in both themes; the
+  dashboard's "Open" affordance was a bare `<Text onPress>` about 34pt tall in
+  `--ring` (3.5:1 light) and is now a 44pt `Pressable` with a haptic and a
+  themed link colour (8.6:1 light, 11.9:1 dark); 33 half-step spacing utilities
+  moved onto the 4/8 grid; the status-pill icon went 13px → the systems's 16px;
+  and the last five hardcoded hexes left the components. **Deferred, and still
+  open:** the app is on Inter, not DM Sans, and `title`/`heading` now share the
+  16px step — moving to the seven named steps (page title at `text-display`
+  28px, KPI weight 700) needs the DM Sans font package and is a separate job.
+  `mobile/` has no working ESLint config (`expo lint` tries to fetch one), so
+  `npx tsc --noEmit` remains the only gate there.
 - **Closed 2026-09-04 — chart series legible in dark mode.** The 2026-09-03
   technical audit (`docs/audits/2026-09-03-technical-audit.md`) found brand
   purple `#4E4456` rendering at 1.99:1 on the dark card, so the primary series

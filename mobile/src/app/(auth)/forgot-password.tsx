@@ -16,11 +16,12 @@ import { Input } from '~/components/ui/input';
 import { Text } from '~/components/ui/text';
 import { requestPasswordReset } from '~/adapters/auth';
 import * as haptics from '~/lib/haptics';
-import { STATUS_COLORS } from '~/theme/tokens';
+import { useTheme } from '~/theme/theme-provider';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ export default function ForgotPasswordScreen() {
           {sent ? (
             <Card className="gap-3">
               <View className="flex-row items-center gap-2">
-                <CheckCircle2 size={18} color={STATUS_COLORS.normal} />
+                <CheckCircle2 size={18} color={colors.status.normal} />
                 <Text variant="heading">Check your email</Text>
               </View>
               <Text variant="caption">

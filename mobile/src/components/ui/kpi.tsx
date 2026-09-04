@@ -1,7 +1,7 @@
 /**
  * KPI tile.
  *
- * BRAND_DESIGN.md §3 "KPI Value Rule": 24px / 600, tabular numerals, tokenised
+ * DESIGN_SYSTEM.md §3 "KPI Value Rule": 24px / 600, tabular numerals, tokenised
  * foreground. The value colour never shifts to red or green — that semantic
  * belongs to the status chip beneath it, so the number itself stays neutral and
  * readable.
@@ -44,7 +44,7 @@ export function KpiTile({
     // `basis-[48%] grow`, not `flex-1`: inside a wrapping row React Native gives
     // `flex: 1` a zero basis, so every tile collapses. An explicit basis gives a
     // clean two-up grid and lets a lone odd tile stretch to full width.
-    <Card className={cn('grow basis-[48%] gap-2 p-3.5', className)}>
+    <Card className={cn('grow basis-[48%] gap-2 p-4', className)}>
       <Text variant="label" numberOfLines={2}>
         {label}
       </Text>
@@ -77,5 +77,5 @@ export function KpiTile({
 
 /** Two-column KPI deck. Two-up is the densest layout that stays legible on a phone. */
 export function KpiGrid({ children }: { children: React.ReactNode }) {
-  return <View className="flex-row flex-wrap gap-2.5">{children}</View>;
+  return <View className="flex-row flex-wrap gap-3">{children}</View>;
 }
