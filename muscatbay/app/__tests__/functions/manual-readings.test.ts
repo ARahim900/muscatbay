@@ -5,6 +5,7 @@ import {
     indexReadings,
     monthDateKeys,
     monthLabel,
+    muscatToday,
     parseDateKey,
     parseReadingInput,
     shiftDateKey,
@@ -31,6 +32,16 @@ describe('date keys', () => {
     it('formats and parses local calendar dates without UTC drift', () => {
         expect(toDateKey(new Date(2026, 8, 5))).toBe('2026-09-05');
         expect(parseDateKey('2026-09-05')?.getDate()).toBe(5);
+    });
+
+    it('reads today off the Muscat calendar, not the server clock', () => {
+        // 20:30 UTC on 5 September is already 00:30 on 6 September in Oman.
+        // The Server Action runs in UTC on Vercel; taking "today" from its own
+        // clock would reject a genuine reading for the 6th as being in future.
+        expect(muscatToday(new Date('2026-09-05T20:30:00Z'))).toBe('2026-09-06');
+        expect(muscatToday(new Date('2026-09-05T19:30:00Z'))).toBe('2026-09-05');
+        // Year and month boundaries cross correctly too.
+        expect(muscatToday(new Date('2026-12-31T21:00:00Z'))).toBe('2027-01-01');
     });
 
     it('rejects impossible dates instead of rolling them over', () => {
