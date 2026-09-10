@@ -1,10 +1,19 @@
 "use client";
 
-// ─── DCAnalyticsPanel + DCDailyTable — the Direct Connections tab of the Daily
-//     report. Data logic unchanged; presentation is the design-system
-//     primitives (SectionCard, KpiCard, Badge, ChartFrame) and tokens only.
+// ─── DCAnalyticsPanel + SupplyReconciliationTable — the Direct Connections tab
+//     of the Daily report.
+//
+//     The tab answers one question: does the NAMA main bulk agree with what the
+//     network below it measured? The gauges show the three stages, and the table
+//     underneath lists every account behind them — the main bulk, all seven zone
+//     bulks (ZEN Project included) and every direct connection — so the middle
+//     gauge can be added up by hand from the rows on screen.
+//
+//     Presentation is the design-system primitives (SectionCard, StatsGrid,
+//     Badge, ChartFrame) and tokens only; the arithmetic lives in the pure,
+//     unit-tested ./supply-reconciliation module.
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Badge, ChartFrame, chartTheme, SectionCard } from "@/components/ui";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
@@ -13,19 +22,21 @@ import {
     ReferenceLine, CartesianGrid,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
-import { Droplets, Activity, Zap, AlertTriangle } from "lucide-react";
-import { DC_METERS, MAIN_BULK_ACCOUNT, ZONE_BULK_CONFIG } from "@/lib/water-accounts";
+import { Droplets, Activity, Zap, AlertTriangle, Gauge, MapPin, Scale } from "lucide-react";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/cn";
 import {
-    type ReportData, type SortState,
-    CHART_COLORS, r2, n, DailyLossConnector,
-    Th, TableSearch, TablePagination, thBase, tdBase,
+    type ReportData,
+    CHART_COLORS, r2, n, DailyLossConnector, thBase, tdBase,
 } from "./inline-shared";
+import {
+    buildSupplyMatrix, supplyDaySnapshot,
+    type SupplyMeterRow,
+} from "./supply-reconciliation";
 import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
-export { DCAnalyticsPanel, DCDailyTable };
+export { DCAnalyticsPanel, SupplyReconciliationTable };
 
 /** Loose value type matching Recharts' Formatter signature. */
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
@@ -43,70 +54,41 @@ interface DCAnalyticsPanelProps {
 
 function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnalyticsPanelProps) {
     const chartMotion = useChartMotion();
-    // O(1) lookup map keyed by account_number
-    const accountMap = useMemo(() => {
-        const map = new Map<string, SupabaseDailyWaterConsumption>();
-        for (const row of monthData) map.set(row.account_number, row);
-        return map;
-    }, [monthData]);
 
-    const l2PlusDcTotal = r2(reportData.l2Total + reportData.dcTotal);
-    const l3PlusDcTotal = r2(reportData.l3Total + reportData.dcTotal);
+    // One source of truth for the supply side: the same matrix drives the
+    // gauges, the trend and the table below, so they cannot drift apart.
+    const matrix = useMemo(() => buildSupplyMatrix(monthData), [monthData]);
+    const day = useMemo(() => supplyDaySnapshot(matrix, selectedDay), [matrix, selectedDay]);
+
+    // Middle gauge = Σ zone bulks (L2, all seven zones) + Σ direct connections.
+    const l2PlusDcTotal = day.combined;
+    // Right gauge swaps the zone bulks for the individual meters underneath them.
+    const l3PlusDcTotal = r2(reportData.l3Total + day.dcTotal);
     const connectionDifference = r2(l2PlusDcTotal - l3PlusDcTotal);
 
     // Main bulk (NAMA L1, account C43659) for the selected day. Ideally it
     // equals Σ zone bulks + Σ DC; the gap is trunk-main loss before any zone.
     // Missing reading ≠ zero — the supply stage is simply not shown that day.
-    const mainBulkRaw = accountMap.get(MAIN_BULK_ACCOUNT)?.[`day_${selectedDay}` as keyof SupabaseDailyWaterConsumption];
-    const mainBulkDay = mainBulkRaw != null ? r2(Number(mainBulkRaw)) : null;
-    const trunkLoss = mainBulkDay != null ? r2(mainBulkDay - l2PlusDcTotal) : null;
+    const mainBulkDay = day.mainBulk;
+    const trunkLoss = day.trunkLoss;
     const totalGaugeMax = Math.max(mainBulkDay ?? 0, l2PlusDcTotal, l3PlusDcTotal) * 1.2 || 100;
 
-    // 31-day trend — same series as the gauges above: Main Bulk (C43659) vs
+    // 31-day trend — the same series as the gauges: Main Bulk (C43659) against
     // Σ zone bulks + DC, with the DC share kept as context. Null zone/DC
     // readings sum as 0 (matching processReport); a missing main-bulk reading
     // stays null so its line gaps instead of plunging to a fake zero.
     const trendData = useMemo(() => {
-        const zoneBulkAccounts = ZONE_BULK_CONFIG.map(z => z.l2Account);
-        const mainBulkRow = accountMap.get(MAIN_BULK_ACCOUNT);
-        const results: { day: string; dayNum: number; 'DC Total': number; 'Zone Bulks + DC': number; 'Main Bulk': number | null }[] = [];
-        for (let day = 1; day <= 31; day++) {
-            const dayCol = `day_${day}` as keyof SupabaseDailyWaterConsumption;
-            let dcSum = 0;
-            let zoneSum = 0;
-            let hasAny = false;
-            for (const dc of DC_METERS) {
-                const v = accountMap.get(dc.account)?.[dayCol];
-                if (v != null) {
-                    dcSum += Number(v);
-                    hasAny = true;
-                }
-            }
-            for (const acc of zoneBulkAccounts) {
-                const v = accountMap.get(acc)?.[dayCol];
-                if (v != null) {
-                    zoneSum += Number(v);
-                    hasAny = true;
-                }
-            }
-            const mbRaw = mainBulkRow?.[dayCol];
-            const mainBulk = mbRaw != null ? r2(Number(mbRaw)) : null;
-            if (mainBulk != null) hasAny = true;
-            if (!hasAny) continue;
-            results.push({
-                day: `D${String(day).padStart(2, '0')}`,
-                dayNum: day,
-                'DC Total': r2(dcSum),
-                'Zone Bulks + DC': r2(zoneSum + dcSum),
-                'Main Bulk': mainBulk,
-            });
-        }
-        return results;
-    }, [accountMap]);
-
-    const totalMeters = reportData.dcRows.length;
+        return matrix.days.map((dayNum, i) => ({
+            day: `D${String(dayNum).padStart(2, "0")}`,
+            dayNum,
+            "DC Total": matrix.dcTotals.dailyValues[i],
+            "Zone Bulks + DC": matrix.combined.dailyValues[i],
+            "Main Bulk": matrix.main?.dailyValues[i] ?? null,
+        }));
+    }, [matrix]);
 
     const currentDayLabel = trendData.find(d => d.dayNum === selectedDay)?.day;
+    const incompleteRead = day.zonesRead < day.zoneCount || day.dcRead < day.dcCount;
 
     return (
         <div className="space-y-6">
@@ -118,9 +100,9 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 </h2>
                 <p className="mt-1 text-body text-muted">
                     <span className="font-medium text-fg">Main Bulk</span> = NAMA supply meter (<span className="meter">C43659</span>) — ideally equal to zone bulks + DC &bull;{" "}
-                    <span className="font-medium text-fg">L2 + DC</span> = zone bulks plus direct connections &bull;{" "}
+                    <span className="font-medium text-fg">L2 + DC</span> = all {day.zoneCount} zone bulks (ZEN Project included) plus the {day.dcCount} direct connections &bull;{" "}
                     <span className="font-medium text-fg">L3 + DC</span> = individual meters plus the same direct connections &bull;{" "}
-                    Sales Center is counted as DC
+                    Sales Center is counted as DC; TSE irrigation is not
                 </p>
             </div>
 
@@ -147,7 +129,7 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     value={l2PlusDcTotal}
                     max={totalGaugeMax}
                     label="L2 + DC Total"
-                    sublabel="Zone bulk total + DC"
+                    sublabel={`${day.zoneCount} zone bulks + ${day.dcCount} DC`}
                     color={CHART_COLORS.teal}
                     size={160}
                     showPercentage={false}
@@ -167,6 +149,19 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                     elementId="daily-dc-gauge-2"
                 />
             </div>
+
+            {/* Read coverage for the middle gauge. A zone bulk that was not read
+                contributes 0 to the total, which would quietly understate it —
+                so say how many of the meters behind the gauge actually reported. */}
+            <p className={cn(
+                "flex flex-wrap items-center justify-center gap-1.5 text-caption",
+                incompleteRead ? "text-warning" : "text-muted",
+            )}>
+                {incompleteRead && <AlertTriangle size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />}
+                L2 + DC on Day {selectedDay} is built from {day.zonesRead} of {day.zoneCount} zone bulks and {day.dcRead} of {day.dcCount} direct connections.
+                {incompleteRead && " Unread meters count as 0, so the total is a floor, not the full picture."}
+            </p>
+
             {mainBulkDay == null && (
                 <p className="flex items-center justify-center gap-1.5 text-caption text-warning">
                     <AlertTriangle size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
@@ -183,12 +178,12 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 />
                 <SectionCard.Body>
                     <p className="mb-3 text-caption text-muted">
-                        Main Bulk (<span className="meter">C43659</span>) supply against zone bulks + direct connections,
-                        with the share of the {totalMeters} DC meters alone. Days without a main-bulk reading leave a gap in its line.
+                        Main Bulk (<span className="meter">C43659</span>) supply against all {day.zoneCount} zone bulks plus the {day.dcCount} direct
+                        connections, with the DC share alone underneath. Days without a main-bulk reading leave a gap in its line.
                     </p>
                     {trendData.length === 0 ? (
                         <div className="flex h-chart items-center justify-center text-body text-muted">
-                            No trend data available for direct connections
+                            No trend data available for the supply meters
                         </div>
                     ) : (
                         <ChartFrame
@@ -241,249 +236,275 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
     );
 }
 
-// ─── DC Daily Meters Table (mirrors ZoneL3Table) ─────────────────────────────
+// ─── Supply reconciliation table ─────────────────────────────────────────────
+//
+// Every account behind the gauges, day by day: the NAMA main bulk, all seven
+// zone bulks and every direct connection, with a subtotal per group and the
+// combined "ΣL2 + ΣDC" line that the middle gauge shows. Seventeen rows, so no
+// pagination and no search — the whole balance is meant to be read at once.
 
-interface DcMeterRow {
+/** A row as exported to CSV — meter rows and derived rows share this shape. */
+interface SupplyExportRow {
+    section: string;
+    meter: string;
     account: string;
-    label: string;
-    isIrr: boolean;
     dailyValues: (number | null)[];
-    rawValues: (number | null)[];
     total: number | null;
 }
 
-function DCDailyTable({ monthData }: { monthData: SupabaseDailyWaterConsumption[] }) {
-    const [search, setSearch] = useState('');
-    const [sort, setSort] = useState<SortState>({ key: '', dir: null });
-    const [page, setPage] = useState(1);
-    const [rowsPerPage, setRowsPerPage] = useState(15);
+/** Header row that opens a group inside the matrix. */
+function GroupHeaderRow({ label, colSpan }: { label: string; colSpan: number }) {
+    return (
+        <TableRow className="border-b border-line bg-component">
+            <TableCell
+                colSpan={colSpan}
+                className={cn(tdBase, "sticky left-0 z-10 bg-component text-eyebrow uppercase text-muted")}
+            >
+                {label}
+            </TableCell>
+        </TableRow>
+    );
+}
 
-    // Build account map for quick lookups
-    const accountMap = useMemo(() => {
-        const map = new Map<string, SupabaseDailyWaterConsumption>();
-        for (const row of monthData) map.set(row.account_number, row);
-        return map;
-    }, [monthData]);
+/** One meter's readings across the month. */
+function MeterRow({ row, badgeTone }: { row: SupplyMeterRow; badgeTone: "info" | "neutral" }) {
+    const Icon = row.kind === "main" ? Gauge : row.kind === "zone" ? MapPin : row.isIrr ? Droplets : Zap;
+    return (
+        <TableRow className="border-b border-line transition-colors even:bg-component hover:bg-component">
+            <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-card font-medium")}>
+                <span className="inline-flex items-center gap-2">
+                    <Icon size={14} strokeWidth={2} className="shrink-0 text-muted" aria-hidden="true" />
+                    {row.label}
+                </span>
+            </TableCell>
+            <TableCell className={cn(tdBase, "meter text-muted")}>{row.account}</TableCell>
+            <TableCell className={cn(tdBase, "text-center")}>
+                <Badge tone={badgeTone}>{row.category}</Badge>
+            </TableCell>
+            {row.dailyValues.map((val, i) => (
+                <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums")}>
+                    {val === null ? (
+                        <span className="text-muted">—</span>
+                    ) : val === 0 ? (
+                        <span className="text-muted">0.00</span>
+                    ) : (
+                        n(val)
+                    )}
+                </TableCell>
+            ))}
+            <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>
+                {n(row.total)}
+            </TableCell>
+        </TableRow>
+    );
+}
 
-    // Determine latest day with data for any DC account
-    const latestDay = useMemo(() => {
-        let maxDay = 0;
-        for (const dc of DC_METERS) {
-            const row = accountMap.get(dc.account);
-            if (!row) continue;
-            for (let d = 31; d >= 1; d--) {
-                if (d <= maxDay) break;
-                const val = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
-                if (val != null) { maxDay = d; break; }
-            }
-        }
-        return Math.max(maxDay, 1);
-    }, [accountMap]);
+/** A subtotal / derived line. `values` may contain nulls (not computable). */
+function TotalsRow({
+    label, values, total, emphasis = false,
+}: {
+    label: React.ReactNode;
+    values: (number | null)[];
+    total: number | null;
+    emphasis?: boolean;
+}) {
+    return (
+        <TableRow className={cn("border-t-2 border-line", emphasis ? "bg-accent-tint" : "bg-component")}>
+            <TableCell
+                colSpan={3}
+                className={cn(tdBase, "sticky left-0 z-10 font-medium", emphasis ? "bg-accent-tint" : "bg-component")}
+            >
+                {label}
+            </TableCell>
+            {values.map((v, i) => (
+                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}>
+                    {v === null ? <span className="text-muted">—</span> : n(v)}
+                </TableCell>
+            ))}
+            <TableCell className={cn(tdBase, "text-right font-medium tabular-nums")}>
+                {n(total)}
+            </TableCell>
+        </TableRow>
+    );
+}
 
-    const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
+function SupplyReconciliationTable({
+    monthData, selectedDay,
+}: {
+    monthData: SupabaseDailyWaterConsumption[];
+    selectedDay: number;
+}) {
+    const matrix = useMemo(() => buildSupplyMatrix(monthData), [monthData]);
+    const { days, latestDay, main, zones, dcs, zoneTotals, dcTotals, combined, trunkLoss } = matrix;
+    const day = useMemo(() => supplyDaySnapshot(matrix, selectedDay), [matrix, selectedDay]);
 
-    // Build DC meter list with all daily readings. Missing readings stay null;
-    // only an explicit source zero is displayed as 0.00.
-    const dcMeters = useMemo(() => {
-        return DC_METERS.map(dc => {
-            const dbRow = accountMap.get(dc.account);
+    const colCount = 3 + days.length + 1; // Meter, Account, Level, …days, Total
+    const meterCount = (main ? 1 : 0) + zones.length + dcs.length;
 
-            const dailyValues: (number | null)[] = [];
-            const rawValues: (number | null)[] = [];
-            let total = 0;
-            let hasReading = false;
-            for (let d = 1; d <= latestDay; d++) {
-                const raw = dbRow ? (dbRow[`day_${d}` as keyof SupabaseDailyWaterConsumption] as number | null) : null;
-                rawValues.push(raw != null ? Number(raw) : null);
-                const val = raw != null ? r2(Number(raw)) : null;
-                dailyValues.push(val);
-                if (val !== null) hasReading = true;
-                total += val ?? 0;
-            }
+    // Month-to-date trunk loss quoted against the same days it was computable
+    // on, so the percentage is like for like rather than against a fuller month.
+    const lossPct = matrix.trunkLossTotal !== null && matrix.mainBulkComparableTotal
+        ? r2((matrix.trunkLossTotal / matrix.mainBulkComparableTotal) * 100)
+        : null;
 
-            return {
-                account: dc.account,
-                label: dc.meterName,
-                isIrr: dc.isIrr,
-                dailyValues,
-                rawValues,
-                total: hasReading ? r2(total) : null,
-            };
-        });
-    }, [accountMap, latestDay]);
+    // CSV mirrors the on-screen matrix, subtotals included, so the exported file
+    // reconciles the same way. Missing readings export as empty cells, never 0.
+    const exportRows = useMemo<SupplyExportRow[]>(() => {
+        const rows: SupplyExportRow[] = [];
+        if (main) rows.push({ section: "Main bulk (L1)", meter: main.label, account: main.account, dailyValues: main.dailyValues, total: main.total });
+        for (const z of zones) rows.push({ section: "Zone bulk (L2)", meter: z.label, account: z.account, dailyValues: z.dailyValues, total: z.total });
+        rows.push({ section: "Subtotal", meter: `ΣL2 — ${zones.length} zone bulks`, account: "", dailyValues: zoneTotals.dailyValues, total: zoneTotals.total });
+        for (const dc of dcs) rows.push({ section: "Direct connection (DC)", meter: dc.label, account: dc.account, dailyValues: dc.dailyValues, total: dc.total });
+        rows.push({ section: "Subtotal", meter: `ΣDC — ${dcs.length} direct connections`, account: "", dailyValues: dcTotals.dailyValues, total: dcTotals.total });
+        rows.push({ section: "Balance", meter: "ΣL2 + ΣDC", account: "", dailyValues: combined.dailyValues, total: combined.total });
+        rows.push({ section: "Balance", meter: "Trunk-main loss (L1 − (ΣL2 + ΣDC))", account: "", dailyValues: trunkLoss, total: matrix.trunkLossTotal });
+        return rows;
+    }, [main, zones, dcs, zoneTotals, dcTotals, combined, trunkLoss, matrix.trunkLossTotal]);
 
-    // Per-day ΣDC totals for footer
-    const dayTotals = useMemo(() => {
-        return days.map((_, i) => r2(dcMeters.reduce((sum, m) => sum + (m.dailyValues[i] ?? 0), 0)));
-    }, [days, dcMeters]);
-    const grandTotal = r2(dayTotals.reduce((s, v) => s + v, 0));
-
-    // Active meters today are those with an actual stored reading, including
-    // an explicit zero.
-    const activeMeters = dcMeters.filter(m => m.rawValues[latestDay - 1] !== null).length;
-
-    // Filter & sort
-    const filtered = useMemo(() => {
-        let result = [...dcMeters];
-        if (search) {
-            const q = search.toLowerCase();
-            result = result.filter(m => m.label.toLowerCase().includes(q) || m.account.includes(q));
-        }
-        if (sort.dir && sort.key) {
-            result.sort((a, b) => {
-                let va: number | string, vb: number | string;
-                if (sort.key === 'label') { va = a.label; vb = b.label; }
-                else if (sort.key === 'total') { va = a.total ?? Number.NEGATIVE_INFINITY; vb = b.total ?? Number.NEGATIVE_INFINITY; }
-                else { va = a.account; vb = b.account; }
-                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-                return sort.dir === 'desc' ? -cmp : cmp;
-            });
-        }
-        return result;
-    }, [dcMeters, search, sort]);
-
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset pagination to page 1 when search/sort change; storing page in state is needed because users can also change it via pagination controls.
-    useEffect(() => { setPage(1); }, [search, sort]);
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-    const paginated = filtered.slice((page - 1) * rowsPerPage, page * rowsPerPage);
-    const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
-
-    // CSV mirrors the on-screen matrix; missing readings export as empty cells,
-    // never 0 — the no-fabrication rule.
-    const exportColumns = useMemo<ExportColumn<DcMeterRow>[]>(() => [
-        { key: 'label', header: 'Meter' },
-        { key: 'account', header: 'Account' },
-        { key: 'isIrr', header: 'Type', format: (m) => m.isIrr ? 'Irrigation' : 'Service' },
+    const exportColumns = useMemo<ExportColumn<SupplyExportRow>[]>(() => [
+        { key: "section", header: "Section" },
+        { key: "meter", header: "Meter" },
+        { key: "account", header: "Account" },
         ...days.map((d) => ({
-            key: 'dailyValues',
+            key: "dailyValues",
             header: `Day ${d}`,
-            format: (m: DcMeterRow) => m.dailyValues[d - 1] ?? '',
-        } as ExportColumn<DcMeterRow>)),
-        { key: 'total', header: 'Total (m³)', format: (m) => m.total ?? '' },
+            format: (row: SupplyExportRow) => row.dailyValues[d - 1] ?? "",
+        } as ExportColumn<SupplyExportRow>)),
+        { key: "total", header: "Total (m³)", format: (row) => row.total ?? "" },
     ], [days]);
 
     return (
         <SectionCard>
             <SectionCard.Header
-                icon={Zap}
-                title="Direct connection — meters"
-                description={`${dcMeters.length} meters — Day 1 to Day ${latestDay}`}
+                icon={Scale}
+                title="Supply reconciliation — main bulk vs zone bulks + DC"
+                description={`${meterCount} supply meters — Day 1 to Day ${latestDay}`}
             />
             <SectionCard.Body className="space-y-4">
-                {/* DC summary KPIs — the app-wide StatsGrid tile */}
+                <p className="text-caption text-muted">
+                    Every account behind the gauges above. Add the <span className="font-medium text-fg">ΣL2</span> and{" "}
+                    <span className="font-medium text-fg">ΣDC</span> lines and you get the middle gauge exactly; the difference
+                    against the main bulk is the trunk-main loss before any zone. Unread meters show &quot;—&quot; and count as 0 in
+                    the subtotals — never as a reading of zero.
+                </p>
+
+                {/* Day-of-interest summary — the app-wide StatsGrid tile */}
                 <StatsGrid stats={[
-                    { label: "Monthly DC Total", value: n(grandTotal), unit: "m³", subtitle: `Day 1 to Day ${latestDay}`, icon: Droplets, variant: "info" },
-                    { label: "DC Meters", value: String(dcMeters.length), subtitle: "Direct connections on the main inlet", icon: Activity, variant: "primary" },
-                    { label: `Active (Day ${latestDay})`, value: `${activeMeters} / ${dcMeters.length}`, subtitle: "Meters with a stored reading", icon: Zap, variant: "success" },
+                    {
+                        label: `Main Bulk (Day ${selectedDay})`,
+                        value: day.mainBulk === null ? "—" : n(day.mainBulk),
+                        unit: day.mainBulk === null ? undefined : "m³",
+                        subtitle: day.mainBulk === null ? "No L1 reading stored for this day" : "NAMA L1 supply (C43659)",
+                        icon: Gauge,
+                        variant: "primary",
+                        status: day.mainBulk === null ? "missing" : "normal",
+                    },
+                    {
+                        label: `L2 + DC (Day ${selectedDay})`,
+                        value: n(day.combined),
+                        unit: "m³",
+                        subtitle: `${day.zonesRead}/${day.zoneCount} zone bulks · ${day.dcRead}/${day.dcCount} DC read`,
+                        icon: Droplets,
+                        variant: "info",
+                        dataQuality: day.zonesRead < day.zoneCount || day.dcRead < day.dcCount ? "incomplete" : undefined,
+                    },
+                    {
+                        label: "Trunk loss (month to date)",
+                        value: matrix.trunkLossTotal === null ? "—" : n(matrix.trunkLossTotal),
+                        unit: matrix.trunkLossTotal === null ? undefined : "m³",
+                        subtitle: matrix.trunkLossTotal === null
+                            ? "No day has both an L1 and a distribution reading"
+                            : `${lossPct === null ? "—" : `${lossPct.toFixed(1)}%`} of main bulk over the comparable days`,
+                        icon: AlertTriangle,
+                        variant: matrix.trunkLossTotal !== null && matrix.trunkLossTotal > 0 ? "warning" : "success",
+                    },
                 ]} />
 
                 <div className="flex flex-wrap items-center gap-2">
-                    <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
-                    <ExportButton rows={filtered} filename="water-dc-daily" columns={exportColumns} className="ml-auto" />
+                    <ExportButton rows={exportRows} filename="water-supply-reconciliation" columns={exportColumns} className="ml-auto" />
                 </div>
 
                 {/* Horizontally scrollable table */}
                 <div className="relative -mx-5">
-                <Table
-                    containerProps={{
-                        role: "region",
-                        "aria-label": "Direct connection daily readings. Scroll horizontally to view all days.",
-                        tabIndex: 0,
-                        className: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                    }}
-                    style={{ minWidth: `${420 + days.length * 72}px` }}
-                    data-density="compact"
-                >
-                    <TableHeader>
-                        <TableRow className="border-b border-line">
-                            <Th
-                                sortKey="label" sort={sort} onSort={setSort}
-                                className="sticky left-0 z-20 min-w-44 bg-primary"
-                            >Meter</Th>
-                            <Th sortKey="account" sort={sort} onSort={setSort} className="min-w-24">Account</Th>
-                            <TableHead scope="col" className={cn(thBase, "min-w-24 text-center")}>Type</TableHead>
-                            {days.map(d => (
-                                <TableHead scope="col" key={d} className={cn(thBase, "min-w-16 px-2 text-right")}>D{d}</TableHead>
-                            ))}
-                            <Th
-                                sortKey="total" sort={sort} onSort={setSort}
-                                className="min-w-20 text-right"
-                            >Total</Th>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {paginated.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={colCount} className="py-10 text-center text-label text-muted">
-                                    No meters found
-                                </TableCell>
-                            </TableRow>
-                        ) : paginated.map(meter => (
-                            <TableRow
-                                key={meter.account}
-                                className="border-b border-line transition-colors even:bg-component hover:bg-component"
-                            >
-                                <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-card font-medium")}>
-                                    <span className="inline-flex items-center gap-2">
-                                        {/* Icon distinguishes irrigation from potable; colour is a
-                                            reinforcement only, so it comes from chart tokens. */}
-                                        {meter.isIrr ? (
-                                            <Droplets size={14} strokeWidth={2} className="shrink-0" style={{ color: CHART_COLORS.teal }} aria-hidden="true" />
-                                        ) : (
-                                            <Zap size={14} strokeWidth={2} className="shrink-0" style={{ color: CHART_COLORS.amber }} aria-hidden="true" />
-                                        )}
-                                        {meter.label}
-                                    </span>
-                                </TableCell>
-                                <TableCell className={cn(tdBase, "meter text-muted")}>{meter.account}</TableCell>
-                                <TableCell className={cn(tdBase, "text-center")}>
-                                    <Badge tone={meter.isIrr ? "info" : "neutral"}>{meter.isIrr ? "Irrigation" : "Service"}</Badge>
-                                </TableCell>
-                                {meter.dailyValues.map((val, i) => (
-                                    <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums")}>
-                                        {val === null ? (
-                                            <span className="text-muted">—</span>
-                                        ) : val === 0 ? (
-                                            <span className="text-muted">0.00</span>
-                                        ) : (
-                                            n(val)
-                                        )}
-                                    </TableCell>
+                    <Table
+                        containerProps={{
+                            role: "region",
+                            "aria-label": "Daily supply reconciliation: main bulk, zone bulks and direct connections. Scroll horizontally to view all days.",
+                            tabIndex: 0,
+                            className: "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                        }}
+                        style={{ minWidth: `${420 + days.length * 72}px` }}
+                        data-density="compact"
+                    >
+                        <TableHeader>
+                            <TableRow className="border-b border-line">
+                                <TableHead scope="col" className={cn(thBase, "sticky left-0 z-20 min-w-44 bg-primary")}>Meter</TableHead>
+                                <TableHead scope="col" className={cn(thBase, "min-w-24")}>Account</TableHead>
+                                <TableHead scope="col" className={cn(thBase, "min-w-24 text-center")}>Level</TableHead>
+                                {days.map(d => (
+                                    <TableHead scope="col" key={d} className={cn(thBase, "min-w-16 px-2 text-right")}>D{d}</TableHead>
                                 ))}
-                                <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>
-                                    {n(meter.total)}
-                                </TableCell>
+                                <TableHead scope="col" className={cn(thBase, "min-w-20 text-right")}>Total</TableHead>
                             </TableRow>
-                        ))}
-                        {/* ΣDC Footer */}
-                        <TableRow className="border-t-2 border-line bg-component">
-                            <TableCell className={cn(tdBase, "sticky left-0 z-10 bg-component font-medium")} colSpan={3}>
-                                ΣDC Total ({dcMeters.length} meters)
-                            </TableCell>
-                            {dayTotals.map((t, i) => (
-                                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}>{n(t)}</TableCell>
-                            ))}
-                            <TableCell className={cn(tdBase, "bg-component text-right font-medium tabular-nums")}>{n(grandTotal)}</TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
-                <div
-                    className="pointer-events-none absolute bottom-0 right-0 top-0 w-8 bg-linear-to-l from-card to-transparent sm:hidden"
-                    aria-hidden="true"
-                />
-                </div>
+                        </TableHeader>
+                        <TableBody>
+                            {/* ── Supply ─────────────────────────────────── */}
+                            <GroupHeaderRow label="Main bulk (L1) — NAMA supply" colSpan={colCount} />
+                            {main ? (
+                                <MeterRow row={main} badgeTone="info" />
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={colCount} className="py-4 text-center text-caption text-warning">
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <AlertTriangle size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                                            No main-bulk (<span className="meter">C43659</span>) rows for this month — the trunk-main balance cannot be computed.
+                                        </span>
+                                    </TableCell>
+                                </TableRow>
+                            )}
 
-                {filtered.length > rowsPerPage && (
-                    <TablePagination
-                        page={page}
-                        totalPages={totalPages}
-                        totalItems={filtered.length}
-                        onPageChange={setPage}
-                        rowsPerPage={rowsPerPage}
-                        onRowsPerPageChange={rpp => { setRowsPerPage(rpp); setPage(1); }}
+                            {/* ── Zone bulks ─────────────────────────────── */}
+                            <GroupHeaderRow label={`Zone bulks (L2) — ${zones.length} zones`} colSpan={colCount} />
+                            {zones.map(z => <MeterRow key={z.account} row={z} badgeTone="neutral" />)}
+                            <TotalsRow
+                                label={`ΣL2 — all ${zones.length} zone bulks`}
+                                values={zoneTotals.dailyValues}
+                                total={zoneTotals.total}
+                            />
+
+                            {/* ── Direct connections ─────────────────────── */}
+                            <GroupHeaderRow label={`Direct connections (DC) — ${dcs.length} meters`} colSpan={colCount} />
+                            {dcs.map(dc => <MeterRow key={dc.account} row={dc} badgeTone={dc.isIrr ? "info" : "neutral"} />)}
+                            <TotalsRow
+                                label={`ΣDC — all ${dcs.length} direct connections`}
+                                values={dcTotals.dailyValues}
+                                total={dcTotals.total}
+                            />
+
+                            {/* ── Balance ────────────────────────────────── */}
+                            <TotalsRow
+                                label={
+                                    <span className="inline-flex items-center gap-1.5">
+                                        <Droplets size={14} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                                        ΣL2 + ΣDC — the L2 + DC gauge
+                                    </span>
+                                }
+                                values={combined.dailyValues}
+                                total={combined.total}
+                                emphasis
+                            />
+                            <TotalsRow
+                                label="Trunk-main loss — L1 − (ΣL2 + ΣDC)"
+                                values={trunkLoss}
+                                total={matrix.trunkLossTotal}
+                            />
+                        </TableBody>
+                    </Table>
+                    <div
+                        className="pointer-events-none absolute bottom-0 right-0 top-0 w-8 bg-linear-to-l from-card to-transparent sm:hidden"
+                        aria-hidden="true"
                     />
-                )}
+                </div>
             </SectionCard.Body>
         </SectionCard>
     );
