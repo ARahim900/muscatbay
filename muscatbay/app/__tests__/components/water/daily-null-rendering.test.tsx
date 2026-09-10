@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { SupplyReconciliationTable } from "@/components/water/daily-report/inline-dc-panel";
@@ -30,5 +30,40 @@ describe("daily supply reconciliation rendering", () => {
         // Both the day cell and the total read "—", never 0.00.
         expect(within(lossRow).getAllByText("—")).toHaveLength(2);
         expect(within(lossRow).queryByText("0.00")).not.toBeInTheDocument();
+    });
+
+    it("collapses a section's meter rows while keeping its subtotal on screen", () => {
+        render(<SupplyReconciliationTable monthData={[]} selectedDay={1} />);
+
+        const toggle = screen.getByRole("button", { name: /Zone bulks \(L2\)/ });
+        expect(toggle).toHaveAttribute("aria-expanded", "true");
+        expect(screen.getByRole("row", { name: /ZEN Project 4300348 Zone bulk/ })).toBeInTheDocument();
+
+        fireEvent.click(toggle);
+
+        expect(toggle).toHaveAttribute("aria-expanded", "false");
+        expect(screen.queryByRole("row", { name: /ZEN Project 4300348 Zone bulk/ })).not.toBeInTheDocument();
+        // The balance must stay readable with the detail folded away.
+        expect(screen.getByRole("row", { name: /ΣL2 — all 7 zone bulks/ })).toBeInTheDocument();
+        expect(screen.getByRole("row", { name: /ΣL2 \+ ΣDC — the L2 \+ DC gauge/ })).toBeInTheDocument();
+
+        fireEvent.click(toggle);
+        expect(screen.getByRole("row", { name: /ZEN Project 4300348 Zone bulk/ })).toBeInTheDocument();
+    });
+
+    it("collapses each of the three sections independently", () => {
+        render(<SupplyReconciliationTable monthData={[]} selectedDay={1} />);
+
+        for (const name of [/Main bulk \(L1\)/, /Zone bulks \(L2\)/, /Direct connections \(DC\)/]) {
+            expect(screen.getByRole("button", { name })).toHaveAttribute("aria-expanded", "true");
+        }
+
+        fireEvent.click(screen.getByRole("button", { name: /Direct connections \(DC\)/ }));
+
+        expect(screen.getByRole("button", { name: /Direct connections \(DC\)/ })).toHaveAttribute("aria-expanded", "false");
+        expect(screen.queryByRole("row", { name: /IRR Tank Z08 4300294 Irrigation/ })).not.toBeInTheDocument();
+        // Folding DC must not fold the others.
+        expect(screen.getByRole("button", { name: /Zone bulks \(L2\)/ })).toHaveAttribute("aria-expanded", "true");
+        expect(screen.getByRole("row", { name: /ZEN Project 4300348 Zone bulk/ })).toBeInTheDocument();
     });
 });

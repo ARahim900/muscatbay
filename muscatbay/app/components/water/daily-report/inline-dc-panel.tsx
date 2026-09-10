@@ -13,16 +13,19 @@
 //     Badge, ChartFrame) and tokens only; the arithmetic lives in the pure,
 //     unit-tested ./supply-reconciliation module.
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Badge, ChartFrame, chartTheme, SectionCard } from "@/components/ui";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import {
-    ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+    ComposedChart, Area, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
     ReferenceLine, CartesianGrid,
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
-import { Droplets, Activity, Zap, AlertTriangle, Gauge, MapPin, Scale } from "lucide-react";
+import {
+    Droplets, Activity, Zap, AlertTriangle, Gauge, MapPin, Scale,
+    ChevronDown, ChevronRight,
+} from "lucide-react";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import { cn } from "@/lib/cn";
 import {
@@ -81,9 +84,12 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
         return matrix.days.map((dayNum, i) => ({
             day: `D${String(dayNum).padStart(2, "0")}`,
             dayNum,
-            "DC Total": matrix.dcTotals.dailyValues[i],
             "Zone Bulks + DC": matrix.combined.dailyValues[i],
             "Main Bulk": matrix.main?.dailyValues[i] ?? null,
+            // Only a positive gap is a loss. A negative one means the network
+            // measured more than the main bulk — a reading-basis mismatch, not
+            // water lost — so it gets no bar rather than a misleading one.
+            "Trunk loss": (matrix.trunkLoss[i] ?? 0) > 0 ? matrix.trunkLoss[i] : null,
         }));
     }, [matrix]);
 
@@ -179,7 +185,8 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                 <SectionCard.Body>
                     <p className="mb-3 text-caption text-muted">
                         Main Bulk (<span className="meter">C43659</span>) supply against all {day.zoneCount} zone bulks plus the {day.dcCount} direct
-                        connections, with the DC share alone underneath. Days without a main-bulk reading leave a gap in its line.
+                        connections. The red bars are the gap between the two lines — the trunk-main loss, on the right axis.
+                        Days without a main-bulk reading leave a gap in its line and no bar.
                     </p>
                     {trendData.length === 0 ? (
                         <div className="flex h-chart items-center justify-center text-body text-muted">
@@ -190,19 +197,41 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                             series={3}
                             height="chart-lg"
                             legend={[
-                                { label: "DC Total", color: CHART_COLORS.gray },
+                                { label: "Main Bulk (L1)", color: CHART_COLORS.brand },
                                 { label: "Zone Bulks + DC", color: CHART_COLORS.teal },
-                                { label: "Main Bulk", color: CHART_COLORS.brand },
+                                { label: "Trunk loss", color: CHART_COLORS.loss },
                             ]}
                         >
                             <ResponsiveContainer width="100%" height="100%">
-                                <ComposedChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <ComposedChart data={trendData} margin={{ top: 10, right: 4, left: 0, bottom: 0 }}>
+                                    <defs>
+                                        <linearGradient id="dc-main-bulk-area" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor={CHART_COLORS.brand} stopOpacity={0.28} />
+                                            <stop offset="100%" stopColor={CHART_COLORS.brand} stopOpacity={0.04} />
+                                        </linearGradient>
+                                        <linearGradient id="dc-network-area" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor={CHART_COLORS.teal} stopOpacity={0.28} />
+                                            <stop offset="100%" stopColor={CHART_COLORS.teal} stopOpacity={0.04} />
+                                        </linearGradient>
+                                    </defs>
                                     <CartesianGrid {...chartTheme.grid} />
-                                    <XAxis dataKey="day" {...chartTheme.axis} interval={4} />
-                                    <YAxis {...chartTheme.axis} tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : v} />
+                                    <XAxis dataKey="day" {...chartTheme.axis} interval={4} minTickGap={16} />
+                                    <YAxis
+                                        yAxisId="volume" {...chartTheme.axis} width={52}
+                                        tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+                                    />
+                                    {/* Loss keeps its own scale so the bars stay legible against
+                                        supply volumes several times their size. */}
+                                    <YAxis
+                                        yAxisId="loss" orientation="right" width={48}
+                                        axisLine={false} tickLine={false} tickMargin={8}
+                                        tick={{ fill: CHART_COLORS.loss, fontSize: 12 }}
+                                        tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}
+                                    />
                                     <Tooltip formatter={fmtM3} {...chartTheme.tooltip} />
                                     {currentDayLabel && (
                                         <ReferenceLine
+                                            yAxisId="volume"
                                             x={currentDayLabel}
                                             stroke={CHART_COLORS.brand}
                                             strokeDasharray="4 3"
@@ -210,20 +239,25 @@ function DCAnalyticsPanel({ reportData, monthData, selectedDay, month }: DCAnaly
                                             label={{ value: `Day ${selectedDay}`, position: 'top', fontSize: 11, fill: "var(--color-muted)" }}
                                         />
                                     )}
+                                    {/* Bars first so the gradient areas read on top of them. */}
+                                    <Bar
+                                        yAxisId="loss" name="Trunk loss" dataKey="Trunk loss"
+                                        fill={CHART_COLORS.loss} radius={[3, 3, 0, 0]} maxBarSize={14}
+                                        {...chartMotion}
+                                    />
                                     <Area
-                                        type="monotone" name="DC Total" dataKey="DC Total"
-                                        stroke={CHART_COLORS.gray} fill={CHART_COLORS.gray} {...chartTheme.area}
-                                        {...chartMotion}
-                                    />
-                                    <Line
-                                        type="monotone" name="Zone Bulks + DC" dataKey="Zone Bulks + DC"
-                                        stroke={CHART_COLORS.teal} {...chartTheme.line}
-                                        {...chartMotion}
-                                    />
-                                    <Line
-                                        type="monotone" name="Main Bulk" dataKey="Main Bulk"
-                                        stroke={CHART_COLORS.brand} {...chartTheme.line}
+                                        yAxisId="volume" type="monotone" name="Main Bulk (L1)" dataKey="Main Bulk"
+                                        stroke={CHART_COLORS.brand} fill="url(#dc-main-bulk-area)"
+                                        {...chartTheme.area} fillOpacity={1}
+                                        activeDot={{ r: 4, stroke: "var(--color-card)", strokeWidth: 2 }}
                                         connectNulls={false}
+                                        {...chartMotion}
+                                    />
+                                    <Area
+                                        yAxisId="volume" type="monotone" name="Zone Bulks + DC" dataKey="Zone Bulks + DC"
+                                        stroke={CHART_COLORS.teal} fill="url(#dc-network-area)"
+                                        {...chartTheme.area} fillOpacity={1}
+                                        activeDot={{ r: 4, stroke: "var(--color-card)", strokeWidth: 2 }}
                                         {...chartMotion}
                                     />
                                 </ComposedChart>
@@ -252,15 +286,36 @@ interface SupplyExportRow {
     total: number | null;
 }
 
-/** Header row that opens a group inside the matrix. */
-function GroupHeaderRow({ label, colSpan }: { label: string; colSpan: number }) {
+/**
+ * Collapsible header row that opens a group inside the matrix. Collapsing hides
+ * only the individual meter rows — each group's subtotal stays on screen, so the
+ * balance can always be read whatever is folded away.
+ */
+function GroupHeaderRow({
+    label, colSpan, open, onToggle, meterCount,
+}: {
+    label: string;
+    colSpan: number;
+    open: boolean;
+    onToggle: () => void;
+    meterCount: number;
+}) {
+    const Chevron = open ? ChevronDown : ChevronRight;
     return (
         <TableRow className="border-b border-line bg-component">
-            <TableCell
-                colSpan={colSpan}
-                className={cn(tdBase, "sticky left-0 z-10 bg-component text-eyebrow uppercase text-muted")}
-            >
-                {label}
+            <TableCell colSpan={colSpan} className={cn(tdBase, "sticky left-0 z-10 bg-component p-0")}>
+                <button
+                    type="button"
+                    onClick={onToggle}
+                    aria-expanded={open}
+                    className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-left text-eyebrow uppercase text-muted transition-colors hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-h-9"
+                >
+                    <Chevron size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                    {label}
+                    <span className="normal-case text-caption text-muted">
+                        ({open ? "hide" : "show"} {meterCount} meter{meterCount === 1 ? "" : "s"})
+                    </span>
+                </button>
             </TableCell>
         </TableRow>
     );
@@ -299,29 +354,47 @@ function MeterRow({ row, badgeTone }: { row: SupplyMeterRow; badgeTone: "info" |
     );
 }
 
-/** A subtotal / derived line. `values` may contain nulls (not computable). */
+/**
+ * A subtotal / derived line. `values` may contain nulls (not computable).
+ *
+ * `tone="loss"` tints every cell that carries an actual loss in light red, so
+ * the days that cost water are findable by eye across a 31-column matrix. A
+ * negative value is not a loss — the network measured more than the main bulk,
+ * which is a reading-basis mismatch — so it stays untinted.
+ */
 function TotalsRow({
-    label, values, total, emphasis = false,
+    label, values, total, emphasis = false, tone = "neutral",
 }: {
     label: React.ReactNode;
     values: (number | null)[];
     total: number | null;
     emphasis?: boolean;
+    tone?: "neutral" | "loss";
 }) {
+    const isLoss = (v: number | null) => tone === "loss" && v !== null && v > 0;
+    const rowBg = emphasis ? "bg-accent-tint" : "bg-component";
     return (
-        <TableRow className={cn("border-t-2 border-line", emphasis ? "bg-accent-tint" : "bg-component")}>
-            <TableCell
-                colSpan={3}
-                className={cn(tdBase, "sticky left-0 z-10 font-medium", emphasis ? "bg-accent-tint" : "bg-component")}
-            >
+        <TableRow className={cn("border-t-2 border-line", rowBg)}>
+            <TableCell colSpan={3} className={cn(tdBase, "sticky left-0 z-10 font-medium", rowBg)}>
                 {label}
             </TableCell>
             {values.map((v, i) => (
-                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}>
+                <TableCell
+                    key={i}
+                    className={cn(
+                        tdBase, "px-2 text-right font-medium tabular-nums",
+                        isLoss(v) && "bg-danger-tint text-danger",
+                    )}
+                >
                     {v === null ? <span className="text-muted">—</span> : n(v)}
                 </TableCell>
             ))}
-            <TableCell className={cn(tdBase, "text-right font-medium tabular-nums")}>
+            <TableCell
+                className={cn(
+                    tdBase, "text-right font-medium tabular-nums",
+                    isLoss(total) && "bg-danger-tint text-danger",
+                )}
+            >
                 {n(total)}
             </TableCell>
         </TableRow>
@@ -337,6 +410,12 @@ function SupplyReconciliationTable({
     const matrix = useMemo(() => buildSupplyMatrix(monthData), [monthData]);
     const { days, latestDay, main, zones, dcs, zoneTotals, dcTotals, combined, trunkLoss } = matrix;
     const day = useMemo(() => supplyDaySnapshot(matrix, selectedDay), [matrix, selectedDay]);
+
+    // Sections start open — the point of the table is that the whole balance is
+    // visible — but 17 meters × 31 days is a lot of grid, so each can be folded.
+    const [openSections, setOpenSections] = useState({ main: true, zones: true, dcs: true });
+    const toggle = (key: keyof typeof openSections) =>
+        setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
     const colCount = 3 + days.length + 1; // Meter, Account, Level, …days, Total
     const meterCount = (main ? 1 : 0) + zones.length + dcs.length;
@@ -449,8 +528,14 @@ function SupplyReconciliationTable({
                         </TableHeader>
                         <TableBody>
                             {/* ── Supply ─────────────────────────────────── */}
-                            <GroupHeaderRow label="Main bulk (L1) — NAMA supply" colSpan={colCount} />
-                            {main ? (
+                            <GroupHeaderRow
+                                label="Main bulk (L1) — NAMA supply"
+                                colSpan={colCount}
+                                open={openSections.main}
+                                onToggle={() => toggle("main")}
+                                meterCount={main ? 1 : 0}
+                            />
+                            {openSections.main && (main ? (
                                 <MeterRow row={main} badgeTone="info" />
                             ) : (
                                 <TableRow>
@@ -461,11 +546,17 @@ function SupplyReconciliationTable({
                                         </span>
                                     </TableCell>
                                 </TableRow>
-                            )}
+                            ))}
 
                             {/* ── Zone bulks ─────────────────────────────── */}
-                            <GroupHeaderRow label={`Zone bulks (L2) — ${zones.length} zones`} colSpan={colCount} />
-                            {zones.map(z => <MeterRow key={z.account} row={z} badgeTone="neutral" />)}
+                            <GroupHeaderRow
+                                label={`Zone bulks (L2) — ${zones.length} zones`}
+                                colSpan={colCount}
+                                open={openSections.zones}
+                                onToggle={() => toggle("zones")}
+                                meterCount={zones.length}
+                            />
+                            {openSections.zones && zones.map(z => <MeterRow key={z.account} row={z} badgeTone="neutral" />)}
                             <TotalsRow
                                 label={`ΣL2 — all ${zones.length} zone bulks`}
                                 values={zoneTotals.dailyValues}
@@ -473,8 +564,14 @@ function SupplyReconciliationTable({
                             />
 
                             {/* ── Direct connections ─────────────────────── */}
-                            <GroupHeaderRow label={`Direct connections (DC) — ${dcs.length} meters`} colSpan={colCount} />
-                            {dcs.map(dc => <MeterRow key={dc.account} row={dc} badgeTone={dc.isIrr ? "info" : "neutral"} />)}
+                            <GroupHeaderRow
+                                label={`Direct connections (DC) — ${dcs.length} meters`}
+                                colSpan={colCount}
+                                open={openSections.dcs}
+                                onToggle={() => toggle("dcs")}
+                                meterCount={dcs.length}
+                            />
+                            {openSections.dcs && dcs.map(dc => <MeterRow key={dc.account} row={dc} badgeTone={dc.isIrr ? "info" : "neutral"} />)}
                             <TotalsRow
                                 label={`ΣDC — all ${dcs.length} direct connections`}
                                 values={dcTotals.dailyValues}
@@ -497,6 +594,7 @@ function SupplyReconciliationTable({
                                 label="Trunk-main loss — L1 − (ΣL2 + ΣDC)"
                                 values={trunkLoss}
                                 total={matrix.trunkLossTotal}
+                                tone="loss"
                             />
                         </TableBody>
                     </Table>
