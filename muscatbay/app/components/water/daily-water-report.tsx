@@ -24,7 +24,7 @@ import {
 } from "./daily-report/inline-shared";
 import { ZoneAnalyticsPanel } from "./daily-report/inline-zone-analytics";
 import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
-import { DCAnalyticsPanel, DCDailyTable } from "./daily-report/inline-dc-panel";
+import { DCAnalyticsPanel, SupplyReconciliationTable } from "./daily-report/inline-dc-panel";
 import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
 import { computeBriefing } from "./daily-report/briefing-metrics";
 // ─── Daily section tabs (zone-first: no L1/NAMA daily account exists, so the
@@ -463,7 +463,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                 selectedDay={selectedDay}
                                 month={selectedMonth}
                             />
-                            <DCDailyTable monthData={monthData} />
+                            <SupplyReconciliationTable monthData={monthData} selectedDay={selectedDay} />
                         </div>
                         </SectionBoundary>
                     )}
