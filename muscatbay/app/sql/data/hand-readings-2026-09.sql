@@ -7,8 +7,27 @@
 -- what is already stored and is identical, and 1 September already matched on
 -- all 17 meters. So the only new facts here are 2–7 September.
 --
--- Written as an upsert keyed on (meter, reading_date), so running it twice is
--- safe and re-running it after a correction in the sheet updates in place.
+-- ⚠ SUPERSEDED BY HAND ENTRY (2026-09-12). Do not treat this as the current
+-- truth for September. Between the 8th and the 10th an operator entered these
+-- days through the Hand Readings page, and went further than this file does:
+-- the live tables now hold 1–9 September, and carry IR Tank 05 and Controller
+-- 08, which the workbook had no rows for at all.
+--
+-- On six days the figures typed into the app DISAGREE with the workbook:
+--
+--     meter          date         entered in app     this file
+--     IRR-MAIN-OUT   2026-09-02             792            875
+--     IRR-MAIN-TSE   2026-09-03             603            608
+--     IRR-MAIN-TSE   2026-09-04             603            803
+--     IRR-TANK-04    2026-09-02              86             74
+--     IRR-TANK-06    2026-09-02              37             43
+--     IRR-TANK-JMB   2026-09-05             138            136
+--
+-- Which side is right is a question for Kalhat, not for this file to settle.
+-- So the conflict clause below is DO NOTHING, not DO UPDATE: running this now
+-- inserts only genuinely missing days and can never overwrite what an operator
+-- recorded. It was an upsert when written, on 2026-09-08, when nothing had been
+-- entered by hand yet and re-running it was harmless.
 --
 -- A day Kalhat did not record has NO ROW here — it must stay "not recorded",
 -- never 0. Every 0 below is a real reading of zero taken from the sheet.
@@ -87,9 +106,7 @@ insert into public.water_manual_readings (account_number, reading_date, consumpt
     ('C43659', '2026-09-05', 1071),
     ('C43659', '2026-09-06', 1389),
     ('C43659', '2026-09-07', 1331)
-on conflict (account_number, reading_date) do update
-    set consumption = excluded.consumption,
-        updated_at  = now();
+on conflict (account_number, reading_date) do nothing;
 
 -- ── Irrigation (63 rows: 9 meters × 7 days) ──────────────────────────────
 insert into public.irrigation_daily_readings (meter_key, reading_date, consumption) values
@@ -165,9 +182,7 @@ insert into public.irrigation_daily_readings (meter_key, reading_date, consumpti
     ('IRR-TANK-JMB', '2026-09-05', 136),
     ('IRR-TANK-JMB', '2026-09-06', 113),
     ('IRR-TANK-JMB', '2026-09-07', 257)
-on conflict (meter_key, reading_date) do update
-    set consumption = excluded.consumption,
-        updated_at  = now();
+on conflict (meter_key, reading_date) do nothing;
 
 commit;
 
