@@ -1642,6 +1642,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-15 — feat(water): meter coverage on the Daily gauges, and harden the hand-readings fill path (#82)
 - 2026-09-10 — feat(water): gradient supply trend with loss bars, collapsible balance table (#84)
 - 2026-09-10 — feat(water): reconcile the Daily DC gauge against every supply meter (#83)
 - 2026-09-08 — feat(water): Hand Readings — Irrigation and Potable daily entry (#81)
