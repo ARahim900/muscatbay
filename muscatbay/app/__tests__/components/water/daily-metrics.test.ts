@@ -3,6 +3,7 @@ import {
     buildDailyGrid, gridValue, dailySeverity, buildZoneDaySeries, buildZoneWatch,
     buildZoneDayBreakdown, buildNetworkDaySeries, buildDailyExceptions,
     risingLossStreak, detectSpike, zeroStreak, wasActiveBefore, zoneMeterCoverage,
+    expectedReported,
     type DayValues, type ZoneDayPoint,
 } from '@/components/water/daily-report/daily-metrics';
 import { ZONE_BULK_CONFIG, BUILDING_CONFIG } from '@/lib/water-accounts';
@@ -203,6 +204,95 @@ describe('buildZoneDayBreakdown', () => {
     });
 });
 
+// ─── Coverage-gated severity ──────────────────────────────────────────────────
+//
+// A day where meters did not report has an understated ΣL3 and so an overstated
+// loss. Grading that as a leak sends someone out after a silent meter, which is
+// the opposite of the owner's rule (act only on a full set). These pin the
+// behaviour that keeps a permanently dead meter from switching detection off.
+
+describe('coverage-gated severity', () => {
+    /** Zone FM with `perDay` meters reporting 1 m³ each, against a 100 m³ bulk. */
+    const zoneWith = (perDay: number[]) => buildDailyGrid([
+        row(FM.l2Account, days(...perDay.map(() => 100))),
+        ...FM.l3Accounts.map((a, i) =>
+            row(a, days(...perDay.map((n) => (i < n ? 1 : null))))),
+    ]);
+
+    it('takes the norm from the best recent day, so a dead meter never raises it', () => {
+        const pts = buildZoneDaySeries(zoneWith([5, 5, 5])).find(s => s.zoneName === 'Zone FM')!.points;
+        expect(expectedReported(pts, 3)).toBe(5);
+        expect(pts[2].coverageShort).toBe(false);
+    });
+
+    it('downgrades a day whose coverage DROPPED, keeping the loss figure intact', () => {
+        const fm = buildZoneDaySeries(zoneWith([15, 15, 5])).find(s => s.zoneName === 'Zone FM')!;
+        const dropped = fm.points[2];
+        expect(dropped.l3Reported).toBe(5);
+        expect(dropped.expectedReported).toBe(15);
+        expect(dropped.coverageShort).toBe(true);
+        expect(dropped.severity).toBe('partial');
+        // The figure is never lost — only its grade.
+        expect(dropped.loss).toBe(95);
+        expect(dropped.lossPct).toBe(95);
+        // The steady days keep their real grade.
+        expect(fm.points[1].severity).toBe('critical');
+        expect(fm.points[1].coverageShort).toBe(false);
+    });
+
+    it('does not let ONE dead meter mute a real alarm', () => {
+        // Zone 3A on the live network: 31 meters, then D-46's bulk dies and it
+        // runs at 30 — while the zone is genuinely losing ~73% of its supply.
+        // A single meter in 31 cannot explain a gap that size.
+        const zone3a = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+        const grid = buildDailyGrid([
+            row(zone3a.l2Account, days(167, 167, 173)),
+            ...zone3a.l3Accounts.map((a, i) =>
+                // Every meter reports ~1.5 m³; the last one falls silent on day 3.
+                row(a, days(1.5, 1.5, i === zone3a.l3Accounts.length - 1 ? null : 1.5))),
+        ]);
+        const pts = buildZoneDaySeries(grid).find(s => s.zoneName === 'Zone 3A')!.points;
+        expect(pts[2].l3Reported).toBe(zone3a.l3Accounts.length - 1);
+        expect(pts[2].coverageShort).toBe(false);
+        expect(pts[2].severity).toBe('critical');
+    });
+
+    it('still grades a zone that runs permanently below its meter count', () => {
+        // 16 of Zone FM's 17 report every day, as on the live network.
+        const fm = buildZoneDaySeries(zoneWith([16, 16, 16])).find(s => s.zoneName === 'Zone FM')!;
+        const day3 = fm.points[2];
+        expect(day3.l3Reported).toBeLessThan(FM.l3Accounts.length);
+        expect(day3.coverageShort).toBe(false);
+        // Gating on `reported === meterCount` would have made this 'partial'
+        // for ever, blinding the zone. It must keep its real severity.
+        expect(day3.severity).toBe('critical');
+    });
+
+    it('keeps a negative balance and a clean day at their own severities', () => {
+        // ΣL3 over the bulk is if anything MORE certain when meters are missing.
+        const over = buildDailyGrid([
+            row(FM.l2Account, days(10, 10)),
+            row(FM.l3Accounts[0], days(60, 60)),
+            row(FM.l3Accounts[1], days(5, null)),
+        ]);
+        const fm = buildZoneDaySeries(over).find(s => s.zoneName === 'Zone FM')!;
+        expect(fm.points[1].coverageShort).toBe(true);
+        expect(fm.points[1].severity).toBe('check');
+    });
+
+    it('breaks the rising-loss streak across a short-coverage day', () => {
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100, 100, 100, 100)),
+            row(FM.l3Accounts[0], days(48, 45, 40, 35)),
+            row(FM.l3Accounts[1], days(50, 50, null, 50)),  // silent on day 3
+        ]);
+        const fm = buildZoneDaySeries(grid).find(s => s.zoneName === 'Zone FM')!;
+        expect(fm.points[2].coverageShort).toBe(true);
+        // Without the guard the inflated day 3 manufactures a 3-day climb.
+        expect(risingLossStreak(fm.points, 4)).toBeLessThan(3);
+    });
+});
+
 describe('zoneMeterCoverage', () => {
     it('lists the unread meters by name so they can be chased, and counts a zero as read', () => {
         const grid = buildDailyGrid([
@@ -384,6 +474,30 @@ describe('buildDailyExceptions', () => {
         const firstWatch = rows.findIndex(r => r.Severity === 'Watch');
         const lastCritical = rows.map(r => r.Severity).lastIndexOf('Critical');
         expect(lastCritical).toBeLessThan(firstWatch === -1 ? rows.length : firstWatch);
+    });
+
+    it('stands down the dispatch rows on a short-coverage day, but still reports the gap', () => {
+        // Day 1: 15 meters reporting. Day 2: only 5 — an inflated 95 m³ gap.
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100, 100)),
+            ...FM.l3Accounts.map((a, i) => row(a, days(i < 15 ? 1 : null, i < 5 ? 1 : null))),
+        ]);
+        const series = buildZoneDaySeries(grid);
+        const rows = buildDailyExceptions(grid, series, 2);
+
+        // No "go and dig" row on a day the meters simply did not report.
+        expect(rows.some(r => r.Category === 'High daily loss' && r.Item === 'Zone FM')).toBe(false);
+        expect(rows.some(r => r.Category === 'Rising-loss signature' && r.Item === 'Zone FM')).toBe(false);
+
+        // …but the figure is still on screen, labelled as a ceiling.
+        const cov = rows.find(r => r.Category === 'Meters not reporting' && r.Item === 'Zone FM')!;
+        expect(cov.Value).toContain('normally 15');
+        expect(cov.Action).toMatch(/upper bound/);
+        expect(cov.Action).toMatch(/95\.0 m³/);
+
+        // Day 1 has full coverage for its own norm, so it keeps the real alarm.
+        expect(buildDailyExceptions(grid, series, 1)
+            .some(r => r.Category === 'High daily loss' && r.Item === 'Zone FM')).toBe(true);
     });
 
     it('names the meters that did not report, and stays quiet for a zone with no data at all', () => {

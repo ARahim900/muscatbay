@@ -74,11 +74,18 @@ export function gridValue(grid: DailyGrid, account: string, day: number): number
  * volumes are small and noisy: a 3 m³ loss on a 5 m³ supply is 60% but trivial,
  * while 100 m³ lost at 9% is not. `check` = negative balance (ΣL3 > L2 —
  * meter over-read or bulk under-read, needs validation, not a leak).
+ *
+ * `partial` is not a loss band at all: it means fewer meters reported than this
+ * zone normally manages, so ΣL3 is understated and the loss overstated. The
+ * owner acts on a gap only when the full set reported (ruling 2026-09-15), so
+ * grading such a day as a leak sends him out after a silent meter. The loss
+ * figure is still carried and shown — as a ceiling, not a measurement.
  */
-export type DailySeverity = "nodata" | "check" | "good" | "moderate" | "high" | "critical";
+export type DailySeverity = "nodata" | "partial" | "check" | "good" | "moderate" | "high" | "critical";
 
 export const SEVERITY_LABEL: Record<DailySeverity, string> = {
     nodata: "No data",
+    partial: "Partial data",
     check: "Check meters",
     good: "Good",
     moderate: "Moderate",
@@ -112,6 +119,10 @@ export interface ZoneDayPoint {
      * the reader needs this number to know whether a gap is real.
      */
     l3Reported: number;
+    /** The zone's own recent norm — see `expectedReported`. */
+    expectedReported: number;
+    /** `l3Reported` is below that norm: the balance is provisional. */
+    coverageShort: boolean;
     /** True when the day has any reading (L2 or any L3). */
     hasData: boolean;
     /** L2 − ΣL3; null when L2 is missing (balance not computable). */
@@ -119,6 +130,51 @@ export interface ZoneDayPoint {
     /** loss / L2 × 100; null when L2 missing or 0. */
     lossPct: number | null;
     severity: DailySeverity;
+}
+
+/**
+ * Days of history the coverage norm looks back over.
+ *
+ * The norm is the MOST meters seen reporting in that window, which is what
+ * makes this work on a network with permanently dead meters. Zone FM has
+ * reported 16 of 17 every day since 4300337 fell silent, so its norm is 16 and
+ * its days read as complete — gating on `reported === meterCount` instead would
+ * have switched off leak detection there for good. What the norm catches is a
+ * DROP: Zone 3A ran at 30 and fell to 23 on 13 September, so that day is
+ * provisional. When a meter dies the norm carries its old level for a week —
+ * deliberately, so the loss is flagged as provisional while the death is fresh
+ * — and then settles to the new level, which stops the register crying wolf.
+ * The meter itself is still named every day by the "Meters not reporting" row.
+ */
+export const COVERAGE_WINDOW_DAYS = 7;
+
+/**
+ * How big a shortfall has to be, as a share of the norm, before it downgrades a
+ * loss grade.
+ *
+ * Any shortfall at all would be too strict. When D-46's bulk died on 8
+ * September, Zone 3A went from 31 meters to 30 — and that zone was running a
+ * genuine 73% loss at the time. Downgrading on one meter in 31 would have
+ * muted a real alarm for the week the norm took to settle. One meter in thirty
+ * cannot explain a gap of that size, so it must not be allowed to excuse it.
+ *
+ * The missing meters are still named every day by the "Meters not reporting"
+ * row whatever this threshold does, so nothing is hidden either way — the
+ * threshold only decides whether the day still gets a leak GRADE.
+ *
+ * This uses the count of meters, not their volume: what a silent meter would
+ * have read is unknowable, and estimating it to sharpen a threshold would be
+ * inventing data.
+ */
+export const COVERAGE_SHORTFALL_RATIO = 0.1;
+
+export function expectedReported(points: ZoneDayPoint[], day: number): number {
+    let best = 0;
+    for (let d = Math.max(1, day - COVERAGE_WINDOW_DAYS); d <= day; d++) {
+        const p = points[d - 1];
+        if (p?.hasData && p.l3Reported > best) best = p.l3Reported;
+    }
+    return best;
 }
 
 export interface ZoneDaySeries {
@@ -148,10 +204,29 @@ export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
             const loss = l2 !== null ? r2(l2 - l3Sum) : null;
             const lossPct = l2 !== null && l2 > 0 && loss !== null ? r2((loss / l2) * 100) : null;
             points.push({
-                day: d, l2, l3Sum, l3Reported: reported, hasData: l2 !== null || reported > 0,
+                day: d, l2, l3Sum, l3Reported: reported,
+                expectedReported: 0, coverageShort: false,
+                hasData: l2 !== null || reported > 0,
                 loss, lossPct, severity: dailySeverity(loss, lossPct),
             });
         }
+
+        // Second pass: the norm needs the whole series, so coverage can only be
+        // judged once every day is built. A short day keeps its loss figure but
+        // loses its loss GRADE — "check" survives, because meters reading more
+        // than the bulk is if anything more certain when some did not report,
+        // and "good" survives, because a small gap cannot be an artefact of
+        // undercounting.
+        for (const p of points) {
+            p.expectedReported = expectedReported(points, p.day);
+            p.coverageShort = p.hasData
+                && p.expectedReported > 0
+                && (p.expectedReported - p.l3Reported) / p.expectedReported > COVERAGE_SHORTFALL_RATIO;
+            if (p.coverageShort && (p.severity === "moderate" || p.severity === "high" || p.severity === "critical")) {
+                p.severity = "partial";
+            }
+        }
+
         return { zoneName: z.zoneName, l2Account: z.l2Account, meterCount: z.l3Accounts.length, points };
     });
 }
@@ -162,10 +237,14 @@ export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
  * Consecutive days of strictly increasing positive loss ending at `day`
  * (number of increases, so a streak of 3 spans 4 days). The classic signature
  * of a growing underground leak; days with a missing balance break the streak.
+ *
+ * So does a day of short coverage: its loss is inflated by the meters that did
+ * not report, which manufactures exactly the rising shape this looks for.
  */
 export function risingLossStreak(points: ZoneDayPoint[], day: number): number {
     let streak = 0;
     for (let d = day; d > 1; d--) {
+        if (points[d - 1]?.coverageShort || points[d - 2]?.coverageShort) break;
         const cur = points[d - 1]?.loss;
         const prev = points[d - 2]?.loss;
         if (cur === null || cur === undefined || prev === null || prev === undefined) break;
@@ -234,6 +313,8 @@ export interface ZoneWatchRow {
     meterCount: number;
     /** Configured L3 meters with a reading on the selected day (≤ meterCount). */
     l3Reported: number;
+    /** Fewer than the zone's own recent norm reported: the balance is provisional. */
+    coverageShort: boolean;
     l2: number | null;
     l3Sum: number;
     loss: number | null;
@@ -271,6 +352,7 @@ export function buildZoneWatch(series: ZoneDaySeries[], day: number): ZoneWatchR
             zoneName: s.zoneName,
             meterCount: s.meterCount,
             l3Reported: p?.l3Reported ?? 0,
+            coverageShort: p?.coverageShort ?? false,
             l2: p?.l2 ?? null,
             l3Sum: p?.l3Sum ?? 0,
             loss: p?.loss ?? null,
@@ -526,7 +608,10 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
                 Action: "Individual meters read more than the bulk — check meter over-read or bulk under-read.",
             });
         }
-        if (p.loss !== null && p.loss > 20) {
+        // A short-coverage day is never a dispatch instruction: the loss is
+        // inflated by the meters that did not report. The coverage row below
+        // carries the figure instead, as the ceiling it is.
+        if (p.loss !== null && p.loss > 20 && !p.coverageShort) {
             const critical = (p.lossPct ?? 0) > 25 || p.loss > 50;
             rows.push({
                 Category: "High daily loss", Item: s.zoneName, Severity: critical ? "Critical" : "Watch",
@@ -537,7 +622,7 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
             });
         }
         const rising = risingLossStreak(s.points, day);
-        if (rising >= 3 && (p.loss ?? 0) > 10) {
+        if (rising >= 3 && (p.loss ?? 0) > 10 && !p.coverageShort) {
             rows.push({
                 Category: "Rising-loss signature", Item: s.zoneName, Severity: "Critical",
                 Value: `${rising + 1} days climbing → ${m3(p.loss ?? 0)}`,
@@ -548,18 +633,29 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
 
     // 1b — meter coverage: a partial day is a feed/meter problem to chase, and
     // it also means every balance above is overstated. Named so the reader
-    // knows which meters to go and look at.
+    // knows which meters to go and look at. On a day whose coverage dropped
+    // below the zone's norm this row also carries the day's loss, because the
+    // dispatch rows above stood down for it — the figure is never lost, it is
+    // just labelled as the ceiling it is.
     for (const z of ZONE_BULK_CONFIG) {
         const cov = zoneMeterCoverage(grid, z, day);
         const s = series.find((x) => x.zoneName === z.zoneName);
+        const p = s?.points[day - 1];
         // A zone with nothing at all that day is "no data", not "n meters down".
-        if (cov.unread.length === 0 || !s?.points[day - 1]?.hasData) continue;
+        if (cov.unread.length === 0 || !p?.hasData) continue;
         const shown = cov.unread.slice(0, 6).map((m) => `${m.name} (${m.account})`);
         const more = cov.unread.length - shown.length;
+        const chase = `Check: ${shown.join(", ")}${more > 0 ? ` and ${more} more` : ""}.`;
         rows.push({
-            Category: "Meters not reporting", Item: z.zoneName, Severity: "Watch",
-            Value: `${cov.reported} / ${cov.configured} meters reported`,
-            Action: `ΣL3 understated and loss overstated until these report — check: ${shown.join(", ")}${more > 0 ? ` and ${more} more` : ""}.`,
+            Category: "Meters not reporting",
+            Item: z.zoneName,
+            Severity: "Watch",
+            Value: p.coverageShort
+                ? `${cov.reported} / ${cov.configured} reported · normally ${p.expectedReported}`
+                : `${cov.reported} / ${cov.configured} meters reported`,
+            Action: p.coverageShort && p.loss !== null && p.loss > 20
+                ? `Coverage dropped, so the day's ${m3(p.loss)} gap is an upper bound, not a measured loss — restore the readings before dispatching an inspection. ${chase}`
+                : `ΣL3 understated and loss overstated until these report. ${chase}`,
         });
     }
 

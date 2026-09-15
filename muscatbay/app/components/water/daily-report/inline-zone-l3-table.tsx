@@ -25,6 +25,7 @@ import {
     TablePagination, thBase, tdBase,
 } from "./inline-shared";
 import { ExportButton, type ExportColumn } from "@/components/shared/data-table";
+import { buildDailyGrid } from "./daily-metrics";
 
 export { ZoneL3Table };
 
@@ -107,20 +108,15 @@ function ZoneL3Table({
         return map;
     }, [buildingRows, zoneConfig]);
 
-    // Determine latest day with data for any L3 account in this zone
-    const latestDay = useMemo(() => {
-        let maxDay = 0;
-        for (const account of zoneConfig.l3Accounts) {
-            const row = accountMap.get(account);
-            if (!row) continue;
-            for (let d = 31; d >= 1; d--) {
-                if (d <= maxDay) break;
-                const val = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
-                if (val != null) { maxDay = d; break; }
-            }
-        }
-        return Math.max(maxDay, 1);
-    }, [accountMap, zoneConfig]);
+    // How many day columns to draw. This is the month's reporting horizon —
+    // the latest day ANY meter recorded — not this zone's own L3 meters.
+    //
+    // Taking it from the zone's L3 meters hid the very outage the red cells
+    // exist to show: if every L3 meter in a zone fell silent after day 10 while
+    // the bulk and the rest of the site kept reporting, the table simply ended
+    // at day 10, so days 11 onward had no cells to mark and the operator could
+    // not see when the feed died. (Raised by the Codex review of PR #82.)
+    const latestDay = useMemo(() => buildDailyGrid(monthData).latestDay, [monthData]);
 
     const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
 
