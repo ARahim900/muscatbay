@@ -128,6 +128,7 @@ function compareZones(a: ZoneWatchRow, b: ZoneWatchRow, field: ZoneSortField): n
 const ZONE_EXPORT_COLUMNS: ExportColumn<ZoneWatchRow>[] = [
     { key: 'zoneName', header: 'Zone' },
     { key: 'meterCount', header: 'Meters' },
+    { key: 'l3Reported', header: 'Meters reported' },
     { key: 'severity', header: 'Status', format: (z) => SEVERITY_LABEL[z.severity] },
     { key: 'l2', header: 'Supply L2 (m³)', format: (z) => z.l2 ?? '' },
     { key: 'l3Sum', header: 'Metered ΣL3 (m³)' },
@@ -273,9 +274,18 @@ function ZonePerformanceTable({
                                             <span className="block truncate text-label text-fg group-hover:text-primary">
                                                 {row.zoneName}
                                             </span>
-                                            <span className="mt-0.5 block text-caption text-muted">
-                                                {row.meterCount} meter{row.meterCount === 1 ? "" : "s"}
-                                            </span>
+                                            {/* reported / configured — a partial day means ΣL3 is
+                                                understated, so the shortfall is called out, not hidden. */}
+                                            {row.l3Reported < row.meterCount ? (
+                                                <span className="mt-0.5 flex items-center gap-1 text-caption font-medium text-warning">
+                                                    <AlertTriangle size={12} strokeWidth={2} aria-hidden="true" />
+                                                    {row.l3Reported} / {row.meterCount} meters reported
+                                                </span>
+                                            ) : (
+                                                <span className="mt-0.5 block text-caption text-muted">
+                                                    {row.l3Reported} / {row.meterCount} meters reported
+                                                </span>
+                                            )}
                                         </span>
                                         <SeverityChip severity={mappedSeverity} label={SEVERITY_LABEL[row.severity]} />
                                     </button>

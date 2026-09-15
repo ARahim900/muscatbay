@@ -15,6 +15,7 @@ import {
     type ReportData,
     CHART_COLORS, r2, n, DailyLossConnector,
 } from "./inline-shared";
+import { buildDailyGrid, zoneMeterCoverage } from "./daily-metrics";
 import { ZoneDayBreakdownChart } from "./zone-day-breakdown-chart";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
@@ -56,6 +57,15 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
 
     // Shared gauge scale (same as Zone Analysis page)
     const gaugeMax = Math.max(l2Value ?? 0, l3Sum) * 1.2 || 100;
+
+    // Which of the zone's meters the ΣL3 gauge actually rests on today. Shown
+    // as "reported / configured" under the gauge and nothing more (owner ruling
+    // 2026-09-15) — the L3 table below marks each missing cell in red, so the
+    // meters to chase are found there, on the day they went quiet.
+    const coverage = useMemo(() => {
+        const zc = ZONE_BULK_CONFIG.find(z => z.zoneName === activeZoneName) ?? ZONE_BULK_CONFIG[0];
+        return zoneMeterCoverage(buildDailyGrid(monthData), zc, selectedDay);
+    }, [monthData, activeZoneName, selectedDay]);
 
     // 31-day trend for the active zone
     const trendData = useMemo(() => {
@@ -166,12 +176,12 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                         elementId="daily-gauge-1"
                     />
                 )}
-                <DailyLossConnector loss={diff} of={l2Value ?? 0} />
+                <DailyLossConnector loss={diff} of={l2Value ?? 0} unread={coverage.unread.length} />
                 <LiquidProgressRing
                     value={l3Sum}
                     max={gaugeMax}
                     label="ΣL3 Meters Total"
-                    sublabel="Recorded by L3 meters"
+                    sublabel={`${coverage.reported} / ${coverage.configured} meters reported`}
                     color={CHART_COLORS.brand}
                     size={160}
                     showPercentage={false}

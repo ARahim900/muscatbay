@@ -186,5 +186,93 @@ BEGIN
     END;
 END $$;
 
+-- ── 20260908b: the fill is not callable by a client ─────────────────────
+-- water_manual_apply_day is SECURITY DEFINER. If `authenticated` holds EXECUTE
+-- it is reachable over PostgREST RPC, and a viewer can blank a day cell for a
+-- hand-read-only meter by calling it for a date with no reading row.
+SET test.uid = '00000000-0000-0000-0000-0000000000b4';  -- viewer
+DO $$
+BEGIN
+    BEGIN
+        PERFORM public.water_manual_apply_day('C43659', '2026-05-06');
+        RAISE EXCEPTION 'FAIL: viewer executed the fill function directly';
+    EXCEPTION WHEN insufficient_privilege THEN
+        NULL; -- expected: permission denied for function
+    END;
+END $$;
+
+-- The operator cannot reach it directly either — only the trigger may.
+SET test.uid = '00000000-0000-0000-0000-0000000000b3';  -- operator
+DO $$
+BEGIN
+    BEGIN
+        PERFORM public.water_manual_apply_day('C43659', '2026-05-06');
+        RAISE EXCEPTION 'FAIL: operator executed the fill function directly';
+    EXCEPTION WHEN insufficient_privilege THEN
+        NULL;
+    END;
+END $$;
+
+-- ── 20260908b: deleting a shared-meter reading clears the cell it filled ──
+-- Zone 3A is NOT manual_owned, so a hand figure only fills an empty cell. When
+-- the operator clears that figure, the value must leave water_daily_consumption
+-- with it — otherwise a withdrawn reading keeps driving Zone Watch, the loss
+-- balance, Monthly, Satellite and the dashboard.
+INSERT INTO public.water_manual_readings (account_number, reading_date, consumption)
+VALUES ('4300343', '2026-07-11', 412.5);
+DO $$
+BEGIN
+    IF (SELECT day_11 FROM public.water_daily_consumption
+        WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026) IS DISTINCT FROM 412.5 THEN
+        RAISE EXCEPTION 'FAIL: shared-meter hand reading did not fill the empty cell';
+    END IF;
+    IF (SELECT applied_consumption FROM public.water_manual_readings
+        WHERE account_number = '4300343' AND reading_date = '2026-07-11') IS DISTINCT FROM 412.5 THEN
+        RAISE EXCEPTION 'FAIL: applied_consumption was not recorded';
+    END IF;
+END $$;
+
+DELETE FROM public.water_manual_readings WHERE account_number = '4300343' AND reading_date = '2026-07-11';
+DO $$
+BEGIN
+    IF (SELECT day_11 FROM public.water_daily_consumption
+        WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026) IS NOT NULL THEN
+        RAISE EXCEPTION 'FAIL: deleting a shared-meter reading left its value behind in the daily table';
+    END IF;
+END $$;
+
+-- Moving a reading to another date must clear the date it left, same rule.
+INSERT INTO public.water_manual_readings (account_number, reading_date, consumption)
+VALUES ('4300343', '2026-07-12', 300);
+UPDATE public.water_manual_readings
+   SET reading_date = '2026-07-13'
+ WHERE account_number = '4300343' AND reading_date = '2026-07-12';
+DO $$
+BEGIN
+    IF (SELECT day_12 FROM public.water_daily_consumption
+        WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026) IS NOT NULL THEN
+        RAISE EXCEPTION 'FAIL: moving a shared-meter reading left its value on the old date';
+    END IF;
+    IF (SELECT day_13 FROM public.water_daily_consumption
+        WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026) IS DISTINCT FROM 300 THEN
+        RAISE EXCEPTION 'FAIL: moving a shared-meter reading did not fill the new date';
+    END IF;
+END $$;
+
+-- A Grafana value on a shared meter is still never overwritten, and is still
+-- left alone when a hand reading beside it is withdrawn.
+UPDATE public.water_daily_consumption SET day_20 = 999
+ WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026;
+INSERT INTO public.water_manual_readings (account_number, reading_date, consumption)
+VALUES ('4300343', '2026-07-20', 111);
+DELETE FROM public.water_manual_readings WHERE account_number = '4300343' AND reading_date = '2026-07-20';
+DO $$
+BEGIN
+    IF (SELECT day_20 FROM public.water_daily_consumption
+        WHERE account_number = '4300343' AND month = 'Jul-26' AND year = 2026) IS DISTINCT FROM 999 THEN
+        RAISE EXCEPTION 'FAIL: an instrumented value was disturbed by a hand reading being withdrawn';
+    END IF;
+END $$;
+
 RESET ROLE;
 SELECT 'manual-readings.test.sql: all assertions passed' AS result;

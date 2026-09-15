@@ -35,7 +35,7 @@ import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-prefe
 import { MAIN_BULK_ACCOUNT } from "@/lib/water-accounts";
 import type { ViewStatus } from "@/components/water/daily-water-report";
 import type { ManualMeter, ManualReadingSystem } from "@/entities/manual-readings";
-import { monthLabel, sumConsumption, toDateKey, type DerivedDay } from "@/functions/api/manual-readings";
+import { monthLabel, muscatToday, sumConsumption, type DerivedDay } from "@/functions/api/manual-readings";
 import { useManualReadings } from "./use-manual-readings";
 import { DateStepper } from "./date-stepper";
 import { ManualReadingsEntry } from "./manual-readings-entry";
@@ -79,7 +79,7 @@ function mtdNote(ledger: Ledger, keys: readonly string[], label: string): string
 export function HandReadingsView({ onStatusChange }: { onStatusChange?: (status: ViewStatus) => void }) {
     // Today from the client's clock. This view is loaded with `ssr: false`
     // (app/water/page.tsx), so there is no server frame to disagree with.
-    const [todayKey] = useState(() => toDateKey(new Date()));
+    const [todayKey] = useState(() => muscatToday());
     // One date for both tables — Kalhat records both systems on the same day.
     const [date, setDate] = useState(todayKey);
     const [system, setSystem] = useState<ManualReadingSystem>(() => {

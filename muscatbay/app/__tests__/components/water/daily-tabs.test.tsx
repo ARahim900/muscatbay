@@ -70,6 +70,8 @@ describe('ZoneWatch', () => {
         }
         // Day 2: loss 40 m³ / 40% → "High" severity chip on the Zone FM row.
         expect(screen.getAllByText('High').length).toBeGreaterThan(0);
+        // …and the row says how many of the zone's meters that ΣL3 rests on.
+        expect(screen.getByText(`1 / ${FM.l3Accounts.length} meters reported`)).toBeInTheDocument();
     });
 
     it('navigates to the zone analysis when a zone row is clicked', () => {
@@ -118,9 +120,20 @@ describe('DailyExceptions', () => {
         expect(screen.getAllByText('Critical').length).toBeGreaterThan(0);
     });
 
-    it('shows the all-clear empty state on a clean day', () => {
+    it('names the meters that did not report, so a partial day is never mistaken for a loss', () => {
         render(<DailyExceptions monthData={monthData} selectedDay={1} month="Mar-26" />);
-        // Day 1: loss 10 m³ / 10% — under the 20 m³ exception threshold.
+        // Day 1: loss 10 m³ / 10% is under the 20 m³ threshold, but only 1 of
+        // Zone FM's 17 meters has a reading — that is the thing to chase.
+        expect(screen.getByText('Meters not reporting')).toBeInTheDocument();
+        expect(screen.getByText(`1 / ${FM.l3Accounts.length} meters reported`)).toBeInTheDocument();
+    });
+
+    it('shows the all-clear empty state on a clean day with every meter reporting', () => {
+        const fullDay: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            ...FM.l3Accounts.map((a, i) => row(a, [i === 0 ? 90 : 0])),
+        ];
+        render(<DailyExceptions monthData={fullDay} selectedDay={1} month="Mar-26" />);
         expect(screen.getByText(/No exceptions for Day 1/i)).toBeInTheDocument();
     });
 });
@@ -147,6 +160,25 @@ describe('ZoneL3Table', () => {
         expect(screen.getByText('Building FM')).toBeInTheDocument();
         // …and the account number still appears (in the Account column).
         expect(screen.getByText(FM.l3Accounts[0])).toBeInTheDocument();
+    });
+
+    it('tints a day cell with no reading red, and leaves a recorded zero alone', () => {
+        const data: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100, 100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            row(FM.l3Accounts[0], [90, null], { meter_name: 'Building FM' }),   // quiet on day 2
+            row(FM.l3Accounts[1], [0, 0], { meter_name: 'Idle villa' }),        // 0 is a reading
+        ];
+        render(<ZoneL3Table zoneRow={fmZoneRow} zoneConfig={FM} monthData={data} buildingRows={[]} />);
+        // Every missing cell is a red-tinted cell carrying the same label.
+        const missing = screen.getAllByLabelText('No reading');
+        expect(missing.length).toBeGreaterThan(0);
+        for (const dash of missing) expect(dash.closest('td')).toHaveClass('bg-danger-tint');
+        // Building FM: day 1 read, day 2 not — exactly one tinted cell.
+        const fm = screen.getByText('Building FM').closest('tr')!;
+        expect(fm.querySelectorAll('td.bg-danger-tint')).toHaveLength(1);
+        // The idle villa's zeros are readings — plain cells.
+        const idle = screen.getByText('Idle villa').closest('tr')!;
+        expect(idle.querySelectorAll('td.bg-danger-tint')).toHaveLength(0);
     });
 
     it('falls back to the account number when a meter has no recorded name', () => {

@@ -60,6 +60,25 @@ export function toDateKey(d: Date): string {
     return `${y}-${m}-${day}`;
 }
 
+/**
+ * Today's date on the Muscat calendar (UTC+4), as `YYYY-MM-DD`.
+ *
+ * The site is a single operation in one timezone, so "today" is an Oman fact,
+ * not a per-machine one. Deriving it from the local clock breaks in two
+ * places: the Server Action runs on Vercel in UTC, so between 20:00 UTC and
+ * midnight Oman is already on the next day and a genuine reading would be
+ * rejected as "in the future"; and a laptop left on another timezone would
+ * cap the date stepper on the wrong day.
+ */
+export function muscatToday(now: Date = new Date()): string {
+    return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Muscat',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).format(now);
+}
+
 /** Parse `YYYY-MM-DD` into a local-midnight Date, or `null` if malformed / impossible. */
 export function parseDateKey(key: string): Date | null {
     if (!ISO_DATE.test(key)) return null;
@@ -355,7 +374,7 @@ export const MAX_READING = 999_999;
  * Validates a save request. Returns the list of problems (empty = valid).
  * `today` is injectable so tests are clock-independent.
  */
-export function validateManualReadings(input: SaveManualReadingsInput, today: string = toDateKey(new Date())): string[] {
+export function validateManualReadings(input: SaveManualReadingsInput, today: string = muscatToday()): string[] {
     const problems: string[] = [];
     if (!isManualReadingSystem(input.system)) problems.push('Unknown reading system.');
     if (!parseDateKey(input.date)) problems.push('Reading date must be a valid YYYY-MM-DD date.');

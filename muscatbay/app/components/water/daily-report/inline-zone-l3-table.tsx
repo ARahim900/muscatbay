@@ -48,6 +48,19 @@ const STATUS_TEXT: Record<StatusRole, string> = {
 const tint = (role: StatusRole, pct: number) =>
     `color-mix(in srgb, ${STATUS_BASE[role]} ${pct}%, transparent)`;
 
+/**
+ * A day cell with no reading. Tinted light red (owner ruling 2026-09-15) so a
+ * meter that has gone quiet is found by scanning the matrix — the dash, the
+ * tooltip and the accessible label carry the same message, never colour alone.
+ * A recorded 0 is a reading and is NOT marked.
+ */
+const MISSING_CELL = "bg-danger-tint";
+function MissingReading() {
+    return (
+        <span className="text-danger" title="No reading" aria-label="No reading">—</span>
+    );
+}
+
 // ─── Zone L3 Meters Table — All-Days View ────────────────────────────────────
 
 function ZoneL3Table({
@@ -369,14 +382,10 @@ function ZoneL3Table({
                             {l2DayTotals.map((val, i) => (
                                 <TableCell
                                     key={i}
-                                    className={cn(tdBase, "px-2 text-right font-medium tabular-nums")}
+                                    className={cn(tdBase, "px-2 text-right font-medium tabular-nums", val === null && MISSING_CELL)}
                                     style={{ color: STATUS_TEXT.primary }}
                                 >
-                                    {val === null ? (
-                                        <span className="text-muted">—</span>
-                                    ) : (
-                                        n(val)
-                                    )}
+                                    {val === null ? <MissingReading /> : n(val)}
                                 </TableCell>
                             ))}
                             <TableCell
@@ -447,9 +456,9 @@ function ZoneL3Table({
                                         <Badge tone={meter.building ? "info" : "neutral"}>{meter.building ? "Building" : "Individual"}</Badge>
                                     </TableCell>
                                     {meter.dailyValues.map((val, i) => (
-                                        <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums")}>
+                                        <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums", val === null && MISSING_CELL)}>
                                             {val === null ? (
-                                                <span className="text-muted">—</span>
+                                                <MissingReading />
                                             ) : val === 0 ? (
                                                 <span className="text-muted">0.00</span>
                                             ) : (
@@ -490,9 +499,9 @@ function ZoneL3Table({
                                                 <Badge tone={child.type === 'Common' ? 'info' : 'neutral'}>{child.type === 'Common' ? 'Common' : 'Apartment'}</Badge>
                                             </TableCell>
                                             {child.dailyValues.map((val, i) => (
-                                                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-normal tabular-nums")}>
+                                                <TableCell key={i} className={cn(tdBase, "px-2 text-right font-normal tabular-nums", val === null && MISSING_CELL)}>
                                                     {val === null ? (
-                                                        <span className="text-muted">—</span>
+                                                        <MissingReading />
                                                     ) : val === 0 ? (
                                                         <span className="text-muted">0.00</span>
                                                     ) : (

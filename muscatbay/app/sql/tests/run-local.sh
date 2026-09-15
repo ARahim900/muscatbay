@@ -77,6 +77,7 @@ SQL
 
 "${PSQL[@]}" -f "$MIGRATIONS/20260901_invitation_only_security_and_rls.sql"
 "${PSQL[@]}" -f "$MIGRATIONS/20260908_manual_meter_readings.sql"
+"${PSQL[@]}" -f "$MIGRATIONS/20260908b_manual_readings_fill_hardening.sql"
 "${PSQL[@]}" -f "$HERE/manual-readings.test.sql"
 
 echo "SQL tests passed."
