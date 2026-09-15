@@ -1642,6 +1642,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-15 — fix(water): restore satellite view on iOS
 - 2026-09-15 — fix(water): restore network overlay and FM navigation
 - 2026-09-15 — feat(water): show daily satellite readings and zone consumption differences
 - 2026-09-15 — feat(water): meter coverage on the Daily gauges, and harden the hand-readings fill path (#82)
