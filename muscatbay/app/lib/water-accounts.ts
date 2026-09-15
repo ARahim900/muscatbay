@@ -232,6 +232,13 @@ export const BUILDING_CONFIG: BuildingConfig[] = [
 
 // ─── Direct Connection (DC) Meters ────────────────────────────────────────────
 
+// A direct connection is a meter fed straight off the NAMA main inlet, i.e. a
+// sibling of the zone bulks rather than a child of one. Together with the zone
+// bulks these are the whole of the L1 balance:
+//     Main Bulk (L1) = Σ zone bulks (L2) + Σ DC + trunk-main loss
+// so this list must contain every `Direct_Connection` meter in the registry and
+// nothing else. `isIrr` marks a potable feed to an irrigation tank — still NAMA
+// water, still part of the balance, just expected to read null on quiet days.
 export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'IRR Tank Z08',              account: '4300294', isIrr: true  },
     { meterName: 'Building Security',          account: '4300297', isIrr: false },
@@ -240,10 +247,22 @@ export const DC_METERS: DCMeterConfig[] = [
     { meterName: 'Hotel Main Building',        account: '4300334', isIrr: false },
     { meterName: 'Community Mgmt / STP',       account: '4300336', isIrr: false },
     { meterName: 'Main Entrance Phase 02',     account: '4300338', isIrr: false },
-    { meterName: 'Irrigation Controller UP',   account: '4300340', isIrr: true  },
-    { meterName: 'Irrigation Controller DOWN', account: '4300341', isIrr: true  },
     { meterName: 'Al Adrak Accommodation',     account: '4300349', isIrr: false },
     { meterName: 'Sales Center',              account: '4300295', isIrr: false },
+];
+
+// ─── TSE irrigation meters — deliberately NOT direct connections ─────────────
+// These run on treated effluent from the STP, not on NAMA potable supply, and
+// the meter registry classes them `label = 'N/A', zone = 'N/A'` for exactly
+// that reason. Adding them to `DC_METERS` (as the Daily report did until
+// 2026-09-10) put TSE volume on the potable side of the L1 balance, inflating
+// "L2 + DC" and understating the trunk-main loss by the same amount. Kept here
+// as a named list so the exclusion is explicit rather than an omission.
+export const TSE_IRRIGATION_METERS: DCMeterConfig[] = [
+    { meterName: 'Irrigation Tank 01 Outlet (TSE)',   account: '4300322', isIrr: true },
+    { meterName: 'Irrigation Controller UP (TSE)',    account: '4300340', isIrr: true },
+    { meterName: 'Irrigation Controller DOWN (TSE)',  account: '4300341', isIrr: true },
+    { meterName: 'Irrigation Tank — Village Sq (TSE)', account: '4300347', isIrr: true },
 ];
 
 // ─── Building Child Meter Details ─────────────────────────────────────────────
@@ -490,6 +509,9 @@ export const BUILDING_CHILD_METERS: Record<string, ChildMeterInfo[]> = {
 
 export function getAllReportAccounts(): string[] {
     const accs = new Set<string>();
+    // L1 first — the Daily report's supply reconciliation needs it, and it is
+    // not reachable through any zone or DC list.
+    accs.add(MAIN_BULK_ACCOUNT);
     for (const z of ZONE_BULK_CONFIG) {
         accs.add(z.l2Account);
         z.l3Accounts.forEach(a => accs.add(a));
