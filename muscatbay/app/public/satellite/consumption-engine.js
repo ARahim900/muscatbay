@@ -4,6 +4,12 @@
   const message = document.getElementById("message");
   const send = (type, extra = {}) =>
     window.parent.postMessage({ type, ...extra }, location.origin);
+  const context = window.SATELLITE_CONTEXT || {
+    positions: [],
+    zones: {},
+    connections: [],
+    zoneIds: {},
+  };
   const locations = [...(window.PLOTS || []), ...(window.ASSETS || [])].map(
     (p) => ({
       account: p.acct,
@@ -11,6 +17,7 @@
       precision: p.precision || "Plot position — not a surveyed meter chamber",
     }),
   );
+  locations.push(...context.positions);
   let map = null;
   let latest = null;
   let loaded = false;
@@ -215,27 +222,113 @@
         );
       }
     }
+    const opacity = zone
+      ? [
+          "case",
+          ["==", ["get", "zone"], zone],
+          1,
+          ["==", ["get", "zone"], ""],
+          0.55,
+          0.15,
+        ]
+      : 1;
+    map.setPaintProperty("network-line", "line-opacity", opacity);
+    map.setPaintProperty("network-case", "line-opacity", opacity);
+    map.setLayoutProperty(
+      "fm-connections",
+      "visibility",
+      zone === "Zone_01_(FM)" ? "visible" : "none",
+    );
+    map.setPaintProperty(
+      "fm-connections",
+      "line-opacity",
+      selected ? ["case", ["==", ["get", "account"], selected], 1, 0.3] : 0.85,
+    );
     const focus = `${zone}:${selected}`;
     if (focus !== previousFocus) {
-      previousFocus = focus;
-      const selectedMeter = points.find((m) => m.account === selected);
-      if (selectedMeter)
+      const selectedPosition =
+        points.find((m) => m.account === selected)?.location ||
+        locations.find((p) => p.account === selected);
+      const coordinates =
+        context.zones[zone] || points.map((m) => m.location.coordinates);
+      const { clientWidth: width } = map.getContainer();
+      if (selectedPosition) {
         map.easeTo({
-          center: selectedMeter.location.coordinates,
-          zoom: 18,
-          duration: reducedMotion ? 0 : 350,
+          center: selectedPosition.coordinates,
+          zoom: 18.5,
+          padding: { top: 110, bottom: 170, left: 30, right: 30 },
+          duration: reducedMotion ? 0 : 700,
         });
-      else if (points.length) {
+        previousFocus = focus;
+      } else if (coordinates.length) {
         const bounds = new maplibregl.LngLatBounds();
-        points.forEach((m) => bounds.extend(m.location.coordinates));
+        coordinates.forEach((coordinate) => bounds.extend(coordinate));
         map.fitBounds(bounds, {
-          padding: 60,
+          padding: {
+            top: 120,
+            bottom: 65,
+            left: width < 640 ? 30 : 60,
+            right: width < 640 ? 30 : 60,
+          },
           maxZoom: 17,
-          duration: reducedMotion ? 0 : 350,
+          duration: reducedMotion ? 0 : 900,
         });
+        previousFocus = focus;
       }
     }
   }
+  function addNetwork() {
+    const features = (window.NETWORK || [])
+      .filter((route) => route.k === 0 || route.k === 1)
+      .map((route) => ({
+        type: "Feature",
+        properties: {
+          zone: context.zoneIds[route.zoneId] || route.zoneId || "",
+          diameter: route.d ?? null,
+          material: route.m ?? null,
+          source: route.source || "existing-coo87-overlay",
+          kind: route.k,
+        },
+        geometry: { type: "LineString", coordinates: route.c },
+      }));
+    map.addSource("network", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features },
+    });
+    map.addLayer({
+      id: "network-case",
+      type: "line",
+      source: "network",
+      paint: {
+        "line-color": "#4E4456",
+        "line-width": ["case", ["==", ["get", "kind"], 0], 5, 3.5],
+      },
+    });
+    map.addLayer({
+      id: "network-line",
+      type: "line",
+      source: "network",
+      paint: {
+        "line-color": "#A4C5BB",
+        "line-width": ["case", ["==", ["get", "kind"], 0], 2.5, 1.5],
+      },
+    });
+    map.addSource("fm-connections", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: context.connections },
+    });
+    map.addLayer({
+      id: "fm-connections",
+      type: "line",
+      source: "fm-connections",
+      paint: {
+        "line-color": "#A4C5BB",
+        "line-width": 2.5,
+        "line-dasharray": [2, 2],
+      },
+    });
+  }
+
   function boot() {
     if (map) return;
     try {
@@ -296,6 +389,7 @@
         update();
       });
       map.on("load", () => {
+        addNetwork();
         map.addSource("meters", {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -354,6 +448,11 @@
         });
         loaded = true;
         report("ready", "");
+        if (!window.NETWORK?.length || !window.SATELLITE_CONTEXT)
+          report(
+            "degraded",
+            "Network geometry could not load. Meter readings remain available.",
+          );
         update();
       });
     } catch (error) {
@@ -371,6 +470,11 @@
     if (!data || typeof data !== "object") return;
     if (data.type === "satviz:hello") {
       send("satviz:ready", { locations });
+      return;
+    }
+    if (data.type === "satviz:focus") {
+      previousFocus = "";
+      update();
       return;
     }
     if (data.type === "satviz:resize") {

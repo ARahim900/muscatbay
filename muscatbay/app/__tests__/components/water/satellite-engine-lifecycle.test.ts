@@ -39,6 +39,7 @@ function environment(fail = false) {
     addLayer: vi.fn(),
     getSource: () => source,
     setLayoutProperty: vi.fn(),
+    setPaintProperty: vi.fn(),
     easeTo: vi.fn(),
     fitBounds: vi.fn(),
     remove: vi.fn(),
@@ -54,6 +55,18 @@ function environment(fail = false) {
     parent,
     PLOTS: [],
     ASSETS: [],
+    NETWORK: [],
+    SATELLITE_CONTEXT: {
+      positions: [],
+      connections: [],
+      zoneIds: {},
+      zones: {
+        "Zone_03_(A)": [
+          [58.637927, 23.549146],
+          [58.635, 23.549],
+        ],
+      },
+    },
     matchMedia: () => ({ matches: true }),
     addEventListener: (
       name: string,
@@ -174,6 +187,55 @@ describe("consumption renderer", () => {
       meters: [{ ...payload.meters[0], value: null }],
     });
     expect(env.elements.some((el) => el.textContent === "— m³")).toBe(true);
+  });
+  it("frames zone geography when the selected level has no mapped meters", () => {
+    const env = environment();
+    env.send("satviz:data", {
+      ...payload,
+      zone: "Zone_03_(A)",
+      selected: "",
+      meters: [],
+    });
+    env.mapEvents.load();
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+    env.send("satviz:update", {
+      ...payload,
+      zone: "Zone_03_(A)",
+      selected: "",
+      meters: [],
+    });
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+    env.send("satviz:focus", undefined);
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(2);
+  });
+  it("waits for geographic positions before consuming an initial focus request", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, selected: "", meters: [] });
+    env.mapEvents.load();
+    expect(env.map.fitBounds).not.toHaveBeenCalled();
+    env.send("satviz:update", { ...payload, selected: "" });
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+  });
+  it("loads network layers beneath meters and distinguishes schematic FM links", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, zone: "Zone_01_(FM)" });
+    env.mapEvents.load();
+    const layers = env.map.addLayer.mock.calls.map(
+      (call) => call[0] as { id: string; paint: Record<string, unknown> },
+    );
+    expect(
+      layers.findIndex((layer) => layer.id === "network-line"),
+    ).toBeLessThan(layers.findIndex((layer) => layer.id === "meter-circles"));
+    expect(
+      layers.find((layer) => layer.id === "fm-connections")?.paint[
+        "line-dasharray"
+      ],
+    ).toEqual([2, 2]);
+    expect(env.map.setLayoutProperty).toHaveBeenCalledWith(
+      "fm-connections",
+      "visibility",
+      "visible",
+    );
   });
   it("releases its graphics resources when the frame leaves", () => {
     const env = environment();

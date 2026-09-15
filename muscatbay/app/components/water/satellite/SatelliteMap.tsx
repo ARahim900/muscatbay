@@ -156,7 +156,7 @@ export function SatelliteMap({
     setAttempt((a) => a + 1);
   };
   return (
-    <div className="min-w-0 space-y-2">
+    <div className="relative min-w-0 space-y-2">
       {status && (
         <div
           role="status"
@@ -175,6 +175,19 @@ export function SatelliteMap({
             </>
           )}
         </div>
+      )}
+      {!failed && (
+        <Button
+          className="absolute bottom-3 left-3 z-10"
+          onClick={() =>
+            frame.current?.contentWindow?.postMessage(
+              { type: "satviz:focus" },
+              location.origin,
+            )
+          }
+        >
+          {selected ? "Refocus meter" : "Fit zone"}
+        </Button>
       )}
       <iframe
         style={{ height: "70svh", minHeight: 360, maxHeight: 720 }}

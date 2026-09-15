@@ -114,7 +114,11 @@ export function SatelliteView({
   );
   const selectZone = useCallback(
     (zone: string) => {
-      change({ zone, meter: "" });
+      change({
+        zone,
+        meter: "",
+        ...(zone === "Zone_01_(FM)" ? { level: "L3" as const } : {}),
+      });
       setQuery("");
     },
     [change],
@@ -181,6 +185,39 @@ export function SatelliteView({
           setShowAll(false);
         }}
       />
+      {state.zone === "Zone_01_(FM)" && (
+        <div className="flex flex-wrap items-center gap-3 text-label">
+          <label htmlFor="fm-building">FM building</label>
+          <select
+            id="fm-building"
+            aria-label="FM building"
+            className="min-h-11 max-w-full rounded-control border border-line bg-card px-3 py-2 text-body text-fg focus-visible:outline-3 focus-visible:outline-accent"
+            value={selected?.level === "L3" ? state.meter : ""}
+            onChange={(event) =>
+              event.target.value
+                ? selectMeter(event.target.value)
+                : change({ meter: "", level: "L3" })
+            }
+          >
+            <option value="">All FM buildings</option>
+            {meters
+              .filter(
+                (meter) =>
+                  meter.zone === "Zone_01_(FM)" && meter.level === "L3",
+              )
+              .map((meter) => (
+                <option key={meter.account} value={meter.account}>
+                  {meter.name}
+                </option>
+              ))}
+          </select>
+          {state.level !== "L3" && (
+            <Button onClick={() => change({ level: "L3", meter: "" })}>
+              Show building meters
+            </Button>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3 text-caption text-muted">
         <span>Daily records · Oman dates · missing readings stay —</span>
         {latestDay && latestDay !== state.date && (
@@ -236,6 +273,9 @@ export function SatelliteView({
                       : `${summary.reporting} of ${scope.length} reporting${summary.partial ? " · Partial data" : ""}`}
                 </p>
                 <p>Circle size = daily m³ · zoom in for labels</p>
+                {state.zone === "Zone_01_(FM)" && (
+                  <p>Dashed links = schematic connections</p>
+                )}
               </div>
             )}
             {selected && (
@@ -282,12 +322,16 @@ export function SatelliteView({
       </div>
       <p className="text-caption text-muted">
         Sage circles: recorded · hollow: missing or invalid · purple outline:
-        selected. Labels show daily m³. Positions come from the drawing
-        register;{" "}
+        selected. Labels show daily m³. Solid lines: existing drawing network
+        (includes previously adjusted road alignments). Positions include
+        building and zone reference points; exact meter chambers may be
+        unverified.{" "}
         {locations === null
           ? "map register loading"
           : `${scope.length - summary.mapped} meters have no mapped position`}
         . Satellite imagery is not live.
+        {state.zone === "Zone_01_(FM)" &&
+          " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
       </p>
       <SatelliteSummary
         state={state}
