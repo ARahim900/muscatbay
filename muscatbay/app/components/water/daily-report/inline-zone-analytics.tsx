@@ -7,7 +7,6 @@ import {
     ComposedChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
     ReferenceLine, Line, CartesianGrid,
 } from "recharts";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { ChartFrame, chartTheme, SectionCard } from "@/components/ui";
 import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
@@ -16,7 +15,7 @@ import {
     type ReportData,
     CHART_COLORS, r2, n, DailyLossConnector,
 } from "./inline-shared";
-import { buildDailyGrid, zoneMeterCoverage, type ZoneCoverage } from "./daily-metrics";
+import { buildDailyGrid, zoneMeterCoverage } from "./daily-metrics";
 import { ZoneDayBreakdownChart } from "./zone-day-breakdown-chart";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 
@@ -36,47 +35,6 @@ interface ZoneAnalyticsPanelProps {
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 const fmtM3 = (v: TipValue, name: number | string | undefined): [string, string] =>
     [v == null ? "—" : `${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })} m³`, String(name)];
-
-/**
- * How many of the zone's meters stand behind the ΣL3 gauge, and which ones
- * do not. The owner acts on a gap only when the full set reported (ruling
- * 2026-09-15); on a partial day the missing meters are the thing to fix, so
- * they are listed by name here rather than left for the reader to hunt down
- * in the L3 table. Colour is always paired with an icon and a text label.
- */
-function MeterCoverageNote({ coverage, day }: { coverage: ZoneCoverage; day: number }) {
-    const { configured, reported, unread } = coverage;
-    if (unread.length === 0) {
-        return (
-            <p className="flex items-center justify-center gap-1.5 text-caption text-success">
-                <CheckCircle2 size={16} strokeWidth={2} aria-hidden="true" />
-                All {configured} meters reported on Day {day} — the balance covers the full set
-            </p>
-        );
-    }
-    return (
-        <div className="mx-auto max-w-3xl rounded-control bg-warning-tint px-4 py-3" role="status">
-            <p className="flex items-start gap-1.5 text-caption font-medium text-warning">
-                <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden="true" />
-                <span>
-                    {reported} / {configured} meters reported on Day {day} — {unread.length} not read, so ΣL3
-                    is understated and the loss overstated. Check these before acting on the gap:
-                </span>
-            </p>
-            <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`Meters with no reading on Day ${day}`}>
-                {unread.map((m) => (
-                    <li
-                        key={m.account}
-                        className="inline-flex items-center gap-1.5 rounded-control border border-line bg-card px-2 py-1 text-caption text-fg"
-                    >
-                        <span>{m.name}</span>
-                        <span className="meter text-muted">{m.account}</span>
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-}
 
 function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZoneName }: ZoneAnalyticsPanelProps) {
     const chartMotion = useChartMotion();
@@ -100,7 +58,10 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
     // Shared gauge scale (same as Zone Analysis page)
     const gaugeMax = Math.max(l2Value ?? 0, l3Sum) * 1.2 || 100;
 
-    // Which of the zone's meters the ΣL3 gauge actually rests on today.
+    // Which of the zone's meters the ΣL3 gauge actually rests on today. Shown
+    // as "reported / configured" under the gauge and nothing more (owner ruling
+    // 2026-09-15) — the L3 table below marks each missing cell in red, so the
+    // meters to chase are found there, on the day they went quiet.
     const coverage = useMemo(() => {
         const zc = ZONE_BULK_CONFIG.find(z => z.zoneName === activeZoneName) ?? ZONE_BULK_CONFIG[0];
         return zoneMeterCoverage(buildDailyGrid(monthData), zc, selectedDay);
@@ -228,8 +189,6 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                     elementId="daily-gauge-2"
                 />
             </div>
-
-            <MeterCoverageNote coverage={coverage} day={selectedDay} />
 
             {/* ── Half-width pair: where the day's water went (left) and the
                    daily trend (right). Both are SectionCards with a header and

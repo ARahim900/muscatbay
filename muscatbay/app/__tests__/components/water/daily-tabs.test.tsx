@@ -162,6 +162,25 @@ describe('ZoneL3Table', () => {
         expect(screen.getByText(FM.l3Accounts[0])).toBeInTheDocument();
     });
 
+    it('tints a day cell with no reading red, and leaves a recorded zero alone', () => {
+        const data: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100, 100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            row(FM.l3Accounts[0], [90, null], { meter_name: 'Building FM' }),   // quiet on day 2
+            row(FM.l3Accounts[1], [0, 0], { meter_name: 'Idle villa' }),        // 0 is a reading
+        ];
+        render(<ZoneL3Table zoneRow={fmZoneRow} zoneConfig={FM} monthData={data} buildingRows={[]} />);
+        // Every missing cell is a red-tinted cell carrying the same label.
+        const missing = screen.getAllByLabelText('No reading');
+        expect(missing.length).toBeGreaterThan(0);
+        for (const dash of missing) expect(dash.closest('td')).toHaveClass('bg-danger-tint');
+        // Building FM: day 1 read, day 2 not — exactly one tinted cell.
+        const fm = screen.getByText('Building FM').closest('tr')!;
+        expect(fm.querySelectorAll('td.bg-danger-tint')).toHaveLength(1);
+        // The idle villa's zeros are readings — plain cells.
+        const idle = screen.getByText('Idle villa').closest('tr')!;
+        expect(idle.querySelectorAll('td.bg-danger-tint')).toHaveLength(0);
+    });
+
     it('falls back to the account number when a meter has no recorded name', () => {
         const namelessData: SupabaseDailyWaterConsumption[] = [
             row(FM.l2Account, [100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
