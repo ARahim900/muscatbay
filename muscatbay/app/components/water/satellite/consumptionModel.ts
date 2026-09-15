@@ -48,7 +48,7 @@ export const formatVolume = (value: number | null): string =>
         maximumFractionDigits: 2,
       });
 export const zoneName = (zone: string): string =>
-  ZONE_CONFIG.find((z) => z.code === zone)?.name ?? zone.replaceAll("_", " ");
+  ZONE_CONFIG.find((z) => z.code === zone)?.name ?? zone.split("_").join(" ");
 export function parseLocations(raw: unknown): MeterLocation[] {
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item: unknown) => {

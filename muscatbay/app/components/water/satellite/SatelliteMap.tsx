@@ -33,6 +33,7 @@ export function SatelliteMap({
   const [failed, setFailed] = useState(false);
   const latest = useRef({ meters, zone, selected, date });
   const callbacks = useRef({ onLocations, onZone, onMeter, onUnavailable });
+  const warnedAboutFontSync = useRef(false);
   const syncTheme = useCallback(() => {
     const element = frame.current;
     const embedded = element?.contentDocument;
@@ -62,7 +63,25 @@ export function SatelliteMap({
       "dark",
       document.documentElement.classList.contains("dark"),
     );
-    document.fonts?.forEach((font) => embedded.fonts.add(font));
+    const sourceFonts = (
+      document as Document & { fonts?: Partial<FontFaceSet> }
+    ).fonts;
+    const targetFonts = (
+      embedded as Document & { fonts?: Partial<FontFaceSet> }
+    ).fonts;
+    if (
+      typeof sourceFonts?.forEach === "function" &&
+      typeof targetFonts?.add === "function"
+    ) {
+      try {
+        sourceFonts.forEach((font) => targetFonts.add?.(font));
+      } catch (error: unknown) {
+        if (!warnedAboutFontSync.current) {
+          warnedAboutFontSync.current = true;
+          console.warn("Satellite map font synchronisation was skipped.", error);
+        }
+      }
+    }
   }, []);
   useEffect(() => {
     const observer = new MutationObserver(syncTheme);
@@ -71,10 +90,17 @@ export function SatelliteMap({
       attributeFilter: ["class", "style"],
     });
     syncTheme();
-    document.fonts?.addEventListener("loadingdone", syncTheme);
+    const fonts = (
+      document as Document & { fonts?: Partial<FontFaceSet> }
+    ).fonts;
+    if (typeof fonts?.addEventListener === "function") {
+      fonts.addEventListener("loadingdone", syncTheme);
+    }
     return () => {
       observer.disconnect();
-      document.fonts?.removeEventListener("loadingdone", syncTheme);
+      if (typeof fonts?.removeEventListener === "function") {
+        fonts.removeEventListener("loadingdone", syncTheme);
+      }
     };
   }, [syncTheme]);
   useEffect(() => {
@@ -134,17 +160,25 @@ export function SatelliteMap({
       }
     };
     window.addEventListener("message", receive);
-    const observer = new ResizeObserver(() =>
+    const sendResize = () =>
       frame.current?.contentWindow?.postMessage(
         { type: "satviz:resize" },
         location.origin,
-      ),
-    );
-    if (frame.current) observer.observe(frame.current);
+      );
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(sendResize);
+    if (observer && frame.current) {
+      observer.observe(frame.current);
+    } else {
+      window.addEventListener("resize", sendResize);
+    }
     return () => {
       window.clearTimeout(timer);
       window.removeEventListener("message", receive);
-      observer.disconnect();
+      window.removeEventListener("resize", sendResize);
+      observer?.disconnect();
       ready.current = false;
     };
   }, [attempt]);

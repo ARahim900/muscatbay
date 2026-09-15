@@ -37,6 +37,8 @@ describe('SectionBoundary', () => {
     it('recognises the chunk-load error shapes browsers and bundlers produce', () => {
         expect(isChunkLoadError(chunkError())).toBe(true);
         expect(isChunkLoadError(new TypeError('Failed to fetch dynamically imported module: /x.js'))).toBe(true);
+        expect(isChunkLoadError(new TypeError('Load failed'))).toBe(true);
+        expect(isChunkLoadError(new Error('Load failed'))).toBe(false);
         expect(isChunkLoadError(new Error('Loading chunk app-pages-browser_components_hvac failed'))).toBe(true);
         expect(isChunkLoadError(new TypeError("Cannot read properties of undefined (reading 'filter')"))).toBe(false);
         expect(isChunkLoadError(null)).toBe(false);
@@ -68,15 +70,25 @@ describe('SectionBoundary', () => {
     });
 
     it('never reloads automatically when sessionStorage is blocked — the claim could not be recorded', () => {
-        vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-            throw new Error('SecurityError: storage is disabled');
+        const storageDescriptor = Object.getOwnPropertyDescriptor(window, 'sessionStorage');
+        Object.defineProperty(window, 'sessionStorage', {
+            configurable: true,
+            value: {
+                getItem: () => {
+                    throw new Error('SecurityError: storage is disabled');
+                },
+            } as unknown as Storage,
         });
         const reload = vi.fn();
-        render(
-            <SectionBoundary title="Plant Watch" reload={reload}>
-                <Boom error={chunkError()} />
-            </SectionBoundary>,
-        );
+        try {
+            render(
+                <SectionBoundary title="Plant Watch" reload={reload}>
+                    <Boom error={chunkError()} />
+                </SectionBoundary>,
+            );
+        } finally {
+            Object.defineProperty(window, 'sessionStorage', storageDescriptor!);
+        }
         expect(reload).not.toHaveBeenCalled();
         expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument();
     });

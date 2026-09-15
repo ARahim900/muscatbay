@@ -39,11 +39,13 @@ import { Component, Fragment, type ErrorInfo, type ReactNode } from "react";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 
 const CHUNK_ERROR_RE = /ChunkLoadError|Loading chunk [\w-]+ failed|Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module/i;
+const SAFARI_CHUNK_ERROR_RE = /^Load failed$/i;
 
 /** True when the error is a code-split chunk that could not be fetched. */
 export function isChunkLoadError(error: Error | null): boolean {
     if (!error) return false;
-    return error.name === "ChunkLoadError" || CHUNK_ERROR_RE.test(error.message) || CHUNK_ERROR_RE.test(error.name);
+    return error.name === "ChunkLoadError" || CHUNK_ERROR_RE.test(error.message) || CHUNK_ERROR_RE.test(error.name) ||
+        (error.name === "TypeError" && SAFARI_CHUNK_ERROR_RE.test(error.message));
 }
 
 const RELOAD_FLAG_PREFIX = "mb:chunk-reload:";

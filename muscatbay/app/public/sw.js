@@ -19,6 +19,8 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v10 (2026-09-15) refreshes iOS clients after the Satellite view added
+ *                    compatibility guards for reduced browser API support.
  *   v9 (2026-09-08) flushes clients holding the pre-Hand-Readings bundle. The
  *                   hand-readings tables were renamed `reading` → `consumption`
  *                   in the same deploy; an open tab kept its cached
@@ -42,7 +44,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v9";
+const CACHE_VERSION = "v10";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;

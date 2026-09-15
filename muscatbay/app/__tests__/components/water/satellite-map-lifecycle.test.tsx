@@ -94,4 +94,30 @@ describe("satellite iframe lifecycle", () => {
     });
     expect(screen.getByRole("button", { name: "Retry map" })).toBeVisible();
   });
+  it("keeps the map mounted when ResizeObserver is unavailable", () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+    render(<SatelliteMap {...props} />);
+    expect(
+      screen.getByTitle("Water consumption satellite map"),
+    ).toBeVisible();
+  });
+  it("skips font copying when the iframe has no mutable font set", () => {
+    Object.defineProperty(document, "fonts", {
+      configurable: true,
+      value: {
+        forEach: (callback: (font: FontFace) => void) =>
+          callback({} as FontFace),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+    try {
+      render(<SatelliteMap {...props} />);
+      expect(
+        screen.getByTitle("Water consumption satellite map"),
+      ).toBeVisible();
+    } finally {
+      Reflect.deleteProperty(document, "fonts");
+    }
+  });
 });

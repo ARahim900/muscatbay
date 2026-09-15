@@ -54,7 +54,7 @@ export function RegisterSW() {
     // stale-chunk reload (app/error.tsx) so the NEXT deploy race can also
     // self-heal in this tab.
     try {
-      sessionStorage.removeItem("mb-chunk-reload");
+      sessionStorage.removeItem(`mb:chunk-reload:${window.location.pathname}`);
     } catch {
       /* storage unavailable — the guard simply stays conservative */
     }

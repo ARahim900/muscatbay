@@ -194,7 +194,7 @@
         const el = document.createElement("button");
         el.type = "button";
         el.className = "zone-marker";
-        el.textContent = group[0].zoneName || name.replaceAll("_", " ");
+        el.textContent = group[0].zoneName || name.split("_").join(" ");
         const count = document.createElement("span");
         const zoneMeters = meters.filter((m) => m.zone === name);
         const recorded = zoneMeters.filter((m) => m.value !== null);
