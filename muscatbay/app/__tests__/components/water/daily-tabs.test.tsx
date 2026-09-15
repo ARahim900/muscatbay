@@ -162,6 +162,21 @@ describe('ZoneL3Table', () => {
         expect(screen.getByText(FM.l3Accounts[0])).toBeInTheDocument();
     });
 
+    it('draws day columns to the month horizon, so a whole-zone outage is visible', () => {
+        // Every Zone FM L3 meter falls silent after day 2, while the zone bulk
+        // and the rest of the site keep reporting to day 4. The table must
+        // still draw days 3 and 4 — that is where the outage shows.
+        const data: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100, 100, 100, 100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            row(FM.l3Accounts[0], [90, 90], { meter_name: 'Building FM' }),
+        ];
+        render(<ZoneL3Table zoneRow={fmZoneRow} zoneConfig={FM} monthData={data} buildingRows={[]} />);
+        expect(screen.getByText('D4')).toBeInTheDocument();
+        // Building FM: read on days 1-2, silent on 3-4 → two red cells.
+        const fm = screen.getByText('Building FM').closest('tr')!;
+        expect(fm.querySelectorAll('td.bg-danger-tint')).toHaveLength(2);
+    });
+
     it('tints a day cell with no reading red, and leaves a recorded zero alone', () => {
         const data: SupabaseDailyWaterConsumption[] = [
             row(FM.l2Account, [100, 100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),

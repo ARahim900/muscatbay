@@ -38,6 +38,13 @@ export const SEV_UI: Record<DailySeverity, { base: string; text: string; bg: str
         base: "var(--color-neutral)", text: "var(--color-muted)",
         bg: "var(--color-neutral-tint)",
     },
+    // Not a loss band: fewer meters reported than this zone normally manages,
+    // so the balance is provisional. Warning, not danger — the thing to fix is
+    // a meter, not the network.
+    partial: {
+        base: "var(--color-warning)", text: "var(--color-warning)",
+        bg: "var(--color-warning-tint)",
+    },
     check: {
         base: "var(--color-info)", text: "var(--color-info)",
         bg: "var(--color-info-tint)",
@@ -89,7 +96,7 @@ function WatchPanel({
  *  missing, so no balance can be computed) collapses into "no data"; "moderate"
  *  maps to "watch". The zone×day heatmap below keeps the finer 6-level palette. */
 const ZONE_SEV_MAP: Record<DailySeverity, Severity> = {
-    nodata: "nodata", check: "nodata", good: "good", moderate: "watch", high: "high", critical: "critical",
+    nodata: "nodata", partial: "watch", check: "nodata", good: "good", moderate: "watch", high: "high", critical: "critical",
 };
 
 type ZoneSortField = "urgency" | "supply" | "metered" | "loss" | "mtdLoss" | "trend";
@@ -98,10 +105,11 @@ type SortDirection = "asc" | "desc";
 const DAILY_SEVERITY_RANK: Record<DailySeverity, number> = {
     good: 0,
     nodata: 1,
-    check: 2,
-    moderate: 3,
-    high: 4,
-    critical: 5,
+    partial: 2,
+    check: 3,
+    moderate: 4,
+    high: 5,
+    critical: 6,
 };
 
 function compareZones(a: ZoneWatchRow, b: ZoneWatchRow, field: ZoneSortField): number {
@@ -129,6 +137,7 @@ const ZONE_EXPORT_COLUMNS: ExportColumn<ZoneWatchRow>[] = [
     { key: 'zoneName', header: 'Zone' },
     { key: 'meterCount', header: 'Meters' },
     { key: 'l3Reported', header: 'Meters reported' },
+    { key: 'coverageShort', header: 'Coverage below normal', format: (z) => z.coverageShort ? 'yes' : 'no' },
     { key: 'severity', header: 'Status', format: (z) => SEVERITY_LABEL[z.severity] },
     { key: 'l2', header: 'Supply L2 (m³)', format: (z) => z.l2 ?? '' },
     { key: 'l3Sum', header: 'Metered ΣL3 (m³)' },
@@ -274,9 +283,12 @@ function ZonePerformanceTable({
                                             <span className="block truncate text-label text-fg group-hover:text-primary">
                                                 {row.zoneName}
                                             </span>
-                                            {/* reported / configured — a partial day means ΣL3 is
-                                                understated, so the shortfall is called out, not hidden. */}
-                                            {row.l3Reported < row.meterCount ? (
+                                            {/* reported / configured. Amber only when coverage fell
+                                                BELOW this zone's own norm — Zone FM has run at 16 of
+                                                17 since 4300337 fell silent, and colouring that amber
+                                                every day would be noise. The silent meter is still
+                                                named daily by the Exceptions register. */}
+                                            {row.coverageShort ? (
                                                 <span className="mt-0.5 flex items-center gap-1 text-caption font-medium text-warning">
                                                     <AlertTriangle size={12} strokeWidth={2} aria-hidden="true" />
                                                     {row.l3Reported} / {row.meterCount} meters reported
@@ -449,7 +461,7 @@ function ZoneDayHeatmap({
             </div>
             {/* Color-blind-safe legend: color always paired with a text label. */}
             <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-                {(["good", "moderate", "high", "critical", "check", "nodata"] as DailySeverity[]).map((sev) => (
+                {(["good", "moderate", "high", "critical", "check", "partial", "nodata"] as DailySeverity[]).map((sev) => (
                     <span key={sev} className="inline-flex items-center gap-1.5 text-caption text-muted">
                         <span className="h-3 w-3 rounded-control border border-line" style={{ background: SEV_UI[sev].bg }} aria-hidden="true" />
                         {SEVERITY_LABEL[sev]}

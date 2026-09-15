@@ -44,7 +44,7 @@ type FooterTone = "neutral" | "success" | "warning" | "danger" | "info";
 
 /** Footer dot per severity band — the same bands the Exceptions register uses. */
 const TONE_BY_SEVERITY: Record<DailySeverity, FooterTone> = {
-    nodata: "neutral", check: "warning", good: "success", moderate: "warning", high: "danger", critical: "danger",
+    nodata: "neutral", partial: "warning", check: "warning", good: "success", moderate: "warning", high: "danger", critical: "danger",
 };
 
 /** One footer line: the day's balance in words. */
