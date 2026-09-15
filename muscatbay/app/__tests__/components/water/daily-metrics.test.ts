@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     buildDailyGrid, gridValue, dailySeverity, buildZoneDaySeries, buildZoneWatch,
     buildZoneDayBreakdown, buildNetworkDaySeries, buildDailyExceptions,
-    risingLossStreak, detectSpike, zeroStreak, wasActiveBefore,
+    risingLossStreak, detectSpike, zeroStreak, wasActiveBefore, zoneMeterCoverage,
     type DayValues, type ZoneDayPoint,
 } from '@/components/water/daily-report/daily-metrics';
 import { ZONE_BULK_CONFIG, BUILDING_CONFIG } from '@/lib/water-accounts';
@@ -95,6 +95,15 @@ describe('buildZoneDaySeries / buildZoneWatch', () => {
     it('marks the balance as not computable when L2 is missing', () => {
         expect(fm.points[2]).toMatchObject({ l2: null, l3Sum: 10, loss: null, lossPct: null, severity: 'nodata' });
         expect(fm.points[2].hasData).toBe(true);
+    });
+
+    it('counts how many configured meters stand behind each day\'s ΣL3', () => {
+        // Day 1 and 2: both fixture meters read. Day 3: only one — the other
+        // 15 of Zone FM's 17 have no row at all and never count as reported.
+        expect(fm.points[0].l3Reported).toBe(2);
+        expect(fm.points[2].l3Reported).toBe(1);
+        expect(buildZoneWatch(series, 3).find(x => x.zoneName === 'Zone FM')!.l3Reported).toBe(1);
+        expect(buildZoneWatch(series, 3).find(x => x.zoneName === 'Zone FM')!.meterCount).toBe(FM.l3Accounts.length);
     });
 
     it('aggregates month-to-date and sparkline in the fleet view', () => {
@@ -194,6 +203,37 @@ describe('buildZoneDayBreakdown', () => {
     });
 });
 
+describe('zoneMeterCoverage', () => {
+    it('lists the unread meters by name so they can be chased, and counts a zero as read', () => {
+        const grid = buildDailyGrid([
+            row(FM.l3Accounts[0], days(30), 'Villa A'),
+            row(FM.l3Accounts[1], days(0), 'Idle villa'),          // 0 is a reading
+            row(FM.l3Accounts[2], days(null, 4), 'Late villa'),    // nothing on day 1
+        ]);
+        const cov = zoneMeterCoverage(grid, FM, 1);
+        expect(cov.configured).toBe(FM.l3Accounts.length);
+        expect(cov.reported).toBe(2);
+        expect(cov.unread).toHaveLength(FM.l3Accounts.length - 2);
+        expect(cov.unread[0]).toEqual({ account: FM.l3Accounts[2], name: 'Late villa' });
+        // A meter with no row at all falls back to its account number.
+        expect(cov.unread[1]).toEqual({ account: FM.l3Accounts[3], name: FM.l3Accounts[3] });
+        // The same meter is read on day 2.
+        expect(zoneMeterCoverage(grid, FM, 2).unread.some(m => m.account === FM.l3Accounts[2])).toBe(false);
+    });
+
+    it('names a building bulk by its building, like the breakdown chart', () => {
+        const zone3a = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+        const building = BUILDING_CONFIG.find(b => b.zone === '3A')!;
+        const cov = zoneMeterCoverage(buildDailyGrid([]), zone3a, 1);
+        expect(cov.unread.find(m => m.account === building.bulkAccount)?.name).toBe(building.buildingName);
+    });
+
+    it('reports a full set when every meter has a reading', () => {
+        const grid = buildDailyGrid(FM.l3Accounts.map(a => row(a, days(1))));
+        expect(zoneMeterCoverage(grid, FM, 1)).toEqual({ configured: FM.l3Accounts.length, reported: FM.l3Accounts.length, unread: [] });
+    });
+});
+
 describe('buildNetworkDaySeries', () => {
     const grid = buildDailyGrid([
         row(FM.l2Account, days(100, 50)),
@@ -213,7 +253,7 @@ describe('buildNetworkDaySeries', () => {
 describe('risingLossStreak', () => {
     const pts = (losses: (number | null)[]): ZoneDayPoint[] =>
         losses.map((loss, i) => ({
-            day: i + 1, l2: 100, l3Sum: 0, hasData: true, loss,
+            day: i + 1, l2: 100, l3Sum: 0, l3Reported: 0, hasData: true, loss,
             lossPct: loss, severity: 'good',
         }));
 
@@ -346,10 +386,28 @@ describe('buildDailyExceptions', () => {
         expect(lastCritical).toBeLessThan(firstWatch === -1 ? rows.length : firstWatch);
     });
 
+    it('names the meters that did not report, and stays quiet for a zone with no data at all', () => {
+        const grid = buildDailyGrid([
+            row(FM.l2Account, days(100)),
+            row(FM.l3Accounts[0], days(98), 'Villa A'),
+        ]);
+        const rows = buildDailyExceptions(grid, buildZoneDaySeries(grid), 1);
+        const hit = rows.find(r => r.Category === 'Meters not reporting' && r.Item === 'Zone FM')!;
+        expect(hit).toBeTruthy();
+        expect(hit.Severity).toBe('Watch');
+        expect(hit.Value).toBe(`${1} / ${FM.l3Accounts.length} meters reported`);
+        // Six named, the rest counted — and the read meter is not among them.
+        expect(hit.Action).toContain(FM.l3Accounts[1]);
+        expect(hit.Action).not.toContain('Villa A');
+        expect(hit.Action).toContain(`and ${FM.l3Accounts.length - 1 - 6} more`);
+        // Zone 8 has nothing that day: "no data", not "22 meters down".
+        expect(rows.some(r => r.Category === 'Meters not reporting' && r.Item === 'Zone 8')).toBe(false);
+    });
+
     it('returns an empty register on a clean day', () => {
         const grid = buildDailyGrid([
             row(FM.l2Account, days(100)),
-            row(FM.l3Accounts[0], days(98)),
+            ...FM.l3Accounts.map((a, i) => row(a, days(i === 0 ? 98 : 0))),
         ]);
         expect(buildDailyExceptions(grid, buildZoneDaySeries(grid), 1)).toEqual([]);
     });

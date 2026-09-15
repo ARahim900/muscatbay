@@ -70,6 +70,8 @@ describe('ZoneWatch', () => {
         }
         // Day 2: loss 40 m³ / 40% → "High" severity chip on the Zone FM row.
         expect(screen.getAllByText('High').length).toBeGreaterThan(0);
+        // …and the row says how many of the zone's meters that ΣL3 rests on.
+        expect(screen.getByText(`1 / ${FM.l3Accounts.length} meters reported`)).toBeInTheDocument();
     });
 
     it('navigates to the zone analysis when a zone row is clicked', () => {
@@ -118,9 +120,20 @@ describe('DailyExceptions', () => {
         expect(screen.getAllByText('Critical').length).toBeGreaterThan(0);
     });
 
-    it('shows the all-clear empty state on a clean day', () => {
+    it('names the meters that did not report, so a partial day is never mistaken for a loss', () => {
         render(<DailyExceptions monthData={monthData} selectedDay={1} month="Mar-26" />);
-        // Day 1: loss 10 m³ / 10% — under the 20 m³ exception threshold.
+        // Day 1: loss 10 m³ / 10% is under the 20 m³ threshold, but only 1 of
+        // Zone FM's 17 meters has a reading — that is the thing to chase.
+        expect(screen.getByText('Meters not reporting')).toBeInTheDocument();
+        expect(screen.getByText(`1 / ${FM.l3Accounts.length} meters reported`)).toBeInTheDocument();
+    });
+
+    it('shows the all-clear empty state on a clean day with every meter reporting', () => {
+        const fullDay: SupabaseDailyWaterConsumption[] = [
+            row(FM.l2Account, [100], { label: 'L2', meter_name: 'ZONE FM (Bulk)' }),
+            ...FM.l3Accounts.map((a, i) => row(a, [i === 0 ? 90 : 0])),
+        ];
+        render(<DailyExceptions monthData={fullDay} selectedDay={1} month="Mar-26" />);
         expect(screen.getByText(/No exceptions for Day 1/i)).toBeInTheDocument();
     });
 });

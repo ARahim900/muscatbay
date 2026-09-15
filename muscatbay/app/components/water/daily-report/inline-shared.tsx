@@ -33,7 +33,7 @@ export const CHART_COLORS = {
  * earned"), mirroring the monthly water-balance treatment. The arrow flips to
  * vertical when the gauges stack on narrow screens.
  */
-export function DailyLossConnector({ loss, of }: { loss: number | null; of: number }) {
+export function DailyLossConnector({ loss, of, unread = 0 }: { loss: number | null; of: number; unread?: number }) {
     // `null` = the balance could not be computed (the bulk meter was not read).
     // Showing that as "0 · balanced" claimed the zone reconciled perfectly.
     if (loss === null) {
@@ -54,6 +54,9 @@ export function DailyLossConnector({ loss, of }: { loss: number | null; of: numb
     const pct = of > 0 ? Math.abs(Math.round((v / of) * 1000) / 10) : 0;
     const sign = v > 0 ? '−' : v < 0 ? '+' : '';
     const caption = v > 0 ? 'loss' : v < 0 ? 'over-read' : 'balanced';
+    // `unread` L3 meters counted as 0 in ΣL3: the figure is an upper bound on
+    // the day's loss, not the loss, and the caption must say so.
+    const partial = unread > 0 ? ` · ${unread} unread` : '';
     return (
         <div className="flex shrink-0 flex-col items-center justify-center">
             <ArrowDown size={20} strokeWidth={2} className="text-muted sm:hidden" aria-hidden="true" />
@@ -65,7 +68,7 @@ export function DailyLossConnector({ loss, of }: { loss: number | null; of: numb
                     {sign}{n(Math.abs(v))} m³
                 </span>
                 <span className="whitespace-nowrap text-eyebrow uppercase" style={{ color: tint }}>
-                    {caption} · {pct}%
+                    {caption} · {pct}%{partial}
                 </span>
             </div>
         </div>

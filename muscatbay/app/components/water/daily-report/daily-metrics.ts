@@ -106,6 +106,12 @@ export interface ZoneDayPoint {
     l2: number | null;
     /** Σ of the zone's individual (L3) meters, nulls counted as 0. */
     l3Sum: number;
+    /**
+     * How many of the zone's configured L3 meters have a reading that day.
+     * Below `meterCount`, `l3Sum` is understated and the loss overstated —
+     * the reader needs this number to know whether a gap is real.
+     */
+    l3Reported: number;
     /** True when the day has any reading (L2 or any L3). */
     hasData: boolean;
     /** L2 − ΣL3; null when L2 is missing (balance not computable). */
@@ -129,12 +135,12 @@ export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
         for (let d = 1; d <= grid.latestDay; d++) {
             const l2raw = gridValue(grid, z.l2Account, d);
             let l3 = 0;
-            let anyL3 = false;
+            let reported = 0;
             for (const a of z.l3Accounts) {
                 const v = gridValue(grid, a, d);
                 if (v !== null) {
                     l3 += v;
-                    anyL3 = true;
+                    reported++;
                 }
             }
             const l2 = l2raw !== null ? r2(l2raw) : null;
@@ -142,7 +148,7 @@ export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
             const loss = l2 !== null ? r2(l2 - l3Sum) : null;
             const lossPct = l2 !== null && l2 > 0 && loss !== null ? r2((loss / l2) * 100) : null;
             points.push({
-                day: d, l2, l3Sum, hasData: l2 !== null || anyL3,
+                day: d, l2, l3Sum, l3Reported: reported, hasData: l2 !== null || reported > 0,
                 loss, lossPct, severity: dailySeverity(loss, lossPct),
             });
         }
@@ -226,6 +232,8 @@ export function wasActiveBefore(values: DayValues, day: number, streak: number):
 export interface ZoneWatchRow {
     zoneName: string;
     meterCount: number;
+    /** Configured L3 meters with a reading on the selected day (≤ meterCount). */
+    l3Reported: number;
     l2: number | null;
     l3Sum: number;
     loss: number | null;
@@ -262,6 +270,7 @@ export function buildZoneWatch(series: ZoneDaySeries[], day: number): ZoneWatchR
         return {
             zoneName: s.zoneName,
             meterCount: s.meterCount,
+            l3Reported: p?.l3Reported ?? 0,
             l2: p?.l2 ?? null,
             l3Sum: p?.l3Sum ?? 0,
             loss: p?.loss ?? null,
@@ -313,6 +322,46 @@ export interface ZoneDayBreakdown {
 /** Curated building names for the L3 accounts that are building bulks. */
 const BUILDING_NAME_BY_BULK = new Map(BUILDING_CONFIG.map((b) => [b.bulkAccount, b.buildingName]));
 
+/** Display name for an L3 account: curated building name → stored meter name → account. */
+function meterLabel(grid: DailyGrid, account: string): string {
+    return BUILDING_NAME_BY_BULK.get(account) ?? grid.names.get(account) ?? account;
+}
+
+// ─── Meter coverage (how many of the zone's meters the day's ΣL3 rests on) ───
+//
+// ΣL3 counts an unread meter as 0, so a day where 23 of 31 meters reported
+// shows a smaller ΣL3 and a larger apparent loss than the zone really had.
+// The owner's rule (2026-09-15) is to act on a gap only when the full set
+// reported; a partial day is a meter-feed problem to chase, not a leak.
+
+export interface UnreadMeter {
+    account: string;
+    name: string;
+}
+
+export interface ZoneCoverage {
+    /** L3 meters configured for the zone. */
+    configured: number;
+    /** Of those, how many have a reading on the day. */
+    reported: number;
+    /** The meters with no reading, in configuration order — the repair list. */
+    unread: UnreadMeter[];
+}
+
+export function zoneMeterCoverage(grid: DailyGrid, zone: ZoneBulkConfig, day: number): ZoneCoverage {
+    const unread: UnreadMeter[] = [];
+    for (const account of zone.l3Accounts) {
+        if (gridValue(grid, account, day) === null) {
+            unread.push({ account, name: meterLabel(grid, account) });
+        }
+    }
+    return {
+        configured: zone.l3Accounts.length,
+        reported: zone.l3Accounts.length - unread.length,
+        unread,
+    };
+}
+
 /**
  * @param topN  Named bars before the rest collapses into "Other". Only meters
  *              with a positive reading are named; zero and unread meters always
@@ -329,7 +378,7 @@ export function buildZoneDayBreakdown(
 
     const meters = zone.l3Accounts.map((account) => ({
         account,
-        label: BUILDING_NAME_BY_BULK.get(account) ?? grid.names.get(account) ?? account,
+        label: meterLabel(grid, account),
         value: gridValue(grid, account, day),
     }));
     const unread = meters.filter((m) => m.value === null).length;
@@ -495,6 +544,23 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
                 Action: "Loss has increased daily — pattern of a growing underground leak. Inspect the zone network.",
             });
         }
+    }
+
+    // 1b — meter coverage: a partial day is a feed/meter problem to chase, and
+    // it also means every balance above is overstated. Named so the reader
+    // knows which meters to go and look at.
+    for (const z of ZONE_BULK_CONFIG) {
+        const cov = zoneMeterCoverage(grid, z, day);
+        const s = series.find((x) => x.zoneName === z.zoneName);
+        // A zone with nothing at all that day is "no data", not "n meters down".
+        if (cov.unread.length === 0 || !s?.points[day - 1]?.hasData) continue;
+        const shown = cov.unread.slice(0, 6).map((m) => `${m.name} (${m.account})`);
+        const more = cov.unread.length - shown.length;
+        rows.push({
+            Category: "Meters not reporting", Item: z.zoneName, Severity: "Watch",
+            Value: `${cov.reported} / ${cov.configured} meters reported`,
+            Action: `ΣL3 understated and loss overstated until these report — check: ${shown.join(", ")}${more > 0 ? ` and ${more} more` : ""}.`,
+        });
     }
 
     // 2 — building bulk vs ΣL4 (in-building leaks)
