@@ -204,7 +204,15 @@ export default function WaterPage() {
         // localStorage is client-only, so restoring the saved view must happen after
         // hydration; a lazy useState initialiser would render a different value on the
         // server than on the client.
-        if (savedPrefs?.dashboardView) setDashboardView(savedPrefs.dashboardView);
+        const restoreView = () => {
+            const linkedView = new URLSearchParams(window.location.search).get('view');
+            const validViews: DashboardView[] = ['monthly', 'daily', 'satellite', 'readings'];
+            const view = validViews.find(value => value === linkedView) ?? savedPrefs?.dashboardView ?? 'monthly';
+            setDashboardView(view);
+        };
+        restoreView();
+        window.addEventListener('popstate', restoreView);
+        return () => window.removeEventListener('popstate', restoreView);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only; deps are stable by construction
     }, []);
 
@@ -283,7 +291,12 @@ export default function WaterPage() {
                     <SegmentedControl<DashboardView>
                         aria-label="View mode"
                         value={dashboardView}
-                        onChange={setDashboardView}
+                        onChange={(view) => {
+                            setDashboardView(view);
+                            const url = new URL(window.location.href);
+                            url.searchParams.set('view', view);
+                            window.history.pushState(null, '', url.pathname + url.search + url.hash);
+                        }}
                         options={[
                             { value: "monthly", label: "Monthly", icon: BarChart3 },
                             { value: "daily", label: "Daily", icon: CalendarDays },
@@ -324,7 +337,7 @@ export default function WaterPage() {
                         {/* Satellite View — as-built network map fed from the same fetch as Monthly */}
                         {dashboardView === "satellite" && !monthlyBlocked && (
                             <SectionBoundary title="Satellite network view">
-                                <SatelliteView waterMeters={waterMeters} derivedMonths={derivedMonths} />
+                                <SatelliteView waterMeters={waterMeters} lastUpdated={lastUpdated} />
                             </SectionBoundary>
                         )}
                     </div>
