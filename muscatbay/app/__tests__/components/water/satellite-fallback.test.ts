@@ -93,9 +93,13 @@ describe("non-WebGL satellite compatibility map", () => {
       ],
     });
 
-    expect(container.querySelector(".compat-imagery")).toHaveAttribute(
+    const tiles = Array.from(
+      container.querySelectorAll<HTMLImageElement>(".compat-imagery-tile"),
+    );
+    expect(tiles.length).toBeGreaterThan(0);
+    expect(tiles[0]).toHaveAttribute(
       "src",
-      expect.stringContaining("World_Imagery/MapServer/export"),
+      expect.stringMatching(/^\/api\/satellite-tiles\/\d+\/\d+\/\d+$/),
     );
     expect(container.querySelectorAll(".compat-network-line")).toHaveLength(1);
     expect(container).toHaveTextContent("10.25 m³");
@@ -107,6 +111,9 @@ describe("non-WebGL satellite compatibility map", () => {
     );
     meter?.click();
     expect(onMeter).toHaveBeenCalledWith("4300155");
+
+    tiles[0].dispatchEvent(new Event("load"));
+    tiles.slice(1).forEach((tile) => tile.dispatchEvent(new Event("error")));
     expect(onStatus).not.toHaveBeenCalled();
   });
 });

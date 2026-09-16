@@ -143,7 +143,12 @@
         will-change: transform;
       }
       .compat-imagery {
-        object-fit: fill;
+        overflow: hidden;
+      }
+      .compat-imagery-tile {
+        position: absolute;
+        display: block;
+        max-width: none;
       }
       .compat-network,
       .compat-markers {

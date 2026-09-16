@@ -4,6 +4,19 @@
   const DEFAULT_BOUNDS = [58.615, 23.525, 58.675, 23.57];
   const MIN_LNG_SPAN = 0.0018;
   const MIN_LAT_SPAN = 0.0014;
+  const TILE_SIZE = 256;
+  const MIN_TILE_ZOOM = 1;
+  const MAX_TILE_ZOOM = 19;
+
+  const longitudeToWorld = (longitude) => (longitude + 180) / 360;
+  const latitudeToWorld = (latitude) => {
+    const limited = Math.max(-85.051129, Math.min(85.051129, latitude));
+    const radians = (limited * Math.PI) / 180;
+    return (
+      (1 - Math.log(Math.tan(radians) + 1 / Math.cos(radians)) / Math.PI) /
+      2
+    );
+  };
 
   const extent = (coordinates) => {
     if (!coordinates.length) return [...DEFAULT_BOUNDS];
@@ -41,9 +54,8 @@
 
     const scene = document.createElement("div");
     scene.className = "compat-scene";
-    const imagery = document.createElement("img");
+    const imagery = document.createElement("div");
     imagery.className = "compat-imagery";
-    imagery.alt = "";
     imagery.setAttribute("aria-hidden", "true");
     const lines = createSvgElement("svg");
     lines.classList.add("compat-network");
@@ -73,8 +85,9 @@
     let latest = null;
     let previousFocus = "";
     let imageKey = "";
+    let imageryGeneration = 0;
     let drag = null;
-    let imageryFailed = false;
+    let imageryUnavailable = false;
 
     const size = () => ({
       width: Math.max(container.clientWidth || 390, 1),
@@ -83,9 +96,16 @@
 
     const project = (coordinate) => {
       const { width, height } = size();
+      const west = longitudeToWorld(bounds[0]);
+      const east = longitudeToWorld(bounds[2]);
+      const north = latitudeToWorld(bounds[3]);
+      const south = latitudeToWorld(bounds[1]);
       return {
-        x: ((coordinate[0] - bounds[0]) / (bounds[2] - bounds[0])) * width,
-        y: ((bounds[3] - coordinate[1]) / (bounds[3] - bounds[1])) * height,
+        x:
+          ((longitudeToWorld(coordinate[0]) - west) / (east - west)) * width,
+        y:
+          ((latitudeToWorld(coordinate[1]) - north) / (south - north)) *
+          height,
       };
     };
 
@@ -256,33 +276,91 @@
 
     const updateImagery = () => {
       const { width, height } = size();
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
-      const imageWidth = Math.min(Math.round(width * ratio), 1600);
-      const imageHeight = Math.min(Math.round(height * ratio), 1600);
-      const key = `${bounds.map((value) => value.toFixed(6)).join(",")}:${imageWidth}:${imageHeight}`;
+      const key = `${bounds.map((value) => value.toFixed(6)).join(",")}:${width}:${height}`;
       if (key === imageKey) return;
       imageKey = key;
-      const query = new URLSearchParams({
-        bbox: bounds.join(","),
-        bboxSR: "4326",
-        imageSR: "4326",
-        size: `${imageWidth},${imageHeight}`,
-        format: "jpg",
-        f: "image",
-      });
-      imagery.hidden = false;
-      imagery.src = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export?${query}`;
-    };
+      imageryGeneration += 1;
+      const generation = imageryGeneration;
+      imagery.replaceChildren();
 
-    imagery.addEventListener("error", () => {
-      imagery.hidden = true;
-      if (!imageryFailed) {
-        imageryFailed = true;
-        onStatus(
-          "Satellite image could not load. The network and daily meter positions remain available.",
-        );
+      const west = longitudeToWorld(bounds[0]);
+      const east = longitudeToWorld(bounds[2]);
+      const north = latitudeToWorld(bounds[3]);
+      const south = latitudeToWorld(bounds[1]);
+      const worldWidth = Math.max(east - west, Number.EPSILON);
+      const worldHeight = Math.max(south - north, Number.EPSILON);
+      const zoom = Math.max(
+        MIN_TILE_ZOOM,
+        Math.min(
+          MAX_TILE_ZOOM,
+          Math.floor(
+            Math.log2(
+              Math.min(
+                width / (worldWidth * TILE_SIZE),
+                height / (worldHeight * TILE_SIZE),
+              ),
+            ),
+          ),
+        ),
+      );
+      const tileCount = 2 ** zoom;
+      const firstX = Math.floor(west * tileCount);
+      const lastX = Math.floor(east * tileCount);
+      const firstY = Math.floor(north * tileCount);
+      const lastY = Math.floor(south * tileCount);
+      let pending = 0;
+      let loaded = 0;
+
+      const settle = (succeeded) => {
+        if (generation !== imageryGeneration) return;
+        pending -= 1;
+        if (succeeded) loaded += 1;
+        if (pending > 0) return;
+        if (loaded === 0) {
+          imageryUnavailable = true;
+          onStatus(
+            "Satellite image could not load. The network and daily meter positions remain available.",
+          );
+        } else if (imageryUnavailable) {
+          imageryUnavailable = false;
+          onStatus(
+            "Compatibility satellite map active. Daily meters and network lines remain interactive.",
+          );
+        }
+      };
+
+      const fragment = document.createDocumentFragment();
+      for (let y = firstY; y <= lastY; y += 1) {
+        if (y < 0 || y >= tileCount) continue;
+        for (let x = firstX; x <= lastX; x += 1) {
+          const wrappedX = ((x % tileCount) + tileCount) % tileCount;
+          const tile = document.createElement("img");
+          tile.className = "compat-imagery-tile";
+          tile.alt = "";
+          tile.decoding = "async";
+          tile.loading = "eager";
+          tile.src = `/api/satellite-tiles/${zoom}/${wrappedX}/${y}`;
+          const tileWest = x / tileCount;
+          const tileNorth = y / tileCount;
+          tile.style.left = `${((tileWest - west) / worldWidth) * width}px`;
+          tile.style.top = `${((tileNorth - north) / worldHeight) * height}px`;
+          tile.style.width = `${(width / (worldWidth * tileCount)) + 1}px`;
+          tile.style.height = `${(height / (worldHeight * tileCount)) + 1}px`;
+          pending += 1;
+          tile.addEventListener("load", () => settle(true), { once: true });
+          tile.addEventListener(
+            "error",
+            () => {
+              tile.hidden = true;
+              settle(false);
+            },
+            { once: true },
+          );
+          fragment.append(tile);
+        }
       }
-    });
+      imagery.append(fragment);
+    };
 
     const render = (withImagery = true) => {
       if (withImagery) updateImagery();
