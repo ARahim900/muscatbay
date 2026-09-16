@@ -1642,6 +1642,12 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-16 — chore(water): keep v14 service-worker diff minimal
+- 2026-09-16 — test(water): expect satellite iframe v14
+- 2026-09-16 — fix(water): refresh iOS satellite cache v14
+- 2026-09-16 — fix(water): load satellite iframe v14
+- 2026-09-16 — fix(water): cache-bust satellite scripts v14
+- 2026-09-16 — fix(water): proxy MapLibre satellite tiles on iOS
 - 2026-09-16 — fix(water): bust iOS satellite cache
 - 2026-09-16 — fix(water): proxy satellite tiles for iOS
 - 2026-09-16 — fix(water): add iOS satellite compatibility map
