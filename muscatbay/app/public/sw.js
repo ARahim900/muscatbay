@@ -19,6 +19,8 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v14 (2026-09-16) routes both MapLibre and compatibility satellite imagery
+ *                    through the same-origin tile proxy and refreshes iOS PWAs.
  *   v13 (2026-09-16) cache-busts the Satellite iframe and compatibility
  *                    scripts so existing iOS PWA sessions cannot reuse v11.
  *   v12 (2026-09-16) replaces the iOS compatibility map's single ArcGIS
@@ -50,7 +52,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v13";
+const CACHE_VERSION = "v14";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
@@ -73,19 +75,12 @@ const NO_STORE_PREFIXES = ["/api/", "/auth/"];
 /** Cap the page cache so a long session can't grow it without bound. */
 const MAX_PAGES = 40;
 
-// ─── Install ────────────────────────────────────────────────────────────────
-
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(SHELL_CACHE).then((cache) =>
-      // addAll() rejects the whole install if any single asset 404s, which
-      // would leave clients on the previous SW. Add them individually instead.
       Promise.all(
         SHELL_ASSETS.map((url) =>
           cache.add(new Request(url, { cache: "reload" })).catch((err) => {
-            // Deliberately non-fatal: a single missing asset must not strand
-            // clients on the previous SW. Log the reason so a 404 here is
-            // diagnosable rather than silent.
             console.warn("[sw] could not precache", url, err);
           })
         )
@@ -95,8 +90,6 @@ self.addEventListener("install", (event) => {
   self.skipWaiting();
 });
 
-// ─── Activate ───────────────────────────────────────────────────────────────
-
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
@@ -104,7 +97,6 @@ self.addEventListener("activate", (event) => {
       await Promise.all(
         keys.filter((key) => !CURRENT_CACHES.includes(key)).map((key) => caches.delete(key))
       );
-      // Serve navigations from the HTTP cache preload where supported.
       if (self.registration.navigationPreload) {
         await self.registration.navigationPreload.enable();
       }
@@ -112,8 +104,6 @@ self.addEventListener("activate", (event) => {
     })()
   );
 });
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 function isSameOrigin(url) {
   return url.origin === self.location.origin;
@@ -124,12 +114,9 @@ function isNoStore(url) {
 }
 
 function isImmutableAsset(url) {
-  // Next.js content-hashes everything under /_next/static — the URL changes
-  // whenever the bytes do, so it is safe to serve from cache forever.
   return url.pathname.startsWith("/_next/static/");
 }
 
-/** Trim a cache to `max` entries, oldest-first. */
 async function trimCache(cacheName, max) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();
@@ -137,7 +124,6 @@ async function trimCache(cacheName, max) {
   await Promise.all(keys.slice(0, keys.length - max).map((key) => cache.delete(key)));
 }
 
-/** Cache-first: cached hit wins; otherwise fetch and store. */
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
   if (cached) return cached;
@@ -149,11 +135,6 @@ async function cacheFirst(request, cacheName) {
   return response;
 }
 
-/**
- * Stale-while-revalidate: answer instantly from cache while refreshing in the
- * background, so a returning operator sees the app paint immediately and still
- * picks up new assets on the following load.
- */
 async function staleWhileRevalidate(event, cacheName) {
   const { request } = event;
   const cache = await caches.open(cacheName);
@@ -169,8 +150,6 @@ async function staleWhileRevalidate(event, cacheName) {
     .catch(() => null);
 
   if (cached) {
-    // Keep the worker alive until the background refresh settles, otherwise
-    // the revalidation is killed the moment we return the cached response.
     event.waitUntil(network);
     return cached;
   }
@@ -180,7 +159,6 @@ async function staleWhileRevalidate(event, cacheName) {
   throw new Error("offline and not cached");
 }
 
-/** Network-first for navigations, falling back to the cached page, then the shell. */
 async function handleNavigation(event) {
   const { request } = event;
   try {
@@ -206,12 +184,8 @@ async function handleNavigation(event) {
   }
 }
 
-// ─── Fetch ──────────────────────────────────────────────────────────────────
-
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-
-  // Only GET is cacheable; everything else goes straight to the network.
   if (request.method !== "GET") return;
 
   let url;
@@ -221,14 +195,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // chrome-extension:, blob:, etc.
   if (url.protocol !== "http:" && url.protocol !== "https:") return;
-
-  // Supabase, Google Fonts and any other origin: let the browser handle it.
-  // Caching authenticated cross-origin responses here would be a data leak.
   if (!isSameOrigin(url)) return;
-
-  // Auth + API traffic must always hit the network.
   if (isNoStore(url)) return;
 
   if (request.mode === "navigate") {
@@ -252,23 +220,13 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// ─── Messages ───────────────────────────────────────────────────────────────
-// Lets the app force an update without a hard reload (register-sw.tsx).
-
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING" || event.data?.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
 });
 
-// ─── Push Notifications ─────────────────────────────────────────────────────
-// Handles push events from the server (future: web-push integration).
-// Currently used for showNotification() calls from the main thread via
-// ServiceWorkerRegistration.showNotification(), which works on both
-// desktop and mobile (including iOS 16.4+ PWA).
-
 self.addEventListener("push", (event) => {
-  // Default notification if push payload is missing
   let title = "Muscat Bay Alert";
   let options = {
     body: "You have a new notification",
@@ -278,7 +236,6 @@ self.addEventListener("push", (event) => {
     data: { url: "/" },
   };
 
-  // Try to parse push data if available
   if (event.data) {
     try {
       const payload = event.data.json();
@@ -291,7 +248,6 @@ self.addEventListener("push", (event) => {
         data: { url: payload.url || "/" },
       };
     } catch {
-      // If JSON parsing fails, use the text directly
       options.body = event.data.text() || options.body;
     }
   }
@@ -299,20 +255,15 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, options));
 });
 
-// ─── Notification Click ─────────────────────────────────────────────────────
-// When the user clicks a browser notification, focus the app or open it.
-
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   const targetUrl = event.notification.data?.url || "/";
 
   event.waitUntil(
-    // Check if the app is already open in a tab
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
-        // If there's already an open tab, focus it and navigate
         for (const client of clientList) {
           if (client.url.includes(self.location.origin)) {
             client.focus();
@@ -320,15 +271,9 @@ self.addEventListener("notificationclick", (event) => {
             return;
           }
         }
-        // Otherwise open a new tab/window
         return self.clients.openWindow(targetUrl);
       })
   );
 });
 
-// ─── Notification Close ─────────────────────────────────────────────────────
-// Optional: track when notifications are dismissed (useful for analytics later)
-
-self.addEventListener("notificationclose", () => {
-  // No-op — placeholder for future analytics
-});
+self.addEventListener("notificationclose", () => {});
