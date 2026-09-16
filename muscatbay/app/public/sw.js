@@ -19,6 +19,8 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v13 (2026-09-16) cache-busts the Satellite iframe and compatibility
+ *                    scripts so existing iOS PWA sessions cannot reuse v11.
  *   v12 (2026-09-16) replaces the iOS compatibility map's single ArcGIS
  *                    export image with same-origin satellite tiles.
  *   v11 (2026-09-15) ships the non-WebGL Satellite compatibility map to iOS
@@ -48,7 +50,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v12";
+const CACHE_VERSION = "v13";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
