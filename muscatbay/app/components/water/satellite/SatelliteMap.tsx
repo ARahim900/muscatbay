@@ -38,7 +38,6 @@ export function SatelliteMap({
     const element = frame.current;
     const embedded = element?.contentDocument;
     if (!element || !embedded?.documentElement) return;
-    // The renderer is same-origin; share the app's resolved theme and loaded font.
     const theme = getComputedStyle(element);
     for (const token of [
       "--color-bg",
@@ -238,7 +237,7 @@ export function SatelliteMap({
         }}
         key={attempt}
         ref={frame}
-        src="/satellite/consumption.html?v=13"
+        src="/satellite/consumption.html?v=14"
         title="Water consumption satellite map"
         className={`${failed ? "hidden" : "block"} w-full rounded-b-card border-0`}
       />
