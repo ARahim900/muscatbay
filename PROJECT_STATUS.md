@@ -1642,6 +1642,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-16 — fix(water): proxy satellite tiles for iOS
 - 2026-09-16 — fix(water): add iOS satellite compatibility map
 - 2026-09-15 — fix(water): restore satellite view on iOS
 - 2026-09-15 — fix(water): restore network overlay and FM navigation
