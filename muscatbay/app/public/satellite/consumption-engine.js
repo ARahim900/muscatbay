@@ -392,9 +392,7 @@
               type: "raster",
               tileSize: 256,
               maxzoom: 19,
-              tiles: [
-                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-              ],
+              tiles: ["/api/satellite-tiles/{z}/{x}/{y}"],
               attribution: "Imagery © Esri",
             },
           },
