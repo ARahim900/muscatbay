@@ -94,6 +94,23 @@ describe("satellite iframe lifecycle", () => {
     });
     expect(screen.getByRole("button", { name: "Retry map" })).toBeVisible();
   });
+  it("keeps a degraded compatibility map visible beyond the startup timeout", () => {
+    vi.useFakeTimers();
+    render(<SatelliteMap {...props} />);
+    const frame = screen.getByTitle(
+      "Water consumption satellite map",
+    ) as HTMLIFrameElement;
+    receive(frame, {
+      type: "satviz:status",
+      status: "degraded",
+      message: "Compatibility satellite map active.",
+    });
+    act(() => {
+      vi.advanceTimersByTime(20000);
+    });
+    expect(frame).toBeVisible();
+    expect(screen.queryByRole("button", { name: "Retry map" })).toBeNull();
+  });
   it("keeps the map mounted when ResizeObserver is unavailable", () => {
     vi.stubGlobal("ResizeObserver", undefined);
     render(<SatelliteMap {...props} />);

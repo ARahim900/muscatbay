@@ -9,6 +9,13 @@ function environment(fail = false) {
   const mapEvents: Record<string, () => void> = {};
   const parent = { postMessage: vi.fn() };
   const source = { setData: vi.fn() };
+  const fallback = {
+    update: vi.fn(),
+    focus: vi.fn(),
+    resize: vi.fn(),
+    remove: vi.fn(),
+  };
+  const createSatelliteFallback = vi.fn(() => fallback);
   const elements: {
     textContent: string;
     children: unknown[];
@@ -68,6 +75,7 @@ function environment(fail = false) {
       },
     },
     matchMedia: () => ({ matches: true }),
+    createSatelliteFallback,
     addEventListener: (
       name: string,
       callback: (event: Record<string, unknown>) => void,
@@ -118,6 +126,8 @@ function environment(fail = false) {
     parent,
     listeners,
     elements,
+    fallback,
+    createSatelliteFallback,
   };
 }
 const payload = {
@@ -153,18 +163,21 @@ describe("consumption renderer", () => {
       pitch: 0,
     });
   });
-  it("reports creation and context loss failures to the independent table host", () => {
+  it("uses the visual compatibility map for creation and context loss failures", () => {
     const env = environment(true);
     env.send("satviz:data", payload);
+    expect(env.createSatelliteFallback).toHaveBeenCalledTimes(1);
+    expect(env.fallback.update).toHaveBeenCalledWith(payload);
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ type: "satviz:status", status: "error" }),
+      expect.objectContaining({ type: "satviz:status", status: "degraded" }),
       "https://example.com",
     );
     const active = environment();
     active.send("satviz:data", payload);
     active.mapEvents.webglcontextlost();
+    expect(active.createSatelliteFallback).toHaveBeenCalledTimes(1);
     expect(active.parent.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "error" }),
+      expect.objectContaining({ status: "degraded" }),
       "https://example.com",
     );
   });

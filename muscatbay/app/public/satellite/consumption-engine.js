@@ -19,6 +19,7 @@
   );
   locations.push(...context.positions);
   let map = null;
+  let fallback = null;
   let latest = null;
   let loaded = false;
   let previousFocus = "";
@@ -98,7 +99,12 @@
     }
   }
   function update() {
-    if (!loaded || !latest || !map) return;
+    if (!loaded || !latest) return;
+    if (fallback) {
+      fallback.update(latest);
+      return;
+    }
+    if (!map) return;
     const { meters, selected, zone } = latest;
     const overview = !zone && !selected;
     const points = meters.filter((m) => m.location);
@@ -277,6 +283,37 @@
       }
     }
   }
+
+  function activateFallback(error) {
+    console.error("[water-satellite] WebGL map unavailable", error);
+    try {
+      if (map) map.remove();
+      map = null;
+      if (typeof window.createSatelliteFallback !== "function")
+        throw new Error("Compatibility map did not load.");
+      fallback = window.createSatelliteFallback({
+        container: document.getElementById("map"),
+        context,
+        network: window.NETWORK || [],
+        volume,
+        onMeter: (account) => send("satviz:select-meter", { account }),
+        onZone: (zone) => send("satviz:select-zone", { zone }),
+        onStatus: (text) => report("degraded", text),
+      });
+      loaded = true;
+      report(
+        "degraded",
+        "Compatibility satellite map active. Daily meters and network lines remain interactive.",
+      );
+      update();
+    } catch (fallbackError) {
+      console.error("[water-satellite] Compatibility map failed", fallbackError);
+      report(
+        "error",
+        "The satellite and compatibility maps are unavailable. Use the meter table or retry the map.",
+      );
+    }
+  }
   function addNetwork() {
     const features = (window.NETWORK || [])
       .filter((route) => route.k === 0 || route.k === 1)
@@ -378,12 +415,10 @@
           "Some imagery could not load. Daily labels and the meter table remain available.",
         );
       });
-      map.on("webglcontextlost", () =>
-        report(
-          "error",
-          "Graphics connection lost. Use the meter table or retry the map.",
-        ),
-      );
+      map.on("webglcontextlost", (event) => {
+        event?.preventDefault?.();
+        activateFallback(new Error("WebGL context was lost."));
+      });
       map.on("webglcontextrestored", () => {
         report("ready", "");
         update();
@@ -456,11 +491,7 @@
         update();
       });
     } catch (error) {
-      console.error("[water-satellite] Map startup failed", error);
-      report(
-        "error",
-        "Satellite imagery is unavailable in this browser. Use the meter table or retry the map.",
-      );
+      activateFallback(error);
     }
   }
   window.addEventListener("message", (event) => {
@@ -473,12 +504,17 @@
       return;
     }
     if (data.type === "satviz:focus") {
+      if (fallback) {
+        fallback.focus();
+        return;
+      }
       previousFocus = "";
       update();
       return;
     }
     if (data.type === "satviz:resize") {
       if (map) map.resize();
+      fallback?.resize();
       return;
     }
     if (data.type !== "satviz:data" && data.type !== "satviz:update") return;
@@ -494,6 +530,8 @@
       map.remove();
       map = null;
     }
+    fallback?.remove();
+    fallback = null;
   });
   send("satviz:ready", { locations });
 })();

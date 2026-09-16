@@ -125,6 +125,112 @@
       .maplibregl-ctrl-attrib {
         font-size: 12px;
       }
+      .compat-map {
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
+      }
+      .compat-scene,
+      .compat-imagery,
+      .compat-network,
+      .compat-markers {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+      }
+      .compat-scene {
+        will-change: transform;
+      }
+      .compat-imagery {
+        object-fit: fill;
+      }
+      .compat-network,
+      .compat-markers {
+        pointer-events: none;
+      }
+      .compat-network polyline {
+        fill: none;
+        vector-effect: non-scaling-stroke;
+      }
+      .compat-network-case {
+        stroke: #4e4456;
+        stroke-width: 5;
+      }
+      .compat-network-line,
+      .compat-fm-line {
+        stroke: #a4c5bb;
+        stroke-width: 2.5;
+      }
+      .compat-fm-line {
+        stroke-dasharray: 6 6;
+      }
+      .compat-markers button {
+        position: absolute;
+        pointer-events: auto;
+      }
+      .compat-meter-point {
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        background: transparent;
+      }
+      .compat-meter-dot {
+        display: block;
+        width: 14px;
+        height: 14px;
+        margin: auto;
+        border: 2px solid #4e4456;
+        border-radius: 50%;
+        background: #a4c5bb;
+      }
+      .compat-meter-point.missing .compat-meter-dot {
+        background: var(--color-card, #fff);
+      }
+      .compat-meter-point.selected .compat-meter-dot {
+        width: 20px;
+        height: 20px;
+        outline: 3px solid #4e4456;
+        outline-offset: 2px;
+      }
+      .compat-meter-card {
+        position: absolute;
+        pointer-events: none;
+      }
+      .compat-controls {
+        position: absolute;
+        z-index: 4;
+        top: 14px;
+        right: 14px;
+        display: grid;
+        overflow: hidden;
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: var(--radius-control, 6px);
+        background: var(--color-card, #fff);
+      }
+      .compat-controls button {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        background: transparent;
+        color: var(--color-fg, #0a0a0a);
+        font: 600 24px/1 var(--map-font, ui-sans-serif, system-ui, sans-serif);
+      }
+      .compat-controls button + button {
+        border-top: 1px solid var(--color-line, #e5e7eb);
+      }
+      .compat-attribution {
+        position: absolute;
+        z-index: 4;
+        right: 8px;
+        bottom: 6px;
+        padding: 2px 5px;
+        border-radius: var(--radius-control, 6px);
+        background: var(--color-card, #fff);
+        color: var(--color-muted, #454545);
+        font-size: 11px;
+      }
     </style>
   </head>
   <body>
@@ -138,6 +244,7 @@
     <script src="data/zone-fm-network.js"></script>
     <script src="data/network-service-zones.js"></script>
     <script src="network-context.js"></script>
+    <script src="consumption-fallback.js"></script>
     <script src="consumption-engine.js"></script>
   </body>
 </html>

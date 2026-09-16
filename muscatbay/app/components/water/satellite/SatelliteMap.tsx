@@ -140,7 +140,11 @@ export function SatelliteMap({
         message.type === "satviz:status" &&
         typeof message.message === "string"
       ) {
-        if (message.status === "ready" || message.status === "error")
+        if (
+          message.status === "ready" ||
+          message.status === "degraded" ||
+          message.status === "error"
+        )
           window.clearTimeout(timer);
         setFailed(message.status === "error");
         callbacks.current.onUnavailable(message.status === "error");
