@@ -72,13 +72,19 @@
     typeof payload.selected === "string" &&
     typeof payload.date === "string" &&
     /^20\d{2}-\d{2}-\d{2}$/.test(payload.date);
-  const volume = (value) =>
-    value === null
-      ? "—"
-      : value.toLocaleString("en-GB", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+  // Map figures are whole numbers (10 m³, not 10.00 m³). Below 10 one decimal is
+  // kept, because a villa's daily use is often under 1 m³ and must not read as 0.
+  const volume = (value) => {
+    if (value === null) return "—";
+    const size = Math.abs(value);
+    if (size > 0 && size < 0.05) return "<0.1";
+    return value.toLocaleString("en-GB", {
+      maximumFractionDigits: size < 10 ? 1 : 0,
+    });
+  };
+  // Zone and main bulk meters measure everything entering; they are drawn
+  // apart from the individual meters and never sized against them.
+  const isBulk = (meter) => meter.level === "L2" || meter.level === "L1";
   function layoutMeterLabels() {
     if (!map) return;
     const { clientWidth: width, clientHeight: height } = map.getContainer();
@@ -94,28 +100,38 @@
         top: height - 160,
         bottom: height,
       });
+    // A label that would cover another first shrinks to its figure alone, and is
+    // hidden only if even that does not fit. Every meter keeps its dot on the map.
     for (const label of meterLabels) {
       const point = map.project(label.coordinates);
-      const w = label.element.offsetWidth || 110;
-      const h = label.element.offsetHeight || 48;
-      const box = {
-        left: point.x - w / 2,
-        right: point.x + w / 2,
-        top: point.y - h - 10,
-        bottom: point.y - 10,
+      const measure = () => {
+        const w = label.element.offsetWidth || 110;
+        const h = label.element.offsetHeight || 48;
+        const box = {
+          left: point.x - w / 2,
+          right: point.x + w / 2,
+          top: point.y - h - 10,
+          bottom: point.y - 10,
+        };
+        const outside =
+          box.right > width || box.left < 0 || box.bottom > height || box.top < 0;
+        const overlap = occupied.some(
+          (b) =>
+            box.left < b.right + 6 &&
+            box.right > b.left - 6 &&
+            box.top < b.bottom + 6 &&
+            box.bottom > b.top - 6,
+        );
+        return { box, blocked: outside || (!label.keep && overlap) };
       };
-      const outside =
-        box.right > width || box.left < 0 || box.bottom > height || box.top < 0;
-      const overlap = occupied.some(
-        (b) =>
-          box.left < b.right + 8 &&
-          box.right > b.left - 8 &&
-          box.top < b.bottom + 8 &&
-          box.bottom > b.top - 8,
-      );
-      const hidden = outside || (!label.selected && overlap);
-      label.element.style.visibility = hidden ? "hidden" : "visible";
-      if (!hidden) occupied.push(box);
+      label.element.classList.remove("compact");
+      let fit = measure();
+      if (fit.blocked && !label.keep) {
+        label.element.classList.add("compact");
+        fit = measure();
+      }
+      label.element.style.visibility = fit.blocked ? "hidden" : "visible";
+      if (!fit.blocked) occupied.push(fit.box);
     }
   }
   function update() {
@@ -129,7 +145,11 @@
     const { meters, selected, zone } = latest;
     const overview = !zone && !selected;
     const points = meters.filter((m) => m.location);
-    const max = Math.max(1, ...points.map((m) => Math.max(0, m.value ?? 0)));
+    const sized = points.filter((m) => !isBulk(m));
+    const max = Math.max(
+      1,
+      ...(sized.length ? sized : points).map((m) => Math.max(0, m.value ?? 0)),
+    );
     map.getSource("meters").setData({
       type: "FeatureCollection",
       features: points.map((m) => ({
@@ -141,10 +161,12 @@
           selected: m.account === selected,
           focused: !selected || m.account === selected,
           recorded: m.value !== null && m.value >= 0,
-          radius:
-            m.value === null || m.value < 0
+          bulk: isBulk(m),
+          radius: isBulk(m)
+            ? 11
+            : m.value === null || m.value < 0
               ? 6
-              : Math.max(3, Math.sqrt(m.value / max) * 22),
+              : Math.max(3, Math.sqrt(m.value / max) * 18),
         },
       })),
     });
@@ -166,6 +188,7 @@
       const priority = [...points].sort(
         (a, b) =>
           Number(b.account === selected) - Number(a.account === selected) ||
+          Number(isBulk(b)) - Number(isBulk(a)) ||
           (b.value ?? -Infinity) - (a.value ?? -Infinity),
       );
       for (const meter of priority) {
@@ -177,10 +200,16 @@
           "missing",
           meter.value === null || meter.value < 0,
         );
+        element.classList.toggle("bulk", isBulk(meter));
         const name = document.createElement("span");
         name.textContent = meter.name;
         const value = document.createElement("strong");
         value.textContent = `${volume(meter.value)} m³`;
+        if (isBulk(meter)) {
+          const tag = document.createElement("em");
+          tag.textContent = "Bulk meter";
+          element.append(tag);
+        }
         element.append(name, value);
         element.addEventListener("click", () =>
           send("satviz:select-meter", { account: meter.account }),
@@ -200,7 +229,7 @@
           marker,
           element,
           coordinates: meter.location.coordinates,
-          selected: meter.account === selected,
+          keep: meter.account === selected || isBulk(meter),
         });
       }
       layoutMeterLabels();
@@ -731,7 +760,7 @@
           source: "meters",
           paint: {
             "circle-radius": ["get", "radius"],
-            "circle-color": "#A4C5BB",
+            "circle-color": ["case", ["get", "bulk"], "#FFFFFF", "#A4C5BB"],
             "circle-opacity": [
               "case",
               ["!", ["get", "recorded"]],
@@ -742,11 +771,16 @@
             ],
             "circle-stroke-color": [
               "case",
-              ["get", "selected"],
+              ["any", ["get", "selected"], ["get", "bulk"]],
               "#4E4456",
               "#454545",
             ],
-            "circle-stroke-width": ["case", ["get", "selected"], 4, 1.5],
+            "circle-stroke-width": [
+              "case",
+              ["any", ["get", "selected"], ["get", "bulk"]],
+              4,
+              1.5,
+            ],
             "circle-stroke-opacity": ["case", ["get", "focused"], 1, 0.25],
           },
         });

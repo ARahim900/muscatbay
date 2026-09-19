@@ -41,7 +41,7 @@ describe("satellite iframe lifecycle", () => {
     const frame = screen.getByTitle(
       "Water consumption satellite map",
     ) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute("src", "/satellite/consumption.html?v=18");
+    expect(frame).toHaveAttribute("src", "/satellite/consumption.html?v=19");
     const post = vi.spyOn(frame.contentWindow!, "postMessage");
     receive(frame, { type: "satviz:ready", locations: [] });
     view.rerender(

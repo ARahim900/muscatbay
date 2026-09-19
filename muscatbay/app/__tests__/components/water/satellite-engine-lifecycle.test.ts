@@ -29,7 +29,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
       children: [] as unknown[],
       dataset: {} as Record<string, string>,
       style: {} as { visibility?: string },
-      classList: { toggle: vi.fn() },
+      classList: { toggle: vi.fn(), add: vi.fn(), remove: vi.fn() },
       attributes: {} as Record<string, string>,
       listeners: {} as Record<string, () => void>,
       setAttribute(name: string, value: string) {
@@ -262,6 +262,28 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
       { type: "satviz:select-zone", zone: "" }, "https://example.com");
   });
+  it("shows whole-number figures, and sets the zone bulk meter apart from the individual meters", () => {
+    const env = environment();
+    const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
+    env.send("satviz:data", { ...payload, selected: "", meters: [
+      { account: "v1", name: "Villa 1", zone: "Zone_05", level: "L3", value: 10, location: at(1) },
+      { account: "v2", name: "Villa 2", zone: "Zone_05", level: "L3", value: 0.35, location: at(2) },
+      { account: "v3", name: "Villa 3", zone: "Zone_05", level: "L3", value: 0.01, location: at(3) },
+      { account: "v4", name: "Villa 4", zone: "Zone_05", level: "L3", value: null, location: at(4) },
+      { account: "b", name: "Zone 5 (Bulk)", zone: "Zone_05", level: "L2", value: 3920.4, location: at(5) },
+    ] });
+    env.mapEvents.load();
+    const text = env.elements.map((e) => e.textContent);
+    // 10.00 → 10; small daily readings keep one decimal so they never read as 0; no reading stays —
+    for (const expected of ["10 m³", "0.4 m³", "<0.1 m³", "— m³", "3,920 m³", "Bulk meter"])
+      expect(text).toContain(expected);
+    const features = (env.source.setData.mock.calls.at(-1)![0] as {
+      features: { properties: { account: string; bulk: boolean; radius: number } }[] }).features;
+    const bulk = features.find((f) => f.properties.account === "b")!;
+    expect(bulk.properties).toMatchObject({ bulk: true, radius: 11 });
+    // the villas are sized against each other, not against the bulk meter
+    expect(features.find((f) => f.properties.account === "v1")!.properties.radius).toBe(18);
+  });
   it("uses the visual compatibility map for creation and context loss failures", () => {
     const env = environment(true);
     env.send("satviz:data", payload);
@@ -291,11 +313,12 @@ describe("consumption renderer", () => {
     });
     expect(env.construct).not.toHaveBeenCalled();
   });
-  it("places exact daily values in interactive map labels and retains missing labels", () => {
+  // Owner ruling 2026-09-20: map labels show whole numbers (10 m³, not 10.00 m³).
+  it("places daily values in interactive map labels and retains missing labels", () => {
     const env = environment();
     env.send("satviz:data", payload);
     env.mapEvents.load();
-    expect(env.elements.some((el) => el.textContent === "10.00 m³")).toBe(true);
+    expect(env.elements.some((el) => el.textContent === "10 m³")).toBe(true);
     env.send("satviz:update", {
       ...payload,
       meters: [{ ...payload.meters[0], value: null }],

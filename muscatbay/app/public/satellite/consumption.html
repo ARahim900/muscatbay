@@ -40,11 +40,13 @@
       .zone-marker,
       .meter-label {
         min-height: 44px;
-        border: 1px solid #e5e7eb;
+        border: 1px solid rgb(255 255 255 / 22%);
         border-radius: 10.5px;
-        background: #4e4456;
+        /* Near-black (the app's dark page colour): figures read clearly over
+           sand, sea and roofs alike. */
+        background: #0a090c;
         color: #fff;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 24%);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 35%);
         font: inherit;
         cursor: pointer;
       }
@@ -76,6 +78,44 @@
         font-size: 16px;
         font-variant-numeric: tabular-nums;
         color: #a4c5bb;
+      }
+      /* Crowded zones: the label shrinks to its figure before it is hidden. */
+      .meter-label.compact {
+        min-width: 0;
+        min-height: 32px;
+        padding: 4px 8px;
+      }
+      .meter-label.compact span {
+        display: none;
+      }
+      .meter-label.compact strong {
+        font-size: 14px;
+      }
+      /* The zone's bulk meter — water in — reads apart from the individual
+         meters: white, larger, labelled, and never hidden by them. */
+      .meter-label.bulk {
+        min-width: 112px;
+        padding: 8px 12px;
+        border-color: #4e4456;
+        background: #fff;
+        color: #0a090c;
+        z-index: 1;
+      }
+      .meter-label.bulk em {
+        display: block;
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #4e4456;
+      }
+      .meter-label.bulk strong {
+        font-size: 20px;
+        color: #4e4456;
+      }
+      .meter-label.bulk.missing strong {
+        color: #0a090c;
       }
       .meter-label.selected {
         background: #a4c5bb;
@@ -336,7 +376,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=18"></script>
-    <script src="consumption-engine.js?v=18"></script>
+    <script src="consumption-fallback.js?v=19"></script>
+    <script src="consumption-engine.js?v=19"></script>
   </body>
 </html>

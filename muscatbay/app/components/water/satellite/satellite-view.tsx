@@ -63,6 +63,18 @@ export function SatelliteView({
       ),
     [meters, state.level, state.zone],
   );
+  // The map always carries the selected zone's bulk meter (water in) beside the
+  // meters of the chosen level, and keeps the zone's individual meters in view
+  // while the bulk itself is selected. Tables and totals still follow `scope`.
+  const mapMeters = useMemo(() => {
+    if (!state.zone) return scope;
+    const extra = meters.filter(
+      (m) =>
+        m.zone === state.zone &&
+        (m.level === "L2" || (state.level === "L2" && m.level === "L3")),
+    );
+    return [...new Set([...extra, ...scope])];
+  }, [meters, scope, state.zone, state.level]);
   const summary = useMemo(() => summariseMeters(scope), [scope]);
   const balance = useMemo(
     () => summariseZoneBalance(meters, state.zone),
@@ -255,7 +267,7 @@ export function SatelliteView({
           <SectionCard.Body flush className="relative">
             <SatelliteMap
               onUnavailable={setMapUnavailable}
-              meters={scope}
+              meters={mapMeters}
               zone={state.zone}
               zones={zoneChips}
               selected={state.meter}

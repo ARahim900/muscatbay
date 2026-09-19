@@ -254,12 +254,21 @@
             box.top < item.bottom + 8 &&
             box.bottom > item.top - 8,
         );
-        if (meter.account !== latest.selected && (outside || overlap)) continue;
+        const keep =
+          meter.account === latest.selected || meter.level === "L2" || meter.level === "L1";
+        if (!keep && (outside || overlap)) continue;
 
         const label = document.createElement("div");
         label.className = "meter-label compat-meter-card";
         label.classList.toggle("selected", meter.account === latest.selected);
         label.classList.toggle("missing", meter.value === null || meter.value < 0);
+        const bulk = meter.level === "L2" || meter.level === "L1";
+        label.classList.toggle("bulk", bulk);
+        if (bulk) {
+          const tag = document.createElement("em");
+          tag.textContent = "Bulk meter";
+          label.append(tag);
+        }
         label.setAttribute("aria-hidden", "true");
         const name = document.createElement("span");
         name.textContent = meter.name;
