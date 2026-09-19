@@ -19,6 +19,7 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v17 (2026-09-19) Satellite map frames a selected zone at an oblique 3D angle.
  *   v16 (2026-09-19) adds the Satellite map's 3D house view (button, off by default).
  *   v15 (2026-09-19) refreshes clients after the Satellite map added flat house
  *                    outlines and the selected villa's house connection.
@@ -55,7 +56,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v16";
+const CACHE_VERSION = "v17";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;

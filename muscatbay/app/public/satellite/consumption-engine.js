@@ -27,7 +27,15 @@
   let meterLabels = [];
   let linkNote = null;
   let threeD = false;
+  // Operator's own 2D/3D choice for this session; null = follow the automatic view.
+  let manualThreeD = null;
+  let threeDButton = null;
+  let threeDBadge = null;
+  // Zone view: the same oblique angle as the standalone as-built 3D model —
+  // camera south-west of the zone, looking north-east, whole zone in frame.
   const TILT = 55;
+  const ZONE_BEARING = 28;
+  const WIDE = 640; // below this the map stays flat unless the operator asks for 3D
   let previousLink = null;
   // Per-villa house outlines from the as-built model (data/villa-buildings.js).
   // Each villa also carries its house connection, matched to it by position.
@@ -266,15 +274,28 @@
         : full;
     map.setPaintProperty("buildings-line", "line-opacity", outlineOpacity(0.9));
     map.setPaintProperty("plots-unbuilt-line", "line-opacity", outlineOpacity(0.6));
+    // Raise only the selected zone's houses (and buildings that belong to no
+    // villa zone); neighbouring zones stay as dimmed outlines, like the network.
+    map.setFilter(
+      "buildings-3d",
+      zone
+        ? ["all", ["get", "built"], ["any", ["==", ["get", "zone"], zone], ["==", ["get", "zone"], ""]]]
+        : ["get", "built"],
+    );
     map.setPaintProperty("buildings-3d", "fill-extrusion-color", [
       "case",
       ["==", ["get", "acct"], selected || "-"],
       "#A4C5BB",
       "#E5E7EB",
     ]);
+    const { clientWidth: mapWidth } = map.getContainer();
+    const wantThreeD = manualThreeD ?? (Boolean(zone) && mapWidth >= WIDE);
+    const modeChanged = wantThreeD !== threeD;
+    if (modeChanged) applyThreeD(wantThreeD);
     showVillaLink(selected);
+    const view = { pitch: threeD ? TILT : 0, bearing: threeD ? ZONE_BEARING : 0 };
     const focus = `${zone}:${selected}`;
-    if (focus !== previousFocus) {
+    if (focus !== previousFocus || modeChanged) {
       const selectedPosition =
         points.find((m) => m.account === selected)?.location ||
         locations.find((p) => p.account === selected);
@@ -285,6 +306,7 @@
         map.easeTo({
           center: selectedPosition.coordinates,
           zoom: 18.5,
+          ...view,
           padding: { top: 110, bottom: 170, left: 30, right: 30 },
           duration: reducedMotion ? 0 : 700,
         });
@@ -300,11 +322,32 @@
             right: width < 640 ? 30 : 60,
           },
           maxZoom: 17,
+          ...view,
           duration: reducedMotion ? 0 : 900,
         });
         previousFocus = focus;
+        keepInView(coordinates, focus, 4);
       }
     }
+  }
+
+  // fitBounds sizes the frame for a flat map; tilted, the near edge of a zone can
+  // fall off screen. After the move, step back until every point is in view.
+  function keepInView(coordinates, focus, tries) {
+    if (!threeD || typeof map.once !== "function") return;
+    map.once("moveend", () => {
+      if (!map || focus !== previousFocus || tries <= 0) return;
+      const { clientWidth: width, clientHeight: height } = map.getContainer();
+      const outside = coordinates.some((coordinate) => {
+        const point = map.project(coordinate);
+        return (
+          point.x < 24 || point.x > width - 24 || point.y < 100 || point.y > height - 48
+        );
+      });
+      if (!outside) return;
+      map.easeTo({ zoom: map.getZoom() - 0.3, duration: reducedMotion ? 0 : 250 });
+      keepInView(coordinates, focus, tries - 1);
+    });
   }
 
   // The selected villa's outline and house connection. The link was matched by
@@ -339,9 +382,12 @@
     const caveat = document.createElement("span");
     caveat.textContent = "Matched by position — confirm against the meter schedule";
     note.append(title, caveat);
-    // Below the house: the meter label sits above the plot point, and the map
-    // never rotates, so the southernmost corner is always the lowest on screen.
-    const lowest = villa.ring.reduce((a, b) => (b[1] < a[1] ? b : a));
+    // Below the house, clear of the meter label above the plot point: the corner
+    // lowest on screen for the current view (south when flat, south-west when tilted).
+    const bearing = ((threeD ? ZONE_BEARING : 0) * Math.PI) / 180;
+    const scale = Math.cos((villa.ring[0][1] * Math.PI) / 180);
+    const up = (c) => c[0] * scale * Math.sin(bearing) + c[1] * Math.cos(bearing);
+    const lowest = villa.ring.reduce((a, b) => (up(b) < up(a) ? b : a));
     linkNote = new maplibregl.Marker({ element: note, anchor: "top", offset: [0, 8] })
       .setLngLat(lowest)
       .addTo(map);
@@ -447,12 +493,14 @@
       },
     });
   }
-  function setThreeD(on, button, badge) {
+  // Layers and button only; update() moves the camera so a zone is re-framed
+  // for the new angle in one move.
+  function applyThreeD(on) {
     threeD = on;
+    previousLink = undefined; // the villa note sits on a different corner when tilted
     map.setLayoutProperty("buildings-3d", "visibility", on ? "visible" : "none");
     map.setLayoutProperty("buildings-fill", "visibility", on ? "none" : "visible");
-    map.easeTo({ pitch: on ? TILT : 0, duration: reducedMotion ? 0 : 600 });
-    labelThreeD(on, button, badge);
+    if (threeDButton) labelThreeD(on, threeDButton, threeDBadge);
   }
   function labelThreeD(on, button, badge) {
     button.setAttribute("aria-pressed", String(on));
@@ -476,7 +524,12 @@
     badge.className = "three-d-badge";
     badge.textContent = "3D · building heights assumed";
     badge.hidden = true;
-    button.addEventListener("click", () => setThreeD(!threeD, button, badge));
+    button.addEventListener("click", () => {
+      manualThreeD = !threeD;
+      update();
+    });
+    threeDButton = button;
+    threeDBadge = badge;
     group.append(button);
     container.append(group, badge);
     map.addControl({ onAdd: () => container, onRemove: () => container.remove() }, "top-right");
