@@ -20,8 +20,8 @@
         position: absolute;
         z-index: 3;
         left: 14px;
-        top: 14px;
-        max-width: calc(100% - 56px);
+        top: 66px;
+        max-width: calc(100% - 92px);
         padding: 10px 14px;
         background: var(--color-card, #fff);
         border: 1px solid var(--color-line, #e5e7eb);
@@ -95,6 +95,43 @@
       }
       /* Map-side controls take the app's tokens (synced in by SatelliteMap), so
          they follow light and dark like the zoom buttons beside them. */
+      .zone-chips {
+        position: absolute;
+        z-index: 3;
+        top: 10px;
+        left: 10px;
+        right: 64px;
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 2px 2px 6px;
+        scrollbar-width: none;
+      }
+      .zone-chips::-webkit-scrollbar {
+        display: none;
+      }
+      .zone-chip {
+        flex: none;
+        min-height: 44px;
+        padding: 0 14px;
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: var(--radius-control, 6px);
+        background: var(--color-card, #fff);
+        color: var(--color-fg, #0a0a0a);
+        box-shadow: var(--shadow-card);
+        font: 500 14px/1 inherit;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+      .zone-chip[aria-pressed="true"] {
+        border-color: var(--color-primary, #4e4456);
+        background: var(--color-primary, #4e4456);
+        color: #fff;
+      }
+      .zone-chip:focus-visible {
+        outline: 3px solid var(--color-accent, #a4c5bb);
+        outline-offset: 2px;
+      }
       .three-d-button {
         width: 44px;
         height: 44px;
@@ -299,7 +336,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=17"></script>
-    <script src="consumption-engine.js?v=17"></script>
+    <script src="consumption-fallback.js?v=18"></script>
+    <script src="consumption-engine.js?v=18"></script>
   </body>
 </html>

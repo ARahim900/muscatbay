@@ -72,6 +72,10 @@ export function SatelliteView({
     () => [...new Set(waterMeters.map((m) => m.zone).filter(Boolean))].sort(),
     [waterMeters],
   );
+  const zoneChips = useMemo(
+    () => zones.map((id) => ({ id, name: zoneName(id) })),
+    [zones],
+  );
   const latestDay = useMemo(
     () =>
       latestRecordedDay(
@@ -253,6 +257,7 @@ export function SatelliteView({
               onUnavailable={setMapUnavailable}
               meters={scope}
               zone={state.zone}
+              zones={zoneChips}
               selected={state.meter}
               date={state.date}
               onLocations={setLocations}

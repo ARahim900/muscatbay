@@ -35,7 +35,8 @@
   // camera south-west of the zone, looking north-east, whole zone in frame.
   const TILT = 55;
   const ZONE_BEARING = 28;
-  const WIDE = 640; // below this the map stays flat unless the operator asks for 3D
+  let fullScreen = false;
+  let chipBar = null;
   let previousLink = null;
   // Per-villa house outlines from the as-built model (data/villa-buildings.js).
   // Each villa also carries its house connection, matched to it by position.
@@ -82,7 +83,8 @@
     if (!map) return;
     const { clientWidth: width, clientHeight: height } = map.getContainer();
     const occupied = [
-      { left: 0, right: Math.min(width - 64, 330), top: 0, bottom: 92 },
+      { left: 0, right: width - 64, top: 0, bottom: 64 },
+      { left: 0, right: Math.min(width - 64, 330), top: 64, bottom: 120 },
       { left: width - 64, right: width, top: 0, bottom: 110 },
     ];
     if (latest?.selected)
@@ -288,8 +290,8 @@
       "#A4C5BB",
       "#E5E7EB",
     ]);
-    const { clientWidth: mapWidth } = map.getContainer();
-    const wantThreeD = manualThreeD ?? (Boolean(zone) && mapWidth >= WIDE);
+    const wantThreeD = manualThreeD ?? Boolean(zone);
+    renderZoneChips();
     const modeChanged = wantThreeD !== threeD;
     if (modeChanged) applyThreeD(wantThreeD);
     showVillaLink(selected);
@@ -329,6 +331,47 @@
         keepInView(coordinates, focus, 4);
       }
     }
+  }
+
+  // One-tap zone switching on the map itself, so the operator never has to
+  // leave it (or full screen) to change zone. "All" returns to the whole site.
+  function renderZoneChips() {
+    if (!chipBar || !latest) return;
+    const known = (latest.zones || []).filter(
+      (z) => (context.zones[z.id] || []).length > 0,
+    );
+    const key = `${latest.zone}|${known.map((z) => z.id).join(",")}`;
+    if (chipBar.dataset.key === key) return;
+    chipBar.dataset.key = key;
+    chipBar.replaceChildren();
+    for (const z of [{ id: "", name: "All" }, ...known]) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "zone-chip";
+      chip.textContent = z.name;
+      chip.setAttribute("aria-pressed", String(z.id === latest.zone));
+      chip.addEventListener("click", () => send("satviz:select-zone", { zone: z.id }));
+      chipBar.append(chip);
+      if (z.id === latest.zone && typeof chip.scrollIntoView === "function")
+        chip.scrollIntoView({ block: "nearest", inline: "center" });
+    }
+  }
+  // Embedded in the page, a touch map must leave one finger to the page scroll.
+  // Full screen there is no page to scroll, so one finger moves the map, two
+  // fingers turn and tilt it, and the compass puts the zone view back.
+  function applyMode() {
+    if (!map) return;
+    const gestures = map.cooperativeGestures;
+    if (gestures && fullScreen) gestures.disable();
+    else if (gestures) gestures.enable();
+    if (fullScreen) {
+      map.touchZoomRotate.enableRotation();
+      map.touchPitch.enable();
+    } else {
+      map.touchZoomRotate.disableRotation();
+      map.touchPitch.disable();
+    }
+    document.documentElement.classList.toggle("full", fullScreen);
   }
 
   // fitBounds sizes the frame for a flat map; tilted, the near edge of a zone can
@@ -641,11 +684,16 @@
           layers: [{ id: "imagery", type: "raster", source: "imagery" }],
         },
       });
-      map.touchZoomRotate.disableRotation();
+      applyMode();
+      chipBar = document.createElement("div");
+      chipBar.className = "zone-chips";
+      chipBar.setAttribute("role", "group");
+      chipBar.setAttribute("aria-label", "Zone");
+      document.getElementById("map").append(chipBar);
       map.on("moveend", layoutMeterLabels);
       map.on("resize", layoutMeterLabels);
       map.addControl(
-        new maplibregl.NavigationControl({ showCompass: false }),
+        new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
         "top-right",
       );
       map.on("error", (event) => {
@@ -754,6 +802,11 @@
       }
       previousFocus = "";
       update();
+      return;
+    }
+    if (data.type === "satviz:mode") {
+      fullScreen = data.full === true;
+      applyMode();
       return;
     }
     if (data.type === "satviz:resize") {

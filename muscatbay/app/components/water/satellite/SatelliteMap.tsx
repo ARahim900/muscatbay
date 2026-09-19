@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/mb-button";
 import {
   parseLocations,
@@ -12,6 +13,7 @@ export function SatelliteMap({
   zone,
   selected,
   date,
+  zones = [],
   onLocations,
   onZone,
   onMeter,
@@ -21,6 +23,8 @@ export function SatelliteMap({
   zone: string;
   selected: string;
   date: string;
+  /** Every zone the operator can switch to — drawn as one-tap chips on the map. */
+  zones?: { id: string; name: string }[];
   onLocations: (locations: MeterLocation[]) => void;
   onZone: (zone: string) => void;
   onMeter: (account: string) => void;
@@ -31,7 +35,10 @@ export function SatelliteMap({
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("Preparing satellite imagery…");
   const [failed, setFailed] = useState(false);
-  const latest = useRef({ meters, zone, selected, date });
+  // Full screen is where the map is operated on a phone: one finger moves it,
+  // because there is no page underneath left to scroll.
+  const [full, setFull] = useState(false);
+  const latest = useRef({ meters, zone, selected, date, zones });
   const callbacks = useRef({ onLocations, onZone, onMeter, onUnavailable });
   const warnedAboutFontSync = useRef(false);
   const syncTheme = useCallback(() => {
@@ -106,13 +113,30 @@ export function SatelliteMap({
     callbacks.current = { onLocations, onZone, onMeter, onUnavailable };
   }, [onLocations, onZone, onMeter, onUnavailable]);
   useEffect(() => {
-    latest.current = { meters, zone, selected, date };
+    latest.current = { meters, zone, selected, date, zones };
     if (ready.current)
       frame.current?.contentWindow?.postMessage(
         { type: "satviz:update", payload: latest.current },
         location.origin,
       );
-  }, [meters, zone, selected, date]);
+  }, [meters, zone, selected, date, zones]);
+  useEffect(() => {
+    frame.current?.contentWindow?.postMessage(
+      { type: "satviz:mode", full },
+      location.origin,
+    );
+    if (!full) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFull(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", close);
+    };
+  }, [full]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setFailed(true);
@@ -152,7 +176,11 @@ export function SatelliteMap({
         message.type === "satviz:select-zone" &&
         typeof message.zone === "string"
       ) {
-        if (latest.current.meters.some((m) => m.zone === message.zone))
+        if (
+          message.zone === "" ||
+          latest.current.zones.some((z) => z.id === message.zone) ||
+          latest.current.meters.some((m) => m.zone === message.zone)
+        )
           callbacks.current.onZone(message.zone);
       } else if (
         message.type === "satviz:select-meter" &&
@@ -193,7 +221,13 @@ export function SatelliteMap({
     setAttempt((a) => a + 1);
   };
   return (
-    <div className="relative min-w-0 space-y-2">
+    <div
+      className={
+        full
+          ? "fixed inset-0 z-[150] flex min-w-0 flex-col bg-bg"
+          : "relative min-w-0 space-y-2"
+      }
+    >
       {status && (
         <div
           role="status"
@@ -214,22 +248,51 @@ export function SatelliteMap({
         </div>
       )}
       {!failed && (
-        <Button
-          className="absolute bottom-3 left-3 z-10"
-          onClick={() =>
-            frame.current?.contentWindow?.postMessage(
-              { type: "satviz:focus" },
-              location.origin,
-            )
-          }
+        <div className="absolute bottom-3 left-3 z-20 flex flex-wrap gap-2">
+          <Button
+            onClick={() =>
+              frame.current?.contentWindow?.postMessage(
+                { type: "satviz:focus" },
+                location.origin,
+              )
+            }
+          >
+            {selected ? "Refocus meter" : "Fit zone"}
+          </Button>
+          <Button
+            icon={full ? Minimize2 : Maximize2}
+            aria-pressed={full}
+            onClick={() => setFull((value) => !value)}
+          >
+            {full ? "Close full screen" : "Full screen"}
+          </Button>
+        </div>
+      )}
+      {!failed && !full && (
+        // On a touch screen the embedded map would fight the page for the
+        // finger, so the first tap opens it full screen instead.
+        <button
+          type="button"
+          onClick={() => setFull(true)}
+          className="absolute inset-0 z-10 hidden items-end justify-center pb-16 focus-visible:outline-3 focus-visible:outline-accent pointer-coarse:flex"
         >
-          {selected ? "Refocus meter" : "Fit zone"}
-        </Button>
+          <span className="rounded-control border border-line bg-card px-3 py-2 text-label text-fg shadow-card">
+            Tap to open the map
+          </span>
+        </button>
       )}
       <iframe
-        style={{ height: "70svh", minHeight: 360, maxHeight: 720 }}
+        style={
+          full
+            ? { height: "100%", flex: 1 }
+            : { height: "70svh", minHeight: 360, maxHeight: 720 }
+        }
         onLoad={() => {
           syncTheme();
+          frame.current?.contentWindow?.postMessage(
+            { type: "satviz:mode", full },
+            location.origin,
+          );
           frame.current?.contentWindow?.postMessage(
             { type: "satviz:hello" },
             location.origin,
@@ -237,9 +300,9 @@ export function SatelliteMap({
         }}
         key={attempt}
         ref={frame}
-        src="/satellite/consumption.html?v=17"
+        src="/satellite/consumption.html?v=18"
         title="Water consumption satellite map"
-        className={`${failed ? "hidden" : "block"} w-full rounded-b-card border-0`}
+        className={`${failed ? "hidden" : "block"} w-full border-0 ${full ? "" : "rounded-b-card"}`}
       />
     </div>
   );

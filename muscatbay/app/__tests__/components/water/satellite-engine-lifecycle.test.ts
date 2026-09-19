@@ -25,11 +25,22 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
   const createElement = () => {
     const element = {
       textContent: "",
+      className: "",
       children: [] as unknown[],
+      dataset: {} as Record<string, string>,
       style: {} as { visibility?: string },
       classList: { toggle: vi.fn() },
-      setAttribute: vi.fn(),
-      addEventListener: vi.fn(),
+      attributes: {} as Record<string, string>,
+      listeners: {} as Record<string, () => void>,
+      setAttribute(name: string, value: string) {
+        this.attributes[name] = value;
+      },
+      addEventListener(name: string, callback: () => void) {
+        this.listeners[name] = callback;
+      },
+      replaceChildren() {
+        this.children = [];
+      },
       append(...children: unknown[]) {
         this.children.push(...children);
       },
@@ -38,7 +49,9 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     return element;
   };
   const map = {
-    touchZoomRotate: { disableRotation: vi.fn() },
+    touchZoomRotate: { disableRotation: vi.fn(), enableRotation: vi.fn() },
+    touchPitch: { enable: vi.fn(), disable: vi.fn() },
+    cooperativeGestures: { enable: vi.fn(), disable: vi.fn() },
     addControl: vi.fn(),
     on: vi.fn((name: string, callback: () => void) => {
       mapEvents[name] = callback;
@@ -91,7 +104,11 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
   runInNewContext(engine, {
     window,
     location: { origin: "https://example.com" },
-    document: { getElementById: () => ({ textContent: "" }), createElement },
+    document: {
+      getElementById: () => ({ textContent: "", append: vi.fn() }),
+      documentElement: { classList: { toggle: vi.fn() } },
+      createElement,
+    },
     console: { error: vi.fn() },
     maplibregl: {
       Map: construct,
@@ -223,6 +240,26 @@ describe("consumption renderer", () => {
     env.map.project = () => ({ x: 400, y: 400 });
     (env.map.once.mock.calls[1][1] as () => void)();
     expect(env.map.easeTo).toHaveBeenCalledTimes(1);
+  });
+  it("gives one-finger control only in full screen, and switches zone from the on-map chips", () => {
+    const env = environment();
+    const zones = [{ id: "Zone_03_(A)", name: "Zone 3A" }, { id: "Zone_09", name: "No coordinates" }];
+    env.send("satviz:data", { ...payload, selected: "", zones });
+    env.mapEvents.load();
+    expect(env.map.cooperativeGestures.enable).toHaveBeenCalled();
+    expect(env.map.cooperativeGestures.disable).not.toHaveBeenCalled();
+    env.listeners.message({ origin: "https://example.com", source: env.parent, data: { type: "satviz:mode", full: true } });
+    expect(env.map.cooperativeGestures.disable).toHaveBeenCalledTimes(1);
+    expect(env.map.touchPitch.enable).toHaveBeenCalledTimes(1);
+    const chips = env.elements.filter((e) => (e as { className?: string }).className === "zone-chip") as unknown as
+      { textContent: string; listeners: Record<string, () => void> }[];
+    expect(chips.map((c) => c.textContent)).toEqual(["All", "Zone 3A"]); // a zone with no coordinates gets no chip
+    chips[1].listeners.click();
+    expect(env.parent.postMessage).toHaveBeenLastCalledWith(
+      { type: "satviz:select-zone", zone: "Zone_03_(A)" }, "https://example.com");
+    chips[0].listeners.click();
+    expect(env.parent.postMessage).toHaveBeenLastCalledWith(
+      { type: "satviz:select-zone", zone: "" }, "https://example.com");
   });
   it("uses the visual compatibility map for creation and context loss failures", () => {
     const env = environment(true);
