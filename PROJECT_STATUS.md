@@ -1642,6 +1642,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-19 — feat(water/satellite): house outlines, villa house-connection highlight and 3D house view (#86)
 - 2026-09-16 — chore(water): keep v14 service-worker diff minimal
 - 2026-09-16 — test(water): expect satellite iframe v14
 - 2026-09-16 — fix(water): refresh iOS satellite cache v14
