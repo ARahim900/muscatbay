@@ -25,6 +25,16 @@
   let previousFocus = "";
   let zoneMarkers = [];
   let meterLabels = [];
+  let linkNote = null;
+  let threeD = false;
+  const TILT = 55;
+  let previousLink = null;
+  // Per-villa house outlines from the as-built model (data/villa-buildings.js).
+  // Each villa also carries its house connection, matched to it by position.
+  const buildings = (window.VILLA_BUILDINGS && window.VILLA_BUILDINGS.buildings) || [];
+  const villaByAccount = new Map(
+    buildings.filter((b) => b.acct).map((b) => [b.acct, b]),
+  );
   const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
@@ -250,6 +260,19 @@
       "line-opacity",
       selected ? ["case", ["==", ["get", "account"], selected], 1, 0.3] : 0.85,
     );
+    const outlineOpacity = (full) =>
+      zone
+        ? ["case", ["==", ["get", "zone"], zone], full, ["==", ["get", "zone"], ""], full * 0.55, 0.15]
+        : full;
+    map.setPaintProperty("buildings-line", "line-opacity", outlineOpacity(0.9));
+    map.setPaintProperty("plots-unbuilt-line", "line-opacity", outlineOpacity(0.6));
+    map.setPaintProperty("buildings-3d", "fill-extrusion-color", [
+      "case",
+      ["==", ["get", "acct"], selected || "-"],
+      "#A4C5BB",
+      "#E5E7EB",
+    ]);
+    showVillaLink(selected);
     const focus = `${zone}:${selected}`;
     if (focus !== previousFocus) {
       const selectedPosition =
@@ -284,6 +307,46 @@
     }
   }
 
+  // The selected villa's outline and house connection. The link was matched by
+  // position when the model was built, so the note on the map says so.
+  function showVillaLink(selected) {
+    const villa = villaByAccount.get(selected) || null;
+    if (villa === previousLink) return;
+    previousLink = villa;
+    if (linkNote) linkNote.remove();
+    linkNote = null;
+    const features = [];
+    if (villa) {
+      features.push({
+        type: "Feature",
+        properties: { part: "outline" },
+        geometry: { type: "LineString", coordinates: villa.ring },
+      });
+      for (const s of villa.svc || [])
+        features.push({
+          type: "Feature",
+          properties: { part: "connection" },
+          geometry: { type: "LineString", coordinates: s.c },
+        });
+    }
+    map.getSource("villa-link").setData({ type: "FeatureCollection", features });
+    const s = villa?.svc?.[0];
+    if (!s) return;
+    const note = document.createElement("div");
+    note.className = "link-note";
+    const title = document.createElement("strong");
+    title.textContent = `House connection · ${s.d ?? "size not recorded"}${s.d ? " mm" : ""} ${s.m ?? ""} · ${s.len} m`;
+    const caveat = document.createElement("span");
+    caveat.textContent = "Matched by position — confirm against the meter schedule";
+    note.append(title, caveat);
+    // Below the house: the meter label sits above the plot point, and the map
+    // never rotates, so the southernmost corner is always the lowest on screen.
+    const lowest = villa.ring.reduce((a, b) => (b[1] < a[1] ? b : a));
+    linkNote = new maplibregl.Marker({ element: note, anchor: "top", offset: [0, 8] })
+      .setLngLat(lowest)
+      .addTo(map);
+  }
+
   function activateFallback(error) {
     console.error("[water-satellite] WebGL map unavailable", error);
     try {
@@ -313,6 +376,132 @@
         "The satellite and compatibility maps are unavailable. Use the meter table or retry the map.",
       );
     }
+  }
+  // Flat house outlines under the network. Built houses are solid lines; plots
+  // with no building on the 11 Jan 2024 imagery, and outlines not yet traced,
+  // are dashed. The map stays flat, so no heights are drawn.
+  function addBuildings() {
+    map.addSource("buildings", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: buildings.map((b) => ({
+          type: "Feature",
+          properties: {
+            built: b.st === "built",
+            h: b.h,
+            acct: b.acct || "",
+            zone: context.zoneIds[b.zone] || "",
+          },
+          geometry: { type: "Polygon", coordinates: [b.ring] },
+        })),
+      },
+    });
+    map.addLayer({
+      id: "buildings-fill",
+      type: "fill",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      paint: { "fill-color": "#F7F8F9", "fill-opacity": 0.12 },
+    });
+    // Two layers: this MapLibre build cannot vary line-dasharray per feature.
+    map.addLayer({
+      id: "buildings-line",
+      type: "line",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      paint: { "line-color": "#F7F8F9", "line-width": 1.2, "line-opacity": 0.9 },
+    });
+    map.addLayer({
+      id: "plots-unbuilt-line",
+      type: "line",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["!", ["get", "built"]],
+      paint: {
+        "line-color": "#F7F8F9",
+        "line-width": 1,
+        "line-dasharray": [2, 2],
+        "line-opacity": 0.6,
+      },
+    });
+  }
+  // 3D houses, shown only in the tilted view. Heights come from the model and
+  // are ASSUMED (the as-built drawings carry none); the view says so on screen.
+  function addBuildings3d() {
+    map.addLayer({
+      id: "buildings-3d",
+      type: "fill-extrusion",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      layout: { visibility: "none" },
+      paint: {
+        "fill-extrusion-color": "#E5E7EB",
+        "fill-extrusion-height": ["get", "h"],
+        "fill-extrusion-base": 0,
+        "fill-extrusion-opacity": 0.9,
+        "fill-extrusion-vertical-gradient": true,
+      },
+    });
+  }
+  function setThreeD(on, button, badge) {
+    threeD = on;
+    map.setLayoutProperty("buildings-3d", "visibility", on ? "visible" : "none");
+    map.setLayoutProperty("buildings-fill", "visibility", on ? "none" : "visible");
+    map.easeTo({ pitch: on ? TILT : 0, duration: reducedMotion ? 0 : 600 });
+    labelThreeD(on, button, badge);
+  }
+  function labelThreeD(on, button, badge) {
+    button.setAttribute("aria-pressed", String(on));
+    button.textContent = on ? "2D" : "3D";
+    button.setAttribute(
+      "aria-label",
+      on ? "Return to the flat map" : "Show houses in 3D (heights are assumed)",
+    );
+    badge.hidden = !on;
+  }
+  // A map button, not a gesture: tilt stays off for touch, so iOS behaves as before.
+  function addThreeDControl() {
+    const container = document.createElement("div");
+    container.className = "maplibregl-ctrl three-d-control";
+    const group = document.createElement("div");
+    group.className = "maplibregl-ctrl-group";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "three-d-button";
+    const badge = document.createElement("p");
+    badge.className = "three-d-badge";
+    badge.textContent = "3D · building heights assumed";
+    badge.hidden = true;
+    button.addEventListener("click", () => setThreeD(!threeD, button, badge));
+    group.append(button);
+    container.append(group, badge);
+    map.addControl({ onAdd: () => container, onRemove: () => container.remove() }, "top-right");
+    labelThreeD(false, button, badge);
+  }
+  function addVillaLink() {
+    map.addSource("villa-link", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addLayer({
+      id: "villa-link-case",
+      type: "line",
+      source: "villa-link",
+      paint: { "line-color": "#4E4456", "line-width": 7 },
+    });
+    map.addLayer({
+      id: "villa-link-line",
+      type: "line",
+      source: "villa-link",
+      paint: {
+        "line-color": "#A4C5BB",
+        "line-width": ["case", ["==", ["get", "part"], "connection"], 4, 3],
+      },
+    });
   }
   function addNetwork() {
     const features = (window.NETWORK || [])
@@ -377,7 +566,7 @@
         zoom: 14.6,
         pitch: 0,
         bearing: 0,
-        maxPitch: 0,
+        maxPitch: TILT,
         preserveDrawingBuffer: false,
         antialias: false,
         pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
@@ -422,7 +611,11 @@
         update();
       });
       map.on("load", () => {
+        addBuildings();
+        addBuildings3d();
         addNetwork();
+        addVillaLink();
+        addThreeDControl();
         map.addSource("meters", {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -524,6 +717,7 @@
   window.addEventListener("pagehide", () => {
     zoneMarkers.forEach((marker) => marker.remove());
     meterLabels.forEach((label) => label.marker.remove());
+    if (linkNote) linkNote.remove();
     if (map) {
       map.remove();
       map = null;

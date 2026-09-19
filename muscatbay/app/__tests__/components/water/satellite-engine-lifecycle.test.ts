@@ -3,12 +3,13 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { describe, expect, it, vi } from "vitest";
 const engine = readFileSync("public/satellite/consumption-engine.js", "utf8");
-function environment(fail = false) {
+function environment(fail = false, extra: Record<string, unknown> = {}) {
   const listeners: Record<string, (event: Record<string, unknown>) => void> =
     {};
   const mapEvents: Record<string, () => void> = {};
   const parent = { postMessage: vi.fn() };
   const source = { setData: vi.fn() };
+  const linkSource = { setData: vi.fn() };
   const fallback = {
     update: vi.fn(),
     focus: vi.fn(),
@@ -44,7 +45,7 @@ function environment(fail = false) {
     }),
     addSource: vi.fn(),
     addLayer: vi.fn(),
-    getSource: () => source,
+    getSource: (id: string) => (id === "villa-link" ? linkSource : source),
     setLayoutProperty: vi.fn(),
     setPaintProperty: vi.fn(),
     easeTo: vi.fn(),
@@ -76,6 +77,7 @@ function environment(fail = false) {
     },
     matchMedia: () => ({ matches: true }),
     createSatelliteFallback,
+    ...extra,
     addEventListener: (
       name: string,
       callback: (event: Record<string, unknown>) => void,
@@ -120,6 +122,7 @@ function environment(fail = false) {
   return {
     map,
     source,
+    linkSource,
     construct,
     send,
     mapEvents,
@@ -145,6 +148,38 @@ const payload = {
   ],
 };
 describe("consumption renderer", () => {
+  it("lights the selected villa's outline and house connection, once per selection", () => {
+    const ring = [[58.64, 23.55], [58.6401, 23.55], [58.6401, 23.5501], [58.64, 23.55]];
+    const env = environment(false, {
+      VILLA_BUILDINGS: {
+        buildings: [
+          { acct: "a", zone: "Zone 5", st: "built", ring, svc: [{ c: [[58.6399, 23.5499], [58.64, 23.55]], d: 25, m: "HDPE", len: 6.4 }] },
+        ],
+      },
+    });
+    env.send("satviz:data", payload);
+    env.mapEvents.load();
+    const ids = env.map.addLayer.mock.calls.map((c: [{ id: string }]) => c[0].id);
+    expect(ids.indexOf("buildings-line")).toBeLessThan(ids.indexOf("network-line"));
+    // MapLibre rejects data expressions in line-dasharray; the style must stay constant per layer.
+    for (const [layer] of env.map.addLayer.mock.calls as [{ paint?: Record<string, unknown> }][])
+      expect(Array.isArray(layer.paint?.["line-dasharray"]) && typeof (layer.paint?.["line-dasharray"] as unknown[])[0] === "string").toBe(false);
+    expect(ids.indexOf("villa-link-line")).toBeGreaterThan(ids.indexOf("network-line"));
+    // 3D houses exist but stay hidden until the operator asks for them; the map opens flat.
+    const extrude = (env.map.addLayer.mock.calls as [{ id: string; type: string; layout?: { visibility?: string } }][])
+      .map((c) => c[0]).find((l) => l.id === "buildings-3d");
+    expect(extrude).toMatchObject({ type: "fill-extrusion", layout: { visibility: "none" } });
+    expect(env.construct.mock.calls[0][0]).toMatchObject({ pitch: 0, dragRotate: false, touchPitch: false });
+    expect(env.map.addControl).toHaveBeenCalledTimes(2);
+    expect(env.linkSource.setData).toHaveBeenCalledTimes(1);
+    const data = env.linkSource.setData.mock.calls[0][0] as { features: { properties: { part: string } }[] };
+    expect(data.features.map((f) => f.properties.part)).toEqual(["outline", "connection"]);
+    env.send("satviz:update", { ...payload, meters: [{ ...payload.meters[0], value: 20 }] });
+    expect(env.linkSource.setData).toHaveBeenCalledTimes(1);
+    env.send("satviz:update", { ...payload, selected: "" });
+    expect(env.linkSource.setData).toHaveBeenCalledTimes(2);
+    expect((env.linkSource.setData.mock.calls[1][0] as { features: unknown[] }).features).toEqual([]);
+  });
   it("keeps the camera and instance when readings change in place", () => {
     const env = environment();
     env.send("satviz:data", payload);
