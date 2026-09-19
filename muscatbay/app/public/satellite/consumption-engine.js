@@ -26,6 +26,8 @@
   let zoneMarkers = [];
   let meterLabels = [];
   let linkNote = null;
+  let threeD = false;
+  const TILT = 55;
   let previousLink = null;
   // Per-villa house outlines from the as-built model (data/villa-buildings.js).
   // Each villa also carries its house connection, matched to it by position.
@@ -264,6 +266,12 @@
         : full;
     map.setPaintProperty("buildings-line", "line-opacity", outlineOpacity(0.9));
     map.setPaintProperty("plots-unbuilt-line", "line-opacity", outlineOpacity(0.6));
+    map.setPaintProperty("buildings-3d", "fill-extrusion-color", [
+      "case",
+      ["==", ["get", "acct"], selected || "-"],
+      "#A4C5BB",
+      "#E5E7EB",
+    ]);
     showVillaLink(selected);
     const focus = `${zone}:${selected}`;
     if (focus !== previousFocus) {
@@ -381,6 +389,8 @@
           type: "Feature",
           properties: {
             built: b.st === "built",
+            h: b.h,
+            acct: b.acct || "",
             zone: context.zoneIds[b.zone] || "",
           },
           geometry: { type: "Polygon", coordinates: [b.ring] },
@@ -417,6 +427,60 @@
         "line-opacity": 0.6,
       },
     });
+  }
+  // 3D houses, shown only in the tilted view. Heights come from the model and
+  // are ASSUMED (the as-built drawings carry none); the view says so on screen.
+  function addBuildings3d() {
+    map.addLayer({
+      id: "buildings-3d",
+      type: "fill-extrusion",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      layout: { visibility: "none" },
+      paint: {
+        "fill-extrusion-color": "#E5E7EB",
+        "fill-extrusion-height": ["get", "h"],
+        "fill-extrusion-base": 0,
+        "fill-extrusion-opacity": 0.9,
+        "fill-extrusion-vertical-gradient": true,
+      },
+    });
+  }
+  function setThreeD(on, button, badge) {
+    threeD = on;
+    map.setLayoutProperty("buildings-3d", "visibility", on ? "visible" : "none");
+    map.setLayoutProperty("buildings-fill", "visibility", on ? "none" : "visible");
+    map.easeTo({ pitch: on ? TILT : 0, duration: reducedMotion ? 0 : 600 });
+    labelThreeD(on, button, badge);
+  }
+  function labelThreeD(on, button, badge) {
+    button.setAttribute("aria-pressed", String(on));
+    button.textContent = on ? "2D" : "3D";
+    button.setAttribute(
+      "aria-label",
+      on ? "Return to the flat map" : "Show houses in 3D (heights are assumed)",
+    );
+    badge.hidden = !on;
+  }
+  // A map button, not a gesture: tilt stays off for touch, so iOS behaves as before.
+  function addThreeDControl() {
+    const container = document.createElement("div");
+    container.className = "maplibregl-ctrl three-d-control";
+    const group = document.createElement("div");
+    group.className = "maplibregl-ctrl-group";
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "three-d-button";
+    const badge = document.createElement("p");
+    badge.className = "three-d-badge";
+    badge.textContent = "3D · building heights assumed";
+    badge.hidden = true;
+    button.addEventListener("click", () => setThreeD(!threeD, button, badge));
+    group.append(button);
+    container.append(group, badge);
+    map.addControl({ onAdd: () => container, onRemove: () => container.remove() }, "top-right");
+    labelThreeD(false, button, badge);
   }
   function addVillaLink() {
     map.addSource("villa-link", {
@@ -502,7 +566,7 @@
         zoom: 14.6,
         pitch: 0,
         bearing: 0,
-        maxPitch: 0,
+        maxPitch: TILT,
         preserveDrawingBuffer: false,
         antialias: false,
         pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
@@ -548,8 +612,10 @@
       });
       map.on("load", () => {
         addBuildings();
+        addBuildings3d();
         addNetwork();
         addVillaLink();
+        addThreeDControl();
         map.addSource("meters", {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },

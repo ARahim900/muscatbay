@@ -165,6 +165,12 @@ describe("consumption renderer", () => {
     for (const [layer] of env.map.addLayer.mock.calls as [{ paint?: Record<string, unknown> }][])
       expect(Array.isArray(layer.paint?.["line-dasharray"]) && typeof (layer.paint?.["line-dasharray"] as unknown[])[0] === "string").toBe(false);
     expect(ids.indexOf("villa-link-line")).toBeGreaterThan(ids.indexOf("network-line"));
+    // 3D houses exist but stay hidden until the operator asks for them; the map opens flat.
+    const extrude = (env.map.addLayer.mock.calls as [{ id: string; type: string; layout?: { visibility?: string } }][])
+      .map((c) => c[0]).find((l) => l.id === "buildings-3d");
+    expect(extrude).toMatchObject({ type: "fill-extrusion", layout: { visibility: "none" } });
+    expect(env.construct.mock.calls[0][0]).toMatchObject({ pitch: 0, dragRotate: false, touchPitch: false });
+    expect(env.map.addControl).toHaveBeenCalledTimes(2);
     expect(env.linkSource.setData).toHaveBeenCalledTimes(1);
     const data = env.linkSource.setData.mock.calls[0][0] as { features: { properties: { part: string } }[] };
     expect(data.features.map((f) => f.properties.part)).toEqual(["outline", "connection"]);
