@@ -25,6 +25,14 @@
   let previousFocus = "";
   let zoneMarkers = [];
   let meterLabels = [];
+  let linkNote = null;
+  let previousLink = null;
+  // Per-villa house outlines from the as-built model (data/villa-buildings.js).
+  // Each villa also carries its house connection, matched to it by position.
+  const buildings = (window.VILLA_BUILDINGS && window.VILLA_BUILDINGS.buildings) || [];
+  const villaByAccount = new Map(
+    buildings.filter((b) => b.acct).map((b) => [b.acct, b]),
+  );
   const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
   ).matches;
@@ -250,6 +258,13 @@
       "line-opacity",
       selected ? ["case", ["==", ["get", "account"], selected], 1, 0.3] : 0.85,
     );
+    const outlineOpacity = (full) =>
+      zone
+        ? ["case", ["==", ["get", "zone"], zone], full, ["==", ["get", "zone"], ""], full * 0.55, 0.15]
+        : full;
+    map.setPaintProperty("buildings-line", "line-opacity", outlineOpacity(0.9));
+    map.setPaintProperty("plots-unbuilt-line", "line-opacity", outlineOpacity(0.6));
+    showVillaLink(selected);
     const focus = `${zone}:${selected}`;
     if (focus !== previousFocus) {
       const selectedPosition =
@@ -284,6 +299,46 @@
     }
   }
 
+  // The selected villa's outline and house connection. The link was matched by
+  // position when the model was built, so the note on the map says so.
+  function showVillaLink(selected) {
+    const villa = villaByAccount.get(selected) || null;
+    if (villa === previousLink) return;
+    previousLink = villa;
+    if (linkNote) linkNote.remove();
+    linkNote = null;
+    const features = [];
+    if (villa) {
+      features.push({
+        type: "Feature",
+        properties: { part: "outline" },
+        geometry: { type: "LineString", coordinates: villa.ring },
+      });
+      for (const s of villa.svc || [])
+        features.push({
+          type: "Feature",
+          properties: { part: "connection" },
+          geometry: { type: "LineString", coordinates: s.c },
+        });
+    }
+    map.getSource("villa-link").setData({ type: "FeatureCollection", features });
+    const s = villa?.svc?.[0];
+    if (!s) return;
+    const note = document.createElement("div");
+    note.className = "link-note";
+    const title = document.createElement("strong");
+    title.textContent = `House connection · ${s.d ?? "size not recorded"}${s.d ? " mm" : ""} ${s.m ?? ""} · ${s.len} m`;
+    const caveat = document.createElement("span");
+    caveat.textContent = "Matched by position — confirm against the meter schedule";
+    note.append(title, caveat);
+    // Below the house: the meter label sits above the plot point, and the map
+    // never rotates, so the southernmost corner is always the lowest on screen.
+    const lowest = villa.ring.reduce((a, b) => (b[1] < a[1] ? b : a));
+    linkNote = new maplibregl.Marker({ element: note, anchor: "top", offset: [0, 8] })
+      .setLngLat(lowest)
+      .addTo(map);
+  }
+
   function activateFallback(error) {
     console.error("[water-satellite] WebGL map unavailable", error);
     try {
@@ -313,6 +368,76 @@
         "The satellite and compatibility maps are unavailable. Use the meter table or retry the map.",
       );
     }
+  }
+  // Flat house outlines under the network. Built houses are solid lines; plots
+  // with no building on the 11 Jan 2024 imagery, and outlines not yet traced,
+  // are dashed. The map stays flat, so no heights are drawn.
+  function addBuildings() {
+    map.addSource("buildings", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: buildings.map((b) => ({
+          type: "Feature",
+          properties: {
+            built: b.st === "built",
+            zone: context.zoneIds[b.zone] || "",
+          },
+          geometry: { type: "Polygon", coordinates: [b.ring] },
+        })),
+      },
+    });
+    map.addLayer({
+      id: "buildings-fill",
+      type: "fill",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      paint: { "fill-color": "#F7F8F9", "fill-opacity": 0.12 },
+    });
+    // Two layers: this MapLibre build cannot vary line-dasharray per feature.
+    map.addLayer({
+      id: "buildings-line",
+      type: "line",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["get", "built"],
+      paint: { "line-color": "#F7F8F9", "line-width": 1.2, "line-opacity": 0.9 },
+    });
+    map.addLayer({
+      id: "plots-unbuilt-line",
+      type: "line",
+      source: "buildings",
+      minzoom: 15,
+      filter: ["!", ["get", "built"]],
+      paint: {
+        "line-color": "#F7F8F9",
+        "line-width": 1,
+        "line-dasharray": [2, 2],
+        "line-opacity": 0.6,
+      },
+    });
+  }
+  function addVillaLink() {
+    map.addSource("villa-link", {
+      type: "geojson",
+      data: { type: "FeatureCollection", features: [] },
+    });
+    map.addLayer({
+      id: "villa-link-case",
+      type: "line",
+      source: "villa-link",
+      paint: { "line-color": "#4E4456", "line-width": 7 },
+    });
+    map.addLayer({
+      id: "villa-link-line",
+      type: "line",
+      source: "villa-link",
+      paint: {
+        "line-color": "#A4C5BB",
+        "line-width": ["case", ["==", ["get", "part"], "connection"], 4, 3],
+      },
+    });
   }
   function addNetwork() {
     const features = (window.NETWORK || [])
@@ -422,7 +547,9 @@
         update();
       });
       map.on("load", () => {
+        addBuildings();
         addNetwork();
+        addVillaLink();
         map.addSource("meters", {
           type: "geojson",
           data: { type: "FeatureCollection", features: [] },
@@ -524,6 +651,7 @@
   window.addEventListener("pagehide", () => {
     zoneMarkers.forEach((marker) => marker.remove());
     meterLabels.forEach((label) => label.marker.remove());
+    if (linkNote) linkNote.remove();
     if (map) {
       map.remove();
       map = null;

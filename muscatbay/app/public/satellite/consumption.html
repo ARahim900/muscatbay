@@ -93,6 +93,25 @@
       .meter-label.selected.missing strong {
         color: #0a0a0a;
       }
+      .link-note {
+        display: grid;
+        gap: 1px;
+        max-width: 260px;
+        padding: 6px 10px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10.5px;
+        background: #4e4456;
+        color: #fff;
+        box-shadow: 0 2px 8px rgb(0 0 0 / 24%);
+        pointer-events: none;
+      }
+      .link-note strong {
+        font-size: 14px;
+        color: #a4c5bb;
+      }
+      .link-note span {
+        font-size: 12px;
+      }
       .meter-label:focus-visible,
       .zone-marker:focus-visible {
         outline: 3px solid #a4c5bb;
@@ -248,8 +267,9 @@
     <script src="data/network-road-corrections.js"></script>
     <script src="data/zone-fm-network.js"></script>
     <script src="data/network-service-zones.js"></script>
+    <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=14"></script>
-    <script src="consumption-engine.js?v=14"></script>
+    <script src="consumption-fallback.js?v=15"></script>
+    <script src="consumption-engine.js?v=15"></script>
   </body>
 </html>
