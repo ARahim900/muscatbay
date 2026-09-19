@@ -120,6 +120,7 @@
   }
   function update() {
     if (!loaded || !latest) return;
+    renderZoneChips();
     if (fallback) {
       fallback.update(latest);
       return;
@@ -291,7 +292,6 @@
       "#E5E7EB",
     ]);
     const wantThreeD = manualThreeD ?? Boolean(zone);
-    renderZoneChips();
     const modeChanged = wantThreeD !== threeD;
     if (modeChanged) applyThreeD(wantThreeD);
     showVillaLink(selected);
@@ -335,8 +335,17 @@
 
   // One-tap zone switching on the map itself, so the operator never has to
   // leave it (or full screen) to change zone. "All" returns to the whole site.
+  // Mounted on the page, not inside the map: the compatibility renderer clears
+  // the map container, and its users (mostly iOS) need the chips just as much.
   function renderZoneChips() {
-    if (!chipBar || !latest) return;
+    if (!latest) return;
+    if (!chipBar) {
+      chipBar = document.createElement("div");
+      chipBar.className = "zone-chips";
+      chipBar.setAttribute("role", "group");
+      chipBar.setAttribute("aria-label", "Zone");
+      document.body.append(chipBar);
+    }
     const known = (latest.zones || []).filter(
       (z) => (context.zones[z.id] || []).length > 0,
     );
@@ -685,11 +694,6 @@
         },
       });
       applyMode();
-      chipBar = document.createElement("div");
-      chipBar.className = "zone-chips";
-      chipBar.setAttribute("role", "group");
-      chipBar.setAttribute("aria-label", "Zone");
-      document.getElementById("map").append(chipBar);
       map.on("moveend", layoutMeterLabels);
       map.on("resize", layoutMeterLabels);
       map.addControl(

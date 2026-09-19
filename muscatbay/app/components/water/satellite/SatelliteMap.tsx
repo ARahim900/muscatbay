@@ -224,7 +224,8 @@ export function SatelliteMap({
     <div
       className={
         full
-          ? "fixed inset-0 z-[150] flex min-w-0 flex-col bg-bg"
+          ? // viewport-fit=cover: keep the map clear of the notch and the home bar
+            "fixed inset-0 z-[150] flex min-w-0 flex-col bg-bg pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
           : "relative min-w-0 space-y-2"
       }
     >
@@ -248,7 +249,9 @@ export function SatelliteMap({
         </div>
       )}
       {!failed && (
-        <div className="absolute bottom-3 left-3 z-20 flex flex-wrap gap-2">
+        <div
+          className={`absolute left-3 z-20 flex flex-wrap gap-2 ${full ? "bottom-[calc(0.75rem+env(safe-area-inset-bottom,0px))]" : "bottom-3"}`}
+        >
           <Button
             onClick={() =>
               frame.current?.contentWindow?.postMessage(

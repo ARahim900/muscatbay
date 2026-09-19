@@ -105,7 +105,8 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     window,
     location: { origin: "https://example.com" },
     document: {
-      getElementById: () => ({ textContent: "", append: vi.fn() }),
+      getElementById: () => ({ textContent: "" }),
+      body: { append: vi.fn() },
       documentElement: { classList: { toggle: vi.fn() } },
       createElement,
     },
@@ -265,6 +266,8 @@ describe("consumption renderer", () => {
     const env = environment(true);
     env.send("satviz:data", payload);
     expect(env.createSatelliteFallback).toHaveBeenCalledTimes(1);
+    // The compatibility map (mostly iOS) keeps the one-tap zone chips.
+    expect(env.elements.some((e) => (e as { className?: string }).className === "zone-chip")).toBe(true);
     expect(env.fallback.update).toHaveBeenCalledWith(payload);
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
       expect.objectContaining({ type: "satviz:status", status: "degraded" }),
