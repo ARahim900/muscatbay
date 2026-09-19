@@ -48,7 +48,10 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     getSource: (id: string) => (id === "villa-link" ? linkSource : source),
     setLayoutProperty: vi.fn(),
     setPaintProperty: vi.fn(),
+    setFilter: vi.fn(),
     easeTo: vi.fn(),
+    once: vi.fn(),
+    getZoom: () => 16,
     fitBounds: vi.fn(),
     remove: vi.fn(),
     resize: vi.fn(),
@@ -197,6 +200,29 @@ describe("consumption renderer", () => {
       antialias: false,
       pitch: 0,
     });
+  });
+  it("frames a selected zone at the oblique angle in one move, and the whole site flat", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, selected: "" });
+    env.mapEvents.load();
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+    expect(env.map.fitBounds.mock.calls[0][1]).toMatchObject({ pitch: 55, bearing: 28 });
+    expect(env.map.easeTo).not.toHaveBeenCalled();
+    expect(env.map.once).toHaveBeenCalledWith("moveend", expect.any(Function));
+    env.send("satviz:update", { ...payload, selected: "", zone: "" });
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(2);
+    expect(env.map.fitBounds.mock.calls[1][1]).toMatchObject({ pitch: 0, bearing: 0 });
+  });
+  it("steps back after a tilted move until every zone point is on screen", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, selected: "" });
+    env.mapEvents.load();
+    env.map.project = () => ({ x: 400, y: 790 }); // below the safe area of the 800 px map
+    (env.map.once.mock.calls[0][1] as () => void)();
+    expect(env.map.easeTo).toHaveBeenCalledWith(expect.objectContaining({ zoom: 15.7 }));
+    env.map.project = () => ({ x: 400, y: 400 });
+    (env.map.once.mock.calls[1][1] as () => void)();
+    expect(env.map.easeTo).toHaveBeenCalledTimes(1);
   });
   it("uses the visual compatibility map for creation and context loss failures", () => {
     const env = environment(true);

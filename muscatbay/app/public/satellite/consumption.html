@@ -93,6 +93,8 @@
       .meter-label.selected.missing strong {
         color: #0a0a0a;
       }
+      /* Map-side controls take the app's tokens (synced in by SatelliteMap), so
+         they follow light and dark like the zoom buttons beside them. */
       .three-d-button {
         width: 44px;
         height: 44px;
@@ -100,8 +102,8 @@
         color: var(--color-fg, #0a0a0a);
       }
       .three-d-button[aria-pressed="true"] {
-        background: #a4c5bb;
-        color: #0a0a0a;
+        background: var(--color-primary, #4e4456);
+        color: #fff;
       }
       .three-d-control {
         display: flex;
@@ -109,15 +111,20 @@
         align-items: flex-end;
         gap: 8px;
       }
-      .three-d-badge {
+      .three-d-badge,
+      .link-note {
         margin: 0;
-        white-space: nowrap;
         padding: 6px 10px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10.5px;
-        background: #4e4456;
-        color: #fff;
-        font-size: 14px;
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: var(--radius-control, 6px);
+        background: var(--color-card, #fff);
+        color: var(--color-fg, #0a0a0a);
+        box-shadow: var(--shadow-card);
+      }
+      .three-d-badge {
+        white-space: nowrap;
+        font-size: 12px;
+        color: var(--color-muted, #6b7280);
       }
       .three-d-badge[hidden] {
         display: none;
@@ -126,20 +133,14 @@
         display: grid;
         gap: 1px;
         max-width: 260px;
-        padding: 6px 10px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10.5px;
-        background: #4e4456;
-        color: #fff;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 24%);
         pointer-events: none;
       }
       .link-note strong {
         font-size: 14px;
-        color: #a4c5bb;
       }
       .link-note span {
         font-size: 12px;
+        color: var(--color-muted, #6b7280);
       }
       .meter-label:focus-visible,
       .zone-marker:focus-visible {
@@ -298,7 +299,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=16"></script>
-    <script src="consumption-engine.js?v=16"></script>
+    <script src="consumption-fallback.js?v=17"></script>
+    <script src="consumption-engine.js?v=17"></script>
   </body>
 </html>

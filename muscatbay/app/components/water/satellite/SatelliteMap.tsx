@@ -237,7 +237,7 @@ export function SatelliteMap({
         }}
         key={attempt}
         ref={frame}
-        src="/satellite/consumption.html?v=16"
+        src="/satellite/consumption.html?v=17"
         title="Water consumption satellite map"
         className={`${failed ? "hidden" : "block"} w-full rounded-b-card border-0`}
       />
