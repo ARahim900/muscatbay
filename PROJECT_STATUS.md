@@ -1642,6 +1642,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-20 — feat(water/satellite): rebuild the Satellite view as one frame with small status marks (#88)
 - 2026-09-19 — feat(water/satellite): frame a selected zone automatically at an oblique 3D angle (#87)
 - 2026-09-19 — feat(water/satellite): house outlines, villa house-connection highlight and 3D house view (#86)
 - 2026-09-16 — chore(water): keep v14 service-worker diff minimal
