@@ -214,13 +214,14 @@ describe("consumption renderer", () => {
     const env = environment();
     env.send("satviz:data", payload);
     env.mapEvents.load();
-    expect(env.map.easeTo).toHaveBeenCalledTimes(1);
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
     env.send("satviz:update", {
       ...payload,
       meters: [{ ...payload.meters[0], value: 20 }],
     });
     expect(env.construct).toHaveBeenCalledTimes(1);
-    expect(env.map.easeTo).toHaveBeenCalledTimes(1);
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+    expect(env.map.easeTo).not.toHaveBeenCalled();
     expect(env.source.setData).toHaveBeenCalledTimes(2);
     expect(env.construct.mock.calls[0][0]).toMatchObject({
       preserveDrawingBuffer: false,
@@ -228,20 +229,46 @@ describe("consumption renderer", () => {
       pitch: 0,
     });
   });
-  // Owner ruling 2026-09-20: selecting a zone frames it but never tilts the map.
-  it("frames a selected zone flat, and tilts to the oblique angle only from the 3D button", () => {
+  // Owner ruling 2026-09-20 (2): auto fly — a zone is framed whole, from its
+  // start (the bulk meter) looking to its far end, at a gentle tilt. The whole
+  // site is flat, and 3D is still only the button.
+  it("flies to a zone from its start towards its end, and keeps the whole site flat", () => {
     const env = environment();
-    env.send("satviz:data", { ...payload, selected: "" });
+    const at = (lng: number, lat: number) => ({ coordinates: [lng, lat] });
+    const meters = [
+      { account: "b", name: "Bulk", zone: "Zone_05", level: "L2", value: 100, location: at(58.64, 23.55) },
+      { account: "v", name: "Villa", zone: "Zone_05", level: "L3", value: 1, location: at(58.65, 23.55) },
+    ];
+    env.send("satviz:data", { ...payload, selected: "", meters });
     env.mapEvents.load();
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
-    expect(env.map.fitBounds.mock.calls[0][1]).toMatchObject({ pitch: 0, bearing: 0 });
-    expect(env.map.once).not.toHaveBeenCalled();
-    threeDButton(env).listeners.click();
-    expect(env.map.fitBounds).toHaveBeenCalledTimes(2);
-    expect(env.map.fitBounds.mock.calls[1][1]).toMatchObject({ pitch: 55, bearing: 28 });
+    // due east of the bulk meter: the camera looks east, tilted 35°
+    expect(env.map.fitBounds.mock.calls[0][1]).toMatchObject({ pitch: 35, bearing: 90 });
     expect(env.map.once).toHaveBeenCalledWith("moveend", expect.any(Function));
     threeDButton(env).listeners.click();
-    expect(env.map.fitBounds.mock.calls[2][1]).toMatchObject({ pitch: 0, bearing: 0 });
+    expect(env.map.fitBounds.mock.calls[1][1]).toMatchObject({ pitch: 55, bearing: 90 });
+    threeDButton(env).listeners.click();
+    env.send("satviz:update", { ...payload, selected: "", zone: "", meters });
+    expect(env.map.fitBounds.mock.calls.at(-1)![1]).toMatchObject({ pitch: 0, bearing: 0 });
+  });
+  it("leaves the camera alone for a meter tapped on the map, and centres one chosen from the list", () => {
+    const env = environment();
+    const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
+    const meters = [
+      { account: "a", name: "A", zone: "Zone_05", level: "L3", value: 1, location: at(1) },
+      { account: "b", name: "B", zone: "Zone_05", level: "L3", value: 2, location: at(2) },
+    ];
+    env.send("satviz:data", { ...payload, selected: "", meters });
+    env.mapEvents.load();
+    const hit = env.mapEvents["click:meter-hit"] as (event: unknown) => void;
+    hit({ point: { x: 1, y: 1 }, originalEvent: { target: env.canvas },
+      features: [{ geometry: { coordinates: [58.641, 23.55] }, properties: { account: "a" } }] });
+    env.send("satviz:update", { ...payload, selected: "a", meters });
+    expect(env.map.easeTo).not.toHaveBeenCalled();
+    env.send("satviz:update", { ...payload, selected: "b", meters }); // picked in the Meters panel
+    expect(env.map.easeTo).toHaveBeenCalledTimes(1);
+    expect(env.map.easeTo.mock.calls[0][0]).toMatchObject({ center: [58.642, 23.55] });
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1); // the zone frame itself never re-ran
   });
   it("opens the meter whose label was tapped, not the dot lying under that label", () => {
     const env = environment();
@@ -256,25 +283,31 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenCalledWith(
       { type: "satviz:select-meter", account: "under-the-label" }, "https://example.com");
   });
-  it("labels findings in words and writes each zone's loss on its marker", () => {
+  it("keeps figures off the map: status on the dot, a name tag for the selected meter and the zone bulk only", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     const meters = [
       { account: "n", name: "Villa N", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 2, status: "normal", location: at(1) },
       { account: "h", name: "Villa H", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 40, status: "high", location: at(2) },
       { account: "z", name: "Villa Z", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 0, status: "zero", location: at(3) },
+      { account: "b", name: "Zone 5 (Bulk)", zone: "Zone_05", zoneName: "Zone 5", level: "L2", value: 120, status: "normal", location: at(4) },
     ];
-    env.send("satviz:data", { ...payload, selected: "", zone: "Zone_05", meters });
+    env.send("satviz:data", { ...payload, selected: "h", zone: "Zone_05", meters });
     env.mapEvents.load();
-    const text = () => env.elements.map((e) => e.textContent);
-    expect(text()).toEqual(expect.arrayContaining(["High usage", "Zero reading"]));
+    const text = () => env.elements.map((e) => e.textContent).filter(Boolean);
+    expect(text()).toEqual(expect.arrayContaining(["Villa H", "Zone bulk"]));
+    expect(text()).not.toContain("Villa N");
+    expect(text().some((t) => t.includes("m³"))).toBe(false);
     const features = (env.source.setData.mock.calls.at(-1)![0] as {
       features: { properties: { account: string; status: string; radius: number } }[] }).features;
     expect(features.find((f) => f.properties.account === "h")!.properties.status).toBe("high");
     expect(features.find((f) => f.properties.account === "z")!.properties.radius).toBe(6); // a zero is never a speck
+    // Overview: a zone is a named pin; its loss is in the Zones panel (and in the pin's spoken label).
     env.send("satviz:update", { ...payload, selected: "", zone: "", meters,
+      zones: [{ id: "Zone_05", name: "Zone 5" }],
       zoneLosses: [{ id: "Zone_05", severity: "high", label: "Loss 30 m³ · 26% · High" }] });
-    expect(text()).toContain("Loss 30 m³ · 26% · High");
+    expect(text()).toContain("Zone 5");
+    expect(text()).not.toContain("Loss 30 m³ · 26% · High");
   });
   it("hangs overlapping zone cards off different sides of their points", () => {
     const env = environment();
@@ -330,7 +363,7 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
       { type: "satviz:select-zone", zone: "" }, "https://example.com");
   });
-  it("shows whole-number figures, and sets the zone bulk meter apart from the individual meters", () => {
+  it("shows whole-number figures under the mouse, and sets the zone bulk meter apart from the individual meters", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     env.send("satviz:data", { ...payload, selected: "", meters: [
@@ -341,9 +374,12 @@ describe("consumption renderer", () => {
       { account: "b", name: "Zone 5 (Bulk)", zone: "Zone_05", level: "L2", value: 3920.4, location: at(5) },
     ] });
     env.mapEvents.load();
+    // Figures appear only in the tag under the mouse.
+    const hover = env.mapEvents["mousemove:meter-hit"] as (event: unknown) => void;
+    for (const account of ["v1", "v2", "v3", "v4", "b"]) hover({ features: [{ properties: { account } }] });
     const text = env.elements.map((e) => e.textContent);
     // 10.00 → 10; small daily readings keep one decimal so they never read as 0; no reading stays —
-    for (const expected of ["10 m³", "0.4 m³", "<0.1 m³", "— m³", "3,920 m³", "Bulk meter"])
+    for (const expected of ["10 m³", "0.4 m³", "<0.1 m³", "— m³", "3,920 m³", "Zone bulk"])
       expect(text).toContain(expected);
     const features = (env.source.setData.mock.calls.at(-1)![0] as {
       features: { properties: { account: string; bulk: boolean; radius: number } }[] }).features;
@@ -382,14 +418,18 @@ describe("consumption renderer", () => {
     expect(env.construct).not.toHaveBeenCalled();
   });
   // Owner ruling 2026-09-20: map labels show whole numbers (10 m³, not 10.00 m³).
-  it("places daily values in interactive map labels and retains missing labels", () => {
+  it("tags the selected meter by name and keeps a missing reading as — under the mouse", () => {
     const env = environment();
     env.send("satviz:data", payload);
     env.mapEvents.load();
-    expect(env.elements.some((el) => el.textContent === "10 m³")).toBe(true);
+    expect(env.elements.some((el) => el.textContent === "A")).toBe(true);
+    expect(env.elements.some((el) => el.textContent === "10 m³")).toBe(false);
     env.send("satviz:update", {
       ...payload,
       meters: [{ ...payload.meters[0], value: null }],
+    });
+    (env.mapEvents["mousemove:meter-hit"] as (event: unknown) => void)({
+      features: [{ properties: { account: "a" } }],
     });
     expect(env.elements.some((el) => el.textContent === "— m³")).toBe(true);
   });

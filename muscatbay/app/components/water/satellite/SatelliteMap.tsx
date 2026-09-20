@@ -36,7 +36,7 @@ export function SatelliteMap({
   zoneLosses?: ZoneLoss[];
   /** One status line, shown above the map in full screen (the card header is hidden there). */
   summary?: string;
-  /** The meter sheet — rendered inside the map so it follows it into full screen. */
+  /** The meter sheet — drawn over the map in full screen only. */
   children?: ReactNode;
   /** The selected villa's house connection, in words ("" when there is none). */
   onVillaLink?: (text: string) => void;
@@ -291,10 +291,10 @@ export function SatelliteMap({
           status line and the full-screen strip above never shift it. */}
       <div className={`relative min-h-0 ${full ? "flex flex-1 flex-col" : ""}`}>
         {!failed && (
-          // On a phone the meter sheet owns the bottom edge, so the buttons
-          // move under the zone strip while a meter is open.
+          // Full screen on a phone: the meter sheet owns the bottom edge, so the
+          // buttons move under the zone strip while a meter is open.
           <div
-            className={`absolute left-3 z-20 flex flex-wrap gap-2 ${selected ? "max-sm:top-17 sm:bottom-3" : "bottom-3"}`}
+            className={`absolute left-3 z-20 flex flex-wrap gap-2 ${selected && full ? "max-sm:top-17 sm:bottom-3" : "bottom-3"}`}
           >
             <Button
               onClick={() =>
@@ -347,11 +347,13 @@ export function SatelliteMap({
           }}
           key={attempt}
           ref={frame}
-          src="/satellite/consumption.html?v=20"
+          src="/satellite/consumption.html?v=21"
           title="Water consumption satellite map"
           className={`${failed ? "hidden" : "block"} w-full border-0 ${full ? "" : "rounded-b-card"}`}
         />
-        {!failed && children}
+        {/* Embedded, the page's own panels carry the details; the sheet is for
+            full screen, where those panels are out of view. */}
+        {!failed && full && children}
       </div>
     </div>
   );

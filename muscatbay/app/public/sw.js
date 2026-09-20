@@ -19,6 +19,8 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v21 (2026-09-20) Satellite view rebuilt as one frame: panels · map · panels. The
+ *                    map carries dots and name tags only; zone auto fly.
  *   v20 (2026-09-20) Satellite map: flat by default, status colours, zone loss,
  *                    non-overlapping zone markers, pill zone strip, label tap fix.
  *   v19 (2026-09-20) Satellite map: whole-number figures, distinct bulk meter, black labels.
@@ -60,7 +62,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v20";
+const CACHE_VERSION = "v21";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;

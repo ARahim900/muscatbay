@@ -23,9 +23,9 @@
   let latest = null;
   let loaded = false;
   let previousFocus = "";
+  let previousZone = "";
   let zoneMarkers = [];
   let meterLabels = [];
-  let linkNote = null;
   let threeD = false;
   // The map is flat unless the operator asks for 3D with the map's own button
   // (owner ruling 2026-09-20: a zone must never tilt the map by itself).
@@ -35,7 +35,14 @@
   // 3D view: the same oblique angle as the standalone as-built 3D model —
   // camera south-west of the zone, looking north-east, whole zone in frame.
   const TILT = 55;
-  const ZONE_BEARING = 28;
+  // Auto fly: choosing a zone stands the camera behind the zone's start (its
+  // bulk meter) looking along the zone to its far end, at this gentler tilt,
+  // with the whole zone in frame. It never moves for a tap on a meter dot.
+  const FLY_TILT = 35;
+  let zoneBearing = 0;
+  // The meter the operator just tapped on the map: the camera stays where it is.
+  let mapPick = "";
+  let hoverTag = null;
   let fullScreen = false;
   let chipBar = null;
   let previousLink = null;
@@ -102,63 +109,47 @@
     (typeof getComputedStyle === "function" &&
       getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
     fallbackColour;
-  // One label for both renderers, so the compatibility map never drifts.
-  function fillMeterLabel(element, meter, selected) {
+  // The map carries no figures: they live in the page's panels. A meter gets a
+  // name tag only when it is selected, when it is the zone bulk, or (with a
+  // mouse) while it is hovered — then with its figure. One builder serves both
+  // renderers, so the compatibility map never drifts.
+  function fillMeterLabel(element, meter, selected, withValue) {
     const status = statusOf(meter);
     element.classList.add("meter-label");
     element.classList.toggle("selected", meter.account === selected);
-    element.classList.toggle("missing", status === "missing");
     element.classList.toggle("bulk", isBulk(meter));
-    element.classList.toggle("flagged", status !== "normal");
     element.dataset.status = status;
-    if (isBulk(meter)) {
-      const tag = document.createElement("em");
-      tag.textContent = "Bulk meter";
-      element.append(tag);
-    }
     const name = document.createElement("span");
-    name.textContent = meter.name;
-    const value = document.createElement("strong");
-    value.textContent = `${volume(meter.value)} m³`;
-    element.append(name, value);
-    if (status !== "normal") {
-      const flag = document.createElement("i");
-      flag.textContent = STATUS_TAGS[status];
-      element.append(flag);
+    name.textContent =
+      isBulk(meter) && meter.account !== selected && !withValue ? "Zone bulk" : meter.name;
+    element.append(name);
+    if (withValue) {
+      const value = document.createElement("strong");
+      value.textContent =
+        status === "normal" || status === "missing"
+          ? `${volume(meter.value)} m³`
+          : `${volume(meter.value)} m³ · ${STATUS_TAGS[status]}`;
+      element.append(value);
     }
     element.setAttribute(
       "aria-label",
       `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + STATUS_TAGS[status]}. Open meter details`,
     );
   }
-  function fillZoneMarker(element, zoneId, zoneMeters, mapped) {
+  // Overview: a zone is a pin with its name. Its figures are in the Zones panel.
+  function fillZoneMarker(element, zoneId, zoneMeters) {
     const zoneLabel =
       (latest.zones || []).find((z) => z.id === zoneId)?.name ||
       zoneMeters[0]?.zoneName ||
       zoneId.split("_").join(" ");
-    const recorded = zoneMeters.filter((m) => m.value !== null);
-    const total = recorded.length
-      ? recorded.reduce((sum, m) => sum + m.value, 0)
-      : null;
     const loss = (latest.zoneLosses || []).find((z) => z.id === zoneId);
     element.classList.add("zone-marker");
     const name = document.createElement("b");
     name.textContent = zoneLabel;
-    const value = document.createElement("strong");
-    value.textContent = `${volume(total)} m³`;
-    element.append(name, value);
-    if (loss && typeof loss.label === "string") {
-      const line = document.createElement("i");
-      line.dataset.severity = String(loss.severity || "nodata");
-      line.textContent = loss.label;
-      element.append(line);
-    }
-    const count = document.createElement("span");
-    count.textContent = `${recorded.length}/${zoneMeters.length} reporting · ${mapped} mapped`;
-    element.append(count);
+    element.append(name);
     element.setAttribute(
       "aria-label",
-      `Select ${zoneLabel}: ${volume(total)} cubic metres, ${recorded.length} of ${zoneMeters.length} reporting${loss ? ", " + loss.label : ""}`,
+      `Select ${zoneLabel}${loss && typeof loss.label === "string" ? ": " + loss.label : ""}`,
     );
   }
   const overlaps = (box, others, gap) =>
@@ -173,11 +164,11 @@
   // bottom-left, and the meter sheet when one is open.
   function reservedAreas(width, height) {
     const areas = [
-      { left: 0, right: width - 64, top: 0, bottom: 64 },
-      { left: width - 64, right: width, top: 0, bottom: 170 },
+      { left: width - 64, right: width, top: 0, bottom: 230 },
       { left: 0, right: 270, top: height - 62, bottom: height },
     ];
-    if (latest?.selected)
+    if (fullScreen) areas.push({ left: 0, right: width - 64, top: 0, bottom: 64 });
+    if (latest?.selected && fullScreen)
       areas.push(
         width < 640
           ? { left: 0, right: width, top: height - 150, bottom: height }
@@ -207,9 +198,7 @@
       const point = map.project(coordinates);
       const candidates = [];
       // Full card, then without the reporting line, then name and figure only.
-      for (const size of ["", "compact", "mini"]) {
-        element.classList.remove("compact", "mini");
-        if (size) element.classList.add(size);
+      for (const size of [""]) {
         const w = element.offsetWidth;
         const h = element.offsetHeight;
         if (!(w > 0 && h > 0)) return; // not rendered (hidden tab): keep the defaults
@@ -253,9 +242,6 @@
     zoneMarkers.forEach(({ element }, index) => {
       const pick = chosen[index];
       const placed = pick && !pick.fallback;
-      const size = placed ? pick.size : "mini";
-      element.classList.remove("compact", "mini");
-      if (size) element.classList.add(size);
       element.style.transform = placed ? "none" : "";
       element.style.left = placed ? `${pick.x}px` : "";
       element.style.top = placed ? `${pick.y}px` : "";
@@ -375,12 +361,11 @@
           (b.value ?? -Infinity) - (a.value ?? -Infinity),
       );
       for (const meter of priority) {
+        if (meter.account !== selected && !isBulk(meter)) continue;
         const element = document.createElement("button");
         element.type = "button";
-        fillMeterLabel(element, meter, selected);
-        element.addEventListener("click", () =>
-          send("satviz:select-meter", { account: meter.account }),
-        );
+        fillMeterLabel(element, meter, selected, false);
+        element.addEventListener("click", () => pickMeter(meter.account));
         const marker = new maplibregl.Marker({
           element,
           anchor: "bottom",
@@ -415,12 +400,7 @@
         anchor.className = "zone-anchor";
         const el = document.createElement("button");
         el.type = "button";
-        fillZoneMarker(
-          el,
-          name,
-          meters.filter((m) => m.zone === name),
-          group.length,
-        );
+        fillZoneMarker(el, name, meters.filter((m) => m.zone === name));
         el.addEventListener("click", () =>
           send("satviz:select-zone", { zone: name }),
         );
@@ -481,42 +461,78 @@
     const modeChanged = wantThreeD !== threeD;
     if (modeChanged) applyThreeD(wantThreeD);
     showVillaLink(selected);
-    const view = { pitch: threeD ? TILT : 0, bearing: threeD ? ZONE_BEARING : 0 };
+    const coordinates =
+      context.zones[zone] || points.map((m) => m.location.coordinates);
+    if (zone !== previousZone) zoneBearing = zone ? flyBearing(coordinates, points) : 0;
+    const zoneChanged = zone !== previousZone || modeChanged;
+    previousZone = zone;
+    const view = {
+      pitch: zone ? (threeD ? TILT : FLY_TILT) : 0,
+      bearing: zone ? zoneBearing : 0,
+    };
     const focus = `${zone}:${selected}`;
-    if (focus !== previousFocus || modeChanged) {
-      const selectedPosition =
-        points.find((m) => m.account === selected)?.location ||
-        locations.find((p) => p.account === selected);
-      const coordinates =
-        context.zones[zone] || points.map((m) => m.location.coordinates);
-      const { clientWidth: width } = map.getContainer();
-      if (selectedPosition) {
-        map.easeTo({
-          center: selectedPosition.coordinates,
-          zoom: 18.5,
-          ...view,
-          padding: { top: 110, bottom: 170, left: 30, right: 30 },
-          duration: reducedMotion ? 0 : 700,
-        });
-        previousFocus = focus;
-      } else if (coordinates.length) {
-        const bounds = new maplibregl.LngLatBounds();
-        coordinates.forEach((coordinate) => bounds.extend(coordinate));
-        map.fitBounds(bounds, {
-          padding: {
-            top: 120,
-            bottom: 65,
-            left: width < 640 ? 30 : 60,
-            right: width < 640 ? 30 : 60,
-          },
-          maxZoom: 17,
-          ...view,
-          duration: reducedMotion ? 0 : 900,
-        });
-        previousFocus = focus;
-        keepInView(coordinates, focus, 4);
-      }
+    if (focus === previousFocus && !modeChanged) return;
+    const selectedPosition =
+      points.find((m) => m.account === selected)?.location ||
+      locations.find((p) => p.account === selected);
+    const { clientWidth: width } = map.getContainer();
+    if (zoneChanged || !selectedPosition) {
+      // Auto fly: only a change of zone (or of 2D/3D) moves the whole camera.
+      if (!coordinates.length) return;
+      const bounds = new maplibregl.LngLatBounds();
+      coordinates.forEach((coordinate) => bounds.extend(coordinate));
+      map.fitBounds(bounds, {
+        padding: {
+          top: fullScreen ? 90 : 40,
+          bottom: 70,
+          left: width < 640 ? 30 : 60,
+          right: width < 640 ? 50 : 80,
+        },
+        maxZoom: 17.5,
+        ...view,
+        duration: reducedMotion ? 0 : 1100,
+      });
+      previousFocus = focus;
+      keepInView(coordinates, focus, 5);
+    } else if (selected !== mapPick) {
+      // Chosen from the page's list: bring the dot to the middle, same angle.
+      map.easeTo({
+        center: selectedPosition.coordinates,
+        zoom: Math.max(map.getZoom(), 17.5),
+        duration: reducedMotion ? 0 : 600,
+      });
+      previousFocus = focus;
+    } else previousFocus = focus; // tapped on the map: the camera stays put
+  }
+
+  const clearHover = () => {
+    hoverTag?.marker.remove();
+    hoverTag = null;
+  };
+  const pickMeter = (account) => {
+    mapPick = account;
+    send("satviz:select-meter", { account });
+  };
+  // Compass bearing from the zone's start to its far end. The start is the
+  // zone's bulk meter; where that position is not on the map, the end of the
+  // zone's longest axis that lies nearer the rest of the site stands in for it.
+  function flyBearing(coordinates, points) {
+    if (coordinates.length < 2) return 0;
+    const scale = Math.cos((coordinates[0][1] * Math.PI) / 180);
+    const distance = (a, b) => Math.hypot((a[0] - b[0]) * scale, a[1] - b[1]);
+    const farthest = (from) =>
+      coordinates.reduce((best, c) => (distance(from, c) > distance(from, best) ? c : best));
+    let start = points.find((m) => isBulk(m))?.location.coordinates;
+    if (!start) {
+      const a = farthest(coordinates[0]);
+      const b = farthest(a);
+      const site = [58.639, 23.5468];
+      start = distance(a, site) <= distance(b, site) ? a : b;
     }
+    const end = farthest(start);
+    const angle =
+      (Math.atan2((end[0] - start[0]) * scale, end[1] - start[1]) * 180) / Math.PI;
+    return Math.round((angle + 360) % 360);
   }
 
   // One-tap zone switching on the map itself, so the operator never has to
@@ -572,14 +588,14 @@
   // fitBounds sizes the frame for a flat map; tilted, the near edge of a zone can
   // fall off screen. After the move, step back until every point is in view.
   function keepInView(coordinates, focus, tries) {
-    if (!threeD || typeof map.once !== "function") return;
+    if (!latest?.zone || typeof map.once !== "function") return;
     map.once("moveend", () => {
       if (!map || focus !== previousFocus || tries <= 0) return;
       const { clientWidth: width, clientHeight: height } = map.getContainer();
       const outside = coordinates.some((coordinate) => {
         const point = map.project(coordinate);
         return (
-          point.x < 24 || point.x > width - 24 || point.y < 100 || point.y > height - 48
+          point.x < 24 || point.x > width - 24 || point.y < 40 || point.y > height - 48
         );
       });
       if (!outside) return;
@@ -594,8 +610,6 @@
     const villa = villaByAccount.get(selected) || null;
     if (villa === previousLink) return;
     previousLink = villa;
-    if (linkNote) linkNote.remove();
-    linkNote = null;
     const features = [];
     if (villa) {
       features.push({
@@ -619,23 +633,7 @@
     // The page's meter sheet carries the same words, so a phone — where a note
     // on the map would sit under the thumb and the sheet — does not need it drawn.
     send("satviz:villa-link", { text: s ? `${headline}. ${caveatText}.` : "" });
-    if (!s || map.getContainer().clientWidth < 640) return;
-    const note = document.createElement("div");
-    note.className = "link-note";
-    const title = document.createElement("strong");
-    title.textContent = headline;
-    const caveat = document.createElement("span");
-    caveat.textContent = caveatText;
-    note.append(title, caveat);
-    // Below the house, clear of the meter label above the plot point: the corner
-    // lowest on screen for the current view (south when flat, south-west when tilted).
-    const bearing = ((threeD ? ZONE_BEARING : 0) * Math.PI) / 180;
-    const scale = Math.cos((villa.ring[0][1] * Math.PI) / 180);
-    const up = (c) => c[0] * scale * Math.sin(bearing) + c[1] * Math.cos(bearing);
-    const lowest = villa.ring.reduce((a, b) => (up(b) < up(a) ? b : a));
-    linkNote = new maplibregl.Marker({ element: note, anchor: "top", offset: [0, 8] })
-      .setLngLat(lowest)
-      .addTo(map);
+    // Words go to the page's panel; the map only lights the outline and the pipe.
   }
 
   function activateFallback(error) {
@@ -778,7 +776,13 @@
     });
     threeDButton = button;
     threeDBadge = badge;
-    group.append(button);
+    const home = document.createElement("button");
+    home.type = "button";
+    home.className = "three-d-button";
+    home.textContent = "All";
+    home.setAttribute("aria-label", "Back to the whole site");
+    home.addEventListener("click", () => send("satviz:select-zone", { zone: "" }));
+    group.append(home, button);
     container.append(group, badge);
     map.addControl({ onAdd: () => container, onRemove: () => container.remove() }, "top-right");
     labelThreeD(false, button, badge);
@@ -976,11 +980,28 @@
               Math.hypot(bp.x - event.point.x, bp.y - event.point.y)
             );
           })[0];
-          if (nearest)
-            send("satviz:select-meter", {
-              account: nearest.properties.account,
-            });
+          if (nearest) pickMeter(nearest.properties.account);
         });
+        // With a mouse, a dot answers with its name and figure — one tag, gone
+        // when the pointer leaves. Touch screens select instead.
+        if (window.matchMedia("(hover: hover)").matches) {
+          map.on("mousemove", "meter-hit", (event) => {
+            const account = event.features?.[0]?.properties.account;
+            const meter = latest?.meters.find((m) => m.account === account);
+            if (!meter?.location || hoverTag?.account === account) return;
+            clearHover();
+            const element = document.createElement("div");
+            fillMeterLabel(element, meter, "", true);
+            element.classList.add("hover");
+            hoverTag = {
+              account,
+              marker: new maplibregl.Marker({ element, anchor: "bottom", offset: [0, -12] })
+                .setLngLat(meter.location.coordinates)
+                .addTo(map),
+            };
+          });
+          map.on("mouseleave", "meter-hit", clearHover);
+        }
         map.on("mouseenter", "meter-hit", () => {
           map.getCanvas().style.cursor = "pointer";
         });
@@ -1015,6 +1036,7 @@
         return;
       }
       previousFocus = "";
+      previousZone = null; // re-run the zone fly-in
       update();
       return;
     }
@@ -1037,7 +1059,6 @@
   window.addEventListener("pagehide", () => {
     zoneMarkers.forEach(({ marker }) => marker.remove());
     meterLabels.forEach((label) => label.marker.remove());
-    if (linkNote) linkNote.remove();
     if (map) {
       map.remove();
       map = null;

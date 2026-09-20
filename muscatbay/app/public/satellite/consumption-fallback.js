@@ -189,14 +189,7 @@
           );
           const button = document.createElement("button");
           button.type = "button";
-          // Compact (name, total, loss): this renderer does not re-place markers.
-          button.classList.add("compact");
-          fillZoneMarker(
-            button,
-            zone,
-            latest.meters.filter((meter) => meter.zone === zone),
-            group.length,
-          );
+          fillZoneMarker(button, zone, latest.meters.filter((meter) => meter.zone === zone));
           button.addEventListener("click", () => onZone(zone));
           place(button, centre, zone.includes("03_(A)") ? "bottom" : "top");
         }
@@ -209,11 +202,6 @@
             Number(a.account === latest.selected) ||
           (b.value ?? -Infinity) - (a.value ?? -Infinity),
       );
-      const { width, height } = size();
-      const occupied = [
-        { left: 0, right: Math.min(width - 64, 330), top: 0, bottom: 92 },
-        { left: width - 64, right: width, top: 0, bottom: 110 },
-      ];
       for (const meter of priority) {
         const button = document.createElement("button");
         button.type = "button";
@@ -235,28 +223,15 @@
         button.style.transform = "translate(-50%, -50%)";
         markers.append(button);
 
-        const box = {
-          left: point.x - 55,
-          right: point.x + 55,
-          top: point.y - 66,
-          bottom: point.y - 16,
-        };
-        const outside =
-          box.left < 0 || box.right > width || box.top < 0 || box.bottom > height;
-        const overlap = occupied.some(
-          (item) =>
-            box.left < item.right + 8 &&
-            box.right > item.left - 8 &&
-            box.top < item.bottom + 8 &&
-            box.bottom > item.top - 8,
-        );
+        // Name tags only for the selected meter and the zone bulk; figures are
+        // in the page's panels.
         const keep =
           meter.account === latest.selected || meter.level === "L2" || meter.level === "L1";
-        if (!keep && (outside || overlap)) continue;
+        if (!keep) continue;
 
         const label = document.createElement("div");
         label.className = "compat-meter-card";
-        fillMeterLabel(label, meter, latest.selected);
+        fillMeterLabel(label, meter, latest.selected, false);
         // The point button beside it is the control; the card is its caption.
         label.removeAttribute("aria-label");
         label.setAttribute("aria-hidden", "true");
@@ -264,7 +239,6 @@
         label.style.top = `${point.y}px`;
         label.style.transform = "translate(-50%, calc(-100% - 10px))";
         markers.append(label);
-        occupied.push(box);
       }
     };
 

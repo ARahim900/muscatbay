@@ -4,44 +4,24 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/mb-button";
 import { Slider } from "@/components/ui/slider";
 import { formatDay, omanToday } from "./dailyModel";
-import type { WaterMeter } from "@/lib/water-data";
-import {
-  LEVELS,
-  LEVEL_LABELS,
-  STATUSES,
-  STATUS_LABELS,
-  zoneName,
-  type MeterStatus,
-  type SatelliteState,
-} from "./consumptionModel";
+import type { SatelliteState } from "./consumptionModel";
 const control =
   "h-9 pointer-coarse:min-h-11 w-full rounded-control border border-line bg-card px-3 text-label text-fg shadow-card focus-visible:outline-3 focus-visible:outline-accent";
 
 interface SatelliteFiltersProps {
   state: SatelliteState;
-  zones: string[];
-  query: string;
-  /** Meters per status in the current zone and level, for the Status options. */
-  statusCounts: Record<MeterStatus, number>;
   latestDay: string | null;
   loading: boolean;
   onChange: (patch: Partial<SatelliteState>) => void;
   /** Day steps replace the URL entry, so dragging does not flood Back. */
   onDay: (date: string) => void;
-  onZone: (zone: string) => void;
-  onQuery: (query: string) => void;
 }
 export function SatelliteFilters({
   state,
-  zones,
-  query,
-  statusCounts,
   latestDay,
   loading,
   onChange,
   onDay,
-  onZone,
-  onQuery,
 }: SatelliteFiltersProps) {
   const month = state.date.slice(0, 7);
   const day = Number(state.date.slice(8, 10));
@@ -59,7 +39,7 @@ export function SatelliteFilters({
   // (same guard as the Daily report's day slider).
   const slide = useCallback((values: number[]) => setDay(values[0]), [setDay]);
   return (
-    <div className="space-y-3.5">
+    <div>
       {/* Reading day — the Daily report's control: month, chevrons, day slider. */}
       <div className="flex flex-wrap items-center gap-3 rounded-card border border-line bg-card px-4 py-3 shadow-card">
         <label className="flex items-center gap-2 text-label text-fg">
@@ -117,77 +97,6 @@ export function SatelliteFilters({
                 : "No readings recorded this month"}
           </span>
         )}
-      </div>
-      <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-        <label className="space-y-1 text-label">
-          Zone
-          <select
-            aria-label="Zone"
-            value={state.zone}
-            onChange={(event) => onZone(event.target.value)}
-            className={control}
-          >
-            <option value="">All zones</option>
-            {zones.map((z) => (
-              <option key={z} value={z}>
-                {zoneName(z)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1 text-label">
-          Meter level
-          <select
-            aria-label="Meter level"
-            value={state.level}
-            onChange={(event) =>
-              onChange({
-                level: event.target.value as WaterMeter["level"],
-                meter: "",
-              })
-            }
-            className={control}
-          >
-            {LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level} · {LEVEL_LABELS[level]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1 text-label">
-          Status
-          <select
-            aria-label="Status"
-            value={state.status}
-            onChange={(event) =>
-              onChange({
-                status: event.target.value as MeterStatus | "",
-                meter: "",
-              })
-            }
-            className={control}
-          >
-            <option value="">Every status</option>
-            {STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {STATUS_LABELS[status]} · {statusCounts[status]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1 text-label">
-          Search every meter
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => {
-              onQuery(event.target.value);
-            }}
-            placeholder="Name, account or zone"
-            className={control}
-          />
-        </label>
       </div>
     </div>
   );
