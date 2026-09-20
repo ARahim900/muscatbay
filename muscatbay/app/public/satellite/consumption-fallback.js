@@ -48,6 +48,9 @@
     onZone,
     onStatus,
     volume,
+    fillMeterLabel,
+    fillZoneMarker,
+    statusOf,
   }) => {
     container.replaceChildren();
     container.className = "compat-map";
@@ -184,23 +187,15 @@
                 0,
               ) / group.length,
           );
-          const zoneMeters = latest.meters.filter((meter) => meter.zone === zone);
-          const recorded = zoneMeters.filter((meter) => meter.value !== null);
-          const total = recorded.length
-            ? recorded.reduce((sum, meter) => sum + meter.value, 0)
-            : null;
           const button = document.createElement("button");
           button.type = "button";
-          button.className = "zone-marker";
-          button.textContent = group[0].zoneName || zone.split("_").join(" ");
-          const value = document.createElement("strong");
-          value.textContent = `${volume(total)} m³`;
-          const count = document.createElement("span");
-          count.textContent = `${recorded.length}/${zoneMeters.length} reporting · ${group.length} mapped`;
-          button.append(value, count);
-          button.setAttribute(
-            "aria-label",
-            `Select ${group[0].zoneName || zone}, ${group.length} mapped meters`,
+          // Compact (name, total, loss): this renderer does not re-place markers.
+          button.classList.add("compact");
+          fillZoneMarker(
+            button,
+            zone,
+            latest.meters.filter((meter) => meter.zone === zone),
+            group.length,
           );
           button.addEventListener("click", () => onZone(zone));
           place(button, centre, zone.includes("03_(A)") ? "bottom" : "top");
@@ -225,6 +220,7 @@
         button.className = "compat-meter-point";
         button.classList.toggle("selected", meter.account === latest.selected);
         button.classList.toggle("missing", meter.value === null || meter.value < 0);
+        button.dataset.status = statusOf(meter);
         const dot = document.createElement("span");
         dot.className = "compat-meter-dot";
         button.append(dot);
@@ -259,22 +255,11 @@
         if (!keep && (outside || overlap)) continue;
 
         const label = document.createElement("div");
-        label.className = "meter-label compat-meter-card";
-        label.classList.toggle("selected", meter.account === latest.selected);
-        label.classList.toggle("missing", meter.value === null || meter.value < 0);
-        const bulk = meter.level === "L2" || meter.level === "L1";
-        label.classList.toggle("bulk", bulk);
-        if (bulk) {
-          const tag = document.createElement("em");
-          tag.textContent = "Bulk meter";
-          label.append(tag);
-        }
+        label.className = "compat-meter-card";
+        fillMeterLabel(label, meter, latest.selected);
+        // The point button beside it is the control; the card is its caption.
+        label.removeAttribute("aria-label");
         label.setAttribute("aria-hidden", "true");
-        const name = document.createElement("span");
-        name.textContent = meter.name;
-        const value = document.createElement("strong");
-        value.textContent = `${volume(meter.value)} m³`;
-        label.append(name, value);
         label.style.left = `${point.x}px`;
         label.style.top = `${point.y}px`;
         label.style.transform = "translate(-50%, calc(-100% - 10px))";

@@ -82,7 +82,9 @@ describe("satellite daily source", () => {
       fetchSatelliteDailyMonth("2026-09-13", new AbortController().signal),
     ).rejects.toThrow("not configured");
   });
-  it("uses one month fetch for day changes and visibly retains stale rows on refresh failure", async () => {
+  // Two reads per month view — the month and the one before it (spike baseline,
+  // and the opening day while a new month is still empty) — and none per day.
+  it("does not refetch for day changes and visibly retains stale rows on refresh failure", async () => {
     configure();
     queryResult.mockResolvedValue({ data: [sample], error: null });
     const view = renderHook(({ date }) => useSatelliteDaily(date), {
@@ -90,7 +92,7 @@ describe("satellite daily source", () => {
     });
     await waitFor(() => expect(view.result.current.loading).toBe(false));
     view.rerender({ date: "2026-09-14" });
-    expect(queryResult).toHaveBeenCalledTimes(1);
+    expect(queryResult).toHaveBeenCalledTimes(2);
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     queryResult.mockResolvedValueOnce({
       data: null,

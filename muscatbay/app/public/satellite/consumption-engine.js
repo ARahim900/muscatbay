@@ -27,11 +27,12 @@
   let meterLabels = [];
   let linkNote = null;
   let threeD = false;
-  // Operator's own 2D/3D choice for this session; null = follow the automatic view.
-  let manualThreeD = null;
+  // The map is flat unless the operator asks for 3D with the map's own button
+  // (owner ruling 2026-09-20: a zone must never tilt the map by itself).
+  let manualThreeD = false;
   let threeDButton = null;
   let threeDBadge = null;
-  // Zone view: the same oblique angle as the standalone as-built 3D model —
+  // 3D view: the same oblique angle as the standalone as-built 3D model —
   // camera south-west of the zone, looking north-east, whole zone in frame.
   const TILT = 55;
   const ZONE_BEARING = 28;
@@ -85,44 +86,211 @@
   // Zone and main bulk meters measure everything entering; they are drawn
   // apart from the individual meters and never sized against them.
   const isBulk = (meter) => meter.level === "L2" || meter.level === "L1";
+  // The page classifies every reading (normal / high / zero / missing); the map
+  // only draws it. Status is never colour alone: the label carries it in words.
+  const STATUS_TAGS = { high: "High usage", zero: "Zero reading", missing: "No reading" };
+  const statusOf = (meter) =>
+    STATUS_TAGS[meter.status]
+      ? meter.status
+      : meter.value === null || meter.value < 0
+        ? "missing"
+        : "normal";
+  const STATUS_RANK = { high: 2, zero: 1, normal: 0, missing: 0 };
+  // The page syncs its status tokens into this document; without them (or
+  // without computed styles at all) the brand's own status colours are used.
+  const token = (name, fallbackColour) =>
+    (typeof getComputedStyle === "function" &&
+      getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
+    fallbackColour;
+  // One label for both renderers, so the compatibility map never drifts.
+  function fillMeterLabel(element, meter, selected) {
+    const status = statusOf(meter);
+    element.classList.add("meter-label");
+    element.classList.toggle("selected", meter.account === selected);
+    element.classList.toggle("missing", status === "missing");
+    element.classList.toggle("bulk", isBulk(meter));
+    element.classList.toggle("flagged", status !== "normal");
+    element.dataset.status = status;
+    if (isBulk(meter)) {
+      const tag = document.createElement("em");
+      tag.textContent = "Bulk meter";
+      element.append(tag);
+    }
+    const name = document.createElement("span");
+    name.textContent = meter.name;
+    const value = document.createElement("strong");
+    value.textContent = `${volume(meter.value)} m³`;
+    element.append(name, value);
+    if (status !== "normal") {
+      const flag = document.createElement("i");
+      flag.textContent = STATUS_TAGS[status];
+      element.append(flag);
+    }
+    element.setAttribute(
+      "aria-label",
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + STATUS_TAGS[status]}. Open meter details`,
+    );
+  }
+  function fillZoneMarker(element, zoneId, zoneMeters, mapped) {
+    const zoneLabel =
+      (latest.zones || []).find((z) => z.id === zoneId)?.name ||
+      zoneMeters[0]?.zoneName ||
+      zoneId.split("_").join(" ");
+    const recorded = zoneMeters.filter((m) => m.value !== null);
+    const total = recorded.length
+      ? recorded.reduce((sum, m) => sum + m.value, 0)
+      : null;
+    const loss = (latest.zoneLosses || []).find((z) => z.id === zoneId);
+    element.classList.add("zone-marker");
+    const name = document.createElement("b");
+    name.textContent = zoneLabel;
+    const value = document.createElement("strong");
+    value.textContent = `${volume(total)} m³`;
+    element.append(name, value);
+    if (loss && typeof loss.label === "string") {
+      const line = document.createElement("i");
+      line.dataset.severity = String(loss.severity || "nodata");
+      line.textContent = loss.label;
+      element.append(line);
+    }
+    const count = document.createElement("span");
+    count.textContent = `${recorded.length}/${zoneMeters.length} reporting · ${mapped} mapped`;
+    element.append(count);
+    element.setAttribute(
+      "aria-label",
+      `Select ${zoneLabel}: ${volume(total)} cubic metres, ${recorded.length} of ${zoneMeters.length} reporting${loss ? ", " + loss.label : ""}`,
+    );
+  }
+  const overlaps = (box, others, gap) =>
+    others.some(
+      (b) =>
+        box.left < b.right + gap &&
+        box.right > b.left - gap &&
+        box.top < b.bottom + gap &&
+        box.bottom > b.top - gap,
+    );
+  // What the page draws over the map: zone strip, zoom column, the two buttons
+  // bottom-left, and the meter sheet when one is open.
+  function reservedAreas(width, height) {
+    const areas = [
+      { left: 0, right: width - 64, top: 0, bottom: 64 },
+      { left: width - 64, right: width, top: 0, bottom: 170 },
+      { left: 0, right: 270, top: height - 62, bottom: height },
+    ];
+    if (latest?.selected)
+      areas.push(
+        width < 640
+          ? { left: 0, right: width, top: height - 150, bottom: height }
+          : { left: width - 350, right: width, top: height - 200, bottom: height },
+      );
+    return areas;
+  }
+  // Overview: every zone keeps its marker. Each card may hang off any of eight
+  // sides of its point, full or shrunk to name and figures; a small search finds
+  // an arrangement where no two cards (or page controls) overlap.
+  const ZONE_SIDES = [
+    [-0.5, 0, 0, 12], // below
+    [-0.5, -1, 0, -12], // above
+    [0, -0.5, 14, 0], // right
+    [-1, -0.5, -14, 0], // left
+    [0, 0, 10, 10],
+    [-1, 0, -10, 10],
+    [0, -1, 10, -10],
+    [-1, -1, -10, -10],
+  ];
+  function layoutZoneMarkers() {
+    if (!map || !zoneMarkers.length) return;
+    const { clientWidth: width, clientHeight: height } = map.getContainer();
+    const reserved = reservedAreas(width, height);
+    const options = [];
+    for (const { element, coordinates } of zoneMarkers) {
+      const point = map.project(coordinates);
+      const candidates = [];
+      // Full card, then without the reporting line, then name and figure only.
+      for (const size of ["", "compact", "mini"]) {
+        element.classList.remove("compact", "mini");
+        if (size) element.classList.add(size);
+        const w = element.offsetWidth;
+        const h = element.offsetHeight;
+        if (!(w > 0 && h > 0)) return; // not rendered (hidden tab): keep the defaults
+        for (const [fx, fy, dx, dy] of ZONE_SIDES) {
+          const left = point.x + fx * w + dx;
+          const top = point.y + fy * h + dy;
+          const box = { left, top, right: left + w, bottom: top + h };
+          const inside =
+            box.left >= 4 && box.right <= width - 4 && box.top >= 4 && box.bottom <= height - 4;
+          if (inside && !overlaps(box, reserved, 6))
+            candidates.push({ size, box, x: fx * w + dx, y: fy * h + dy });
+        }
+      }
+      options.push(candidates);
+    }
+    let chosen = [];
+    let budget = 0;
+    // Backtracking: an earlier card moves aside when a later one has no room.
+    // Only if no full arrangement exists may a card keep its default place.
+    const search = (index, lenient) => {
+      if (index === options.length) return true;
+      for (const candidate of options[index]) {
+        if (budget-- <= 0) return false;
+        if (overlaps(candidate.box, chosen.filter((c) => !c.fallback).map((c) => c.box), 6))
+          continue;
+        chosen[index] = candidate;
+        if (search(index + 1, lenient)) return true;
+        chosen.length = index;
+      }
+      if (!lenient) return false;
+      chosen[index] = { fallback: true };
+      if (search(index + 1, lenient)) return true;
+      chosen.length = index;
+      return false;
+    };
+    for (const lenient of [false, true]) {
+      chosen = [];
+      budget = 20000;
+      if (search(0, lenient)) break;
+    }
+    zoneMarkers.forEach(({ element }, index) => {
+      const pick = chosen[index];
+      const placed = pick && !pick.fallback;
+      const size = placed ? pick.size : "mini";
+      element.classList.remove("compact", "mini");
+      if (size) element.classList.add(size);
+      element.style.transform = placed ? "none" : "";
+      element.style.left = placed ? `${pick.x}px` : "";
+      element.style.top = placed ? `${pick.y}px` : "";
+    });
+  }
   function layoutMeterLabels() {
     if (!map) return;
     const { clientWidth: width, clientHeight: height } = map.getContainer();
-    const occupied = [
-      { left: 0, right: width - 64, top: 0, bottom: 64 },
-      { left: 0, right: Math.min(width - 64, 330), top: 64, bottom: 120 },
-      { left: width - 64, right: width, top: 0, bottom: 110 },
-    ];
-    if (latest?.selected)
-      occupied.push({
-        left: width < 640 ? 0 : width - 350,
-        right: width,
-        top: height - 160,
-        bottom: height,
-      });
+    const occupied = reservedAreas(width, height);
     // A label that would cover another first shrinks to its figure alone, and is
     // hidden only if even that does not fit. Every meter keeps its dot on the map.
     for (const label of meterLabels) {
       const point = map.project(label.coordinates);
+      label.element.style.marginLeft = "";
       const measure = () => {
         const w = label.element.offsetWidth || 110;
         const h = label.element.offsetHeight || 48;
+        // The selected meter and the bulk meter are always labelled, so near a
+        // side edge their label slides inwards instead of being cut off.
+        const slide = label.keep
+          ? Math.max(4 - (point.x - w / 2), 0) + Math.min(width - 4 - (point.x + w / 2), 0)
+          : 0;
+        if (slide) label.element.style.marginLeft = `${slide}px`;
         const box = {
-          left: point.x - w / 2,
-          right: point.x + w / 2,
+          left: point.x - w / 2 + slide,
+          right: point.x + w / 2 + slide,
           top: point.y - h - 10,
           bottom: point.y - 10,
         };
         const outside =
           box.right > width || box.left < 0 || box.bottom > height || box.top < 0;
-        const overlap = occupied.some(
-          (b) =>
-            box.left < b.right + 6 &&
-            box.right > b.left - 6 &&
-            box.top < b.bottom + 6 &&
-            box.bottom > b.top - 6,
-        );
-        return { box, blocked: outside || (!label.keep && overlap) };
+        return {
+          box,
+          blocked: outside || (!label.keep && overlaps(box, occupied, 6)),
+        };
       };
       label.element.classList.remove("compact");
       let fit = measure();
@@ -162,14 +330,27 @@
           focused: !selected || m.account === selected,
           recorded: m.value !== null && m.value >= 0,
           bulk: isBulk(m),
+          status: statusOf(m),
+          // A zero reading is a finding, not a speck: it is drawn as large as a
+          // missing one so it can be seen and tapped.
           radius: isBulk(m)
             ? 11
-            : m.value === null || m.value < 0
+            : m.value === null || m.value <= 0
               ? 6
               : Math.max(3, Math.sqrt(m.value / max) * 18),
         },
       })),
     });
+    map.setPaintProperty("meter-circles", "circle-color", [
+      "case",
+      ["get", "bulk"],
+      "#FFFFFF",
+      ["==", ["get", "status"], "high"],
+      token("--color-danger", "#D67A7A"),
+      ["==", ["get", "status"], "zero"],
+      token("--color-warning", "#E8C064"),
+      "#A4C5BB",
+    ]);
     map.setLayoutProperty(
       "meter-circles",
       "visibility",
@@ -180,7 +361,7 @@
       "visibility",
       overview ? "none" : "visible",
     );
-    zoneMarkers.forEach((marker) => marker.remove());
+    zoneMarkers.forEach(({ marker }) => marker.remove());
     zoneMarkers = [];
     meterLabels.forEach((label) => label.marker.remove());
     meterLabels = [];
@@ -189,28 +370,14 @@
         (a, b) =>
           Number(b.account === selected) - Number(a.account === selected) ||
           Number(isBulk(b)) - Number(isBulk(a)) ||
+          // Findings are labelled before ordinary readings.
+          STATUS_RANK[statusOf(b)] - STATUS_RANK[statusOf(a)] ||
           (b.value ?? -Infinity) - (a.value ?? -Infinity),
       );
       for (const meter of priority) {
         const element = document.createElement("button");
         element.type = "button";
-        element.className = "meter-label";
-        element.classList.toggle("selected", meter.account === selected);
-        element.classList.toggle(
-          "missing",
-          meter.value === null || meter.value < 0,
-        );
-        element.classList.toggle("bulk", isBulk(meter));
-        const name = document.createElement("span");
-        name.textContent = meter.name;
-        const value = document.createElement("strong");
-        value.textContent = `${volume(meter.value)} m³`;
-        if (isBulk(meter)) {
-          const tag = document.createElement("em");
-          tag.textContent = "Bulk meter";
-          element.append(tag);
-        }
-        element.append(name, value);
+        fillMeterLabel(element, meter, selected);
         element.addEventListener("click", () =>
           send("satviz:select-meter", { account: meter.account }),
         );
@@ -221,10 +388,6 @@
         })
           .setLngLat(meter.location.coordinates)
           .addTo(map);
-        element.setAttribute(
-          "aria-label",
-          `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}. Open meter details`,
-        );
         meterLabels.push({
           marker,
           element,
@@ -247,36 +410,30 @@
             group.reduce((sum, m) => sum + m.location.coordinates[i], 0) /
             group.length,
         );
+        // The marker is a point; its card hangs off whichever side is free.
+        const anchor = document.createElement("div");
+        anchor.className = "zone-anchor";
         const el = document.createElement("button");
         el.type = "button";
-        el.className = "zone-marker";
-        el.textContent = group[0].zoneName || name.split("_").join(" ");
-        const count = document.createElement("span");
-        const zoneMeters = meters.filter((m) => m.zone === name);
-        const recorded = zoneMeters.filter((m) => m.value !== null);
-        const total = recorded.length
-          ? recorded.reduce((sum, m) => sum + m.value, 0)
-          : null;
-        const value = document.createElement("strong");
-        value.textContent = `${volume(total)} m³`;
-        count.textContent = `${recorded.length}/${zoneMeters.length} reporting · ${group.length} mapped`;
-        el.append(value, count);
+        fillZoneMarker(
+          el,
+          name,
+          meters.filter((m) => m.zone === name),
+          group.length,
+        );
         el.addEventListener("click", () =>
           send("satviz:select-zone", { zone: name }),
         );
-        zoneMarkers.push(
-          new maplibregl.Marker({
-            element: el,
-            anchor: name.includes("03_(A)") ? "bottom" : "top",
-          })
+        anchor.append(el);
+        zoneMarkers.push({
+          element: el,
+          coordinates: centre,
+          marker: new maplibregl.Marker({ element: anchor, anchor: "center" })
             .setLngLat(centre)
             .addTo(map),
-        );
-        el.setAttribute(
-          "aria-label",
-          `Select ${group[0].zoneName || name}, ${group.length} mapped meters`,
-        );
+        });
       }
+      layoutZoneMarkers();
     }
     const opacity = zone
       ? [
@@ -320,7 +477,7 @@
       "#A4C5BB",
       "#E5E7EB",
     ]);
-    const wantThreeD = manualThreeD ?? Boolean(zone);
+    const wantThreeD = manualThreeD;
     const modeChanged = wantThreeD !== threeD;
     if (modeChanged) applyThreeD(wantThreeD);
     showVillaLink(selected);
@@ -455,13 +612,20 @@
     }
     map.getSource("villa-link").setData({ type: "FeatureCollection", features });
     const s = villa?.svc?.[0];
-    if (!s) return;
+    const headline = s
+      ? `House connection · ${s.d ?? "size not recorded"}${s.d ? " mm" : ""} ${s.m ?? ""} · ${s.len} m`
+      : "";
+    const caveatText = "Matched by position — confirm against the meter schedule";
+    // The page's meter sheet carries the same words, so a phone — where a note
+    // on the map would sit under the thumb and the sheet — does not need it drawn.
+    send("satviz:villa-link", { text: s ? `${headline}. ${caveatText}.` : "" });
+    if (!s || map.getContainer().clientWidth < 640) return;
     const note = document.createElement("div");
     note.className = "link-note";
     const title = document.createElement("strong");
-    title.textContent = `House connection · ${s.d ?? "size not recorded"}${s.d ? " mm" : ""} ${s.m ?? ""} · ${s.len} m`;
+    title.textContent = headline;
     const caveat = document.createElement("span");
-    caveat.textContent = "Matched by position — confirm against the meter schedule";
+    caveat.textContent = caveatText;
     note.append(title, caveat);
     // Below the house, clear of the meter label above the plot point: the corner
     // lowest on screen for the current view (south when flat, south-west when tilted).
@@ -489,6 +653,9 @@
         onMeter: (account) => send("satviz:select-meter", { account }),
         onZone: (zone) => send("satviz:select-zone", { zone }),
         onStatus: (text) => report("degraded", text),
+        fillMeterLabel,
+        fillZoneMarker,
+        statusOf,
       });
       loaded = true;
       report(
@@ -723,8 +890,12 @@
         },
       });
       applyMode();
-      map.on("moveend", layoutMeterLabels);
-      map.on("resize", layoutMeterLabels);
+      const relayout = () => {
+        layoutMeterLabels();
+        layoutZoneMarkers();
+      };
+      map.on("moveend", relayout);
+      map.on("resize", relayout);
       map.addControl(
         new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
         "top-right",
@@ -791,6 +962,11 @@
           paint: { "circle-radius": 22, "circle-opacity": 0 },
         });
         map.on("click", "meter-hit", (event) => {
+          // Labels are drawn inside the map, so a tap on one also reaches the
+          // map underneath it. Without this guard the dot lying under the label
+          // answered last and opened a different meter than the one tapped.
+          const target = event.originalEvent?.target;
+          if (target && target !== map.getCanvas()) return;
           const features = event.features || [];
           const nearest = features.sort((a, b) => {
             const ap = map.project(a.geometry.coordinates),
@@ -859,7 +1035,7 @@
     update();
   });
   window.addEventListener("pagehide", () => {
-    zoneMarkers.forEach((marker) => marker.remove());
+    zoneMarkers.forEach(({ marker }) => marker.remove());
     meterLabels.forEach((label) => label.marker.remove());
     if (linkNote) linkNote.remove();
     if (map) {

@@ -1,4 +1,5 @@
 import { ZONE_CONFIG, type WaterMeter } from "@/lib/water-data";
+import { detectSpike } from "@/components/water/daily-report/daily-metrics";
 import {
   dailyMonth,
   dailyValue,
@@ -13,6 +14,20 @@ export interface MeterLocation {
   coordinates: [number, number];
   precision: string;
 }
+/**
+ * What a day's reading says about the meter. `high` reuses the Daily report's
+ * spike rule (`detectSpike`), so the map and the report never disagree.
+ */
+export type MeterStatus = "normal" | "high" | "zero" | "missing";
+export const STATUS_LABELS: Record<MeterStatus, string> = {
+  normal: "Normal",
+  high: "High usage",
+  zero: "Zero reading",
+  missing: "No reading",
+};
+export const STATUSES = Object.keys(STATUS_LABELS) as MeterStatus[];
+/** Days of history read for the spike baseline (it uses up to 7 recorded days). */
+const HISTORY_DAYS = 14;
 export interface ConsumptionMeter {
   account: string;
   name: string;
@@ -25,12 +40,17 @@ export interface ConsumptionMeter {
   trend: { date: string; value: number | null }[];
   updatedAt: string | null;
   location: MeterLocation | null;
+  status: MeterStatus;
+  /** Why the meter carries its status, in words — shown beside the colour. */
+  statusNote: string;
 }
 export interface SatelliteState {
   date: string;
   zone: string;
   meter: string;
   level: WaterMeter["level"];
+  /** "" = every status. */
+  status: MeterStatus | "";
 }
 export const LEVELS: WaterMeter["level"][] = [
   "L1",
@@ -47,6 +67,31 @@ export const formatVolume = (value: number | null): string =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
+/** Map figures: whole numbers, one decimal below 10, never a false "0". */
+export const formatMapVolume = (value: number | null): string => {
+  if (value === null) return "—";
+  const size = Math.abs(value);
+  if (size > 0 && size < 0.05) return "<0.1";
+  return value.toLocaleString("en-GB", {
+    maximumFractionDigits: size < 10 ? 1 : 0,
+  });
+};
+export function meterStatus(
+  value: number | null,
+  history: (number | null)[],
+): { status: MeterStatus; statusNote: string } {
+  if (value === null) return { status: "missing", statusNote: "No reading recorded for this day" };
+  if (value < 0) return { status: "missing", statusNote: "Negative reading · check the source" };
+  if (value === 0) return { status: "zero", statusNote: "Recorded as 0 m³ · check the meter if the unit is in use" };
+  const values = [...history, value];
+  const spike = detectSpike(values, values.length);
+  if (spike)
+    return {
+      status: "high",
+      statusNote: `${formatMapVolume(spike.value)} m³ against a ${formatMapVolume(spike.avg)} m³ recent daily average (×${spike.ratio.toFixed(1)})`,
+    };
+  return { status: "normal", statusNote: "Within its recent daily range" };
+}
 export const zoneName = (zone: string): string =>
   ZONE_CONFIG.find((z) => z.code === zone)?.name ?? zone.split("_").join(" ");
 export function parseLocations(raw: unknown): MeterLocation[] {
@@ -90,7 +135,14 @@ export function buildConsumptionMeters(
   const find = (account: string, day: string) =>
     daily.get(`${account}:${dailyMonth(day)}:${day.slice(0, 4)}`);
   const days = Array.from({ length: 7 }, (_, i) => shiftDay(date, i - 6));
+  const history = Array.from({ length: HISTORY_DAYS }, (_, i) =>
+    shiftDay(date, i - HISTORY_DAYS),
+  );
   return meters.map((m) => ({
+    ...meterStatus(
+      dailyValue(find(m.accountNumber, date), date),
+      history.map((day) => dailyValue(find(m.accountNumber, day), day)),
+    ),
     account: m.accountNumber,
     name: m.label,
     zone: m.zone || "Unassigned",
@@ -131,6 +183,7 @@ export function readSatelliteState(
   const selected = meters.find((m) => m.accountNumber === query.get("meter"));
   const level = LEVELS.find((l) => l === query.get("level")) ?? "L3";
   return {
+    status: STATUSES.find((value) => value === query.get("status")) ?? "",
     date: validDate(query.get("date") ?? "")
       ? query.get("date")!
       : shiftDay(omanToday(), -1),

@@ -45,7 +45,9 @@ const EMPTY: DailyMeterRow[] = [];
 export function useSatelliteDaily(date: string, parentRefresh?: Date | null) {
   const month = date.slice(0, 7);
   const previousMonth = shiftDay(`${month}-01`, -1).slice(0, 7);
-  const key = `${month}:${Number(date.slice(8)) < 7 ? previousMonth : ""}`;
+  // The previous month is always read too: the spike baseline looks back 14
+  // days, and the opening day falls back to it while the new month is empty.
+  const key = `${month}:${previousMonth}`;
   const [revision, setRevision] = useState(0);
   const [snapshot, setSnapshot] = useState<DailySnapshot | null>(null);
   const [request, setRequest] = useState({ token: "", error: "" });

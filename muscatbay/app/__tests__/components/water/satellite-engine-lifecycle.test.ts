@@ -6,7 +6,8 @@ const engine = readFileSync("public/satellite/consumption-engine.js", "utf8");
 function environment(fail = false, extra: Record<string, unknown> = {}) {
   const listeners: Record<string, (event: Record<string, unknown>) => void> =
     {};
-  const mapEvents: Record<string, () => void> = {};
+  const mapEvents: Record<string, (event?: unknown) => void> = {};
+  const canvas = { tagName: "CANVAS" };
   const parent = { postMessage: vi.fn() };
   const source = { setData: vi.fn() };
   const linkSource = { setData: vi.fn() };
@@ -53,9 +54,12 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     touchPitch: { enable: vi.fn(), disable: vi.fn() },
     cooperativeGestures: { enable: vi.fn(), disable: vi.fn() },
     addControl: vi.fn(),
-    on: vi.fn((name: string, callback: () => void) => {
-      mapEvents[name] = callback;
+    on: vi.fn((name: string, ...rest: unknown[]) => {
+      // map.on(event, handler) or map.on(event, layer, handler)
+      const key = rest.length === 2 ? `${name}:${String(rest[0])}` : name;
+      mapEvents[key] = rest[rest.length - 1] as (event?: unknown) => void;
     }),
+    getCanvas: () => canvas,
     addSource: vi.fn(),
     addLayer: vi.fn(),
     getSource: (id: string) => (id === "villa-link" ? linkSource : source),
@@ -146,6 +150,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     linkSource,
     construct,
     send,
+    canvas,
     mapEvents,
     parent,
     listeners,
@@ -154,6 +159,10 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     createSatelliteFallback,
   };
 }
+const threeDButton = (env: ReturnType<typeof environment>) =>
+  env.elements.find(
+    (e) => (e as { className?: string }).className === "three-d-button",
+  ) as unknown as { listeners: Record<string, () => void> };
 const payload = {
   date: "2026-09-14",
   zone: "Zone_05",
@@ -219,22 +228,81 @@ describe("consumption renderer", () => {
       pitch: 0,
     });
   });
-  it("frames a selected zone at the oblique angle in one move, and the whole site flat", () => {
+  // Owner ruling 2026-09-20: selecting a zone frames it but never tilts the map.
+  it("frames a selected zone flat, and tilts to the oblique angle only from the 3D button", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
-    expect(env.map.fitBounds.mock.calls[0][1]).toMatchObject({ pitch: 55, bearing: 28 });
-    expect(env.map.easeTo).not.toHaveBeenCalled();
-    expect(env.map.once).toHaveBeenCalledWith("moveend", expect.any(Function));
-    env.send("satviz:update", { ...payload, selected: "", zone: "" });
+    expect(env.map.fitBounds.mock.calls[0][1]).toMatchObject({ pitch: 0, bearing: 0 });
+    expect(env.map.once).not.toHaveBeenCalled();
+    threeDButton(env).listeners.click();
     expect(env.map.fitBounds).toHaveBeenCalledTimes(2);
-    expect(env.map.fitBounds.mock.calls[1][1]).toMatchObject({ pitch: 0, bearing: 0 });
+    expect(env.map.fitBounds.mock.calls[1][1]).toMatchObject({ pitch: 55, bearing: 28 });
+    expect(env.map.once).toHaveBeenCalledWith("moveend", expect.any(Function));
+    threeDButton(env).listeners.click();
+    expect(env.map.fitBounds.mock.calls[2][1]).toMatchObject({ pitch: 0, bearing: 0 });
+  });
+  it("opens the meter whose label was tapped, not the dot lying under that label", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, selected: "" });
+    env.mapEvents.load();
+    const hit = env.mapEvents["click:meter-hit"] as (event: unknown) => void;
+    const feature = { geometry: { coordinates: [58.64, 23.55] }, properties: { account: "under-the-label" } };
+    env.parent.postMessage.mockClear();
+    hit({ point: { x: 1, y: 1 }, features: [feature], originalEvent: { target: { tagName: "BUTTON" } } });
+    expect(env.parent.postMessage).not.toHaveBeenCalled();
+    hit({ point: { x: 1, y: 1 }, features: [feature], originalEvent: { target: env.canvas } });
+    expect(env.parent.postMessage).toHaveBeenCalledWith(
+      { type: "satviz:select-meter", account: "under-the-label" }, "https://example.com");
+  });
+  it("labels findings in words and writes each zone's loss on its marker", () => {
+    const env = environment();
+    const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
+    const meters = [
+      { account: "n", name: "Villa N", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 2, status: "normal", location: at(1) },
+      { account: "h", name: "Villa H", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 40, status: "high", location: at(2) },
+      { account: "z", name: "Villa Z", zone: "Zone_05", zoneName: "Zone 5", level: "L3", value: 0, status: "zero", location: at(3) },
+    ];
+    env.send("satviz:data", { ...payload, selected: "", zone: "Zone_05", meters });
+    env.mapEvents.load();
+    const text = () => env.elements.map((e) => e.textContent);
+    expect(text()).toEqual(expect.arrayContaining(["High usage", "Zero reading"]));
+    const features = (env.source.setData.mock.calls.at(-1)![0] as {
+      features: { properties: { account: string; status: string; radius: number } }[] }).features;
+    expect(features.find((f) => f.properties.account === "h")!.properties.status).toBe("high");
+    expect(features.find((f) => f.properties.account === "z")!.properties.radius).toBe(6); // a zero is never a speck
+    env.send("satviz:update", { ...payload, selected: "", zone: "", meters,
+      zoneLosses: [{ id: "Zone_05", severity: "high", label: "Loss 30 m³ · 26% · High" }] });
+    expect(text()).toContain("Loss 30 m³ · 26% · High");
+  });
+  it("hangs overlapping zone cards off different sides of their points", () => {
+    const env = environment();
+    const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
+    env.send("satviz:data", { ...payload, selected: "", zone: "", meters: [
+      { account: "a", name: "A", zone: "Zone_05", level: "L3", value: 1, location: at(1) },
+      { account: "b", name: "B", zone: "Zone_08", level: "L3", value: 2, location: at(2) },
+    ] });
+    env.mapEvents.load();
+    // Both zone centres project to the same screen point in this mock map.
+    for (const element of env.elements) Object.assign(element, { offsetWidth: 120, offsetHeight: 60 });
+    env.mapEvents.moveend();
+    const placed = env.elements
+      .map((e) => e.style as { left?: string; top?: string })
+      .filter((style) => style.left);
+    expect(placed).toHaveLength(2);
+    const box = (style: { left?: string; top?: string }) => {
+      const left = parseFloat(style.left!), top = parseFloat(style.top!);
+      return { left, top, right: left + 120, bottom: top + 60 };
+    };
+    const [one, two] = placed.map(box);
+    expect(one.right <= two.left || two.right <= one.left || one.bottom <= two.top || two.bottom <= one.top).toBe(true);
   });
   it("steps back after a tilted move until every zone point is on screen", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
+    threeDButton(env).listeners.click();
     env.map.project = () => ({ x: 400, y: 790 }); // below the safe area of the 800 px map
     (env.map.once.mock.calls[0][1] as () => void)();
     expect(env.map.easeTo).toHaveBeenCalledWith(expect.objectContaining({ zoom: 15.7 }));

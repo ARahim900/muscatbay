@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { WaterMeter } from "@/lib/water-data";
 import {
   buildConsumptionMeters,
+  meterStatus,
   parseLocations,
   readSatelliteState,
   satelliteUrl,
@@ -148,5 +149,25 @@ describe("satellite daily consumption contract", () => {
     ).toEqual(state);
     expect(url).not.toContain("period=");
     expect(url).toContain("other=keep");
+  });
+  describe("meter status", () => {
+    const quiet = [1, 1.2, 0.8, 1, 1.1, 0.9, 1];
+    it("keeps missing, negative and zero readings apart", () => {
+      expect(meterStatus(null, quiet).status).toBe("missing");
+      expect(meterStatus(-3, quiet).status).toBe("missing");
+      expect(meterStatus(-3, quiet).statusNote).toContain("Negative");
+      expect(meterStatus(0, quiet).status).toBe("zero");
+      expect(meterStatus(1.3, quiet).status).toBe("normal");
+    });
+    it("flags high usage with the Daily report's spike rule (≥ 2× recent average and ≥ 5 m³ above it)", () => {
+      expect(meterStatus(9, quiet).status).toBe("high");
+      expect(meterStatus(9, quiet).statusNote).toContain("×9.0");
+      expect(meterStatus(3, quiet).status).toBe("normal"); // 3× the average but only 2 m³ above it
+      expect(meterStatus(9, [1, null, null]).status).toBe("normal"); // no baseline, no verdict
+    });
+    it("reads the status filter from the link and ignores an unknown one", () => {
+      expect(readSatelliteState("?status=zero", []).status).toBe("zero");
+      expect(readSatelliteState("?status=broken", []).status).toBe("");
+    });
   });
 });

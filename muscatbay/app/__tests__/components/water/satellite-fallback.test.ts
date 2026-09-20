@@ -68,6 +68,16 @@ describe("non-WebGL satellite compatibility map", () => {
       onZone,
       onStatus,
       volume: (value: number | null) => (value === null ? "—" : value.toFixed(2)),
+      // The engine hands both renderers the same label builders; stand-ins here.
+      statusOf: (meter: { value: number | null }) => (meter.value === null ? "missing" : "normal"),
+      fillMeterLabel: (element: HTMLElement, meter: { name: string; value: number | null }) => {
+        element.classList.add("meter-label");
+        element.textContent = `${meter.name} ${meter.value === null ? "—" : meter.value.toFixed(2)} m³`;
+      },
+      fillZoneMarker: (element: HTMLElement, zone: string) => {
+        element.classList.add("zone-marker");
+        element.textContent = zone;
+      },
     });
     map.update({
       date: "2026-09-12",

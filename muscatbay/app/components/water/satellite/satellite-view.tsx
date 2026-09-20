@@ -1,28 +1,49 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { Link2, MapPin, RefreshCw, X } from "lucide-react";
+import { Info, Link2, MapPin, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/mb-button";
 import { SectionCard } from "@/components/ui/section-card";
 import type { WaterMeter } from "@/lib/water-data";
 import { SatelliteMap } from "./SatelliteMap";
 import { MeterDetails } from "./MeterDetails";
 import { SatelliteFilters } from "./SatelliteFilters";
-import { summariseZoneBalance } from "./zoneBalance";
+import { summariseZoneBalance, summariseZoneLosses } from "./zoneBalance";
+import { UnmappedMeters } from "./UnmappedMeters";
 import { SatelliteSummary } from "./SatelliteSummary";
 import { MeterRanking } from "./MeterRanking";
 import { useSatelliteDaily } from "./useSatelliteDaily";
-import { formatDay, latestRecordedDay, validDate } from "./dailyModel";
 import {
+  formatDay,
+  latestRecordedDay,
+  shiftDay,
+  validDate,
+} from "./dailyModel";
+import {
+  STATUSES,
+  STATUS_LABELS,
   buildConsumptionMeters,
-  formatVolume,
+  formatMapVolume,
   readSatelliteState,
   satelliteUrl,
   summariseMeters,
   zoneName,
   type MeterLocation,
+  type MeterStatus,
   type SatelliteState,
 } from "./consumptionModel";
+
+// Legend swatches — the same status tokens the map's dots use.
+const STATUS_DOTS: Record<MeterStatus, string> = {
+  normal: "bg-accent",
+  high: "bg-danger",
+  zero: "bg-warning",
+  missing: "bg-card",
+};
+/** True when the link names its own day; otherwise the page opens on the latest recorded one. */
+const linkHasDate = () =>
+  typeof window !== "undefined" &&
+  validDate(new URLSearchParams(window.location.search).get("date") ?? "");
 
 interface SatelliteViewProps {
   waterMeters: WaterMeter[];
@@ -44,7 +65,26 @@ export function SatelliteView({
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapUnavailable, setMapUnavailable] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
+  const [villaLink, setVillaLink] = useState("");
+  // Until the operator picks a day, the page follows the latest recorded one —
+  // yesterday is often not entered yet, and an empty map reads as broken.
+  const [followLatest, setFollowLatest] = useState(() => !linkHasDate());
   const daily = useSatelliteDaily(state.date, lastUpdated);
+  // Open on the latest recorded day (this month, else the one before). State is
+  // adjusted while rendering — React's pattern for state that follows loaded
+  // data — and the URL is left without a date, so the link keeps following.
+  if (followLatest && !daily.loading && !daily.error) {
+    const accounts = new Set(waterMeters.map((m) => m.accountNumber));
+    const latest =
+      latestRecordedDay(daily.rows, accounts, state.date) ??
+      latestRecordedDay(
+        daily.rows,
+        accounts,
+        shiftDay(`${state.date.slice(0, 7)}-01`, -1),
+      );
+    setFollowLatest(false);
+    if (latest && latest !== state.date) setState({ ...state, date: latest });
+  }
   const meters = useMemo(
     () =>
       buildConsumptionMeters(
@@ -66,15 +106,32 @@ export function SatelliteView({
   // The map always carries the selected zone's bulk meter (water in) beside the
   // meters of the chosen level, and keeps the zone's individual meters in view
   // while the bulk itself is selected. Tables and totals still follow `scope`.
+  // The status filter narrows the map and the table; totals stay on `scope`.
+  const visible = useMemo(
+    () => (state.status ? scope.filter((m) => m.status === state.status) : scope),
+    [scope, state.status],
+  );
   const mapMeters = useMemo(() => {
-    if (!state.zone) return scope;
+    if (!state.zone) return visible;
     const extra = meters.filter(
       (m) =>
         m.zone === state.zone &&
-        (m.level === "L2" || (state.level === "L2" && m.level === "L3")),
+        (m.level === "L2" ||
+          (state.level === "L2" &&
+            m.level === "L3" &&
+            (!state.status || m.status === state.status))),
     );
-    return [...new Set([...extra, ...scope])];
-  }, [meters, scope, state.zone, state.level]);
+    return [...new Set([...extra, ...visible])];
+  }, [meters, visible, state.zone, state.level, state.status]);
+  const statusCounts = useMemo(() => {
+    const counts = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<
+      MeterStatus,
+      number
+    >;
+    for (const meter of scope) counts[meter.status] += 1;
+    return counts;
+  }, [scope]);
+  const zoneLosses = useMemo(() => summariseZoneLosses(meters), [meters]);
   const summary = useMemo(() => summariseMeters(scope), [scope]);
   const balance = useMemo(
     () => summariseZoneBalance(meters, state.zone),
@@ -102,22 +159,24 @@ export function SatelliteView({
     ? meters.filter((m) =>
         `${m.name} ${m.account} ${m.zone}`.toLowerCase().includes(search),
       )
-    : scope;
+    : visible;
   const selected = meters.find((m) => m.account === state.meter);
   const panelOnMap = selected?.location && !mapUnavailable;
   useEffect(() => {
     const restore = () => {
       setState(readSatelliteState(window.location.search, waterMeters));
+      setFollowLatest(!linkHasDate());
       setShowAll(false);
     };
     window.addEventListener("popstate", restore);
     return () => window.removeEventListener("popstate", restore);
   }, [waterMeters]);
   const change = useCallback(
-    (patch: Partial<SatelliteState>) => {
+    (patch: Partial<SatelliteState>, replace = false) => {
       if (patch.date !== undefined && !validDate(patch.date)) return;
+      if (patch.date !== undefined) setFollowLatest(false);
       const next = { ...state, ...patch };
-      window.history.pushState(
+      window.history[replace ? "replaceState" : "pushState"](
         null,
         "",
         satelliteUrl(window.location.href, next),
@@ -127,6 +186,10 @@ export function SatelliteView({
       setCopyStatus("");
     },
     [state],
+  );
+  const stepDay = useCallback(
+    (date: string) => change({ date }, true),
+    [change],
   );
   const selectZone = useCallback(
     (zone: string) => {
@@ -167,6 +230,53 @@ export function SatelliteView({
       setCopyStatus(`Copy this view link: ${url}`);
     }
   };
+  const reportingLine = daily.loading
+    ? "Refreshing daily readings…"
+    : daily.error
+      ? "Refresh failed · data may be stale"
+      : `${summary.reporting} of ${scope.length} reporting${summary.partial ? " · partial" : ""}`;
+  // Meter details: a sheet docked to the map's bottom edge on a phone (also in
+  // full screen), a card in the map's corner on wider screens.
+  const meterSheet = selected && (
+    <div
+      className={
+        panelOnMap
+          ? "absolute inset-x-0 bottom-0 z-30 max-h-3/5 overflow-auto rounded-t-card border border-line bg-primary text-on-primary shadow-card sm:inset-x-auto sm:bottom-3 sm:right-3 sm:w-80 sm:rounded-card"
+          : "m-3 rounded-card border border-line bg-primary text-on-primary"
+      }
+    >
+      <div className="flex items-center justify-between gap-2 px-3 pt-2">
+        <div className="min-w-0">
+          <p className="truncate text-label font-semibold">
+            {selected.name} · {formatMapVolume(selected.value)} m³
+          </p>
+          <p className="text-caption text-on-primary">
+            {formatDay(state.date)} · {STATUS_LABELS[selected.status]}
+            {!selected.location ? " · Unmapped" : ""}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          icon={X}
+          className="text-on-primary hover:bg-primary-hover hover:text-on-primary"
+          aria-label="Close meter details"
+          onClick={() => change({ meter: "" })}
+        />
+      </div>
+      <p className="px-3 text-caption text-on-primary">{selected.statusNote}</p>
+      {villaLink && (
+        <p className="px-3 pt-1 text-caption text-on-primary">{villaLink}</p>
+      )}
+      <details>
+        <summary className="min-h-11 cursor-pointer content-center px-3 text-label">
+          Daily trend and meter details
+        </summary>
+        <div className="max-h-60 overflow-auto rounded-b-card bg-card text-fg">
+          <MeterDetails meter={selected} date={state.date} />
+        </div>
+      </details>
+    </div>
+  );
   return (
     <section
       aria-label="Satellite daily consumption"
@@ -194,7 +304,11 @@ export function SatelliteView({
         state={state}
         zones={zones}
         query={query}
+        statusCounts={statusCounts}
+        latestDay={latestDay}
+        loading={daily.loading}
         onChange={change}
+        onDay={stepDay}
         onZone={selectZone}
         onQuery={(value) => {
           setQuery(value);
@@ -236,11 +350,6 @@ export function SatelliteView({
       )}
       <div className="flex flex-wrap items-center gap-3 text-caption text-muted">
         <span>Daily records · Oman dates · missing readings stay —</span>
-        {latestDay && latestDay !== state.date && (
-          <Button onClick={() => change({ date: latestDay })}>
-            Latest recorded day · {formatDay(latestDay)}
-          </Button>
-        )}
         <Button
           icon={RefreshCw}
           loading={daily.loading}
@@ -263,6 +372,14 @@ export function SatelliteView({
             icon={MapPin}
             title="Satellite map"
             description={`${formatDay(state.date)} · ${state.zone ? zoneName(state.zone) : "All zones"} · ${state.level}`}
+            action={
+              <p className="text-right text-caption text-muted">
+                <span className="block text-label tabular-nums text-fg">
+                  {formatMapVolume(summary.total)} m³
+                </span>
+                {reportingLine}
+              </p>
+            }
           />
           <SectionCard.Body flush className="relative">
             <SatelliteMap
@@ -270,86 +387,56 @@ export function SatelliteView({
               meters={mapMeters}
               zone={state.zone}
               zones={zoneChips}
+              zoneLosses={zoneLosses}
               selected={state.meter}
               date={state.date}
+              summary={`${formatDay(state.date)} · ${formatMapVolume(summary.total)} m³ · ${reportingLine}`}
               onLocations={setLocations}
               onZone={selectZone}
               onMeter={selectMeter}
-            />
-            {!mapUnavailable && (
-              <div className="pointer-events-none absolute left-3 top-3 z-10 max-w-xs rounded-control border border-line bg-primary px-3 py-2 text-caption text-on-primary shadow-card">
-                <p className="font-semibold">
-                  {formatDay(state.date)} · {formatVolume(summary.total)} m³
-                  recorded
-                </p>
-                <p>
-                  {daily.loading
-                    ? "Refreshing daily readings…"
-                    : daily.error
-                      ? "Refresh failed · data may be stale"
-                      : `${summary.reporting} of ${scope.length} reporting${summary.partial ? " · Partial data" : ""}`}
-                </p>
-                <p>Circle size = daily m³ · zoom in for labels</p>
-                {state.zone === "Zone_01_(FM)" && (
-                  <p>Dashed links = schematic connections</p>
-                )}
-              </div>
-            )}
-            {selected && (
-              <div
-                className={
-                  panelOnMap
-                    ? "absolute bottom-12 left-3 right-3 z-10 rounded-card border border-line bg-primary text-on-primary shadow-card sm:left-auto sm:w-80"
-                    : "m-3 rounded-card border border-line bg-primary text-on-primary"
-                }
-              >
-                <div className="flex items-center justify-between gap-2 px-3 pt-2">
-                  <div>
-                    <p className="text-label font-semibold">
-                      {selected.name} · {formatVolume(selected.value)} m³
-                    </p>
-                    <p className="text-caption text-on-primary">
-                      {formatDay(state.date)} ·{" "}
-                      {selected.value === null
-                        ? "No recorded reading"
-                        : "Daily consumption"}
-                      {!selected.location ? " · Unmapped" : ""}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    icon={X}
-                    className="text-on-primary hover:bg-primary-hover hover:text-on-primary"
-                    aria-label="Close meter details"
-                    onClick={() => change({ meter: "" })}
-                  />
-                </div>
-                <details>
-                  <summary className="cursor-pointer px-3 py-2 text-label">
-                    Daily trend and meter details
-                  </summary>
-                  <div className="max-h-60 overflow-auto rounded-b-card bg-card text-fg">
-                    <MeterDetails meter={selected} date={state.date} />
-                  </div>
-                </details>
-              </div>
-            )}
+              onVillaLink={setVillaLink}
+            >
+              {panelOnMap && meterSheet}
+            </SatelliteMap>
+            {!panelOnMap && meterSheet}
           </SectionCard.Body>
         </SectionCard>
       </div>
-      <p className="text-caption text-muted">
-        Sage circles: recorded · hollow: missing or invalid · purple outline:
-        selected. Labels show daily m³. Solid lines: existing drawing network
-        (includes previously adjusted road alignments). Positions include
-        building and zone reference points; exact meter chambers may be
-        unverified.{" "}
-        {locations === null
-          ? "map register loading"
-          : `${scope.length - summary.mapped} meters have no mapped position`}
-        . Satellite imagery is not live.
-        {state.zone === "Zone_01_(FM)" &&
-          " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
-      </p>
+      <div className="space-y-2 text-caption text-muted">
+        <ul className="flex flex-wrap gap-x-5 gap-y-2">
+          <li>Circle size = daily m³</li>
+          <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            Colour = status:
+            {STATUSES.map((status) => (
+              <span key={status} className="inline-flex items-center gap-1.5">
+                <span
+                  aria-hidden
+                  className={`h-2.5 w-2.5 rounded-pill border border-neutral ${STATUS_DOTS[status]}`}
+                />
+                {STATUS_LABELS[status]}
+              </span>
+            ))}
+          </li>
+          <li>White ring = zone bulk meter</li>
+        </ul>
+        <details>
+          <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 focus-visible:outline-3 focus-visible:outline-accent">
+            <Info size={16} strokeWidth={2} aria-hidden />
+            About this map
+          </summary>
+          <p>
+            High usage follows the Daily report&apos;s rule: at least twice the
+            meter&apos;s recent daily average and 5 m³ above it. Solid lines:
+            existing drawing network (includes previously adjusted road
+            alignments). Positions include building and zone reference points;
+            exact meter chambers may be unverified. Satellite imagery is not
+            live. Missing readings stay —, never 0.
+            {state.zone === "Zone_01_(FM)" &&
+              " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
+          </p>
+        </details>
+      </div>
+      <UnmappedMeters meters={scope} ready={locations !== null} />
       <SatelliteSummary
         state={state}
         balance={balance}

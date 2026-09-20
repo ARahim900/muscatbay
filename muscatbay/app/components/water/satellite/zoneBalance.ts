@@ -1,5 +1,14 @@
 import { ZONE_CONFIG } from "@/lib/water-data";
-import { summariseMeters, type ConsumptionMeter } from "./consumptionModel";
+import {
+  SEVERITY_LABEL,
+  dailySeverity,
+  type DailySeverity,
+} from "@/components/water/daily-report/daily-metrics";
+import {
+  formatMapVolume,
+  summariseMeters,
+  type ConsumptionMeter,
+} from "./consumptionModel";
 
 export function summariseZoneBalance(meters: ConsumptionMeter[], zone: string) {
   const l3Meters = meters.filter(
@@ -40,4 +49,37 @@ export function summariseZoneBalance(meters: ConsumptionMeter[], zone: string) {
     difference,
     unavailable,
   };
+}
+
+export interface ZoneLoss {
+  id: string;
+  /** Bulk − L3 for the day; null until the comparison is complete. */
+  loss: number | null;
+  lossPct: number | null;
+  /** The Daily report's scale (`dailySeverity`) — one loss model app-wide. */
+  severity: DailySeverity;
+  label: string;
+}
+/** Loss per registered zone, for the overview markers. Never estimated. */
+export function summariseZoneLosses(meters: ConsumptionMeter[]): ZoneLoss[] {
+  return ZONE_CONFIG.map((zone) => {
+    const { bulk, difference } = summariseZoneBalance(meters, zone.code);
+    const lossPct =
+      difference !== null && bulk !== null && bulk > 0
+        ? (difference / bulk) * 100
+        : null;
+    const severity = dailySeverity(difference, lossPct);
+    return {
+      id: zone.code,
+      loss: difference,
+      lossPct,
+      severity,
+      label:
+        difference === null
+          ? bulk === null
+            ? "Loss — · bulk reading missing"
+            : "Loss — · L3 readings incomplete"
+          : `Loss ${formatMapVolume(difference)} m³${lossPct === null ? "" : ` · ${Math.round(lossPct)}%`} · ${SEVERITY_LABEL[severity]}`,
+    };
+  });
 }

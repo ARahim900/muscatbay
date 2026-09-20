@@ -30,6 +30,12 @@
       #message:empty {
         display: none;
       }
+      @media (max-width: 639px) {
+        /* On a phone the page's two map buttons can sit under the zone strip. */
+        #message {
+          top: 118px;
+        }
+      }
       button:focus-visible {
         outline: 2px solid var(--color-accent, #a1d1d5);
       }
@@ -50,18 +56,83 @@
         font: inherit;
         cursor: pointer;
       }
+      /* A zone marker is a point with a card hung off one side of it; the
+         engine picks a free side so zone cards never overlap. */
+      .zone-anchor {
+        position: relative;
+        width: 0;
+        height: 0;
+      }
+      .zone-anchor::before {
+        content: "";
+        position: absolute;
+        left: -6px;
+        top: -6px;
+        width: 12px;
+        height: 12px;
+        border: 3px solid #4e4456;
+        border-radius: 50%;
+        background: #fff;
+        box-sizing: border-box;
+      }
       .zone-marker {
+        position: absolute;
         min-width: 44px;
         padding: 8px 12px;
+        text-align: left;
+        white-space: nowrap;
+        /* Default: centred below the point. The engine then moves the card to
+           whichever side of the point is free. */
+        left: 0;
+        top: 0;
+        transform: translate(-50%, 12px);
+      }
+      .zone-marker b {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
       }
       .zone-marker strong {
         display: block;
         font-size: 16px;
+        font-variant-numeric: tabular-nums;
         color: #a4c5bb;
       }
-      .zone-marker span {
+      .zone-marker span,
+      .zone-marker i {
         display: block;
         font-size: 12px;
+        font-style: normal;
+      }
+      /* Loss against the Daily report's scale: a dot and the word, never colour alone. */
+      .zone-marker i::before,
+      .meter-label i::before {
+        content: "";
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: #6b7280;
+      }
+      .zone-marker i[data-severity="good"]::before {
+        background: #84b59f;
+      }
+      .zone-marker i[data-severity="moderate"]::before {
+        background: var(--color-warning, #e8c064);
+      }
+      .zone-marker i[data-severity="high"]::before,
+      .zone-marker i[data-severity="critical"]::before {
+        background: var(--color-danger, #d67a7a);
+      }
+      .zone-marker.compact span,
+      .zone-marker.mini span,
+      .zone-marker.mini i {
+        display: none;
+      }
+      .zone-marker.mini {
+        min-height: 44px;
+        padding: 4px 10px;
       }
       .meter-label {
         min-width: 92px;
@@ -79,14 +150,41 @@
         font-variant-numeric: tabular-nums;
         color: #a4c5bb;
       }
-      /* Crowded zones: the label shrinks to its figure before it is hidden. */
+      .meter-label i {
+        display: block;
+        font-size: 12px;
+        font-style: normal;
+      }
+      .meter-label[data-status="high"] i::before {
+        background: var(--color-danger, #d67a7a);
+      }
+      .meter-label[data-status="zero"] i::before {
+        background: var(--color-warning, #e8c064);
+      }
+      .meter-label[data-status="missing"] i::before {
+        background: transparent;
+        border: 1.5px solid #fff;
+        box-sizing: border-box;
+      }
+      .meter-label[data-status="high"] strong {
+        color: var(--color-danger, #d67a7a);
+      }
+      .meter-label[data-status="zero"] strong {
+        color: var(--color-warning, #e8c064);
+      }
+      /* Crowded zones: the label shrinks to its figure before it is hidden. A
+         finding keeps its meter name — "0 m³" or "— m³" alone says nothing. */
       .meter-label.compact {
         min-width: 0;
         min-height: 32px;
         padding: 4px 8px;
       }
-      .meter-label.compact span {
+      .meter-label.compact span,
+      .meter-label.compact i {
         display: none;
+      }
+      .meter-label.compact.flagged span {
+        display: block;
       }
       .meter-label.compact strong {
         font-size: 14px;
@@ -124,7 +222,8 @@
         outline-offset: 2px;
         z-index: 2;
       }
-      .meter-label.selected strong {
+      .meter-label.selected strong,
+      .meter-label.selected[data-status] strong {
         color: #0a0a0a;
       }
       .meter-label.missing strong {
@@ -135,16 +234,23 @@
       }
       /* Map-side controls take the app's tokens (synced in by SatelliteMap), so
          they follow light and dark like the zoom buttons beside them. */
+      /* The app's pill strip (TabNavigation): one bordered track, the chosen
+         zone filled purple. One row; it scrolls sideways when zones do not fit. */
       .zone-chips {
         position: absolute;
         z-index: 3;
         top: 10px;
         left: 10px;
-        right: 64px;
+        max-width: calc(100% - 84px);
         display: flex;
-        gap: 6px;
+        gap: 4px;
         overflow-x: auto;
-        padding: 2px 2px 6px;
+        padding: 4px;
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: 12px;
+        background: var(--color-card, #fff);
+        box-shadow: var(--shadow-card);
+        box-sizing: border-box;
         scrollbar-width: none;
       }
       .zone-chips::-webkit-scrollbar {
@@ -154,23 +260,34 @@
         flex: none;
         min-height: 44px;
         padding: 0 14px;
-        border: 1px solid var(--color-line, #e5e7eb);
-        border-radius: var(--radius-control, 6px);
-        background: var(--color-card, #fff);
-        color: var(--color-fg, #0a0a0a);
-        box-shadow: var(--shadow-card);
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--color-muted, #454545);
         font: 500 14px/1 inherit;
         white-space: nowrap;
         cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .zone-chip:hover {
+        background: var(--color-component, #f0f2f4);
+        color: var(--color-fg, #0a0a0a);
       }
       .zone-chip[aria-pressed="true"] {
-        border-color: var(--color-primary, #4e4456);
         background: var(--color-primary, #4e4456);
         color: #fff;
+        font-weight: 600;
       }
       .zone-chip:focus-visible {
         outline: 3px solid var(--color-accent, #a4c5bb);
-        outline-offset: 2px;
+        outline-offset: -3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .zone-chip {
+          transition: none;
+        }
       }
       .three-d-button {
         width: 44px;
@@ -319,6 +436,12 @@
       .compat-meter-point.missing .compat-meter-dot {
         background: var(--color-card, #fff);
       }
+      .compat-meter-point[data-status="high"] .compat-meter-dot {
+        background: var(--color-danger, #d67a7a);
+      }
+      .compat-meter-point[data-status="zero"] .compat-meter-dot {
+        background: var(--color-warning, #e8c064);
+      }
       .compat-meter-point.selected .compat-meter-dot {
         width: 20px;
         height: 20px;
@@ -376,7 +499,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=19"></script>
-    <script src="consumption-engine.js?v=19"></script>
+    <script src="consumption-fallback.js?v=20"></script>
+    <script src="consumption-engine.js?v=20"></script>
   </body>
 </html>
