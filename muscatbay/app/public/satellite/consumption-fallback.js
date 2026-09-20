@@ -51,6 +51,7 @@
     fillMeterLabel,
     fillZoneMarker,
     statusOf,
+    buildRing,
   }) => {
     container.replaceChildren();
     container.className = "compat-map";
@@ -205,13 +206,11 @@
       for (const meter of priority) {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "compat-meter-point";
+        // The same ring the WebGL map draws, so the two never disagree.
+        button.className = "meter-ring compat-meter-point";
         button.classList.toggle("selected", meter.account === latest.selected);
-        button.classList.toggle("missing", meter.value === null || meter.value < 0);
         button.dataset.status = statusOf(meter);
-        const dot = document.createElement("span");
-        dot.className = "compat-meter-dot";
-        button.append(dot);
+        button.append(buildRing(meter, latest.selected));
         button.setAttribute(
           "aria-label",
           `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}. Open meter details`,

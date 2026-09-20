@@ -151,19 +151,32 @@ describe("satellite daily consumption contract", () => {
     expect(url).toContain("other=keep");
   });
   describe("meter status", () => {
-    const quiet = [1, 1.2, 0.8, 1, 1.1, 0.9, 1];
+    const quiet = [1, 1, 1, 1, 1, 1, 1];
     it("keeps missing, negative and zero readings apart", () => {
       expect(meterStatus(null, quiet).status).toBe("missing");
       expect(meterStatus(-3, quiet).status).toBe("missing");
       expect(meterStatus(-3, quiet).statusNote).toContain("Negative");
       expect(meterStatus(0, quiet).status).toBe("zero");
-      expect(meterStatus(1.3, quiet).status).toBe("normal");
+      expect(meterStatus(0, quiet).ratio).toBe(0);
     });
-    it("flags high usage with the Daily report's spike rule (≥ 2× recent average and ≥ 5 m³ above it)", () => {
-      expect(meterStatus(9, quiet).status).toBe("high");
-      expect(meterStatus(9, quiet).statusNote).toContain("×9.0");
-      expect(meterStatus(3, quiet).status).toBe("normal"); // 3× the average but only 2 m³ above it
-      expect(meterStatus(9, [1, null, null]).status).toBe("normal"); // no baseline, no verdict
+    // Owner bands 2026-09-20: judged against the meter's OWN recent average, so
+    // a villa-size jump is caught as readily as a building-size one.
+    it("bands the day against the meter's own recent average", () => {
+      expect(meterStatus(1.2, quiet).status).toBe("normal"); // 120%
+      expect(meterStatus(1.4, quiet).status).toBe("elevated"); // 140%
+      expect(meterStatus(2, quiet).status).toBe("high"); // 200%
+      expect(meterStatus(9, quiet).statusNote).toContain("900% of its usual");
+      expect(meterStatus(1.4, quiet).ratio).toBeCloseTo(1.4);
+    });
+    it("withholds a verdict until the meter has three recorded days", () => {
+      const thin = meterStatus(9, [1, null, null]);
+      expect(thin.status).toBe("normal");
+      expect(thin.ratio).toBeNull();
+      expect(thin.baseline).toBeNull();
+      expect(thin.statusNote).toContain("No average yet");
+    });
+    it("skips missing days rather than counting them as zero", () => {
+      expect(meterStatus(3, [2, null, 2, null, 2]).baseline).toBe(2);
     });
     it("reads the status filter from the link and ignores an unknown one", () => {
       expect(readSatelliteState("?status=zero", []).status).toBe("zero");

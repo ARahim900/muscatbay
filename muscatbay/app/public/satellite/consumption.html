@@ -59,6 +59,25 @@
         font: inherit;
         white-space: nowrap;
       }
+      /* Every meter is the same ring: it fills with the day's share of that
+         meter's own recent daily average and takes the colour of its band. */
+      .meter-ring {
+        display: block;
+        padding: 5px;
+        border: 0;
+        background: transparent;
+        line-height: 0;
+        cursor: pointer;
+        filter: drop-shadow(0 1px 3px rgb(0 0 0 / 45%));
+      }
+      .meter-ring.selected {
+        z-index: 2;
+      }
+      .meter-ring:focus-visible {
+        outline: 3px solid var(--color-accent, #a4c5bb);
+        outline-offset: -2px;
+        border-radius: 50%;
+      }
       .zone-anchor {
         position: relative;
         width: 0;
@@ -307,35 +326,7 @@
         pointer-events: auto;
       }
       .compat-meter-point {
-        width: 44px;
-        height: 44px;
         padding: 0;
-        border: 0;
-        background: transparent;
-      }
-      .compat-meter-dot {
-        display: block;
-        width: 14px;
-        height: 14px;
-        margin: auto;
-        border: 2px solid #4e4456;
-        border-radius: 50%;
-        background: #a4c5bb;
-      }
-      .compat-meter-point.missing .compat-meter-dot {
-        background: var(--color-card, #fff);
-      }
-      .compat-meter-point[data-status="high"] .compat-meter-dot {
-        background: var(--color-danger, #d67a7a);
-      }
-      .compat-meter-point[data-status="zero"] .compat-meter-dot {
-        background: var(--color-warning, #e8c064);
-      }
-      .compat-meter-point.selected .compat-meter-dot {
-        width: 20px;
-        height: 20px;
-        outline: 3px solid #4e4456;
-        outline-offset: 2px;
       }
       .compat-meter-card {
         position: absolute;
@@ -388,7 +379,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=21"></script>
-    <script src="consumption-engine.js?v=21"></script>
+    <script src="consumption-fallback.js?v=22"></script>
+    <script src="consumption-engine.js?v=22"></script>
   </body>
 </html>

@@ -26,6 +26,10 @@
   let previousZone = "";
   let zoneMarkers = [];
   let meterLabels = [];
+  let meterRings = [];
+  const hoverable =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(hover: hover)").matches;
   let threeD = false;
   // The map is flat unless the operator asks for 3D with the map's own button
   // (owner ruling 2026-09-20: a zone must never tilt the map by itself).
@@ -93,22 +97,102 @@
   // Zone and main bulk meters measure everything entering; they are drawn
   // apart from the individual meters and never sized against them.
   const isBulk = (meter) => meter.level === "L2" || meter.level === "L1";
-  // The page classifies every reading (normal / high / zero / missing); the map
-  // only draws it. Status is never colour alone: the label carries it in words.
-  const STATUS_TAGS = { high: "High usage", zero: "Zero reading", missing: "No reading" };
+  // The page classifies every reading and works out its ratio to the meter's own
+  // recent daily average; the map only draws it. Colour is never the only
+  // carrier: the ring's fill says the same thing, and the panels say it in words.
+  const STATUS_TAGS = {
+    elevated: "Elevated",
+    high: "High usage",
+    zero: "Zero reading",
+    missing: "No reading",
+  };
   const statusOf = (meter) =>
-    STATUS_TAGS[meter.status]
+    STATUS_TAGS[meter.status] || meter.status === "normal"
       ? meter.status
       : meter.value === null || meter.value < 0
         ? "missing"
         : "normal";
-  const STATUS_RANK = { high: 2, zero: 1, normal: 0, missing: 0 };
+  const STATUS_RANK = { high: 3, elevated: 2, zero: 1, normal: 0, missing: 0 };
   // The page syncs its status tokens into this document; without them (or
   // without computed styles at all) the brand's own status colours are used.
   const token = (name, fallbackColour) =>
     (typeof getComputedStyle === "function" &&
       getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
     fallbackColour;
+  const STATUS_COLOUR = {
+    normal: () => token("--color-success", "#2E7D42"),
+    elevated: () => token("--color-warning", "#9A6B00"),
+    high: () => token("--color-danger", "#B03A2E"),
+    zero: () => token("--color-warning", "#9A6B00"),
+    missing: () => token("--color-muted", "#6B7280"),
+  };
+  const RADIUS = 14;
+  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+  const svg = (name, attributes) => {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", name);
+    for (const [key, value] of Object.entries(attributes))
+      node.setAttribute(key, String(value));
+    return node;
+  };
+  /**
+   * Every meter is the same ring. It fills with the day's share of that meter's
+   * own recent daily average — full at twice it — and takes the colour of its
+   * band. A zero reading is an empty ring marked 0; no reading, or too few
+   * recorded days to have an average, is a dashed ring.
+   */
+  function buildRing(meter, selected) {
+    const status = statusOf(meter);
+    const colour = (STATUS_COLOUR[status] || STATUS_COLOUR.missing)();
+    const dashed = status === "missing" || typeof meter.ratio !== "number";
+    const frame = svg("svg", { viewBox: "0 0 40 40", width: 34, height: 34, "aria-hidden": "true" });
+    frame.append(
+      svg("circle", {
+        cx: 20, cy: 20, r: 18,
+        fill: token("--color-card", "#fff"),
+        stroke: meter.account === selected ? token("--color-primary", "#4e4456") : token("--color-line", "#e5e7eb"),
+        "stroke-width": meter.account === selected ? 3 : 1.5,
+      }),
+      svg("circle", {
+        cx: 20, cy: 20, r: RADIUS, fill: "none",
+        stroke: dashed ? colour : token("--color-component", "#f0f2f4"),
+        "stroke-width": dashed ? 3 : 5,
+        ...(dashed ? { "stroke-dasharray": "4 4" } : {}),
+      }),
+    );
+    if (!dashed && meter.ratio > 0) {
+      const filled = Math.min(meter.ratio / 2, 1) * CIRCUMFERENCE;
+      frame.append(
+        svg("circle", {
+          cx: 20, cy: 20, r: RADIUS, fill: "none", stroke: colour, "stroke-width": 5,
+          "stroke-dasharray": `${filled} ${CIRCUMFERENCE}`,
+          transform: "rotate(-90 20 20)",
+        }),
+      );
+    }
+    if (status === "zero") {
+      const mark = svg("text", {
+        x: 20, y: 25.5, "text-anchor": "middle", "font-size": 15, "font-weight": 600, fill: colour,
+      });
+      mark.textContent = "0";
+      frame.append(mark);
+    }
+    return frame;
+  }
+  function buildMeterMarker(meter, selected) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "meter-ring";
+    button.dataset.status = statusOf(meter);
+    button.classList.toggle("selected", meter.account === selected);
+    button.classList.toggle("bulk", isBulk(meter));
+    button.append(buildRing(meter, selected));
+    const status = statusOf(meter);
+    button.setAttribute(
+      "aria-label",
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${typeof meter.ratio === "number" ? `, ${Math.round(meter.ratio * 100)} per cent of its usual` : ""}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
+    );
+    return button;
+  }
   // The map carries no figures: they live in the page's panels. A meter gets a
   // name tag only when it is selected, when it is the zone bulk, or (with a
   // mouse) while it is hovered — then with its figure. One builder serves both
@@ -126,14 +210,14 @@
     if (withValue) {
       const value = document.createElement("strong");
       value.textContent =
-        status === "normal" || status === "missing"
-          ? `${volume(meter.value)} m³`
-          : `${volume(meter.value)} m³ · ${STATUS_TAGS[status]}`;
+        typeof meter.ratio === "number"
+          ? `${volume(meter.value)} m³ · ${Math.round(meter.ratio * 100)}%`
+          : `${volume(meter.value)} m³`;
       element.append(value);
     }
     element.setAttribute(
       "aria-label",
-      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + STATUS_TAGS[status]}. Open meter details`,
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
     );
   }
   // Overview: a zone is a pin with its name. Its figures are in the Zones panel.
@@ -268,8 +352,8 @@
         const box = {
           left: point.x - w / 2 + slide,
           right: point.x + w / 2 + slide,
-          top: point.y - h - 10,
-          bottom: point.y - 10,
+          top: point.y - h - 22,
+          bottom: point.y - 22,
         };
         const outside =
           box.right > width || box.left < 0 || box.bottom > height || box.top < 0;
@@ -299,54 +383,24 @@
     const { meters, selected, zone } = latest;
     const overview = !zone && !selected;
     const points = meters.filter((m) => m.location);
-    const sized = points.filter((m) => !isBulk(m));
-    const max = Math.max(
-      1,
-      ...(sized.length ? sized : points).map((m) => Math.max(0, m.value ?? 0)),
-    );
-    map.getSource("meters").setData({
-      type: "FeatureCollection",
-      features: points.map((m) => ({
-        type: "Feature",
-        geometry: { type: "Point", coordinates: m.location.coordinates },
-        properties: {
-          account: m.account,
-          zone: m.zone,
-          selected: m.account === selected,
-          focused: !selected || m.account === selected,
-          recorded: m.value !== null && m.value >= 0,
-          bulk: isBulk(m),
-          status: statusOf(m),
-          // A zero reading is a finding, not a speck: it is drawn as large as a
-          // missing one so it can be seen and tapped.
-          radius: isBulk(m)
-            ? 11
-            : m.value === null || m.value <= 0
-              ? 6
-              : Math.max(3, Math.sqrt(m.value / max) * 18),
-        },
-      })),
-    });
-    map.setPaintProperty("meter-circles", "circle-color", [
-      "case",
-      ["get", "bulk"],
-      "#FFFFFF",
-      ["==", ["get", "status"], "high"],
-      token("--color-danger", "#D67A7A"),
-      ["==", ["get", "status"], "zero"],
-      token("--color-warning", "#E8C064"),
-      "#A4C5BB",
-    ]);
-    map.setLayoutProperty(
-      "meter-circles",
-      "visibility",
-      overview ? "none" : "visible",
-    );
-    map.setLayoutProperty(
-      "meter-hit",
-      "visibility",
-      overview ? "none" : "visible",
-    );
+    meterRings.forEach((marker) => marker.remove());
+    meterRings = [];
+    // Every mapped meter is one ring of the same size — no dot is bigger or
+    // smaller than another, so the map reads as a register, not a bubble chart.
+    if (!overview)
+      for (const meter of points) {
+        const element = buildMeterMarker(meter, selected);
+        element.addEventListener("click", () => pickMeter(meter.account));
+        if (hoverable) {
+          element.addEventListener("mouseenter", () => showHover(meter));
+          element.addEventListener("mouseleave", clearHover);
+        }
+        meterRings.push(
+          new maplibregl.Marker({ element, anchor: "center" })
+            .setLngLat(meter.location.coordinates)
+            .addTo(map),
+        );
+      }
     zoneMarkers.forEach(({ marker }) => marker.remove());
     zoneMarkers = [];
     meterLabels.forEach((label) => label.marker.remove());
@@ -369,7 +423,7 @@
         const marker = new maplibregl.Marker({
           element,
           anchor: "bottom",
-          offset: [0, -10],
+          offset: [0, -22],
         })
           .setLngLat(meter.location.coordinates)
           .addTo(map);
@@ -509,6 +563,21 @@
     hoverTag?.marker.remove();
     hoverTag = null;
   };
+  // With a mouse, a ring answers with its name and figure — one tag, gone when
+  // the pointer leaves. Touch screens select instead.
+  function showHover(meter) {
+    if (hoverTag?.account === meter.account || meter.account === latest?.selected) return;
+    clearHover();
+    const element = document.createElement("div");
+    fillMeterLabel(element, meter, "", true);
+    element.classList.add("hover");
+    hoverTag = {
+      account: meter.account,
+      marker: new maplibregl.Marker({ element, anchor: "bottom", offset: [0, -22] })
+        .setLngLat(meter.location.coordinates)
+        .addTo(map),
+    };
+  }
   const pickMeter = (account) => {
     mapPick = account;
     send("satviz:select-meter", { account });
@@ -654,6 +723,7 @@
         fillMeterLabel,
         fillZoneMarker,
         statusOf,
+        buildRing,
       });
       loaded = true;
       report(
@@ -925,89 +995,6 @@
         addNetwork();
         addVillaLink();
         addThreeDControl();
-        map.addSource("meters", {
-          type: "geojson",
-          data: { type: "FeatureCollection", features: [] },
-        });
-        map.addLayer({
-          id: "meter-circles",
-          type: "circle",
-          source: "meters",
-          paint: {
-            "circle-radius": ["get", "radius"],
-            "circle-color": ["case", ["get", "bulk"], "#FFFFFF", "#A4C5BB"],
-            "circle-opacity": [
-              "case",
-              ["!", ["get", "recorded"]],
-              0,
-              ["get", "focused"],
-              1,
-              0.25,
-            ],
-            "circle-stroke-color": [
-              "case",
-              ["any", ["get", "selected"], ["get", "bulk"]],
-              "#4E4456",
-              "#454545",
-            ],
-            "circle-stroke-width": [
-              "case",
-              ["any", ["get", "selected"], ["get", "bulk"]],
-              4,
-              1.5,
-            ],
-            "circle-stroke-opacity": ["case", ["get", "focused"], 1, 0.25],
-          },
-        });
-        map.addLayer({
-          id: "meter-hit",
-          type: "circle",
-          source: "meters",
-          paint: { "circle-radius": 22, "circle-opacity": 0 },
-        });
-        map.on("click", "meter-hit", (event) => {
-          // Labels are drawn inside the map, so a tap on one also reaches the
-          // map underneath it. Without this guard the dot lying under the label
-          // answered last and opened a different meter than the one tapped.
-          const target = event.originalEvent?.target;
-          if (target && target !== map.getCanvas()) return;
-          const features = event.features || [];
-          const nearest = features.sort((a, b) => {
-            const ap = map.project(a.geometry.coordinates),
-              bp = map.project(b.geometry.coordinates);
-            return (
-              Math.hypot(ap.x - event.point.x, ap.y - event.point.y) -
-              Math.hypot(bp.x - event.point.x, bp.y - event.point.y)
-            );
-          })[0];
-          if (nearest) pickMeter(nearest.properties.account);
-        });
-        // With a mouse, a dot answers with its name and figure — one tag, gone
-        // when the pointer leaves. Touch screens select instead.
-        if (window.matchMedia("(hover: hover)").matches) {
-          map.on("mousemove", "meter-hit", (event) => {
-            const account = event.features?.[0]?.properties.account;
-            const meter = latest?.meters.find((m) => m.account === account);
-            if (!meter?.location || hoverTag?.account === account) return;
-            clearHover();
-            const element = document.createElement("div");
-            fillMeterLabel(element, meter, "", true);
-            element.classList.add("hover");
-            hoverTag = {
-              account,
-              marker: new maplibregl.Marker({ element, anchor: "bottom", offset: [0, -12] })
-                .setLngLat(meter.location.coordinates)
-                .addTo(map),
-            };
-          });
-          map.on("mouseleave", "meter-hit", clearHover);
-        }
-        map.on("mouseenter", "meter-hit", () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-        map.on("mouseleave", "meter-hit", () => {
-          map.getCanvas().style.cursor = "";
-        });
         loaded = true;
         report("ready", "");
         if (!window.NETWORK?.length || !window.SATELLITE_CONTEXT)
@@ -1059,6 +1046,8 @@
   window.addEventListener("pagehide", () => {
     zoneMarkers.forEach(({ marker }) => marker.remove());
     meterLabels.forEach((label) => label.marker.remove());
+    meterRings.forEach((marker) => marker.remove());
+    clearHover();
     if (map) {
       map.remove();
       map = null;

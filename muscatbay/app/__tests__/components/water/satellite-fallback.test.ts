@@ -74,6 +74,7 @@ describe("non-WebGL satellite compatibility map", () => {
         element.classList.add("meter-label");
         element.textContent = `${meter.name} ${meter.value === null ? "—" : meter.value.toFixed(2)} m³`;
       },
+      buildRing: () => document.createElementNS("http://www.w3.org/2000/svg", "svg"),
       fillZoneMarker: (element: HTMLElement, zone: string) => {
         element.classList.add("zone-marker");
         element.textContent = zone;
@@ -140,7 +141,7 @@ describe("non-WebGL satellite compatibility map", () => {
     expect(container.querySelectorAll(".meter-label")).toHaveLength(1);
     expect(container).toHaveTextContent("Villa meter");
     expect(
-      container.querySelector('button.missing[aria-label*="no reading"]'),
+      container.querySelector('button[data-status="missing"][aria-label*="no reading"]'),
     ).toBeInTheDocument();
     const meter = container.querySelector<HTMLButtonElement>(
       'button[aria-label*="Villa meter"]',

@@ -28,27 +28,77 @@ import {
 } from "./consumptionModel";
 import type { ZoneLoss } from "./zoneBalance";
 
-/** Swatches — the same status tokens the map's dots use. */
-export const STATUS_DOTS: Record<MeterStatus, string> = {
-  normal: "bg-accent",
-  high: "bg-danger",
-  zero: "bg-warning",
-  missing: "bg-card",
-};
 const STATUS_TONES = {
   normal: "success",
+  elevated: "warning",
   high: "danger",
   zero: "warning",
   missing: "neutral",
 } as const;
+export const STATUS_STROKE: Record<MeterStatus, string> = {
+  normal: "var(--color-success)",
+  elevated: "var(--color-warning)",
+  high: "var(--color-danger)",
+  zero: "var(--color-warning)",
+  missing: "var(--color-muted)",
+};
+/**
+ * The map's marker, in miniature: a ring filled to the day's share of the
+ * meter's own recent average (full at twice it), coloured by band. A zero
+ * reading is an empty ring marked 0; a meter with no reading, or with too few
+ * recorded days to have an average, carries a dashed ring.
+ */
+export function RingGauge({
+  status,
+  ratio,
+  size = 20,
+}: {
+  status: MeterStatus;
+  ratio: number | null;
+  size?: number;
+}) {
+  const circumference = 2 * Math.PI * 14;
+  const filled = ratio === null ? 0 : Math.min(ratio / 2, 1) * circumference;
+  const dashed = status === "missing" || ratio === null;
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 40 40"
+      style={{ width: size, height: size }}
+      className="shrink-0"
+    >
+      <circle cx="20" cy="20" r="18" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1.5" />
+      <circle
+        cx="20"
+        cy="20"
+        r="14"
+        fill="none"
+        stroke={dashed ? STATUS_STROKE[status] : "var(--color-component)"}
+        strokeWidth={dashed ? 3 : 5}
+        strokeDasharray={dashed ? "4 4" : undefined}
+      />
+      {!dashed && filled > 0 && (
+        <circle
+          cx="20"
+          cy="20"
+          r="14"
+          fill="none"
+          stroke={STATUS_STROKE[status]}
+          strokeWidth="5"
+          strokeDasharray={`${filled} ${circumference}`}
+          transform="rotate(-90 20 20)"
+        />
+      )}
+      {status === "zero" && (
+        <text x="20" y="25" textAnchor="middle" fontSize="15" fontWeight="600" fill="var(--color-warning)">
+          0
+        </text>
+      )}
+    </svg>
+  );
+}
 const StatusDot = ({ status }: { status: MeterStatus }) => (
-  <span
-    aria-hidden
-    className={cn(
-      "h-2.5 w-2.5 shrink-0 rounded-pill border border-neutral",
-      STATUS_DOTS[status],
-    )}
-  />
+  <RingGauge status={status} ratio={status === "normal" ? 1 : status === "elevated" ? 1.5 : status === "high" ? 2 : null} />
 );
 const rowButton =
   "w-full min-h-11 px-5 py-2 text-left focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-accent hover:bg-component";
@@ -169,7 +219,8 @@ const STATUS_ORDER: Record<MeterStatus, number> = {
   high: 0,
   zero: 1,
   missing: 2,
-  normal: 3,
+  elevated: 3,
+  normal: 4,
 };
 /** The meters on the map, findings first. A row and its dot select each other. */
 export function MetersPanel({
@@ -249,7 +300,7 @@ export function MetersPanel({
                     meter.account === selected && "bg-accent-tint font-semibold",
                   )}
                 >
-                  <StatusDot status={meter.status} />
+                  <RingGauge status={meter.status} ratio={meter.ratio} />
                   <span className="min-w-0 flex-1 truncate">
                     {meter.name}
                     {!meter.location && (
@@ -264,7 +315,7 @@ export function MetersPanel({
                     <Badge tone={STATUS_TONES[meter.status]} className="shrink-0">
                       {meter.status === "missing"
                         ? STATUS_LABELS.missing
-                        : `${formatMapVolume(meter.value)} m³ · ${STATUS_LABELS[meter.status].split(" ")[0].toLowerCase()}`}
+                        : `${formatMapVolume(meter.value)} m³ · ${meter.ratio === null ? STATUS_LABELS[meter.status].toLowerCase() : `${Math.round(meter.ratio * 100)}%`}`}
                     </Badge>
                   )}
                 </button>
@@ -362,7 +413,8 @@ export function SelectedMeterPanel({
       {meter && (
         <SectionCard.Body flush>
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-            <Badge tone={STATUS_TONES[meter.status]} dot>
+            <RingGauge status={meter.status} ratio={meter.ratio} size={28} />
+            <Badge tone={STATUS_TONES[meter.status]}>
               {STATUS_LABELS[meter.status]}
             </Badge>
             <span className="text-caption text-muted">{meter.statusNote}</span>

@@ -6,6 +6,7 @@ import { Badge, Button, SectionCard, SegmentedControl } from "@/components/ui";
 import type { WaterMeter } from "@/lib/water-data";
 import { SatelliteMap } from "./SatelliteMap";
 import {
+  RingGauge,
   MetersPanel,
   SelectedMeterPanel,
   StatusPanel,
@@ -38,6 +39,14 @@ import {
   type SatelliteState,
 } from "./consumptionModel";
 
+// Legend: one ring per band, each at a reading typical of it.
+const RING_LEGEND: Record<MeterStatus, number | null> = {
+  normal: 1,
+  elevated: 1.5,
+  high: 2,
+  zero: 0,
+  missing: null,
+};
 /** True when the link names its own day; otherwise the page opens on the latest recorded one. */
 const linkHasDate = () =>
   typeof window !== "undefined" &&
@@ -380,10 +389,21 @@ export function SatelliteView({
               </SectionCard.Body>
             </SectionCard>
             <div className="space-y-1 text-caption text-muted">
-              <ul className="flex flex-wrap gap-x-5 gap-y-1">
-                <li>Circle size = daily m³</li>
-                <li>White ring = zone bulk meter</li>
-                <li>Figures are in the panels, not on the map</li>
+              <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+                {STATUSES.map((status) => (
+                  <li key={status} className="inline-flex items-center gap-1.5">
+                    <RingGauge
+                      status={status}
+                      ratio={RING_LEGEND[status]}
+                      size={18}
+                    />
+                    {STATUS_LABELS[status]}
+                  </li>
+                ))}
+                <li>
+                  Each ring fills to the day&apos;s share of that meter&apos;s
+                  usual — full at twice it
+                </li>
               </ul>
               <details>
                 <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 focus-visible:outline-3 focus-visible:outline-accent">
@@ -391,17 +411,19 @@ export function SatelliteView({
                   About this map
                 </summary>
                 <p>
-                  High usage follows the Daily report&apos;s rule: at least
-                  twice the meter&apos;s recent daily average and 5 m³ above it.
-                  Unaccounted water is the zone bulk minus its L3 meters for the
-                  same day; when some meters have not reported it is marked
-                  partial and can only overstate the loss. It may include
-                  leakage, unmetered use or reading-time differences; it is not
-                  a confirmed leak measurement. Solid lines: existing drawing
-                  network (includes previously adjusted road alignments).
-                  Positions include building and zone reference points; exact
-                  meter chambers may be unverified. Satellite imagery is not
-                  live. Missing readings stay —, never 0.
+                  Each meter is judged against its own average over its last
+                  recorded days (up to 7, at least 3): elevated from 130% of
+                  that average, high usage from 200%. Too few recorded days and
+                  the ring is dashed, with no verdict. Unaccounted water is the
+                  zone bulk minus its L3 meters for the same day; when some
+                  meters have not reported it is marked partial and can only
+                  overstate the loss. It may include leakage, unmetered use or
+                  reading-time differences; it is not a confirmed leak
+                  measurement. Solid lines: existing drawing network (includes
+                  previously adjusted road alignments). Positions include
+                  building and zone reference points; exact meter chambers may
+                  be unverified. Satellite imagery is not live. Missing readings
+                  stay —, never 0.
                   {state.zone === "Zone_01_(FM)" &&
                     " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
                 </p>

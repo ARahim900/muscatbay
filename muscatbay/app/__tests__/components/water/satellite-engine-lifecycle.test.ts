@@ -39,6 +39,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
       addEventListener(name: string, callback: () => void) {
         this.listeners[name] = callback;
       },
+      removeAttribute() {},
       replaceChildren() {
         this.children = [];
       },
@@ -113,6 +114,8 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
       body: { append: vi.fn() },
       documentElement: { classList: { toggle: vi.fn() } },
       createElement,
+      // The ring markers are SVG.
+      createElementNS: (_ns: string, name: string) => createElement(name),
     },
     console: { error: vi.fn() },
     maplibregl: {
@@ -159,6 +162,16 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     createSatelliteFallback,
   };
 }
+/** The rings from the latest render — elements from earlier ones are kept too. */
+const rings = (env: ReturnType<typeof environment>, count: number) =>
+  env.elements
+    .filter((e) => (e as { className?: string }).className === "meter-ring")
+    .slice(-count) as unknown as { listeners: Record<string, () => void> }[];
+const ring = (env: ReturnType<typeof environment>, index: number, count = index + 1) =>
+  rings(env, count)[index];
+/** Hover each ring in turn, as a mouse would. */
+const hoverEach = (env: ReturnType<typeof environment>, accounts: string[]) =>
+  rings(env, accounts.length).forEach((r) => r.listeners.mouseenter?.());
 const threeDButton = (env: ReturnType<typeof environment>) =>
   env.elements.find(
     (e) => (e as { className?: string }).className === "three-d-button",
@@ -222,7 +235,10 @@ describe("consumption renderer", () => {
     expect(env.construct).toHaveBeenCalledTimes(1);
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
     expect(env.map.easeTo).not.toHaveBeenCalled();
-    expect(env.source.setData).toHaveBeenCalledTimes(2);
+    // The rings are rebuilt for the new reading; the camera is not touched.
+    expect(
+      env.elements.filter((e) => (e as { className?: string }).className === "meter-ring"),
+    ).toHaveLength(2);
     expect(env.construct.mock.calls[0][0]).toMatchObject({
       preserveDrawingBuffer: false,
       antialias: false,
@@ -260,9 +276,7 @@ describe("consumption renderer", () => {
     ];
     env.send("satviz:data", { ...payload, selected: "", meters });
     env.mapEvents.load();
-    const hit = env.mapEvents["click:meter-hit"] as (event: unknown) => void;
-    hit({ point: { x: 1, y: 1 }, originalEvent: { target: env.canvas },
-      features: [{ geometry: { coordinates: [58.641, 23.55] }, properties: { account: "a" } }] });
+    ring(env, 0, 2).listeners.click(); // tapped on the map
     env.send("satviz:update", { ...payload, selected: "a", meters });
     expect(env.map.easeTo).not.toHaveBeenCalled();
     env.send("satviz:update", { ...payload, selected: "b", meters }); // picked in the Meters panel
@@ -270,20 +284,16 @@ describe("consumption renderer", () => {
     expect(env.map.easeTo.mock.calls[0][0]).toMatchObject({ center: [58.642, 23.55] });
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1); // the zone frame itself never re-ran
   });
-  it("opens the meter whose label was tapped, not the dot lying under that label", () => {
+  it("opens the meter whose ring was tapped", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
-    const hit = env.mapEvents["click:meter-hit"] as (event: unknown) => void;
-    const feature = { geometry: { coordinates: [58.64, 23.55] }, properties: { account: "under-the-label" } };
     env.parent.postMessage.mockClear();
-    hit({ point: { x: 1, y: 1 }, features: [feature], originalEvent: { target: { tagName: "BUTTON" } } });
-    expect(env.parent.postMessage).not.toHaveBeenCalled();
-    hit({ point: { x: 1, y: 1 }, features: [feature], originalEvent: { target: env.canvas } });
+    ring(env, 0).listeners.click();
     expect(env.parent.postMessage).toHaveBeenCalledWith(
-      { type: "satviz:select-meter", account: "under-the-label" }, "https://example.com");
+      { type: "satviz:select-meter", account: "a" }, "https://example.com");
   });
-  it("keeps figures off the map: status on the dot, a name tag for the selected meter and the zone bulk only", () => {
+  it("keeps figures off the map: one ring per meter, a name tag for the selected meter and the zone bulk only", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     const meters = [
@@ -298,10 +308,11 @@ describe("consumption renderer", () => {
     expect(text()).toEqual(expect.arrayContaining(["Villa H", "Zone bulk"]));
     expect(text()).not.toContain("Villa N");
     expect(text().some((t) => t.includes("m³"))).toBe(false);
-    const features = (env.source.setData.mock.calls.at(-1)![0] as {
-      features: { properties: { account: string; status: string; radius: number } }[] }).features;
-    expect(features.find((f) => f.properties.account === "h")!.properties.status).toBe("high");
-    expect(features.find((f) => f.properties.account === "z")!.properties.radius).toBe(6); // a zero is never a speck
+    // Every mapped meter draws one ring, all the same size, coloured by band.
+    const rings = env.elements.filter(
+      (e) => (e as { className?: string }).className === "meter-ring",
+    ) as unknown as { dataset: Record<string, string> }[];
+    expect(rings.map((r) => r.dataset.status).sort()).toEqual(["high", "normal", "normal", "zero"]);
     // Overview: a zone is a named pin; its loss is in the Zones panel (and in the pin's spoken label).
     env.send("satviz:update", { ...payload, selected: "", zone: "", meters,
       zones: [{ id: "Zone_05", name: "Zone 5" }],
@@ -363,7 +374,7 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
       { type: "satviz:select-zone", zone: "" }, "https://example.com");
   });
-  it("shows whole-number figures under the mouse, and sets the zone bulk meter apart from the individual meters", () => {
+  it("shows whole-number figures and the percentage under the mouse", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     env.send("satviz:data", { ...payload, selected: "", meters: [
@@ -375,18 +386,11 @@ describe("consumption renderer", () => {
     ] });
     env.mapEvents.load();
     // Figures appear only in the tag under the mouse.
-    const hover = env.mapEvents["mousemove:meter-hit"] as (event: unknown) => void;
-    for (const account of ["v1", "v2", "v3", "v4", "b"]) hover({ features: [{ properties: { account } }] });
+    hoverEach(env, ["v1", "v2", "v3", "v4", "b"]);
     const text = env.elements.map((e) => e.textContent);
     // 10.00 → 10; small daily readings keep one decimal so they never read as 0; no reading stays —
     for (const expected of ["10 m³", "0.4 m³", "<0.1 m³", "— m³", "3,920 m³", "Zone bulk"])
       expect(text).toContain(expected);
-    const features = (env.source.setData.mock.calls.at(-1)![0] as {
-      features: { properties: { account: string; bulk: boolean; radius: number } }[] }).features;
-    const bulk = features.find((f) => f.properties.account === "b")!;
-    expect(bulk.properties).toMatchObject({ bulk: true, radius: 11 });
-    // the villas are sized against each other, not against the bulk meter
-    expect(features.find((f) => f.properties.account === "v1")!.properties.radius).toBe(18);
   });
   it("uses the visual compatibility map for creation and context loss failures", () => {
     const env = environment(true);
@@ -424,13 +428,13 @@ describe("consumption renderer", () => {
     env.mapEvents.load();
     expect(env.elements.some((el) => el.textContent === "A")).toBe(true);
     expect(env.elements.some((el) => el.textContent === "10 m³")).toBe(false);
+    // The hover tag is for a meter that is not already selected.
     env.send("satviz:update", {
       ...payload,
+      selected: "",
       meters: [{ ...payload.meters[0], value: null }],
     });
-    (env.mapEvents["mousemove:meter-hit"] as (event: unknown) => void)({
-      features: [{ properties: { account: "a" } }],
-    });
+    hoverEach(env, ["a"]);
     expect(env.elements.some((el) => el.textContent === "— m³")).toBe(true);
   });
   it("frames zone geography when the selected level has no mapped meters", () => {
@@ -461,16 +465,18 @@ describe("consumption renderer", () => {
     env.send("satviz:update", { ...payload, selected: "" });
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
   });
-  it("loads network layers beneath meters and distinguishes schematic FM links", () => {
+  it("loads the network beneath the buildings and distinguishes schematic FM links", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, zone: "Zone_01_(FM)" });
     env.mapEvents.load();
     const layers = env.map.addLayer.mock.calls.map(
       (call) => call[0] as { id: string; paint: Record<string, unknown> },
     );
-    expect(
+    // Meters are DOM rings above the canvas, so the network only has to sit
+    // above the building outlines it runs between.
+    expect(layers.findIndex((layer) => layer.id === "buildings-line")).toBeLessThan(
       layers.findIndex((layer) => layer.id === "network-line"),
-    ).toBeLessThan(layers.findIndex((layer) => layer.id === "meter-circles"));
+    );
     expect(
       layers.find((layer) => layer.id === "fm-connections")?.paint[
         "line-dasharray"
