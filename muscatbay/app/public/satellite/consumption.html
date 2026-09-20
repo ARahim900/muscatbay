@@ -59,11 +59,12 @@
         font: inherit;
         white-space: nowrap;
       }
-      /* Every meter is the same bar: five segments light up with the day's
-         share of that meter's own daily usual, in the colour of its band. */
+      /* A meter is one small line in the colour of its band, and the further
+         above its own usual it read, the longer that line. A meter that read
+         nothing at all is a dot. Figures stay in the page's panels. */
       .meter-marker {
         display: block;
-        padding: 4px;
+        padding: 6px;
         border: 0;
         background: transparent;
         line-height: 0;
@@ -72,32 +73,31 @@
       .meter-marker.selected {
         z-index: 2;
       }
-      .meter-bar {
+      .meter-tick {
+        display: block;
+        height: 4px;
+        border-radius: 999px;
         transform: scale(var(--marker-scale, 1));
         transform-origin: center;
-        display: flex;
-        gap: 2px;
-        width: 56px;
-        padding: 3px;
-        border: 1px solid rgb(255 255 255 / 22%);
-        border-radius: 999px;
-        background: #0a090c;
-        box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+        box-shadow:
+          0 0 0 1px rgb(10 9 12 / 65%),
+          0 1px 3px rgb(0 0 0 / 40%);
       }
-      .meter-bar i {
-        flex: 1;
-        height: 10px;
-        border-radius: 1px;
-        background: rgb(255 255 255 / 14%);
-      }
-      .meter-marker.selected .meter-bar {
-        border-width: 2px;
-        padding: 2px;
+      .meter-marker.selected .meter-tick {
+        height: 6px;
+        box-shadow:
+          0 0 0 2px var(--color-card, #fff),
+          0 1px 4px rgb(0 0 0 / 50%);
       }
       .meter-marker:focus-visible {
         outline: 3px solid var(--color-accent, #a4c5bb);
-        outline-offset: -2px;
+        outline-offset: 0;
         border-radius: 999px;
+      }
+      @media (pointer: coarse) {
+        .meter-marker {
+          padding: 10px;
+        }
       }
       .zone-anchor {
         position: relative;
@@ -347,7 +347,9 @@
         pointer-events: auto;
       }
       .compat-meter-point {
-        padding: 0;
+        /* The compatibility map is the touch path: keep a finger-sized target
+           around a mark this small. */
+        padding: 10px;
       }
       .compat-meter-card {
         position: absolute;
@@ -400,7 +402,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=23"></script>
-    <script src="consumption-engine.js?v=23"></script>
+    <script src="consumption-fallback.js?v=24"></script>
+    <script src="consumption-engine.js?v=24"></script>
   </body>
 </html>

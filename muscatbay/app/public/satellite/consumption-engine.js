@@ -99,7 +99,7 @@
   const isBulk = (meter) => meter.level === "L2" || meter.level === "L1";
   // The page classifies every reading and works out its ratio to the meter's own
   // recent daily average; the map only draws it. Colour is never the only
-  // carrier: the ring's fill says the same thing, and the panels say it in words.
+  // carrier: the mark's length says the same thing, and the panels say it in words.
   const STATUS_TAGS = {
     elevated: "Elevated",
     high: "High usage",
@@ -128,9 +128,9 @@
         : ratio >= 10
           ? `×${Math.round(ratio)}`
           : `${Math.round(ratio * 100)}%`;
-  // Saturated indicator colours, the app's own — a lit segment has to carry
-  // over satellite imagery, so these are the bright status tokens, not the
-  // muted text ones.
+  // Saturated indicator colours, the app's own — a mark this small has to
+  // carry over satellite imagery, so these are the bright status tokens, not
+  // the muted text ones.
   const STATUS_COLOUR = {
     normal: () => token("--status-normal", "#22c55e"),
     elevated: () => token("--status-warning", "#f59e0b"),
@@ -138,37 +138,22 @@
     zero: () => token("--status-warning", "#f59e0b"),
     missing: () => token("--status-missing", "#94a3b8"),
   };
-  const SEGMENTS = 5;
-  const SEGMENT_STEP = 0.4;
+  /** Line length in pixels, by band: a quiet mark for normal, longer as it rises. */
+  const TICK_WIDTH = { normal: 10, elevated: 14, high: 18, zero: 5, missing: 5 };
   /**
-   * Every meter is the same bar: five segments on a near-black track, lit one
-   * per 40% of that meter's own usual and all five from twice it, in the colour
-   * of its band. A zero reading lights none and carries an amber edge; no
-   * reading, or too few recorded days for an average, is a dashed empty bar.
+   * One small line per meter, in the colour of its band and as long as its
+   * band is serious — 10px normal, 14px elevated, 18px high. A zero reading
+   * and a meter that never reported are 5px dots, amber and grey, the missing
+   * one dimmed. Nothing on the map carries a figure; the panels do.
    */
-  function buildBar(meter, selected) {
+  function buildTick(meter) {
     const status = statusOf(meter);
-    const colour = (STATUS_COLOUR[status] || STATUS_COLOUR.missing)();
-    const unknown = typeof meter.ratio !== "number";
-    const lit = unknown || meter.ratio <= 0
-      ? 0
-      : Math.min(SEGMENTS, Math.max(1, Math.ceil(meter.ratio / SEGMENT_STEP)));
-    const bar = document.createElement("span");
-    bar.className = "meter-bar";
-    bar.style.borderColor =
-      meter.account === selected
-        ? token("--color-primary", "#4e4456")
-        : status === "normal" && !unknown
-          ? "rgb(255 255 255 / 22%)"
-          : colour;
-    bar.style.borderStyle = unknown ? "dashed" : "solid";
-    if (status === "missing") bar.style.opacity = "0.6";
-    for (let index = 0; index < SEGMENTS; index++) {
-      const segment = document.createElement("i");
-      segment.style.background = index < lit ? colour : "rgb(255 255 255 / 14%)";
-      bar.append(segment);
-    }
-    return bar;
+    const tick = document.createElement("span");
+    tick.className = "meter-tick";
+    tick.style.width = `${TICK_WIDTH[status] || TICK_WIDTH.missing}px`;
+    tick.style.background = (STATUS_COLOUR[status] || STATUS_COLOUR.missing)();
+    if (status === "missing") tick.style.opacity = "0.55";
+    return tick;
   }
   function buildMeterMarker(meter, selected) {
     const button = document.createElement("button");
@@ -177,7 +162,7 @@
     button.dataset.status = statusOf(meter);
     button.classList.toggle("selected", meter.account === selected);
     button.classList.toggle("bulk", isBulk(meter));
-    button.append(buildBar(meter, selected));
+    button.append(buildTick(meter));
     const status = statusOf(meter);
     button.setAttribute(
       "aria-label",
@@ -712,7 +697,7 @@
         fillMeterLabel,
         fillZoneMarker,
         statusOf,
-        buildBar,
+        buildTick,
       });
       loaded = true;
       report(
@@ -953,11 +938,12 @@
         },
       });
       applyMode();
-      // Bars are drawn at a fixed pixel size, so in a dense zone they crowd at
-      // low zoom and look sparse close in. Scale them with the zoom instead.
+      // Marks are drawn at a fixed pixel size, so in a dense zone they crowd at
+      // low zoom and look sparse close in. Scale them with the zoom instead —
+      // never below 0.85, or the smallest mark stops being visible at all.
       const scaleMarkers = () => {
         const zoom = typeof map.getZoom === "function" ? map.getZoom() : 17;
-        const scale = Math.max(0.62, Math.min(1.15, 0.62 + (zoom - 15.4) * 0.3));
+        const scale = Math.max(0.85, Math.min(1.25, 0.85 + (zoom - 15.4) * 0.25));
         document.documentElement.style.setProperty("--marker-scale", scale.toFixed(2));
       };
       const relayout = () => {

@@ -30,14 +30,6 @@ export const STATUS_LABELS: Record<MeterStatus, string> = {
 export const STATUS_BANDS = { elevated: 1.3, high: 2 };
 /** Recorded days needed before a meter can be judged at all. */
 export const BASELINE_DAYS = 3;
-/** The marker's bar: 5 segments, each a 40% step of the meter's usual. */
-export const SEGMENTS = 5;
-export const SEGMENT_STEP = 0.4;
-/** Segments lit for a ratio — 1 at the least, all 5 from twice the usual. */
-export const litSegments = (ratio: number | null): number =>
-  ratio === null || ratio <= 0
-    ? 0
-    : Math.min(SEGMENTS, Math.max(1, Math.ceil(ratio / SEGMENT_STEP)));
 export const STATUSES = Object.keys(STATUS_LABELS) as MeterStatus[];
 /** Days of history read for the spike baseline (it uses up to 7 recorded days). */
 const HISTORY_DAYS = 14;

@@ -21,11 +21,9 @@ import {
   LEVELS,
   LEVEL_LABELS,
   STATUSES,
-  SEGMENTS,
   STATUS_LABELS,
   formatMapVolume,
   formatRatio,
-  litSegments,
   type ConsumptionMeter,
   type MeterStatus,
 } from "./consumptionModel";
@@ -47,60 +45,37 @@ export const STATUS_LIGHT: Record<MeterStatus, string> = {
   missing: "var(--status-missing)",
 };
 /**
- * The map's marker, and the same shape everywhere else: a dark bar of five
- * segments that light up with the day's reading — one segment per 40% of that
- * meter's own usual, all five from twice it — in the colour of its band. A
- * zero reading lights none and carries an amber edge; no reading, or too few
- * recorded days to have an average, is a dashed empty bar.
+ * The map's marker, and the same mark everywhere else: one small line in the
+ * colour of the meter's band, and the longer for how serious that band is. A
+ * meter that read zero, and one that did not report at all, are dots. The
+ * figure and the words sit beside it — the mark is never the only carrier.
  */
-export function StatusBar({
-  status,
-  ratio,
-  width = 56,
-}: {
-  status: MeterStatus;
-  ratio: number | null;
-  width?: number;
-}) {
-  const lit = litSegments(ratio);
-  const unknown = ratio === null;
+export const MARK_WIDTH: Record<MeterStatus, number> = {
+  normal: 10,
+  elevated: 14,
+  high: 18,
+  zero: 5,
+  missing: 5,
+};
+export function StatusMark({ status }: { status: MeterStatus }) {
   return (
     <span
       aria-hidden
-      className="inline-flex shrink-0 items-center rounded-pill border"
-      style={{
-        width,
-        gap: 2,
-        padding: 3,
-        background: "#0A090C",
-        borderColor:
-          status === "normal" && !unknown
-            ? "rgb(255 255 255 / 22%)"
-            : STATUS_LIGHT[status],
-        borderStyle: unknown ? "dashed" : "solid",
-        opacity: status === "missing" ? 0.6 : 1,
-      }}
+      className="inline-flex shrink-0 justify-start"
+      style={{ width: MARK_WIDTH.high }}
     >
-      {Array.from({ length: SEGMENTS }, (_, index) => (
-        <span
-          key={index}
-          className="h-2.5 flex-1"
-          style={{
-            borderRadius: 1,
-            background:
-              index < lit ? STATUS_LIGHT[status] : "rgb(255 255 255 / 14%)",
-          }}
-        />
-      ))}
+      <span
+        className="rounded-pill"
+        style={{
+          width: MARK_WIDTH[status],
+          height: 4,
+          background: STATUS_LIGHT[status],
+          opacity: status === "missing" ? 0.55 : 1,
+        }}
+      />
     </span>
   );
 }
-const StatusDot = ({ status }: { status: MeterStatus }) => (
-  <StatusBar
-    status={status}
-    ratio={status === "normal" ? 1 : status === "elevated" ? 1.5 : status === "high" ? 2 : status === "zero" ? 0 : null}
-  />
-);
 const rowButton =
   "w-full min-h-11 px-5 py-2 text-left focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-accent hover:bg-component";
 const field =
@@ -204,7 +179,7 @@ export function StatusPanel({
                   status === selected && "bg-accent-tint font-semibold",
                 )}
               >
-                <StatusDot status={status} />
+                <StatusMark status={status} />
                 <span className="flex-1">{STATUS_LABELS[status]}</span>
                 <span className="tabular-nums">{counts[status]}</span>
               </button>
@@ -301,7 +276,7 @@ export function MetersPanel({
                     meter.account === selected && "bg-accent-tint font-semibold",
                   )}
                 >
-                  <StatusBar status={meter.status} ratio={meter.ratio} />
+                  <StatusMark status={meter.status} />
                   <span className="min-w-0 flex-1 truncate">
                     {meter.name}
                     {!meter.location && (
@@ -414,7 +389,7 @@ export function SelectedMeterPanel({
       {meter && (
         <SectionCard.Body flush>
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-            <StatusBar status={meter.status} ratio={meter.ratio} width={72} />
+            <StatusMark status={meter.status} />
             <Badge tone={STATUS_TONES[meter.status]}>
               {STATUS_LABELS[meter.status]}
             </Badge>

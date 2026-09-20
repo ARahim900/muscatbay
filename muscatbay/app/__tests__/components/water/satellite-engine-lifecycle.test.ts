@@ -167,14 +167,14 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     createSatelliteFallback,
   };
 }
-/** The bars from the latest render — elements from earlier ones are kept too. */
+/** The marks from the latest render — elements from earlier ones are kept too. */
 const rings = (env: ReturnType<typeof environment>, count: number) =>
   env.elements
     .filter((e) => (e as { className?: string }).className === "meter-marker")
     .slice(-count) as unknown as { listeners: Record<string, () => void> }[];
 const ring = (env: ReturnType<typeof environment>, index: number, count = index + 1) =>
   rings(env, count)[index];
-/** Hover each bar in turn, as a mouse would. */
+/** Hover each mark in turn, as a mouse would. */
 const hoverEach = (env: ReturnType<typeof environment>, accounts: string[]) =>
   rings(env, accounts.length).forEach((r) => r.listeners.mouseenter?.());
 const threeDButton = (env: ReturnType<typeof environment>) =>
@@ -240,7 +240,7 @@ describe("consumption renderer", () => {
     expect(env.construct).toHaveBeenCalledTimes(1);
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
     expect(env.map.easeTo).not.toHaveBeenCalled();
-    // The bars are rebuilt for the new reading; the camera is not touched.
+    // The marks are rebuilt for the new reading; the camera is not touched.
     expect(
       env.elements.filter((e) => (e as { className?: string }).className === "meter-marker"),
     ).toHaveLength(2);
@@ -289,16 +289,16 @@ describe("consumption renderer", () => {
     expect(env.map.easeTo.mock.calls[0][0]).toMatchObject({ center: [58.642, 23.55] });
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1); // the zone frame itself never re-ran
   });
-  it("scales the bar markers with the zoom so a dense zone does not crowd", () => {
+  it("scales the marks with the zoom so a dense zone does not crowd", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
     const set = env.documentElement.style.setProperty;
     expect(set).toHaveBeenCalledWith("--marker-scale", expect.any(String));
-    // the mock map sits at zoom 16 → 0.62 + 0.6 * 0.3
-    expect(set.mock.calls.at(-1)![1]).toBe("0.80");
+    // the mock map sits at zoom 16 → 0.85 + 0.6 * 0.25
+    expect(set.mock.calls.at(-1)![1]).toBe("1.00");
   });
-  it("opens the meter whose bar was tapped", () => {
+  it("opens the meter whose mark was tapped", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
@@ -307,7 +307,7 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenCalledWith(
       { type: "satviz:select-meter", account: "a" }, "https://example.com");
   });
-  it("keeps figures off the map: one bar per meter, a name tag for the selected meter and the zone bulk only", () => {
+  it("keeps figures off the map: one mark per meter, a name tag for the selected meter and the zone bulk only", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     const meters = [
@@ -322,11 +322,16 @@ describe("consumption renderer", () => {
     expect(text()).toEqual(expect.arrayContaining(["Villa H", "Zone bulk"]));
     expect(text()).not.toContain("Villa N");
     expect(text().some((t) => t.includes("m³"))).toBe(false);
-    // Every mapped meter draws one bar, all the same size, coloured by band.
+    // Every mapped meter draws one mark, coloured by its band and as long as it is serious.
     const rings = env.elements.filter(
       (e) => (e as { className?: string }).className === "meter-marker",
     ) as unknown as { dataset: Record<string, string> }[];
     expect(rings.map((r) => r.dataset.status).sort()).toEqual(["high", "normal", "normal", "zero"]);
+    const marks = env.elements.filter(
+      (e) => (e as { className?: string }).className === "meter-tick",
+    ) as unknown as { style: { width?: string } }[];
+    // One line each: 10px normal, 18px high, and a 5px dot for the zero reading.
+    expect(marks.map((m) => m.style.width)).toEqual(["10px", "18px", "5px", "10px"]);
     // Overview: a zone is a named pin; its loss is in the Zones panel (and in the pin's spoken label).
     env.send("satviz:update", { ...payload, selected: "", zone: "", meters,
       zones: [{ id: "Zone_05", name: "Zone 5" }],

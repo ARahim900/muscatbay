@@ -20,6 +20,7 @@
  *
  * History:
  *   v23 (2026-09-20) Satellite map: meters are segmented bars, not ring gauges.
+ *   v24 (2026-09-20) Satellite map: one small status line per meter.
  *   v22 (2026-09-20) Satellite map: every meter is a ring filled to its share of
  *                    its own recent average, green / amber / red by band.
  *   v21 (2026-09-20) Satellite view rebuilt as one frame: panels · map · panels. The
@@ -65,7 +66,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v23";
+const CACHE_VERSION = "v24";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;

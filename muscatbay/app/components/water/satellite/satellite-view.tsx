@@ -6,7 +6,7 @@ import { Badge, Button, SectionCard, SegmentedControl } from "@/components/ui";
 import type { WaterMeter } from "@/lib/water-data";
 import { SatelliteMap } from "./SatelliteMap";
 import {
-  StatusBar,
+  StatusMark,
   MetersPanel,
   SelectedMeterPanel,
   StatusPanel,
@@ -39,14 +39,6 @@ import {
   type SatelliteState,
 } from "./consumptionModel";
 
-// Legend: one bar per band, each at a reading typical of it.
-const RING_LEGEND: Record<MeterStatus, number | null> = {
-  normal: 1,
-  elevated: 1.5,
-  high: 2,
-  zero: 0,
-  missing: null,
-};
 /** True when the link names its own day; otherwise the page opens on the latest recorded one. */
 const linkHasDate = () =>
   typeof window !== "undefined" &&
@@ -395,14 +387,11 @@ export function SatelliteView({
               <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
                 {STATUSES.map((status) => (
                   <li key={status} className="inline-flex items-center gap-1.5">
-                    <StatusBar status={status} ratio={RING_LEGEND[status]} width={44} />
+                    <StatusMark status={status} />
                     {STATUS_LABELS[status]}
                   </li>
                 ))}
-                <li>
-                  One segment per 40% of that meter&apos;s usual — all five
-                  from twice it
-                </li>
+                <li>The longer the mark, the further above that meter&apos;s usual</li>
               </ul>
               <details>
                 <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 focus-visible:outline-3 focus-visible:outline-accent">

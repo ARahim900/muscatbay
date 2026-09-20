@@ -74,7 +74,7 @@ describe("non-WebGL satellite compatibility map", () => {
         element.classList.add("meter-label");
         element.textContent = `${meter.name} ${meter.value === null ? "—" : meter.value.toFixed(2)} m³`;
       },
-      buildBar: () => document.createElement("span"),
+      buildTick: () => document.createElement("span"),
       fillZoneMarker: (element: HTMLElement, zone: string) => {
         element.classList.add("zone-marker");
         element.textContent = zone;
