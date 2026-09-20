@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { WaterMeter } from "@/lib/water-data";
 import {
   buildConsumptionMeters,
+  meterStatus,
   parseLocations,
   readSatelliteState,
   satelliteUrl,
@@ -148,5 +149,51 @@ describe("satellite daily consumption contract", () => {
     ).toEqual(state);
     expect(url).not.toContain("period=");
     expect(url).toContain("other=keep");
+  });
+  it("opens on the latest day at least half the meters reported, not one entered early", () => {
+    const rows: DailyMeterRow[] = [
+      { account_number: "a", month: "Sep-26", year: 2026, day_17: 5, day_19: 2 },
+      { account_number: "b", month: "Sep-26", year: 2026, day_17: 5 },
+      { account_number: "c", month: "Sep-26", year: 2026, day_17: 5 },
+      { account_number: "d", month: "Sep-26", year: 2026, day_17: 5 },
+    ];
+    const accounts = new Set(["a", "b", "c", "d"]);
+    // One meter is already entered for the 19th; the page must not open there.
+    expect(latestRecordedDay(rows, accounts, "2026-09-01", 0.5)).toBe("2026-09-17");
+    // The button beside the slider still reports any reading at all.
+    expect(latestRecordedDay(rows, accounts, "2026-09-01")).toBe("2026-09-19");
+  });
+  describe("meter status", () => {
+    const quiet = [1, 1, 1, 1, 1, 1, 1];
+    it("keeps missing, negative and zero readings apart", () => {
+      expect(meterStatus(null, quiet).status).toBe("missing");
+      expect(meterStatus(-3, quiet).status).toBe("missing");
+      expect(meterStatus(-3, quiet).statusNote).toContain("Negative");
+      expect(meterStatus(0, quiet).status).toBe("zero");
+      expect(meterStatus(0, quiet).ratio).toBe(0);
+    });
+    // Owner bands 2026-09-20: judged against the meter's OWN recent average, so
+    // a villa-size jump is caught as readily as a building-size one.
+    it("bands the day against the meter's own recent average", () => {
+      expect(meterStatus(1.2, quiet).status).toBe("normal"); // 120%
+      expect(meterStatus(1.4, quiet).status).toBe("elevated"); // 140%
+      expect(meterStatus(2, quiet).status).toBe("high"); // 200%
+      expect(meterStatus(9, quiet).statusNote).toContain("900% of its usual");
+      expect(meterStatus(1.4, quiet).ratio).toBeCloseTo(1.4);
+    });
+    it("withholds a verdict until the meter has three recorded days", () => {
+      const thin = meterStatus(9, [1, null, null]);
+      expect(thin.status).toBe("normal");
+      expect(thin.ratio).toBeNull();
+      expect(thin.baseline).toBeNull();
+      expect(thin.statusNote).toContain("No average yet");
+    });
+    it("skips missing days rather than counting them as zero", () => {
+      expect(meterStatus(3, [2, null, 2, null, 2]).baseline).toBe(2);
+    });
+    it("reads the status filter from the link and ignores an unknown one", () => {
+      expect(readSatelliteState("?status=zero", []).status).toBe("zero");
+      expect(readSatelliteState("?status=broken", []).status).toBe("");
+    });
   });
 });

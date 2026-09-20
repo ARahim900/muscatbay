@@ -1,26 +1,45 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/mb-button";
 import {
   parseLocations,
   type ConsumptionMeter,
   type MeterLocation,
 } from "./consumptionModel";
+import type { ZoneLoss } from "./zoneBalance";
+
+const NO_LOSSES: ZoneLoss[] = [];
 
 export function SatelliteMap({
   meters,
   zone,
   selected,
   date,
+  zones = [],
+  zoneLosses = NO_LOSSES,
+  summary = "",
+  children,
   onLocations,
   onZone,
   onMeter,
   onUnavailable,
+  onVillaLink,
 }: {
   meters: ConsumptionMeter[];
   zone: string;
   selected: string;
   date: string;
+  /** Every zone the operator can switch to — drawn as one-tap chips on the map. */
+  zones?: { id: string; name: string }[];
+  /** Bulk − L3 per zone, written on the overview's zone markers. */
+  zoneLosses?: ZoneLoss[];
+  /** One status line, shown above the map in full screen (the card header is hidden there). */
+  summary?: string;
+  /** The meter sheet — drawn over the map in full screen only. */
+  children?: ReactNode;
+  /** The selected villa's house connection, in words ("" when there is none). */
+  onVillaLink?: (text: string) => void;
   onLocations: (locations: MeterLocation[]) => void;
   onZone: (zone: string) => void;
   onMeter: (account: string) => void;
@@ -31,8 +50,17 @@ export function SatelliteMap({
   const [attempt, setAttempt] = useState(0);
   const [status, setStatus] = useState("Preparing satellite imagery…");
   const [failed, setFailed] = useState(false);
-  const latest = useRef({ meters, zone, selected, date });
-  const callbacks = useRef({ onLocations, onZone, onMeter, onUnavailable });
+  // Full screen is where the map is operated on a phone: one finger moves it,
+  // because there is no page underneath left to scroll.
+  const [full, setFull] = useState(false);
+  const latest = useRef({ meters, zone, selected, date, zones, zoneLosses });
+  const callbacks = useRef({
+    onLocations,
+    onZone,
+    onMeter,
+    onUnavailable,
+    onVillaLink,
+  });
   const warnedAboutFontSync = useRef(false);
   const syncTheme = useCallback(() => {
     const element = frame.current;
@@ -40,6 +68,13 @@ export function SatelliteMap({
     if (!element || !embedded?.documentElement) return;
     const theme = getComputedStyle(element);
     for (const token of [
+      "--status-normal",
+      "--status-warning",
+      "--status-danger",
+      "--status-missing",
+      "--color-success",
+      "--color-warning",
+      "--color-danger",
       "--color-bg",
       "--color-card",
       "--color-component",
@@ -103,16 +138,39 @@ export function SatelliteMap({
     };
   }, [syncTheme]);
   useEffect(() => {
-    callbacks.current = { onLocations, onZone, onMeter, onUnavailable };
-  }, [onLocations, onZone, onMeter, onUnavailable]);
+    callbacks.current = {
+      onLocations,
+      onZone,
+      onMeter,
+      onUnavailable,
+      onVillaLink,
+    };
+  }, [onLocations, onZone, onMeter, onUnavailable, onVillaLink]);
   useEffect(() => {
-    latest.current = { meters, zone, selected, date };
+    latest.current = { meters, zone, selected, date, zones, zoneLosses };
     if (ready.current)
       frame.current?.contentWindow?.postMessage(
         { type: "satviz:update", payload: latest.current },
         location.origin,
       );
-  }, [meters, zone, selected, date]);
+  }, [meters, zone, selected, date, zones, zoneLosses]);
+  useEffect(() => {
+    frame.current?.contentWindow?.postMessage(
+      { type: "satviz:mode", full },
+      location.origin,
+    );
+    if (!full) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFull(false);
+    };
+    window.addEventListener("keydown", close);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener("keydown", close);
+    };
+  }, [full]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setFailed(true);
@@ -152,7 +210,11 @@ export function SatelliteMap({
         message.type === "satviz:select-zone" &&
         typeof message.zone === "string"
       ) {
-        if (latest.current.meters.some((m) => m.zone === message.zone))
+        if (
+          message.zone === "" ||
+          latest.current.zones.some((z) => z.id === message.zone) ||
+          latest.current.meters.some((m) => m.zone === message.zone)
+        )
           callbacks.current.onZone(message.zone);
       } else if (
         message.type === "satviz:select-meter" &&
@@ -160,6 +222,11 @@ export function SatelliteMap({
       ) {
         if (latest.current.meters.some((m) => m.account === message.account))
           callbacks.current.onMeter(message.account);
+      } else if (
+        message.type === "satviz:villa-link" &&
+        typeof message.text === "string"
+      ) {
+        callbacks.current.onVillaLink?.(message.text.slice(0, 200));
       }
     };
     window.addEventListener("message", receive);
@@ -193,7 +260,14 @@ export function SatelliteMap({
     setAttempt((a) => a + 1);
   };
   return (
-    <div className="relative min-w-0 space-y-2">
+    <div
+      className={
+        full
+          ? // viewport-fit=cover: keep the map clear of the notch and the home bar
+            "fixed inset-0 z-[150] flex min-w-0 flex-col bg-bg pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]"
+          : "relative min-w-0 space-y-2"
+      }
+    >
       {status && (
         <div
           role="status"
@@ -213,34 +287,79 @@ export function SatelliteMap({
           )}
         </div>
       )}
-      {!failed && (
-        <Button
-          className="absolute bottom-3 left-3 z-10"
-          onClick={() =>
-            frame.current?.contentWindow?.postMessage(
-              { type: "satviz:focus" },
-              location.origin,
-            )
-          }
-        >
-          {selected ? "Refocus meter" : "Fit zone"}
-        </Button>
+      {full && summary && (
+        <p className="truncate border-b border-line bg-card px-3 py-2 text-caption tabular-nums text-fg">
+          {summary}
+        </p>
       )}
-      <iframe
-        style={{ height: "70svh", minHeight: 360, maxHeight: 720 }}
-        onLoad={() => {
-          syncTheme();
-          frame.current?.contentWindow?.postMessage(
-            { type: "satviz:hello" },
-            location.origin,
-          );
-        }}
-        key={attempt}
-        ref={frame}
-        src="/satellite/consumption.html?v=17"
-        title="Water consumption satellite map"
-        className={`${failed ? "hidden" : "block"} w-full rounded-b-card border-0`}
-      />
+      {/* Everything drawn over the map is placed against the map itself, so the
+          status line and the full-screen strip above never shift it. */}
+      <div className={`relative min-h-0 ${full ? "flex flex-1 flex-col" : ""}`}>
+        {!failed && (
+          // Full screen on a phone: the meter sheet owns the bottom edge, so the
+          // buttons move under the zone strip while a meter is open.
+          <div
+            className={`absolute left-3 z-20 flex flex-wrap gap-2 ${selected && full ? "max-sm:top-17 sm:bottom-3" : "bottom-3"}`}
+          >
+            <Button
+              onClick={() =>
+                frame.current?.contentWindow?.postMessage(
+                  { type: "satviz:focus" },
+                  location.origin,
+                )
+              }
+            >
+              {selected ? "Refocus meter" : "Fit zone"}
+            </Button>
+            <Button
+              icon={full ? Minimize2 : Maximize2}
+              aria-pressed={full}
+              onClick={() => setFull((value) => !value)}
+            >
+              {full ? "Close full screen" : "Full screen"}
+            </Button>
+          </div>
+        )}
+        {!failed && !full && (
+          // On a touch screen the embedded map would fight the page for the
+          // finger, so the first tap opens it full screen instead.
+          <button
+            type="button"
+            onClick={() => setFull(true)}
+            className="absolute inset-0 z-10 hidden items-end justify-center pb-16 focus-visible:outline-3 focus-visible:outline-accent pointer-coarse:flex"
+          >
+            <span className="rounded-control border border-line bg-card px-3 py-2 text-label text-fg shadow-card">
+              Tap to open the map
+            </span>
+          </button>
+        )}
+        <iframe
+          style={
+            full
+              ? { height: "100%", flex: 1 }
+              : { height: "70svh", minHeight: 360, maxHeight: 720 }
+          }
+          onLoad={() => {
+            syncTheme();
+            frame.current?.contentWindow?.postMessage(
+              { type: "satviz:mode", full },
+              location.origin,
+            );
+            frame.current?.contentWindow?.postMessage(
+              { type: "satviz:hello" },
+              location.origin,
+            );
+          }}
+          key={attempt}
+          ref={frame}
+          src="/satellite/consumption.html?v=24"
+          title="Water consumption satellite map"
+          className={`${failed ? "hidden" : "block"} w-full border-0 ${full ? "" : "rounded-b-card"}`}
+        />
+        {/* Embedded, the page's own panels carry the details; the sheet is for
+            full screen, where those panels are out of view. */}
+        {!failed && full && children}
+      </div>
     </div>
   );
 }

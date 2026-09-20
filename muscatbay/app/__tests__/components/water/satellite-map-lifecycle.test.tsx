@@ -41,7 +41,7 @@ describe("satellite iframe lifecycle", () => {
     const frame = screen.getByTitle(
       "Water consumption satellite map",
     ) as HTMLIFrameElement;
-    expect(frame).toHaveAttribute("src", "/satellite/consumption.html?v=17");
+    expect(frame).toHaveAttribute("src", "/satellite/consumption.html?v=24");
     const post = vi.spyOn(frame.contentWindow!, "postMessage");
     receive(frame, { type: "satviz:ready", locations: [] });
     view.rerender(
@@ -55,6 +55,24 @@ describe("satellite iframe lifecycle", () => {
       }),
       location.origin,
     );
+  });
+  it("opens full screen without reloading the map, and lets the map return to all zones", () => {
+    const onZone = vi.fn();
+    render(<SatelliteMap {...props} zone="Zone_05" zones={[{ id: "Zone_08", name: "Zone 8" }]} onZone={onZone} />);
+    const frame = screen.getByTitle("Water consumption satellite map") as HTMLIFrameElement;
+    const post = vi.spyOn(frame.contentWindow!, "postMessage");
+    receive(frame, { type: "satviz:ready", locations: [] });
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    expect(screen.getByTitle("Water consumption satellite map")).toBe(frame);
+    expect(post).toHaveBeenLastCalledWith({ type: "satviz:mode", full: true }, location.origin);
+    expect(document.body.style.overflow).toBe("hidden");
+    receive(frame, { type: "satviz:select-zone", zone: "Zone_08" });
+    receive(frame, { type: "satviz:select-zone", zone: "" });
+    receive(frame, { type: "satviz:select-zone", zone: "Zone_unknown" });
+    expect(onZone.mock.calls).toEqual([["Zone_08"], [""]]);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(post).toHaveBeenLastCalledWith({ type: "satviz:mode", full: false }, location.origin);
+    expect(document.body.style.overflow).toBe("");
   });
   it("ignores messages from a different frame even on the same origin", () => {
     render(<SatelliteMap {...props} />);

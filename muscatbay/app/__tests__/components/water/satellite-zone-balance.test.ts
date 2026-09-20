@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { summariseZoneBalance } from "@/components/water/satellite/zoneBalance";
+import {
+  summariseZoneBalance,
+  summariseZoneLosses,
+} from "@/components/water/satellite/zoneBalance";
 import type { ConsumptionMeter } from "@/components/water/satellite/consumptionModel";
 const meter = (
   account: string,
@@ -18,6 +21,8 @@ const meter = (
   trend: [],
   updatedAt: null,
   location: null,
+  status: "normal",
+  statusNote: "",
 });
 const bulk = (value: number | null) => meter("4300345", "L2", value);
 describe("daily zone bulk versus L3 comparison", () => {
@@ -39,15 +44,27 @@ describe("daily zone bulk versus L3 comparison", () => {
     expect(result.count).toBe(2);
     expect(result.difference).toBeCloseTo(73.86);
   });
-  it("keeps recorded L3 consumption but withholds a difference when a reading is missing", () => {
+  // Owner ruling 2026-09-20: a silent L3 meter no longer blanks the zone. The
+  // measured difference is shown and marked partial, as the Daily report does.
+  it("shows the measured difference, marked partial, when an L3 reading is missing", () => {
     const result = summariseZoneBalance(
       [bulk(105), meter("a", "L3", 59.43), meter("b", "L3", null)],
       "Zone_05",
     );
     expect(result.l3.total).toBe(59.43);
     expect(result.l3.reporting).toBe(1);
+    expect(result.difference).toBeCloseTo(45.57);
+    expect(result.partial).toBe(true);
+    expect(result.missing).toBe(1);
+    expect(result.unavailable).toBe("");
+  });
+  it("has no difference at all when no L3 meter reported", () => {
+    const result = summariseZoneBalance(
+      [bulk(105), meter("a", "L3", null)],
+      "Zone_05",
+    );
     expect(result.difference).toBeNull();
-    expect(result.unavailable).toContain("1 L3 reading(s) missing");
+    expect(result.partial).toBe(false);
   });
   it("does not substitute another bulk meter for the registered zone inlet", () => {
     const result = summariseZoneBalance(
@@ -90,5 +107,24 @@ describe("daily zone bulk versus L3 comparison", () => {
       summariseZoneBalance([bulk(10), bulk(10), meter("a", "L3", 5)], "Zone_05")
         .difference,
     ).toBeNull();
+  });
+  it("writes each zone's loss on the Daily report's scale, and never estimates one", () => {
+    const losses = summariseZoneLosses([
+      bulk(139),
+      meter("a", "L3", 60),
+      meter("b", "L3", 5),
+      meter("4300342", "L2", null, "Zone_08"),
+      meter("c", "L3", 16, "Zone_08"),
+    ]);
+    const zone5 = losses.find((z) => z.id === "Zone_05")!;
+    expect(zone5.loss).toBe(74);
+    expect(zone5.lossPct).toBeCloseTo(53.2, 1);
+    expect(zone5.severity).toBe("critical");
+    expect(zone5.label).toBe("Loss 74 m³ · 53% · Critical");
+    // Zone 8's bulk reading is missing: the loss stays unknown, it is not 0.
+    const zone8 = losses.find((z) => z.id === "Zone_08")!;
+    expect(zone8.loss).toBeNull();
+    expect(zone8.severity).toBe("nodata");
+    expect(zone8.label).toBe("Loss — · bulk reading missing");
   });
 });

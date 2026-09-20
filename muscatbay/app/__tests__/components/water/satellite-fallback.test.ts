@@ -38,7 +38,7 @@ describe("non-WebGL satellite compatibility map", () => {
     document.body.replaceChildren();
   });
 
-  it("renders satellite imagery, network lines and tappable daily meter values", () => {
+  it("renders satellite imagery, network lines and tappable meter points with one name tag", () => {
     const container = document.createElement("div");
     container.id = "map";
     Object.defineProperties(container, {
@@ -68,6 +68,17 @@ describe("non-WebGL satellite compatibility map", () => {
       onZone,
       onStatus,
       volume: (value: number | null) => (value === null ? "—" : value.toFixed(2)),
+      // The engine hands both renderers the same label builders; stand-ins here.
+      statusOf: (meter: { value: number | null }) => (meter.value === null ? "missing" : "normal"),
+      fillMeterLabel: (element: HTMLElement, meter: { name: string; value: number | null }) => {
+        element.classList.add("meter-label");
+        element.textContent = `${meter.name} ${meter.value === null ? "—" : meter.value.toFixed(2)} m³`;
+      },
+      buildTick: () => document.createElement("span"),
+      fillZoneMarker: (element: HTMLElement, zone: string) => {
+        element.classList.add("zone-marker");
+        element.textContent = zone;
+      },
     });
     map.update({
       date: "2026-09-12",
@@ -102,9 +113,35 @@ describe("non-WebGL satellite compatibility map", () => {
       expect.stringMatching(/^\/api\/satellite-tiles\/\d+\/\d+\/\d+$/),
     );
     expect(container.querySelectorAll(".compat-network-line")).toHaveLength(1);
-    expect(container).toHaveTextContent("10.25 m³");
+    // No figures on the map: a name tag for the selected meter only.
+    expect(container).not.toHaveTextContent("10.25 m³");
+    map.update({
+      date: "2026-09-12",
+      zone: "Zone_05",
+      selected: "4300155",
+      meters: [
+        {
+          account: "4300155",
+          name: "Villa meter",
+          zone: "Zone_05",
+          zoneName: "Zone 5",
+          value: 10.25,
+          location: { coordinates: [58.64, 23.55] },
+        },
+        {
+          account: "missing",
+          name: "Missing meter",
+          zone: "Zone_05",
+          zoneName: "Zone 5",
+          value: null,
+          location: { coordinates: [58.6405, 23.5505] },
+        },
+      ],
+    });
+    expect(container.querySelectorAll(".meter-label")).toHaveLength(1);
+    expect(container).toHaveTextContent("Villa meter");
     expect(
-      container.querySelector('button.missing[aria-label*="no reading"]'),
+      container.querySelector('button[data-status="missing"][aria-label*="no reading"]'),
     ).toBeInTheDocument();
     const meter = container.querySelector<HTMLButtonElement>(
       'button[aria-label*="Villa meter"]',

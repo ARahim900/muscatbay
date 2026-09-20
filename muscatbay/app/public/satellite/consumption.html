@@ -21,7 +21,7 @@
         z-index: 3;
         left: 14px;
         top: 14px;
-        max-width: calc(100% - 56px);
+        max-width: calc(100% - 92px);
         padding: 10px 14px;
         background: var(--color-card, #fff);
         border: 1px solid var(--color-line, #e5e7eb);
@@ -30,6 +30,15 @@
       #message:empty {
         display: none;
       }
+      html.full #message {
+        top: 66px;
+      }
+      @media (max-width: 639px) {
+        /* Full screen on a phone: the page's two map buttons can sit under the zone strip. */
+        html.full #message {
+          top: 118px;
+        }
+      }
       button:focus-visible {
         outline: 2px solid var(--color-accent, #a1d1d5);
       }
@@ -37,64 +46,192 @@
         width: 44px;
         height: 44px;
       }
+      /* Nothing on the map carries a figure: zones are named pins and a meter
+         shows a name tag only when selected, when it is the zone bulk, or under
+         the mouse. They take the app's card tokens, like every other control. */
       .zone-marker,
       .meter-label {
-        min-height: 44px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10.5px;
-        background: #4e4456;
-        color: #fff;
-        box-shadow: 0 2px 8px rgb(0 0 0 / 24%);
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: var(--radius-control, 6px);
+        background: var(--color-card, #fff);
+        color: var(--color-fg, #0a0a0a);
+        box-shadow: var(--shadow-card);
         font: inherit;
+        white-space: nowrap;
+      }
+      /* A meter is one small line in the colour of its band, and the further
+         above its own usual it read, the longer that line. A meter that read
+         nothing at all is a dot. Figures stay in the page's panels. */
+      .meter-marker {
+        display: block;
+        padding: 6px;
+        border: 0;
+        background: transparent;
+        line-height: 0;
         cursor: pointer;
       }
-      .zone-marker {
-        min-width: 44px;
-        padding: 8px 12px;
-      }
-      .zone-marker strong {
-        display: block;
-        font-size: 16px;
-        color: #a4c5bb;
-      }
-      .zone-marker span {
-        display: block;
-        font-size: 12px;
-      }
-      .meter-label {
-        min-width: 92px;
-        padding: 6px 10px;
-        display: grid;
-        gap: 1px;
-      }
-      .meter-label span {
-        display: block;
-        font-size: 12px;
-      }
-      .meter-label strong {
-        display: block;
-        font-size: 16px;
-        font-variant-numeric: tabular-nums;
-        color: #a4c5bb;
-      }
-      .meter-label.selected {
-        background: #a4c5bb;
-        color: #0a0a0a;
-        outline: 3px solid #4e4456;
-        outline-offset: 2px;
+      .meter-marker.selected {
         z-index: 2;
       }
-      .meter-label.selected strong {
-        color: #0a0a0a;
+      .meter-tick {
+        display: block;
+        height: 4px;
+        border-radius: 999px;
+        transform: scale(var(--marker-scale, 1));
+        transform-origin: center;
+        box-shadow:
+          0 0 0 1px rgb(10 9 12 / 65%),
+          0 1px 3px rgb(0 0 0 / 40%);
       }
-      .meter-label.missing strong {
+      .meter-marker.selected .meter-tick {
+        height: 6px;
+        box-shadow:
+          0 0 0 2px var(--color-card, #fff),
+          0 1px 4px rgb(0 0 0 / 50%);
+      }
+      .meter-marker:focus-visible {
+        outline: 3px solid var(--color-accent, #a4c5bb);
+        outline-offset: 0;
+        border-radius: 999px;
+      }
+      @media (pointer: coarse) {
+        .meter-marker {
+          padding: 10px;
+        }
+      }
+      .zone-anchor {
+        position: relative;
+        width: 0;
+        height: 0;
+      }
+      .zone-anchor::before {
+        content: "";
+        position: absolute;
+        left: -6px;
+        top: -6px;
+        width: 12px;
+        height: 12px;
+        border: 3px solid #4e4456;
+        border-radius: 50%;
+        background: #fff;
+        box-sizing: border-box;
+      }
+      .zone-marker {
+        position: absolute;
+        min-height: 44px;
+        padding: 0 14px;
+        cursor: pointer;
+        /* Default: centred below the point. The engine then moves the pin's name
+           to whichever side of the point is free. */
+        left: 0;
+        top: 0;
+        transform: translate(-50%, 12px);
+      }
+      .zone-marker b {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .zone-marker:hover {
+        border-color: var(--color-primary, #4e4456);
+      }
+      .meter-label {
+        display: grid;
+        gap: 1px;
+        min-height: 32px;
+        padding: 5px 10px;
+        align-content: center;
+        text-align: center;
+        cursor: pointer;
+      }
+      .meter-label span {
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .meter-label strong {
+        font-size: 13px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .meter-label.bulk span {
+        font-size: 12px;
+        color: var(--color-muted, #6b7280);
+      }
+      .meter-label.selected {
+        border-color: var(--color-primary, #4e4456);
+        background: var(--color-primary, #4e4456);
         color: #fff;
+        z-index: 2;
       }
-      .meter-label.selected.missing strong {
-        color: #0a0a0a;
+      .meter-label.selected span {
+        color: #fff;
+        font-size: 13px;
+      }
+      .meter-label.hover {
+        pointer-events: none;
+        z-index: 3;
       }
       /* Map-side controls take the app's tokens (synced in by SatelliteMap), so
          they follow light and dark like the zoom buttons beside them. */
+      /* The app's pill strip (TabNavigation): one bordered track, the chosen
+         zone filled purple. One row; it scrolls sideways when zones do not fit. */
+      /* Embedded, the page's Zones panel switches zone. Full screen hides that
+         panel, so the strip appears there only. */
+      .zone-chips {
+        display: none;
+        position: absolute;
+        z-index: 3;
+        top: 10px;
+        left: 10px;
+        max-width: calc(100% - 84px);
+        gap: 4px;
+        overflow-x: auto;
+        padding: 4px;
+        border: 1px solid var(--color-line, #e5e7eb);
+        border-radius: 12px;
+        background: var(--color-card, #fff);
+        box-shadow: var(--shadow-card);
+        box-sizing: border-box;
+        scrollbar-width: none;
+      }
+      html.full .zone-chips {
+        display: flex;
+      }
+      .zone-chips::-webkit-scrollbar {
+        display: none;
+      }
+      .zone-chip {
+        flex: none;
+        min-height: 44px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--color-muted, #454545);
+        font: 500 14px/1 inherit;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          background-color 0.15s ease,
+          color 0.15s ease;
+      }
+      .zone-chip:hover {
+        background: var(--color-component, #f0f2f4);
+        color: var(--color-fg, #0a0a0a);
+      }
+      .zone-chip[aria-pressed="true"] {
+        background: var(--color-primary, #4e4456);
+        color: #fff;
+        font-weight: 600;
+      }
+      .zone-chip:focus-visible {
+        outline: 3px solid var(--color-accent, #a4c5bb);
+        outline-offset: -3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .zone-chip {
+          transition: none;
+        }
+      }
       .three-d-button {
         width: 44px;
         height: 44px;
@@ -111,8 +248,7 @@
         align-items: flex-end;
         gap: 8px;
       }
-      .three-d-badge,
-      .link-note {
+      .three-d-badge {
         margin: 0;
         padding: 6px 10px;
         border: 1px solid var(--color-line, #e5e7eb);
@@ -128,19 +264,6 @@
       }
       .three-d-badge[hidden] {
         display: none;
-      }
-      .link-note {
-        display: grid;
-        gap: 1px;
-        max-width: 260px;
-        pointer-events: none;
-      }
-      .link-note strong {
-        font-size: 14px;
-      }
-      .link-note span {
-        font-size: 12px;
-        color: var(--color-muted, #6b7280);
       }
       .meter-label:focus-visible,
       .zone-marker:focus-visible {
@@ -224,29 +347,9 @@
         pointer-events: auto;
       }
       .compat-meter-point {
-        width: 44px;
-        height: 44px;
-        padding: 0;
-        border: 0;
-        background: transparent;
-      }
-      .compat-meter-dot {
-        display: block;
-        width: 14px;
-        height: 14px;
-        margin: auto;
-        border: 2px solid #4e4456;
-        border-radius: 50%;
-        background: #a4c5bb;
-      }
-      .compat-meter-point.missing .compat-meter-dot {
-        background: var(--color-card, #fff);
-      }
-      .compat-meter-point.selected .compat-meter-dot {
-        width: 20px;
-        height: 20px;
-        outline: 3px solid #4e4456;
-        outline-offset: 2px;
+        /* The compatibility map is the touch path: keep a finger-sized target
+           around a mark this small. */
+        padding: 10px;
       }
       .compat-meter-card {
         position: absolute;
@@ -299,7 +402,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=17"></script>
-    <script src="consumption-engine.js?v=17"></script>
+    <script src="consumption-fallback.js?v=24"></script>
+    <script src="consumption-engine.js?v=24"></script>
   </body>
 </html>

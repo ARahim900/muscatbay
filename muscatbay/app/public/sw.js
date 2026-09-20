@@ -19,6 +19,16 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v23 (2026-09-20) Satellite map: meters are segmented bars, not ring gauges.
+ *   v24 (2026-09-20) Satellite map: one small status line per meter.
+ *   v22 (2026-09-20) Satellite map: every meter is a ring filled to its share of
+ *                    its own recent average, green / amber / red by band.
+ *   v21 (2026-09-20) Satellite view rebuilt as one frame: panels · map · panels. The
+ *                    map carries dots and name tags only; zone auto fly.
+ *   v20 (2026-09-20) Satellite map: flat by default, status colours, zone loss,
+ *                    non-overlapping zone markers, pill zone strip, label tap fix.
+ *   v19 (2026-09-20) Satellite map: whole-number figures, distinct bulk meter, black labels.
+ *   v18 (2026-09-20) Satellite map: full-screen touch mode and on-map zone chips.
  *   v17 (2026-09-19) Satellite map frames a selected zone at an oblique 3D angle.
  *   v16 (2026-09-19) adds the Satellite map's 3D house view (button, off by default).
  *   v15 (2026-09-19) refreshes clients after the Satellite map added flat house
@@ -56,7 +66,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v17";
+const CACHE_VERSION = "v24";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
