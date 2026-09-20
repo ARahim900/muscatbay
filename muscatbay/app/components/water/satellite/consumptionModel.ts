@@ -83,6 +83,16 @@ export const formatMapVolume = (value: number | null): string => {
     maximumFractionDigits: size < 10 ? 1 : 0,
   });
 };
+/**
+ * The ring's share of a meter's usual, in words. Beyond ten times over, a
+ * percentage stops being readable ("1085%"), so the multiple is shown instead.
+ */
+export const formatRatio = (ratio: number | null): string => {
+  if (ratio === null) return "";
+  if (ratio === 0) return "zero";
+  if (ratio >= 10) return `×${Math.round(ratio)}`;
+  return `${Math.round(ratio * 100)}%`;
+};
 export function meterStatus(
   value: number | null,
   history: (number | null)[],
@@ -128,7 +138,10 @@ export function meterStatus(
       ratio: null,
     };
   const ratio = value / baseline;
-  const percent = `${Math.round(ratio * 100)}% of its usual`;
+  const percent =
+    ratio >= 10
+      ? `${formatRatio(ratio)} its usual`
+      : `${formatRatio(ratio)} of its usual`;
   if (ratio >= STATUS_BANDS.high)
     return { status: "high", statusNote: `${percent}${against}`, baseline, ratio };
   if (ratio >= STATUS_BANDS.elevated)

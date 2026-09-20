@@ -23,6 +23,7 @@ import {
   STATUSES,
   STATUS_LABELS,
   formatMapVolume,
+  formatRatio,
   type ConsumptionMeter,
   type MeterStatus,
 } from "./consumptionModel";
@@ -315,7 +316,7 @@ export function MetersPanel({
                     <Badge tone={STATUS_TONES[meter.status]} className="shrink-0">
                       {meter.status === "missing"
                         ? STATUS_LABELS.missing
-                        : `${formatMapVolume(meter.value)} m³ · ${meter.ratio === null ? STATUS_LABELS[meter.status].toLowerCase() : `${Math.round(meter.ratio * 100)}%`}`}
+                        : `${formatMapVolume(meter.value)} m³ · ${formatRatio(meter.ratio) || STATUS_LABELS[meter.status].toLowerCase()}`}
                     </Badge>
                   )}
                 </button>

@@ -126,6 +126,9 @@
     zero: () => token("--color-warning", "#9A6B00"),
     missing: () => token("--color-muted", "#6B7280"),
   };
+  // Beyond ten times over, a percentage stops being readable; show the multiple.
+  const share = (ratio) =>
+    typeof ratio !== "number" ? "" : ratio === 0 ? "zero" : ratio >= 10 ? `×${Math.round(ratio)}` : `${Math.round(ratio * 100)}%`;
   const RADIUS = 14;
   const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
   const svg = (name, attributes) => {
@@ -189,7 +192,7 @@
     const status = statusOf(meter);
     button.setAttribute(
       "aria-label",
-      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${typeof meter.ratio === "number" ? `, ${Math.round(meter.ratio * 100)} per cent of its usual` : ""}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${share(meter.ratio) ? `, ${share(meter.ratio)} of its usual` : ""}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
     );
     return button;
   }
@@ -209,10 +212,7 @@
     element.append(name);
     if (withValue) {
       const value = document.createElement("strong");
-      value.textContent =
-        typeof meter.ratio === "number"
-          ? `${volume(meter.value)} m³ · ${Math.round(meter.ratio * 100)}%`
-          : `${volume(meter.value)} m³`;
+      value.textContent = `${volume(meter.value)} m³${share(meter.ratio) ? ` · ${share(meter.ratio)}` : ""}`;
       element.append(value);
     }
     element.setAttribute(
