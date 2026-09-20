@@ -29,6 +29,7 @@ import {
     getSTPOperationsFromSupabase,
     getContractorTrackerData,
 } from "@/lib/supabase";
+import { getCurrentUser, onAuthStateChange } from "@/lib/auth";
 import type { WaterMeter } from "@/lib/water-data";
 import type { ContractorTracker } from "@/entities/contractor";
 import type { STPOperation } from "@/lib/mock-data";
@@ -102,8 +103,23 @@ export function useOperationalAlerts(
         setAckedIds(getAcknowledgedAlertIds());
     }, []);
 
+    // Whether the last fetch found a signed-in session (null = not yet asked).
+    const hadSession = useRef<boolean | null>(null);
+
     const fetchSources = useCallback(async () => {
         if (!isSupabaseConfigured()) {
+            setData(null);
+            setStatus("unavailable");
+            setEvaluatedAt(new Date());
+            return;
+        }
+        // This provider sits above the auth gate, so the hook also runs on the
+        // login screen. The alert tables need a session; asking without one
+        // answers 401 and logs a read failure while nothing is actually wrong.
+        // getCurrentUser() reads the stored session — no network round-trip.
+        const user = await getCurrentUser();
+        hadSession.current = Boolean(user);
+        if (!user) {
             setData(null);
             setStatus("unavailable");
             setEvaluatedAt(new Date());
@@ -130,6 +146,16 @@ export function useOperationalAlerts(
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- kick off the async source fetch; state lands after awaits
         fetchSources();
+    }, [fetchSources]);
+
+    // Signing in is what makes the sources readable, so read them then. Only a
+    // fetch that found no session arms this, so a page opened already signed in
+    // does not fetch twice.
+    useEffect(() => {
+        const { data: { subscription } } = onAuthStateChange((user) => {
+            if (user && hadSession.current === false) fetchSources();
+        });
+        return () => subscription.unsubscribe();
     }, [fetchSources]);
 
     // Debounced refetch on realtime changes — mirrors the dashboard's pattern.
