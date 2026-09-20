@@ -106,7 +106,8 @@ export function SatelliteView({
   // while the bulk itself is selected. Tables and totals still follow `scope`.
   // The status filter narrows the map and the table; totals stay on `scope`.
   const visible = useMemo(
-    () => (state.status ? scope.filter((m) => m.status === state.status) : scope),
+    () =>
+      state.status ? scope.filter((m) => m.status === state.status) : scope,
     [scope, state.status],
   );
   const mapMeters = useMemo(() => {
@@ -299,14 +300,19 @@ export function SatelliteView({
           onChange={changeLevel}
           options={[
             { value: "all", label: "All zones" },
-            { value: "zone", label: state.zone ? zoneName(state.zone) : "Zone" },
+            {
+              value: "zone",
+              label: state.zone ? zoneName(state.zone) : "Zone",
+            },
             { value: "meter", label: selected ? selected.name : "Meter" },
           ]}
         />
         <div className="flex flex-wrap items-center gap-2">
           <Badge
             dot
-            tone={daily.error ? "danger" : summary.partial ? "warning" : "success"}
+            tone={
+              daily.error ? "danger" : summary.partial ? "warning" : "success"
+            }
           >
             {reportingLine}
           </Badge>
@@ -342,66 +348,75 @@ export function SatelliteView({
             : "Values are unavailable."}
         </p>
       )}
-      {/* One frame at every level: panels · map · panels, KPI strip beneath.
-          On a phone the same blocks stack — map, KPIs, meters, zones — and
+      {/* One frame at every level: KPI strip, then panels · map · panels. On a
+          phone the same blocks stack — map, KPIs, meters, week, zones — and
           nothing is ever laid over the map. */}
       <div className="grid gap-3.5 xl:grid-cols-[16rem_minmax(0,1fr)_19rem] 2xl:grid-cols-[18rem_minmax(0,1fr)_22rem]">
-        <div ref={mapRef} className="min-w-0 space-y-2 xl:col-start-2 xl:row-start-1">
-          <SectionCard className="h-auto">
-            <SectionCard.Header
-              icon={MapPin}
-              title="Satellite map"
-              description={`${formatDay(state.date)} · ${state.zone ? zoneName(state.zone) : "All zones"} · ${state.level}`}
+        <div className="contents xl:col-start-2 xl:row-start-2 xl:block xl:min-w-0 xl:space-y-3.5">
+          <div ref={mapRef} className="order-1 min-w-0 space-y-2">
+            <SectionCard className="h-auto">
+              <SectionCard.Header
+                icon={MapPin}
+                title="Satellite map"
+                description={`${formatDay(state.date)} · ${state.zone ? zoneName(state.zone) : "All zones"} · ${state.level}`}
+              />
+              <SectionCard.Body flush className="relative">
+                <SatelliteMap
+                  onUnavailable={setMapUnavailable}
+                  meters={mapMeters}
+                  zone={state.zone}
+                  zones={zoneChips}
+                  zoneLosses={zoneLosses}
+                  selected={state.meter}
+                  date={state.date}
+                  summary={`${formatDay(state.date)} · ${formatMapVolume(summary.total)} m³ · ${reportingLine}`}
+                  onLocations={setLocations}
+                  onZone={selectZone}
+                  onMeter={selectMeter}
+                  onVillaLink={setVillaLink}
+                >
+                  {meterSheet}
+                </SatelliteMap>
+              </SectionCard.Body>
+            </SectionCard>
+            <div className="space-y-1 text-caption text-muted">
+              <ul className="flex flex-wrap gap-x-5 gap-y-1">
+                <li>Circle size = daily m³</li>
+                <li>White ring = zone bulk meter</li>
+                <li>Figures are in the panels, not on the map</li>
+              </ul>
+              <details>
+                <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 focus-visible:outline-3 focus-visible:outline-accent">
+                  <Info size={16} strokeWidth={2} aria-hidden />
+                  About this map
+                </summary>
+                <p>
+                  High usage follows the Daily report&apos;s rule: at least
+                  twice the meter&apos;s recent daily average and 5 m³ above it.
+                  Unaccounted water is the zone bulk minus its L3 meters for the
+                  same day; when some meters have not reported it is marked
+                  partial and can only overstate the loss. It may include
+                  leakage, unmetered use or reading-time differences; it is not
+                  a confirmed leak measurement. Solid lines: existing drawing
+                  network (includes previously adjusted road alignments).
+                  Positions include building and zone reference points; exact
+                  meter chambers may be unverified. Satellite imagery is not
+                  live. Missing readings stay —, never 0.
+                  {state.zone === "Zone_01_(FM)" &&
+                    " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
+                </p>
+              </details>
+            </div>
+          </div>
+          <div className="order-4 min-w-0">
+            <TrendPanel
+              bulk={trendBulk}
+              metered={trendMetered}
+              scope={state.zone ? zoneName(state.zone) : "Whole site"}
             />
-            <SectionCard.Body flush className="relative">
-              <SatelliteMap
-                onUnavailable={setMapUnavailable}
-                meters={mapMeters}
-                zone={state.zone}
-                zones={zoneChips}
-                zoneLosses={zoneLosses}
-                selected={state.meter}
-                date={state.date}
-                summary={`${formatDay(state.date)} · ${formatMapVolume(summary.total)} m³ · ${reportingLine}`}
-                onLocations={setLocations}
-                onZone={selectZone}
-                onMeter={selectMeter}
-                onVillaLink={setVillaLink}
-              >
-                {meterSheet}
-              </SatelliteMap>
-            </SectionCard.Body>
-          </SectionCard>
-          <div className="space-y-1 text-caption text-muted">
-            <ul className="flex flex-wrap gap-x-5 gap-y-1">
-              <li>Circle size = daily m³</li>
-              <li>White ring = zone bulk meter</li>
-              <li>Figures are in the panels, not on the map</li>
-            </ul>
-            <details>
-              <summary className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 focus-visible:outline-3 focus-visible:outline-accent">
-                <Info size={16} strokeWidth={2} aria-hidden />
-                About this map
-              </summary>
-              <p>
-                High usage follows the Daily report&apos;s rule: at least twice
-                the meter&apos;s recent daily average and 5 m³ above it.
-                Unaccounted water is the zone bulk minus its L3 meters for the
-                same day; when some meters have not reported it is marked
-                partial and can only overstate the loss. It may include
-                leakage, unmetered use or reading-time differences; it is not a
-                confirmed leak measurement. Solid lines: existing drawing
-                network (includes previously adjusted road alignments).
-                Positions include building and zone reference points; exact
-                meter chambers may be unverified. Satellite imagery is not
-                live. Missing readings stay —, never 0.
-                {state.zone === "Zone_01_(FM)" &&
-                  " Dashed FM links are schematic building connections, not surveyed pipe routes or measured flow."}
-              </p>
-            </details>
           </div>
         </div>
-        <div className="min-w-0 xl:col-span-3 xl:row-start-2">
+        <div className="order-2 min-w-0 xl:col-span-3 xl:row-start-1">
           <SatelliteSummary
             zone={zoneRow}
             zones={zoneLosses}
@@ -409,7 +424,7 @@ export function SatelliteView({
             statusCounts={statusCounts}
           />
         </div>
-        <div className="min-w-0 space-y-3.5 xl:col-start-3 xl:row-start-1">
+        <div className="order-3 min-w-0 space-y-3.5 xl:col-start-3 xl:row-start-2">
           <MetersPanel
             meters={ranked}
             selected={state.meter}
@@ -429,7 +444,7 @@ export function SatelliteView({
             onClose={() => change({ meter: "" })}
           />
         </div>
-        <div className="min-w-0 space-y-3.5 xl:col-start-1 xl:row-start-1">
+        <div className="order-5 min-w-0 space-y-3.5 xl:col-start-1 xl:row-start-2">
           <ZonesPanel
             zones={zoneLosses}
             selected={state.zone}
@@ -440,11 +455,6 @@ export function SatelliteView({
             counts={statusCounts}
             selected={state.status}
             onStatus={(status) => change({ status, meter: "" })}
-          />
-          <TrendPanel
-            bulk={trendBulk}
-            metered={trendMetered}
-            scope={state.zone ? zoneName(state.zone) : "Whole site"}
           />
         </div>
       </div>
