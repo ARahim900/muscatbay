@@ -106,10 +106,20 @@ export function parseDailyRows(raw: unknown): DailyMeterRow[] {
     return row;
   });
 }
+/**
+ * The latest day of `monthDate`'s month with readings, newest first.
+ *
+ * `minShare` is what makes this usable as the page's opening day: a single
+ * meter entered early for tomorrow must not pin the whole view to a day where
+ * nothing else is recorded — the map would look broken, which is exactly the
+ * fault this default was added to fix. Left at 0 it means "any reading at all",
+ * which is what the "Latest recorded" button reports for the meters in view.
+ */
 export function latestRecordedDay(
   rows: DailyMeterRow[],
   accounts: Set<string>,
   monthDate: string,
+  minShare = 0,
 ): string | null {
   const end = new Date(
     Date.UTC(Number(monthDate.slice(0, 4)), Number(monthDate.slice(5, 7)), 0),
@@ -117,12 +127,10 @@ export function latestRecordedDay(
   for (let day = end; day >= 1; day--) {
     const date = `${monthDate.slice(0, 7)}-${String(day).padStart(2, "0")}`;
     if (date > omanToday()) continue;
-    if (
-      rows.some(
-        (r) => accounts.has(r.account_number) && dailyValue(r, date) !== null,
-      )
-    )
-      return date;
+    const reporting = rows.filter(
+      (r) => accounts.has(r.account_number) && dailyValue(r, date) !== null,
+    ).length;
+    if (reporting > 0 && reporting >= accounts.size * minShare) return date;
   }
   return null;
 }

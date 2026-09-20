@@ -82,12 +82,15 @@ export function SatelliteView({
   // data — and the URL is left without a date, so the link keeps following.
   if (followLatest && !daily.loading && !daily.error) {
     const accounts = new Set(waterMeters.map((m) => m.accountNumber));
+    // Half the meters must have reported: a day entered early for one meter is
+    // not the day to open on.
     const latest =
-      latestRecordedDay(daily.rows, accounts, state.date) ??
+      latestRecordedDay(daily.rows, accounts, state.date, 0.5) ??
       latestRecordedDay(
         daily.rows,
         accounts,
         shiftDay(`${state.date.slice(0, 7)}-01`, -1),
+        0.5,
       );
     setFollowLatest(false);
     if (latest && latest !== state.date) setState({ ...state, date: latest });

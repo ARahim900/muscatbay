@@ -150,6 +150,19 @@ describe("satellite daily consumption contract", () => {
     expect(url).not.toContain("period=");
     expect(url).toContain("other=keep");
   });
+  it("opens on the latest day at least half the meters reported, not one entered early", () => {
+    const rows: DailyMeterRow[] = [
+      { account_number: "a", month: "Sep-26", year: 2026, day_17: 5, day_19: 2 },
+      { account_number: "b", month: "Sep-26", year: 2026, day_17: 5 },
+      { account_number: "c", month: "Sep-26", year: 2026, day_17: 5 },
+      { account_number: "d", month: "Sep-26", year: 2026, day_17: 5 },
+    ];
+    const accounts = new Set(["a", "b", "c", "d"]);
+    // One meter is already entered for the 19th; the page must not open there.
+    expect(latestRecordedDay(rows, accounts, "2026-09-01", 0.5)).toBe("2026-09-17");
+    // The button beside the slider still reports any reading at all.
+    expect(latestRecordedDay(rows, accounts, "2026-09-01")).toBe("2026-09-19");
+  });
   describe("meter status", () => {
     const quiet = [1, 1, 1, 1, 1, 1, 1];
     it("keeps missing, negative and zero readings apart", () => {
