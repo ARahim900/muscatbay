@@ -6,7 +6,7 @@ import { Badge, Button, SectionCard, SegmentedControl } from "@/components/ui";
 import type { WaterMeter } from "@/lib/water-data";
 import { SatelliteMap } from "./SatelliteMap";
 import {
-  RingGauge,
+  StatusBar,
   MetersPanel,
   SelectedMeterPanel,
   StatusPanel,
@@ -39,7 +39,7 @@ import {
   type SatelliteState,
 } from "./consumptionModel";
 
-// Legend: one ring per band, each at a reading typical of it.
+// Legend: one bar per band, each at a reading typical of it.
 const RING_LEGEND: Record<MeterStatus, number | null> = {
   normal: 1,
   elevated: 1.5,
@@ -392,17 +392,13 @@ export function SatelliteView({
               <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
                 {STATUSES.map((status) => (
                   <li key={status} className="inline-flex items-center gap-1.5">
-                    <RingGauge
-                      status={status}
-                      ratio={RING_LEGEND[status]}
-                      size={18}
-                    />
+                    <StatusBar status={status} ratio={RING_LEGEND[status]} width={44} />
                     {STATUS_LABELS[status]}
                   </li>
                 ))}
                 <li>
-                  Each ring fills to the day&apos;s share of that meter&apos;s
-                  usual — full at twice it
+                  One segment per 40% of that meter&apos;s usual — all five
+                  from twice it
                 </li>
               </ul>
               <details>

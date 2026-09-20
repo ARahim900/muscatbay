@@ -162,14 +162,14 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     createSatelliteFallback,
   };
 }
-/** The rings from the latest render — elements from earlier ones are kept too. */
+/** The bars from the latest render — elements from earlier ones are kept too. */
 const rings = (env: ReturnType<typeof environment>, count: number) =>
   env.elements
-    .filter((e) => (e as { className?: string }).className === "meter-ring")
+    .filter((e) => (e as { className?: string }).className === "meter-marker")
     .slice(-count) as unknown as { listeners: Record<string, () => void> }[];
 const ring = (env: ReturnType<typeof environment>, index: number, count = index + 1) =>
   rings(env, count)[index];
-/** Hover each ring in turn, as a mouse would. */
+/** Hover each bar in turn, as a mouse would. */
 const hoverEach = (env: ReturnType<typeof environment>, accounts: string[]) =>
   rings(env, accounts.length).forEach((r) => r.listeners.mouseenter?.());
 const threeDButton = (env: ReturnType<typeof environment>) =>
@@ -235,9 +235,9 @@ describe("consumption renderer", () => {
     expect(env.construct).toHaveBeenCalledTimes(1);
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
     expect(env.map.easeTo).not.toHaveBeenCalled();
-    // The rings are rebuilt for the new reading; the camera is not touched.
+    // The bars are rebuilt for the new reading; the camera is not touched.
     expect(
-      env.elements.filter((e) => (e as { className?: string }).className === "meter-ring"),
+      env.elements.filter((e) => (e as { className?: string }).className === "meter-marker"),
     ).toHaveLength(2);
     expect(env.construct.mock.calls[0][0]).toMatchObject({
       preserveDrawingBuffer: false,
@@ -284,7 +284,7 @@ describe("consumption renderer", () => {
     expect(env.map.easeTo.mock.calls[0][0]).toMatchObject({ center: [58.642, 23.55] });
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1); // the zone frame itself never re-ran
   });
-  it("opens the meter whose ring was tapped", () => {
+  it("opens the meter whose bar was tapped", () => {
     const env = environment();
     env.send("satviz:data", { ...payload, selected: "" });
     env.mapEvents.load();
@@ -293,7 +293,7 @@ describe("consumption renderer", () => {
     expect(env.parent.postMessage).toHaveBeenCalledWith(
       { type: "satviz:select-meter", account: "a" }, "https://example.com");
   });
-  it("keeps figures off the map: one ring per meter, a name tag for the selected meter and the zone bulk only", () => {
+  it("keeps figures off the map: one bar per meter, a name tag for the selected meter and the zone bulk only", () => {
     const env = environment();
     const at = (n: number) => ({ coordinates: [58.64 + n / 1000, 23.55] });
     const meters = [
@@ -308,9 +308,9 @@ describe("consumption renderer", () => {
     expect(text()).toEqual(expect.arrayContaining(["Villa H", "Zone bulk"]));
     expect(text()).not.toContain("Villa N");
     expect(text().some((t) => t.includes("m³"))).toBe(false);
-    // Every mapped meter draws one ring, all the same size, coloured by band.
+    // Every mapped meter draws one bar, all the same size, coloured by band.
     const rings = env.elements.filter(
-      (e) => (e as { className?: string }).className === "meter-ring",
+      (e) => (e as { className?: string }).className === "meter-marker",
     ) as unknown as { dataset: Record<string, string> }[];
     expect(rings.map((r) => r.dataset.status).sort()).toEqual(["high", "normal", "normal", "zero"]);
     // Overview: a zone is a named pin; its loss is in the Zones panel (and in the pin's spoken label).

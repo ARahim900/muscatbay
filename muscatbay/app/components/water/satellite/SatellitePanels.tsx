@@ -21,9 +21,11 @@ import {
   LEVELS,
   LEVEL_LABELS,
   STATUSES,
+  SEGMENTS,
   STATUS_LABELS,
   formatMapVolume,
   formatRatio,
+  litSegments,
   type ConsumptionMeter,
   type MeterStatus,
 } from "./consumptionModel";
@@ -36,70 +38,68 @@ const STATUS_TONES = {
   zero: "warning",
   missing: "neutral",
 } as const;
-export const STATUS_STROKE: Record<MeterStatus, string> = {
-  normal: "var(--color-success)",
-  elevated: "var(--color-warning)",
-  high: "var(--color-danger)",
-  zero: "var(--color-warning)",
-  missing: "var(--color-muted)",
+/** Saturated status tokens — the app's own indicator colours. */
+export const STATUS_LIGHT: Record<MeterStatus, string> = {
+  normal: "var(--status-normal)",
+  elevated: "var(--status-warning)",
+  high: "var(--status-danger)",
+  zero: "var(--status-warning)",
+  missing: "var(--status-missing)",
 };
 /**
- * The map's marker, in miniature: a ring filled to the day's share of the
- * meter's own recent average (full at twice it), coloured by band. A zero
- * reading is an empty ring marked 0; a meter with no reading, or with too few
- * recorded days to have an average, carries a dashed ring.
+ * The map's marker, and the same shape everywhere else: a dark bar of five
+ * segments that light up with the day's reading — one segment per 40% of that
+ * meter's own usual, all five from twice it — in the colour of its band. A
+ * zero reading lights none and carries an amber edge; no reading, or too few
+ * recorded days to have an average, is a dashed empty bar.
  */
-export function RingGauge({
+export function StatusBar({
   status,
   ratio,
-  size = 20,
+  width = 56,
 }: {
   status: MeterStatus;
   ratio: number | null;
-  size?: number;
+  width?: number;
 }) {
-  const circumference = 2 * Math.PI * 14;
-  const filled = ratio === null ? 0 : Math.min(ratio / 2, 1) * circumference;
-  const dashed = status === "missing" || ratio === null;
+  const lit = litSegments(ratio);
+  const unknown = ratio === null;
   return (
-    <svg
+    <span
       aria-hidden
-      viewBox="0 0 40 40"
-      style={{ width: size, height: size }}
-      className="shrink-0"
+      className="inline-flex shrink-0 items-center rounded-pill border"
+      style={{
+        width,
+        gap: 2,
+        padding: 3,
+        background: "#0A090C",
+        borderColor:
+          status === "normal" && !unknown
+            ? "rgb(255 255 255 / 22%)"
+            : STATUS_LIGHT[status],
+        borderStyle: unknown ? "dashed" : "solid",
+        opacity: status === "missing" ? 0.6 : 1,
+      }}
     >
-      <circle cx="20" cy="20" r="18" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1.5" />
-      <circle
-        cx="20"
-        cy="20"
-        r="14"
-        fill="none"
-        stroke={dashed ? STATUS_STROKE[status] : "var(--color-component)"}
-        strokeWidth={dashed ? 3 : 5}
-        strokeDasharray={dashed ? "4 4" : undefined}
-      />
-      {!dashed && filled > 0 && (
-        <circle
-          cx="20"
-          cy="20"
-          r="14"
-          fill="none"
-          stroke={STATUS_STROKE[status]}
-          strokeWidth="5"
-          strokeDasharray={`${filled} ${circumference}`}
-          transform="rotate(-90 20 20)"
+      {Array.from({ length: SEGMENTS }, (_, index) => (
+        <span
+          key={index}
+          className="h-2.5 flex-1"
+          style={{
+            borderRadius: 1,
+            background:
+              index < lit ? STATUS_LIGHT[status] : "rgb(255 255 255 / 14%)",
+          }}
         />
-      )}
-      {status === "zero" && (
-        <text x="20" y="25" textAnchor="middle" fontSize="15" fontWeight="600" fill="var(--color-warning)">
-          0
-        </text>
-      )}
-    </svg>
+      ))}
+    </span>
   );
 }
 const StatusDot = ({ status }: { status: MeterStatus }) => (
-  <RingGauge status={status} ratio={status === "normal" ? 1 : status === "elevated" ? 1.5 : status === "high" ? 2 : null} />
+  <StatusBar
+    status={status}
+    ratio={status === "normal" ? 1 : status === "elevated" ? 1.5 : status === "high" ? 2 : status === "zero" ? 0 : null}
+  />
 );
 const rowButton =
   "w-full min-h-11 px-5 py-2 text-left focus-visible:outline-3 focus-visible:-outline-offset-3 focus-visible:outline-accent hover:bg-component";
@@ -301,7 +301,7 @@ export function MetersPanel({
                     meter.account === selected && "bg-accent-tint font-semibold",
                   )}
                 >
-                  <RingGauge status={meter.status} ratio={meter.ratio} />
+                  <StatusBar status={meter.status} ratio={meter.ratio} />
                   <span className="min-w-0 flex-1 truncate">
                     {meter.name}
                     {!meter.location && (
@@ -414,7 +414,7 @@ export function SelectedMeterPanel({
       {meter && (
         <SectionCard.Body flush>
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
-            <RingGauge status={meter.status} ratio={meter.ratio} size={28} />
+            <StatusBar status={meter.status} ratio={meter.ratio} width={72} />
             <Badge tone={STATUS_TONES[meter.status]}>
               {STATUS_LABELS[meter.status]}
             </Badge>

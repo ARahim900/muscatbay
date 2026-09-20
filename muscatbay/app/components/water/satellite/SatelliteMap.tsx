@@ -68,6 +68,10 @@ export function SatelliteMap({
     if (!element || !embedded?.documentElement) return;
     const theme = getComputedStyle(element);
     for (const token of [
+      "--status-normal",
+      "--status-warning",
+      "--status-danger",
+      "--status-missing",
       "--color-success",
       "--color-warning",
       "--color-danger",
@@ -348,7 +352,7 @@ export function SatelliteMap({
           }}
           key={attempt}
           ref={frame}
-          src="/satellite/consumption.html?v=22"
+          src="/satellite/consumption.html?v=23"
           title="Water consumption satellite map"
           className={`${failed ? "hidden" : "block"} w-full border-0 ${full ? "" : "rounded-b-card"}`}
         />

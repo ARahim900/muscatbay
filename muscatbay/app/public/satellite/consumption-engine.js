@@ -119,76 +119,65 @@
     (typeof getComputedStyle === "function" &&
       getComputedStyle(document.documentElement).getPropertyValue(name).trim()) ||
     fallbackColour;
-  const STATUS_COLOUR = {
-    normal: () => token("--color-success", "#2E7D42"),
-    elevated: () => token("--color-warning", "#9A6B00"),
-    high: () => token("--color-danger", "#B03A2E"),
-    zero: () => token("--color-warning", "#9A6B00"),
-    missing: () => token("--color-muted", "#6B7280"),
-  };
   // Beyond ten times over, a percentage stops being readable; show the multiple.
   const share = (ratio) =>
-    typeof ratio !== "number" ? "" : ratio === 0 ? "zero" : ratio >= 10 ? `×${Math.round(ratio)}` : `${Math.round(ratio * 100)}%`;
-  const RADIUS = 14;
-  const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-  const svg = (name, attributes) => {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", name);
-    for (const [key, value] of Object.entries(attributes))
-      node.setAttribute(key, String(value));
-    return node;
+    typeof ratio !== "number"
+      ? ""
+      : ratio === 0
+        ? "zero"
+        : ratio >= 10
+          ? `×${Math.round(ratio)}`
+          : `${Math.round(ratio * 100)}%`;
+  // Saturated indicator colours, the app's own — a lit segment has to carry
+  // over satellite imagery, so these are the bright status tokens, not the
+  // muted text ones.
+  const STATUS_COLOUR = {
+    normal: () => token("--status-normal", "#22c55e"),
+    elevated: () => token("--status-warning", "#f59e0b"),
+    high: () => token("--status-danger", "#ef4444"),
+    zero: () => token("--status-warning", "#f59e0b"),
+    missing: () => token("--status-missing", "#94a3b8"),
   };
+  const SEGMENTS = 5;
+  const SEGMENT_STEP = 0.4;
   /**
-   * Every meter is the same ring. It fills with the day's share of that meter's
-   * own recent daily average — full at twice it — and takes the colour of its
-   * band. A zero reading is an empty ring marked 0; no reading, or too few
-   * recorded days to have an average, is a dashed ring.
+   * Every meter is the same bar: five segments on a near-black track, lit one
+   * per 40% of that meter's own usual and all five from twice it, in the colour
+   * of its band. A zero reading lights none and carries an amber edge; no
+   * reading, or too few recorded days for an average, is a dashed empty bar.
    */
-  function buildRing(meter, selected) {
+  function buildBar(meter, selected) {
     const status = statusOf(meter);
     const colour = (STATUS_COLOUR[status] || STATUS_COLOUR.missing)();
-    const dashed = status === "missing" || typeof meter.ratio !== "number";
-    const frame = svg("svg", { viewBox: "0 0 40 40", width: 34, height: 34, "aria-hidden": "true" });
-    frame.append(
-      svg("circle", {
-        cx: 20, cy: 20, r: 18,
-        fill: token("--color-card", "#fff"),
-        stroke: meter.account === selected ? token("--color-primary", "#4e4456") : token("--color-line", "#e5e7eb"),
-        "stroke-width": meter.account === selected ? 3 : 1.5,
-      }),
-      svg("circle", {
-        cx: 20, cy: 20, r: RADIUS, fill: "none",
-        stroke: dashed ? colour : token("--color-component", "#f0f2f4"),
-        "stroke-width": dashed ? 3 : 5,
-        ...(dashed ? { "stroke-dasharray": "4 4" } : {}),
-      }),
-    );
-    if (!dashed && meter.ratio > 0) {
-      const filled = Math.min(meter.ratio / 2, 1) * CIRCUMFERENCE;
-      frame.append(
-        svg("circle", {
-          cx: 20, cy: 20, r: RADIUS, fill: "none", stroke: colour, "stroke-width": 5,
-          "stroke-dasharray": `${filled} ${CIRCUMFERENCE}`,
-          transform: "rotate(-90 20 20)",
-        }),
-      );
+    const unknown = typeof meter.ratio !== "number";
+    const lit = unknown || meter.ratio <= 0
+      ? 0
+      : Math.min(SEGMENTS, Math.max(1, Math.ceil(meter.ratio / SEGMENT_STEP)));
+    const bar = document.createElement("span");
+    bar.className = "meter-bar";
+    bar.style.borderColor =
+      meter.account === selected
+        ? token("--color-primary", "#4e4456")
+        : status === "normal" && !unknown
+          ? "rgb(255 255 255 / 22%)"
+          : colour;
+    bar.style.borderStyle = unknown ? "dashed" : "solid";
+    if (status === "missing") bar.style.opacity = "0.6";
+    for (let index = 0; index < SEGMENTS; index++) {
+      const segment = document.createElement("i");
+      segment.style.background = index < lit ? colour : "rgb(255 255 255 / 14%)";
+      bar.append(segment);
     }
-    if (status === "zero") {
-      const mark = svg("text", {
-        x: 20, y: 25.5, "text-anchor": "middle", "font-size": 15, "font-weight": 600, fill: colour,
-      });
-      mark.textContent = "0";
-      frame.append(mark);
-    }
-    return frame;
+    return bar;
   }
   function buildMeterMarker(meter, selected) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "meter-ring";
+    button.className = "meter-marker";
     button.dataset.status = statusOf(meter);
     button.classList.toggle("selected", meter.account === selected);
     button.classList.toggle("bulk", isBulk(meter));
-    button.append(buildRing(meter, selected));
+    button.append(buildBar(meter, selected));
     const status = statusOf(meter);
     button.setAttribute(
       "aria-label",
@@ -723,7 +712,7 @@
         fillMeterLabel,
         fillZoneMarker,
         statusOf,
-        buildRing,
+        buildBar,
       });
       loaded = true;
       report(
