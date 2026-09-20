@@ -8,6 +8,10 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     {};
   const mapEvents: Record<string, (event?: unknown) => void> = {};
   const canvas = { tagName: "CANVAS" };
+  const documentElement = {
+    classList: { toggle: vi.fn() },
+    style: { setProperty: vi.fn() },
+  };
   const parent = { postMessage: vi.fn() };
   const source = { setData: vi.fn() };
   const linkSource = { setData: vi.fn() };
@@ -112,7 +116,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     document: {
       getElementById: () => ({ textContent: "" }),
       body: { append: vi.fn() },
-      documentElement: { classList: { toggle: vi.fn() } },
+      documentElement,
       createElement,
       // The ring markers are SVG.
       createElementNS: (_ns: string, name: string) => createElement(name),
@@ -154,6 +158,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     construct,
     send,
     canvas,
+    documentElement,
     mapEvents,
     parent,
     listeners,
@@ -283,6 +288,15 @@ describe("consumption renderer", () => {
     expect(env.map.easeTo).toHaveBeenCalledTimes(1);
     expect(env.map.easeTo.mock.calls[0][0]).toMatchObject({ center: [58.642, 23.55] });
     expect(env.map.fitBounds).toHaveBeenCalledTimes(1); // the zone frame itself never re-ran
+  });
+  it("scales the bar markers with the zoom so a dense zone does not crowd", () => {
+    const env = environment();
+    env.send("satviz:data", { ...payload, selected: "" });
+    env.mapEvents.load();
+    const set = env.documentElement.style.setProperty;
+    expect(set).toHaveBeenCalledWith("--marker-scale", expect.any(String));
+    // the mock map sits at zoom 16 → 0.62 + 0.6 * 0.3
+    expect(set.mock.calls.at(-1)![1]).toBe("0.80");
   });
   it("opens the meter whose bar was tapped", () => {
     const env = environment();

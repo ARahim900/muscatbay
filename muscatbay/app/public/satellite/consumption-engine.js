@@ -953,10 +953,19 @@
         },
       });
       applyMode();
+      // Bars are drawn at a fixed pixel size, so in a dense zone they crowd at
+      // low zoom and look sparse close in. Scale them with the zoom instead.
+      const scaleMarkers = () => {
+        const zoom = typeof map.getZoom === "function" ? map.getZoom() : 17;
+        const scale = Math.max(0.62, Math.min(1.15, 0.62 + (zoom - 15.4) * 0.3));
+        document.documentElement.style.setProperty("--marker-scale", scale.toFixed(2));
+      };
       const relayout = () => {
         layoutMeterLabels();
         layoutZoneMarkers();
       };
+      map.on("zoom", scaleMarkers);
+      scaleMarkers();
       map.on("moveend", relayout);
       map.on("resize", relayout);
       map.addControl(
