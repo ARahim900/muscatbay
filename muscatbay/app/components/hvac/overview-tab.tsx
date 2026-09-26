@@ -18,6 +18,7 @@ import { format } from "date-fns";
 import type { GulfExpertContract, GulfExpertData } from "./types";
 import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
 import { useChartMotion } from "@/hooks/useReducedMotion";
+import { useIsPhone } from "@/hooks/useIsPhone";
 
 interface OverviewTabProps {
   data: GulfExpertData;
@@ -37,6 +38,25 @@ function formatDate(value: string | null): string {
 }
 
 /** Free-text status from the database → the shared status palette. */
+/** PPM visit status chip — shared by the schedule table (sm+) and the phone cards. */
+function PpmStatusChip({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
+        status === "Completed"
+          ? "bg-mb-success-light text-mb-success-text"
+          : status === "In Progress"
+          ? "bg-mb-warning-light text-mb-warning-text"
+          : "bg-muted-bg text-muted-foreground dark:bg-muted-bg dark:text-muted-foreground"
+      }`}
+    >
+      {status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
+      {status === "In Progress" && <Clock className="h-3 w-3" />}
+      {status}
+    </span>
+  );
+}
+
 function contractStatusCls(status: string): string {
   const s = status?.toLowerCase() ?? "";
   if (s.includes("active")) return "bg-mb-success-light text-mb-success-text";
@@ -59,6 +79,7 @@ function contractTypeLabel(contract: GulfExpertContract): string {
 
 export function OverviewTab({ data }: OverviewTabProps) {
     const chartMotion = useChartMotion();
+  const isPhone = useIsPhone();
   const { findings, recurringIssues, contracts, communications } = data;
 
   const stats = useMemo(() => {
@@ -110,6 +131,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
     });
     return Object.entries(counts).map(([status, count]) => ({ status, count }));
   }, [findings]);
+  const statusCount = useMemo(
+    () => new Map(findingsByStatus.map((d) => [d.status, d.count])),
+    [findingsByStatus],
+  );
 
   const ppmSchedule = useMemo(() => {
     const fy25Findings = findings.filter((f) => f.fiscal_year === "FY25");
@@ -230,8 +255,10 @@ export function OverviewTab({ data }: OverviewTabProps) {
                       paddingAngle={2}
                       dataKey="count"
                       nameKey="status"
-                      label={(props) => `${props.name}: ${props.value}`}
-                      labelLine={{ stroke: "var(--chart-axis)", strokeWidth: 1 }}
+                      // Phones: outside labels collide and run off the card edge, so the
+                      // count moves into the legend below instead (same figure, no loss).
+                      label={isPhone ? false : (props) => `${props.name}: ${props.value}`}
+                      labelLine={isPhone ? false : { stroke: "var(--chart-axis)", strokeWidth: 1 }}
                       {...chartMotion}
                     >
                       {findingsByStatus.map((entry, index) => (
@@ -252,10 +279,13 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     />
                     <Legend
                       verticalAlign="bottom"
-                      height={36}
+                      // Phones: let Recharts measure the (longer, wrapping) legend.
+                      height={isPhone ? undefined : 36}
                       iconSize={10}
                       formatter={(value: string) => (
-                        <span className="text-xs text-muted-foreground">{value}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {isPhone && statusCount.has(value) ? `${value} · ${statusCount.get(value)}` : value}
+                        </span>
                       )}
                     />
                   </PieChart>
@@ -275,7 +305,24 @@ export function OverviewTab({ data }: OverviewTabProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
+            {/* Phones: five columns don't fit, so each system becomes a card
+                with its four visits in a 2 × 2 grid. */}
+            <div className="space-y-3 sm:hidden">
+              {(["hvac", "bms"] as const).map((system) => (
+                <div key={system} className="rounded-lg border border-border p-3">
+                  <p className="mb-2 text-sm font-semibold uppercase text-foreground">{system}</p>
+                  <dl className="grid grid-cols-2 gap-2">
+                    {ppmSchedule[system].map((q, i) => (
+                      <div key={q.quarter} className="flex flex-col items-start gap-1">
+                        <dt className="text-xs text-muted-foreground">Q{i + 1} ({q.quarter})</dt>
+                        <dd><PpmStatusChip status={q.status} /></dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ))}
+            </div>
+            <Table containerProps={{ className: "hidden sm:block" }}>
               <TableHeader>
                 <TableRow>
                   <TableHead scope="col" className="text-left">System</TableHead>
@@ -294,19 +341,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                     </TableCell>
                     {ppmSchedule[system].map((q, i) => (
                       <TableCell key={i} className="text-center">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${
-                            q.status === "Completed"
-                              ? "bg-mb-success-light text-mb-success-text"
-                              : q.status === "In Progress"
-                              ? "bg-mb-warning-light text-mb-warning-text"
-                              : "bg-muted-bg text-muted-foreground dark:bg-muted-bg dark:text-muted-foreground"
-                          }`}
-                        >
-                          {q.status === "Completed" && <CheckCircle2 className="h-3 w-3" />}
-                          {q.status === "In Progress" && <Clock className="h-3 w-3" />}
-                          {q.status}
-                        </span>
+                        <PpmStatusChip status={q.status} />
                       </TableCell>
                     ))}
                   </TableRow>

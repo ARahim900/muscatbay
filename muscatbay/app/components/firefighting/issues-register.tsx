@@ -134,7 +134,7 @@ export function IssuesRegister({ issues }: IssuesRegisterProps) {
     return (
         <div className="space-y-4">
             <TableToolbar>
-                <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md">
+                <div className="relative min-w-0 basis-full sm:flex-1 sm:min-w-[200px] max-w-md">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"

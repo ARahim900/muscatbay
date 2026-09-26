@@ -25,7 +25,7 @@ import {
 } from "recharts";
 import {
     Droplet, AlertTriangle, Activity,
-    Gauge, Building2, Plug, Search, Layers, ArrowRight, MapPin, CheckCircle2,
+    Gauge, Building2, Plug, Search, Layers, ArrowDown, ArrowRight, MapPin, CheckCircle2,
     Filter, Download, ClipboardList, XCircle, Target, FileSpreadsheet,
     BarChart3, Database, List, ChevronDown, ChevronUp, type LucideIcon,
 } from "lucide-react";
@@ -45,6 +45,7 @@ import {
     type WaterData, type PeriodResult, type Sel, type ZoneRow, type Severity,
 } from "@/lib/water-monthly-data";
 import { useChartMotion } from "@/hooks/useReducedMotion";
+import { useIsPhone } from "@/hooks/useIsPhone";
 import { cn } from "@/lib/cn";
 
 /* ---------- Chart series (DESIGN_SYSTEM.md §2.4, through chartTheme) ---------- */
@@ -278,7 +279,7 @@ function RingGauge({ frac, color, big, small, label, caption }: RingGaugeProps) 
     const fs = bl <= 4 ? 28 : bl <= 6 ? 23 : 19;
     const titleId = `ring-${label.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}`;
     return (
-        <div className="flex flex-col items-center">
+        <div className="flex w-32 flex-col items-center sm:w-auto">
             <svg viewBox={`0 0 ${S} ${S}`} width="100%" style={{ maxWidth: 160 }} role="img" aria-labelledby={titleId}>
                 <title id={titleId}>{`${label}: ${big} ${small}, ${pctv}% of supply — ${caption}`}</title>
                 <circle cx={cc} cy={cc} r={r} fill="none" stroke="var(--color-line)" strokeWidth={sw} />
@@ -300,8 +301,9 @@ function RingGauge({ frac, color, big, small, label, caption }: RingGaugeProps) 
 function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
     const p = of ? Math.round((v / of) * 1000) / 10 : 0;
     return (
-        <div className="flex shrink-0 flex-col items-center px-0.5">
-            <ArrowRight size={16} strokeWidth={2} className="text-muted" aria-hidden="true" />
+        <div className="flex shrink-0 flex-col items-center px-0.5 py-1 sm:py-0">
+            <ArrowDown size={16} strokeWidth={2} className="text-muted sm:hidden" aria-hidden="true" />
+            <ArrowRight size={16} strokeWidth={2} className="hidden text-muted sm:block" aria-hidden="true" />
             <span className="mt-1 whitespace-nowrap rounded-control bg-danger-tint px-1.5 py-0.5 text-caption font-medium text-danger">−{fmt(v)} m³</span>
             <span className="mt-0.5 whitespace-nowrap text-caption font-medium text-danger">{label} · {p}%</span>
         </div>
@@ -376,8 +378,10 @@ interface OverviewProps {
 }
 function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
     const chartMotion = useChartMotion();
+    const isPhone = useIsPhone();
     const a2f = pct(t.A2, t.A1) / 100, a3f = pct(t.A3, t.A1) / 100;
     const typePie = t.types.map((x) => ({ name: x.type.replace("Residential ", "").replace("(", "").replace(")", ""), value: x.total, pct: x.pct }));
+    const typePct = new Map(typePie.map((d) => [d.name, d.pct]));
     // `target` is a real management target, so it is drawn as its own series
     // (see the balance chart below) rather than sitting unused in the data.
     const trend = monthly.map((p, i) => ({ m: MONTHS[i], A1: p.A1, A3: p.A3, loss: p.loss, lossPct: p.lossPct, target: TARGET_LOSS_PCT }));
@@ -406,8 +410,10 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                     description={`Supply → distribution → consumption · ${periodLabel} · target loss ≤ ${TARGET_LOSS_PCT}%`}
                 />
                 <SectionCard.Body>
-                    {/* `safe` centring: when the flow is wider than the card (phones) it aligns to the start so the first ring stays reachable by scrolling. */}
-                    <div className="flex items-center justify-center-safe gap-1 overflow-x-auto pb-1 sm:gap-3">
+                    {/* Phones: the three rings stack top-to-bottom (a row of three hid A3 off the card edge).
+                        From `sm` up it is a row; `safe` centring keeps the first ring reachable if the row
+                        is still wider than the card. */}
+                    <div className="flex flex-col items-center gap-1 pb-1 sm:flex-row sm:justify-center-safe sm:gap-3 sm:overflow-x-auto">
                         <RingGauge frac={1} color={SERIES.dist} big={fmt(t.A1)} small="m³" label="A1 · Supply" caption="total entering" />
                         <LossLink label="trunk" v={t.stage1} of={t.A1} />
                         <RingGauge frac={a2f} color={SERIES.supply} big={fmt(t.A2)} small="m³" label="A2 · Distribution" caption="reaches zones" />
@@ -475,8 +481,10 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                         <Pie
                                             data={typePie} dataKey="value" nameKey="name" cx="50%" cy="50%"
                                             innerRadius={60} outerRadius={100} paddingAngle={2}
-                                            label={(props: { name?: string | number; percent?: number }) => `${props.name}: ${Math.round((props.percent ?? 0) * 100)}%`}
-                                            labelLine={{ stroke: "var(--color-muted)", strokeWidth: 1 }}
+                                            // Phones: outside labels collide and run off the card edge, so the
+                                            // share moves into the legend below instead (same figure, no loss).
+                                            label={isPhone ? false : (props: { name?: string | number; percent?: number }) => `${props.name}: ${Math.round((props.percent ?? 0) * 100)}%`}
+                                            labelLine={isPhone ? false : { stroke: "var(--color-muted)", strokeWidth: 1 }}
                                             {...chartMotion}
                                         >
                                             {typePie.map((e, i) => <Cell key={i} fill={CHART_PALETTE[i % CHART_PALETTE.length]} />)}
@@ -484,9 +492,14 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                         <Tooltip formatter={(v, n, p) => [`${fmt(Number(v))} m³ (${p?.payload?.pct}%)`, n]} {...chartTheme.tooltip} />
                                         <Legend
                                             verticalAlign="bottom"
-                                            height={36}
+                                            // Phones: let Recharts measure the (longer, wrapping) legend.
+                                            height={isPhone ? undefined : 36}
                                             iconSize={10}
-                                            formatter={(value: string) => <span className="text-caption text-muted">{value}</span>}
+                                            formatter={(value: string) => (
+                                                <span className="text-caption text-muted">
+                                                    {isPhone && typePct.has(value) ? `${value} · ${typePct.get(value)}%` : value}
+                                                </span>
+                                            )}
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>

@@ -484,6 +484,28 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Fixed 2026-09-26 — phone-width layout (402 px, iPhone 17 Pro).** Owner
+  audit of all nine modules in iOS Safari found five fit faults, now fixed
+  (desktop layout unchanged — every change is scoped below Tailwind `sm`):
+  1. `PageHeader` stacks its status under the title on phones (Water's two
+     chips had squeezed the title to "W..").
+  2. Water → System water balance stacks A1 → A2 → A3 vertically with down
+     arrows (A3 was hidden off the card edge).
+  3. Water "Consumption by type" and HVAC "Findings by Status" donuts drop the
+     outside slice labels on phones and show the share / count in the legend
+     (`hooks/useIsPhone.ts`); labels had collided and run off the edge.
+  4. Table-toolbar search boxes (10 of them: Contractors ×2, STP, Electricity,
+     Assets, Fire Safety ×3, HVAC ×2) take their own full-width line on phones
+     instead of shrinking to just the icon.
+  5. HVAC FY25 PPM Schedule renders as one card per system (Q1–Q4 in a 2 × 2
+     grid) on phones; the five-column table was cut off after Q2.
+
+  **Still open from the same audit:** Water donut gives *Villa* and
+  *MB_Common* the same purple (`CHART_PALETTE` has 6 colours, so the 7th
+  category reuses the 1st — also on desktop); OMR shown to 1–2 decimals in places (STP economic impact, HVAC AMC
+  cards) against the 3-decimal convention; Water Daily / Satellite / Hand
+  Readings views and inner tabs were not audited at phone width.
+
 - **Open 2026-09-10 — real unaccounted water upstream of every zone, ~20–40% of
   NAMA supply.** Analysis over 97 days with complete DC readings (Jun-26 to
   Sep-26), using the reconciliation the Direct Connections tab now performs:

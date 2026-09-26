@@ -553,7 +553,7 @@ export default function AssetsPage() {
                         <h2 className="text-lg font-semibold text-foreground">Asset Register</h2>
                         <p className="text-sm text-muted-foreground">{TABS.find(t => t.key === activeTab)?.label ?? 'Overview'} view of the master assets register</p>
                     </div>
-                    <div className="relative flex-1 min-w-0 sm:min-w-[200px] max-w-md sm:ml-auto">
+                    <div className="relative min-w-0 basis-full sm:flex-1 sm:min-w-[200px] max-w-md sm:ml-auto">
                         <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"

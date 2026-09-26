@@ -3,6 +3,9 @@
 // one StatusChip (or any single element) on the right.
 // The title column is capped so it never wraps at >= 1280px. If a title
 // wraps, shorten the title — do not change this component.
+// Below the `sm` breakpoint (phones) the status stacks under the title
+// instead of sharing its row: side by side, a chip or two squeezed the
+// title to "W.." on a 402px screen. From `sm` up the layout is unchanged.
 import type { ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
@@ -22,12 +25,12 @@ const bar: Record<NonNullable<Props['accent']>, string> = {
 
 export function PageHeader({ title, description, accent = 'none', status, className }: Props) {
   return (
-    <header className={cn('flex h-header items-center justify-between gap-6', className)}>
-      <div className={cn('min-w-0 max-w-[60%] border-l-[3px] pl-4', bar[accent])}>
+    <header className={cn('flex flex-col items-start gap-3 sm:h-header sm:flex-row sm:items-center sm:justify-between sm:gap-6', className)}>
+      <div className={cn('min-w-0 max-w-full border-l-[3px] pl-4 sm:max-w-[60%]', bar[accent])}>
         <h1 className="text-display truncate text-primary dark:text-fg">{title}</h1>
         {description && <p className="text-body truncate text-muted">{description}</p>}
       </div>
-      {status && <div className="shrink-0">{status}</div>}
+      {status && <div className="max-w-full shrink-0">{status}</div>}
     </header>
   );
 }
