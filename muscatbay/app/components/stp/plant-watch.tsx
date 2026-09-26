@@ -39,6 +39,7 @@ import {
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
+import { formatOmr } from "@/lib/currency";
 import {
     buildSTPModel, buildHealthMetrics, buildHeatmap, buildSTPFindings, effSeverity, STP_GATE_NOTE,
     type STPDay,
@@ -311,7 +312,7 @@ export function PlantWatch({
         { icon: Droplets, label: "Inlet treated", value: <>{num(summary.totalInlet)} <span className="text-muted-foreground">m³</span></> },
         { icon: Recycle, label: "TSE reused", value: <>{num(summary.totalTSE)} <span className="text-muted-foreground">m³</span></> },
         { icon: Truck, label: "Tanker trips", value: num(summary.totalTrips) },
-        { icon: DollarSign, label: "Economic impact", value: <>{num(summary.economicImpact)} <span className="text-muted-foreground">OMR</span></> },
+        { icon: DollarSign, label: "Economic impact", value: <>{formatOmr(summary.economicImpact)} <span className="text-muted-foreground">OMR</span></> },
         {
             // Data completeness was computed and never rendered — a period missing
             // a third of its days used to look as trustworthy as a full one.

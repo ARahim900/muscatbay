@@ -47,6 +47,7 @@ import {
 import { useChartMotion } from "@/hooks/useReducedMotion";
 import { useIsPhone } from "@/hooks/useIsPhone";
 import { cn } from "@/lib/cn";
+import { formatOmr } from "@/lib/currency";
 
 /* ---------- Chart series (DESIGN_SYSTEM.md §2.4, through chartTheme) ---------- */
 const SERIES = {
@@ -360,7 +361,7 @@ function WaterSummary({ period, lossDelta, periodLabel }: Pick<OverviewProps, "p
                 invertTrend: true,
             }),
         },
-        { label: "Loss Cost Estimate", value: fmt(lossCost), unit: "OMR", subtitle: `${LOSS_RATE_OMR} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
+        { label: "Loss Cost Estimate", value: formatOmr(lossCost), unit: "OMR", subtitle: `${formatOmr(LOSS_RATE_OMR)} OMR / m³ assumption`, icon: FileSpreadsheet, variant: "warning" },
     ];
     return <StatsGrid stats={stats} />;
 }

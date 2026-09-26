@@ -36,6 +36,14 @@ describe('computeBriefing', () => {
         expect(m.status).toBe('warning');
     });
 
+    it('counts only the zones whose bulk meter was read', () => {
+        const unread: ZoneRow = { ...zone('Zone_08', null, false), l2Value: null, isNullL2: true };
+        const today = report({ zoneRows: [zone('Zone_01', 5, false), unread, zone('Zone_05', 2, false)] });
+        const m = computeBriefing(today, null);
+        expect(m.zoneCount).toBe(3);
+        expect(m.zonesReported).toBe(2);
+    });
+
     it('reports status normal when no zone is in high loss', () => {
         const today = report({ zoneRows: [zone('Zone_01', 5, false)] });
         expect(computeBriefing(today, null).status).toBe('normal');

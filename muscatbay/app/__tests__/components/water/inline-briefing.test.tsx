@@ -5,7 +5,7 @@ import type { BriefingMetrics } from '@/components/water/daily-report/briefing-m
 
 const base: BriefingMetrics = {
     totalSupply: 1200, l2Total: 1000, l3Total: 850, lossM3: 150, lossPct: 15,
-    alarmCount: 0, alarmZones: [], zoneCount: 6, vsYesterdayPct: 10, status: 'normal',
+    alarmCount: 0, alarmZones: [], zoneCount: 6, zonesReported: 6, vsYesterdayPct: 10, status: 'normal',
 };
 
 // The briefing is a static card (the former ticker strip duplicated its stat
@@ -68,6 +68,21 @@ describe('DailyBriefing', () => {
         const m: BriefingMetrics = { ...base, zoneCount: 0 };
         render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
         expect(screen.getAllByText('No zone data today').length).toBeGreaterThan(0);
+        expect(screen.queryAllByText(/zones normal/)).toHaveLength(0);
+    });
+
+    it('shows a no-readings message, not a column of zeros, when no zone was read', () => {
+        const m: BriefingMetrics = { ...base, totalSupply: 0, l2Total: 0, l3Total: 0, lossM3: 0, lossPct: null, zonesReported: 0 };
+        render(<DailyBriefing metrics={m} month="Sep-26" day={25} />);
+        expect(screen.getByText(/No meter readings recorded for Day 25 yet/)).toBeInTheDocument();
+        expect(screen.queryAllByText(/zones normal/)).toHaveLength(0);
+        expect(screen.queryAllByText('Water supplied today')).toHaveLength(0);
+    });
+
+    it('withholds the all-clear on a partly read day and counts the unread zones', () => {
+        const m: BriefingMetrics = { ...base, zoneCount: 7, zonesReported: 5 };
+        render(<DailyBriefing metrics={m} month="Sep-26" day={24} />);
+        expect(screen.getAllByText('None of 5 read · 2 not read').length).toBeGreaterThan(0);
         expect(screen.queryAllByText(/zones normal/)).toHaveLength(0);
     });
 

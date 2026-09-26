@@ -37,6 +37,7 @@ import {
 } from "@/components/shared/inspection";
 import { FindingsRegister } from "@/components/shared/findings-register";
 import { cn } from "@/lib/utils";
+import { formatOmr } from "@/lib/currency";
 import {
     buildElectricityModel, buildCategoryMetrics, buildCategoryHeatmap, buildElectricityFindings,
     CATEGORY_HEATMAP_NOTE, type CategoryRow, type FlagKind,
@@ -374,10 +375,10 @@ export function LoadWatch({
         {
             icon: DollarSign,
             label: "Estimated cost",
-            value: num(summary.cost),
+            value: formatOmr(summary.cost),
             unit: "OMR",
             subtitle: budget !== null
-                ? `${((summary.cost / budget) * 100).toFixed(0)}% of ${num(budget)} OMR budget`
+                ? `${((summary.cost / budget) * 100).toFixed(0)}% of ${formatOmr(budget)} OMR budget`
                 : `At ${RATE} OMR/kWh`,
             variant: budget !== null && summary.cost > budget ? "danger" : "info",
         },

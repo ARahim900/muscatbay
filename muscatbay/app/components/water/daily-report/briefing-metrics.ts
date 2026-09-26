@@ -28,6 +28,12 @@ export interface BriefingMetrics {
      * value rather than a clean result.
      */
     zoneCount: number;
+    /**
+     * Zones whose bulk (L2) meter has a reading for the day. Fewer than
+     * `zoneCount` means the day is partly read, and 0 means no readings have
+     * landed yet — neither may be presented as "all zones normal".
+     */
+    zonesReported: number;
     /** Day-over-day change in the distribution total (%); null when no comparable yesterday. */
     vsYesterdayPct: number | null;
     /** Overall verdict: 'warning' when any zone is in alarm, else 'normal'. */
@@ -56,6 +62,7 @@ export function computeBriefing(today: ReportData, yesterday: ReportData | null)
         alarmCount: alarmZones.length,
         alarmZones,
         zoneCount: today.zoneRows.length,
+        zonesReported: today.zoneRows.filter(z => !z.isNullL2).length,
         vsYesterdayPct,
         status: alarmZones.length > 0 ? 'warning' : 'normal',
     };

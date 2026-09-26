@@ -484,6 +484,28 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Fixed 2026-09-26 — three data-honesty faults from the iPhone app UX review.**
+  1. **Water → Daily false all-clear.** The view opened on "yesterday" from the
+     device clock (25 Sep) although readings ran only to 24 Sep, and the
+     briefing showed "0.00 m³ supplied · None — all 7 zones normal · 100.0%
+     less used". A defaulted day now moves to the latest day with any reading
+     once the month loads (an explicit day pick is never overridden). The
+     briefing says "No meter readings recorded for Day N yet" when no zone was
+     read, and a partly read day shows "None of 5 read · 2 not read" instead of
+     the green all-clear.
+  2. **Overview part-month comparison.** A month-to-date water month (daily
+     sums, official import not landed) was trended against full months, so
+     September read "22.0% down" on the tile and "21.1% down" on the chart. The
+     tile now reads "Sep-26 · month to date (to day 24)" with no trend, the
+     chart insight compares only complete months and names the part month,
+     and the running average excludes it.
+  3. **One OMR formatter** (`lib/currency.ts`, 3 decimals): Water loss cost and
+     its rate, Electricity estimated cost and budget, STP economic impact (tile,
+     subtitle, Plant Watch) and tanker fee, Contractors total value and Year 1
+     expense, HVAC AMC contract values, and the STP daily-operations CSV
+     export (income, savings, total impact). Compact forms remain only on the
+     Overview hero deck.
+
 - **Fixed 2026-09-26 — phone-width layout (402 px, iPhone 17 Pro).** Owner
   audit of all nine modules in iOS Safari found five fit faults, now fixed
   (desktop layout unchanged — every change is scoped below Tailwind `sm`):
@@ -502,9 +524,9 @@ stops at last month" problem is structurally closed:
 
   **Still open from the same audit:** Water donut gives *Villa* and
   *MB_Common* the same purple (`CHART_PALETTE` has 6 colours, so the 7th
-  category reuses the 1st — also on desktop); OMR shown to 1–2 decimals in places (STP economic impact, HVAC AMC
-  cards) against the 3-decimal convention; Water Daily / Satellite / Hand
-  Readings views and inner tabs were not audited at phone width.
+  category reuses the 1st — also on desktop). (OMR decimals and the Daily
+  view were closed by the entry above; the Satellite and Hand Readings phone
+  layouts are logged in the UX review as the next batch.)
 
 - **Open 2026-09-10 — real unaccounted water upstream of every zone, ~20–40% of
   NAMA supply.** Analysis over 97 days with complete DC readings (Jun-26 to
