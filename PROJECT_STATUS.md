@@ -1686,6 +1686,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-26 — fix(water,dashboard): daily false all-clear, part-month trend, OMR to 3 dp (#90)
 - 2026-09-26 — fix(mobile): five phone-width layout faults (402 px audit) (#89)
 - 2026-09-20 — feat(water/satellite): rebuild the Satellite view as one frame with small status marks (#88)
 - 2026-09-19 — feat(water/satellite): frame a selected zone automatically at an oblique 3D angle (#87)
