@@ -6,9 +6,9 @@ import { getWaterSystemData, getElectricityMeters, getSTPOperations, getContract
 import {
     getSTPOperationsFromSupabase,
     getElectricityMetersFromSupabase,
-    getWaterMetersFromSupabase,
     isSupabaseConfigured
 } from "@/lib/supabase";
+import { fetchWaterMeters, type DerivedMonth } from "@/functions/api/water";
 import { getContractorCounts } from "@/functions";
 import { ELECTRICITY_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -63,6 +63,12 @@ export interface ChartData {
     month: string;
     /** null = month inside the shared window with no reading (renders as a gap). */
     water?: number | null;
+    /**
+     * Set only when `water` is a month-to-date sum of daily readings (the
+     * official monthly import has not landed): the last day it covers. Such a
+     * month must never be compared with a complete one.
+     */
+    waterThroughDay?: number;
     efficiency?: number;
     inlet?: number | null;
     tse?: number | null;
@@ -118,6 +124,7 @@ export const STP_RECOVERY_CRITICAL_PCT = 80;
  */
 export const PERIOD_BASIS_NOTE =
     `Each KPI is labelled with the period it covers. Water and electricity show the newest month with meter readings; ` +
+    `a water month still in progress is marked month to date and is not compared with a full month; ` +
     `STP shows the newest month with at least ${MIN_DAYS_FOR_COMPLETE_MONTH} daily logs, so a part-way month is not reported as a shortfall. ` +
     `Trends compare each KPI against its own previous period.`;
 
@@ -298,6 +305,8 @@ export function useDashboardData() {
              * plausible-wrong-number failure this dashboard must not produce.
              */
             let waterMock: Awaited<ReturnType<typeof getWaterSystemData>> | null = null;
+            /** Water months that are month-to-date daily sums, not official monthly reads. */
+            let derivedMonths: DerivedMonth[] = [];
             /** Sources whose read rejected. Non-empty ⇒ the deck is incomplete. */
             const failed: string[] = [];
 
@@ -306,7 +315,7 @@ export function useDashboardData() {
                     getSTPOperationsFromSupabase(),
                     getElectricityMetersFromSupabase(),
                     getContractorCounts(),
-                    getWaterMetersFromSupabase()
+                    fetchWaterMeters()
                 ]);
 
                 // A rejected read is reported, not papered over. An empty result
@@ -321,8 +330,11 @@ export function useDashboardData() {
                 if (contractorsResult.status === 'fulfilled') contractorsCount = contractorsResult.value.active;
                 else failed.push("contractors");
 
-                if (waterResult.status === 'fulfilled') waterMeters = waterResult.value;
-                else failed.push("water meters");
+                // fetchWaterMeters reports a failed read in `error` rather than rejecting.
+                if (waterResult.status === 'fulfilled' && waterResult.value.error === null) {
+                    waterMeters = waterResult.value.meters;
+                    derivedMonths = waterResult.value.derivedMonths;
+                } else failed.push("water meters");
 
                 if (failed.length > 0) {
                     setError(
@@ -409,6 +421,11 @@ export function useDashboardData() {
             const elecTotal = allReadings[latestElecMonth] || 0;
             const elecPrevTotal = allReadings[prevElecMonth] || 0;
 
+            // A month-to-date water month covers only part of the month, so it is
+            // labelled as such and never trended against a complete month.
+            const waterThroughDay = derivedMonths.find(d => d.month === waterMonth)?.throughDay;
+            const waterIsPartial = waterThroughDay !== undefined;
+
             // Which KPIs actually have something behind them. A source that
             // returned nothing yields "—", never a 0 that reads as a measurement.
             const hasWater = waterValue !== null;
@@ -467,11 +484,11 @@ export function useDashboardData() {
                 {
                     label: "WATER PRODUCTION",
                     value: kpi(waterValue, hasWater, 1000, "k m³"),
-                    subtitle: waterMonth,
+                    subtitle: waterIsPartial ? `${waterMonth} · month to date (to day ${waterThroughDay})` : waterMonth,
                     icon: null,
                     variant: "water" as const,
-                    trend: hasWater ? waterTrend.trend : undefined,
-                    trendValue: hasWater ? waterTrend.trendValue : undefined,
+                    trend: hasWater && !waterIsPartial ? waterTrend.trend : undefined,
+                    trendValue: hasWater && !waterIsPartial ? waterTrend.trendValue : undefined,
                     invertTrend: true,   // Less water drawn = conservation = green ✓
                     target: waterTarget,
                 },
@@ -550,7 +567,12 @@ export function useDashboardData() {
 
             const nextChartData: ChartData[] = monthWindow.map(month => {
                 const v = waterByMonth.get(month);
-                return { month, water: v != null ? Math.round(v / 1000) : null };
+                const throughDay = derivedMonths.find(d => d.month === month)?.throughDay;
+                return {
+                    month,
+                    water: v != null ? Math.round(v / 1000) : null,
+                    ...(throughDay !== undefined && { waterThroughDay: throughDay }),
+                };
             });
             setChartData(nextChartData);
 
@@ -598,9 +620,9 @@ export function useDashboardData() {
                 {
                     title: `Water Production — ${waterMonth}`,
                     description: hasWater
-                        ? `${kpi(waterValue, true, 1000, "k m³")} · ${trendDesc(waterTrend)}`
+                        ? `${kpi(waterValue, true, 1000, "k m³")} · ${waterIsPartial ? `month to date (to day ${waterThroughDay}), not compared` : trendDesc(waterTrend)}`
                         : `No reading available`,
-                    type: hasWater && waterTrend.trend === 'up' ? 'warning' : 'info'
+                    type: hasWater && !waterIsPartial && waterTrend.trend === 'up' ? 'warning' : 'info'
                 },
                 {
                     title: `Electricity Usage — ${formattedElecMonth}`,

@@ -45,6 +45,7 @@ import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import dynamic from "next/dynamic";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
+import { formatOmr } from "@/lib/currency";
 
 // ─── Recharts is loaded on demand ──────────────────────────────────────────
 // Plant Watch and the three trend charts are the only Recharts consumers on
@@ -504,8 +505,7 @@ export default function STPPage() {
         // it is TSE ÷ inlet, so it rides on the TSE subtitle here, and it
         // remains the LEAD health card on the Plant Watch tab with its target
         // bands intact.
-        const money = (v: number) =>
-            v.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+        const money = formatOmr;
 
         return [
             {
@@ -529,7 +529,7 @@ export default function STPPage() {
             {
                 label: "Tanker Trips",
                 value: `${totalTrips.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
-                subtitle: `at ${TANKER_FEE} OMR / trip`,
+                subtitle: `at ${formatOmr(TANKER_FEE)} OMR / trip`,
                 icon: Truck,
                 variant: "warning" as const,
                 ...(tripsTrend && { trend: tripsTrend.trend, trendValue: tripsTrend.trendValue }),

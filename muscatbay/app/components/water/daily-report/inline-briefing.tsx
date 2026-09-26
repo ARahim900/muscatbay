@@ -1,7 +1,7 @@
 "use client";
 
 import {
-    Droplets, Gauge, TrendingDown, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, Minus,
+    Droplets, Gauge, TrendingDown, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown, Minus, CircleDashed,
     type LucideIcon,
 } from "lucide-react";
 import { SectionCard } from "@/components/ui";
@@ -52,6 +52,52 @@ function Stat({
 }
 
 /**
+ * The "Zones needing attention" stat. The green all-clear is earned only when
+ * every zone's bulk meter was read; a partly read day says how many zones are
+ * missing, because an unread zone may be the one leaking.
+ */
+function ZoneAttentionStat({
+    alarmCount, alarmZones, zoneCount, zonesReported,
+}: Pick<BriefingMetrics, "alarmCount" | "alarmZones" | "zoneCount" | "zonesReported">) {
+    if (alarmCount > 0) {
+        return (
+            <Stat
+                icon={AlertTriangle}
+                iconClassName="text-danger"
+                label="Zones needing attention"
+                value={`${alarmCount} of ${zoneCount} · ${alarmZones.map(shortZone).join(", ")}`}
+                valueClassName="text-danger"
+                title={`Above the daily loss threshold: ${alarmZones.join(", ")}`}
+            />
+        );
+    }
+    if (zoneCount === 0) {
+        return <Stat icon={CheckCircle2} iconClassName="text-neutral" label="Zones needing attention" value="No zone data today" />;
+    }
+    if (zonesReported < zoneCount) {
+        const unread = zoneCount - zonesReported;
+        return (
+            <Stat
+                icon={CircleDashed}
+                iconClassName="text-neutral"
+                label="Zones needing attention"
+                value={`None of ${zonesReported} read · ${unread} not read`}
+                title={`${unread} zone bulk ${unread === 1 ? "meter has" : "meters have"} no reading for this day, so ${unread === 1 ? "that zone" : "those zones"} cannot be checked.`}
+            />
+        );
+    }
+    return (
+        <Stat
+            icon={CheckCircle2}
+            iconClassName="text-success"
+            label="Zones needing attention"
+            value={`None — all ${zoneCount} zones normal`}
+            valueClassName="text-success"
+        />
+    );
+}
+
+/**
  * Daily briefing — the five distribution-level figures for the selected day in
  * one static card (the former news-ticker strip is gone: DESIGN_SYSTEM.md rule 7,
  * ticker / marquee strips do not exist). Labels stay distribution-level — the
@@ -65,7 +111,7 @@ export function DailyBriefing({
     month: string;
     day: number;
 }) {
-    const { totalSupply, l2Total, l3Total, lossM3, lossPct, alarmCount, alarmZones, zoneCount, vsYesterdayPct, status } = metrics;
+    const { totalSupply, l2Total, l3Total, lossM3, lossPct, zoneCount, zonesReported, vsYesterdayPct, status } = metrics;
 
     const isWarning = status === "warning";
     // Points with the movement; a flat/absent comparison gets the neutral glyph
@@ -76,6 +122,21 @@ export function DailyBriefing({
             : vsYesterdayPct < 0
               ? ArrowDown
               : ArrowUp;
+
+    // Nothing read yet: say so instead of rendering a column of zeros.
+    if (zoneCount > 0 && zonesReported === 0) {
+        return (
+            <SectionCard>
+                <SectionCard.Header icon={Droplets} title={`Briefing · ${month} · Day ${day}`} />
+                <SectionCard.Body>
+                    <p className="flex items-center gap-2 text-label text-muted">
+                        <CircleDashed size={16} strokeWidth={2} className="shrink-0" aria-hidden="true" />
+                        No meter readings recorded for Day {day} yet. Readings usually arrive a day or two late.
+                    </p>
+                </SectionCard.Body>
+            </SectionCard>
+        );
+    }
 
     return (
         <SectionCard>
@@ -114,24 +175,7 @@ export function DailyBriefing({
                         valueClassName={isWarning ? "text-warning" : undefined}
                         title="Water that entered the zones but was not recorded at any property meter — leaks, unmetered use or meter error."
                     />
-                    {alarmCount > 0 ? (
-                        <Stat
-                            icon={AlertTriangle}
-                            iconClassName="text-danger"
-                            label="Zones needing attention"
-                            value={`${alarmCount} of ${zoneCount} · ${alarmZones.map(shortZone).join(", ")}`}
-                            valueClassName="text-danger"
-                            title={`Above the daily loss threshold: ${alarmZones.join(", ")}`}
-                        />
-                    ) : (
-                        <Stat
-                            icon={CheckCircle2}
-                            iconClassName={zoneCount > 0 ? "text-success" : "text-neutral"}
-                            label="Zones needing attention"
-                            value={zoneCount > 0 ? `None — all ${zoneCount} zones normal` : "No zone data today"}
-                            valueClassName={zoneCount > 0 ? "text-success" : undefined}
-                        />
-                    )}
+                    <ZoneAttentionStat {...metrics} />
                     <Stat
                         icon={TrendIcon}
                         iconClassName="text-info"

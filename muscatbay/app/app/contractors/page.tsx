@@ -47,6 +47,7 @@ import { RenewalsPanel } from "@/components/contractors/renewals";
 import { TermsPanel } from "@/components/contractors/terms";
 import { PricingPanel } from "@/components/contractors/pricing";
 import { YearlyCostChart } from "@/components/contractors/yearly-chart";
+import { formatOmr } from "@/lib/currency";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -504,10 +505,6 @@ export default function ContractorsPage() {
     const revenueContracts = contracts.filter(c => c.flow === 'Revenue');
     const totalContractValue = expenseContracts.reduce((s, c) => s + (c.total_value_omr ?? 0), 0);
     const currentYearExpense = matrix.rows.length > 0 ? matrix.rows[0].total : 0;
-    const compactContractValue = new Intl.NumberFormat('en-US', {
-        notation: 'compact',
-        maximumFractionDigits: 2,
-    }).format(totalContractValue);
 
     // Counted from the SAME parsed end dates the Renewals tab renders, so the
     // KPI and the list can never disagree.
@@ -549,10 +546,9 @@ export default function ContractorsPage() {
         },
         {
             label: "TOTAL CONTRACT VALUE",
-            value: compactContractValue,
+            value: formatOmr(totalContractValue),
             unit: "OMR",
-            accessibleValue: `${totalContractValue.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
-            subtitle: `Year 1 expense: ${currentYearExpense.toLocaleString('en-US', { maximumFractionDigits: 1 })} OMR`,
+            subtitle: `Year 1 expense: ${formatOmr(currentYearExpense)} OMR`,
             icon: DollarSign,
             variant: "warning" as const,
         },

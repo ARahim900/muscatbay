@@ -19,16 +19,17 @@ import type { GulfExpertContract, GulfExpertData } from "./types";
 import { CHART_PALETTE, STATUS_CHART_COLORS } from "@/lib/tokens";
 import { useChartMotion } from "@/hooks/useReducedMotion";
 import { useIsPhone } from "@/hooks/useIsPhone";
+import { formatOmr } from "@/lib/currency";
 
 interface OverviewTabProps {
   data: GulfExpertData;
 }
 
-/** `numeric` columns come back from PostgREST as strings — normalise before formatting. */
-function formatOmr(value: number | string | null): string {
+/** `numeric` columns come back from PostgREST as strings — normalise, then the shared 3-decimal format. */
+function formatAmcValue(value: number | string | null): string {
   const n = typeof value === "string" ? Number(value) : value;
-  if (n == null || Number.isNaN(n)) return "—";
-  return `OMR ${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const text = formatOmr(n);
+  return text === "—" ? text : `OMR ${text}`;
 }
 
 function formatDate(value: string | null): string {
@@ -383,7 +384,7 @@ export function OverviewTab({ data }: OverviewTabProps) {
                           {contractTypeLabel(c)}
                         </p>
                         <p className="text-xl font-semibold text-foreground tabular-nums">
-                          {formatOmr(c.value_omr_incl_vat)}
+                          {formatAmcValue(c.value_omr_incl_vat)}
                         </p>
                         <p className="text-[10px] text-muted-foreground">incl. VAT</p>
                       </div>

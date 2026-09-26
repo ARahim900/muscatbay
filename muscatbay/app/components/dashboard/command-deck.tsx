@@ -295,7 +295,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                                 href={stat.href}
                                 data-deck-cell
                                 data-glow
-                                aria-label={`${stat.label}: ${stat.value}${stat.subtitle ? `, ${stat.subtitle}` : ""}. ${stat.trend === "up" ? "Up" : stat.trend === "down" ? "Down" : "No change"} ${stat.trendValue || ""} compared to the previous period.${stat.target ? ` ${stat.target.label}.` : ""} Click to view details.`}
+                                aria-label={`${stat.label}: ${stat.value}${stat.subtitle ? `, ${stat.subtitle}` : ""}.${stat.trend ? ` ${stat.trend === "up" ? "Up" : stat.trend === "down" ? "Down" : "No change"} ${stat.trendValue || ""} compared to the previous period.` : ""}${stat.target ? ` ${stat.target.label}.` : ""} Click to view details.`}
                                 className={cn(
                                     cellClassName,
                                     "mb-glow transition-colors duration-200",

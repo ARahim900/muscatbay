@@ -42,18 +42,35 @@ const MIN_MARKER_LABEL = { value: 'Min', position: 'bottom' as const, fontSize: 
 // this LABEL is 10px text and needs 4.5:1, so it takes the text tier.
 const NOW_MARKER_LABEL = { value: 'Now', position: 'top' as const, fontSize: 10, fill: 'var(--status-info)', fontWeight: 700 };
 
-/** Synthesise a one-line insight from the data so boards see the takeaway, not the numbers. */
-function buildWaterInsight(data: ChartData[], avg: number): string {
-    // Months with no reading are gaps (null) — compare the last two REAL readings.
-    const readings = data.filter((d) => typeof d.water === "number");
-    if (readings.length < 2) return "";
-    const last = readings[readings.length - 1].water as number;
-    const prev = readings[readings.length - 2].water as number;
-    const t = calcTrend(last, prev);
+/** A water point that is a complete month (not a gap, not month-to-date). */
+const isCompleteWater = (d: ChartData): boolean =>
+    typeof d.water === "number" && d.waterThroughDay === undefined;
+
+/**
+ * Synthesise a one-line insight from the data so boards see the takeaway, not the numbers.
+ *
+ * Only complete months are compared. A month-to-date month holds a part of
+ * the month (e.g. 24 of 30 days), so comparing it with a full month always
+ * reads as a fall; it is named as month-to-date instead.
+ */
+export function buildWaterInsight(data: ChartData[], avg: number): string {
+    const newest = [...data].reverse().find((d) => typeof d.water === "number");
+    const partialNote = newest && newest.waterThroughDay !== undefined
+        ? `${newest.month} is month to date (to day ${newest.waterThroughDay}). `
+        : "";
+    // Months with no reading are gaps (null) — compare the last two COMPLETE readings.
+    const readings = data.filter(isCompleteWater);
+    if (readings.length < 2) return partialNote.trim();
+    const last = readings[readings.length - 1];
+    const prev = readings[readings.length - 2];
+    const t = calcTrend(last.water as number, prev.water as number);
+    const tail = `running average is ${avg.toFixed(1)}k m³.`;
     if (t.trend === "neutral") {
-        return t.trendValue === "—" ? "" : `Latest month is level with the prior month; running average is ${avg.toFixed(1)}k m³.`;
+        return t.trendValue === "—"
+            ? partialNote.trim()
+            : `${partialNote}${last.month} was level with ${prev.month}; ${tail}`;
     }
-    return `Latest month is ${t.trendValue} ${t.trend} vs the prior month; running average is ${avg.toFixed(1)}k m³.`;
+    return `${partialNote}${last.month} was ${t.trendValue} ${t.trend} on ${prev.month}; ${tail}`;
 }
 
 /**
@@ -99,11 +116,12 @@ const INSIGHT_STATUS_COLOR = {
 function DashboardChartsInner({ chartData, stpChartData }: DashboardChartsProps) {
     const chartMotion = useChartMotion();
     const stpLegend = useChartLegendToggle();
-    // Average over months that HAVE a reading — gap months must not dilute it.
+    // Average over COMPLETE months — gap months and a month-to-date month
+    // (only part of its days) must not dilute it.
     const waterAvg = useMemo(() => {
         const vals = chartData
-            .map((d) => d.water)
-            .filter((v): v is number => typeof v === "number");
+            .filter(isCompleteWater)
+            .map((d) => d.water as number);
         return vals.length > 0 ? vals.reduce((sum, v) => sum + v, 0) / vals.length : 0;
     }, [chartData]);
     const waterInsight = useMemo(() => buildWaterInsight(chartData, waterAvg), [chartData, waterAvg]);

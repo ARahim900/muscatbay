@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { Slider } from "@/components/ui/slider";
 import { Button, SectionCard, Tabs, type TabItem } from "@/components/ui";
 import { SectionBoundary } from "@/components/shared/section-boundary";
@@ -27,6 +27,7 @@ import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
 import { DCAnalyticsPanel, SupplyReconciliationTable } from "./daily-report/inline-dc-panel";
 import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
 import { computeBriefing } from "./daily-report/briefing-metrics";
+import { buildDailyGrid } from "./daily-report/daily-metrics";
 // ─── Daily section tabs (zone-first: no L1/NAMA daily account exists, so the
 //     section is organised around the L2-vs-ΣL3 balance where leaks show up).
 import { ZoneWatch } from "./daily-report/zone-watch";
@@ -125,6 +126,26 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
     const [activeTab, setActiveTab] = useState<DailyTab>('watch');
     const [activeZone, setActiveZone] = useState<string>(ZONE_BULK_CONFIG[0].zoneName);
 
+    // True while the day on screen is a default rather than the operator's pick.
+    // "Yesterday" from the device clock is only a placeholder: readings land a
+    // day or two late, so yesterday often has none, and an empty day rendered
+    // as "0.00 m³ · all zones normal" — a false all-clear. Once the month's
+    // rows arrive, a defaulted day moves to the latest day that has readings.
+    const autoDayRef = useRef(true);
+
+    /** Switch month and let the day follow the data (see autoDayRef). */
+    const chooseMonth = useCallback((month: string) => {
+        autoDayRef.current = true;
+        setSelectedMonth(month);
+        setSelectedDay(getDefaultDay(month));
+    }, []);
+
+    /** An explicit day choice — never overridden by the latest-day default. */
+    const pickDay = useCallback((day: number | ((d: number) => number)) => {
+        autoDayRef.current = false;
+        setSelectedDay(day);
+    }, []);
+
     // ── Restore / persist the selected tab & zone (client-only) ────────────────
     useEffect(() => {
         const prefs = loadFilterPreferences<{ tab?: string; zone?: string }>('water-daily');
@@ -147,10 +168,10 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
 
     // ── Cross-navigation: Zone Watch cards/heatmap → Zone Analysis drill-down ──
     const inspectZone = useCallback((zone: string, day?: number) => {
-        if (day !== undefined) setSelectedDay(day);
+        if (day !== undefined) pickDay(day);
         setActiveZone(zone);
         setActiveTab('zones');
-    }, []);
+    }, [pickDay]);
 
     // ── Cheap existence probe: does a month have any rows? (HEAD count, no data)
     const monthHasData = useCallback(async (month: string): Promise<boolean> => {
@@ -183,12 +204,11 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                 m = getDefaultMonth();
             }
             if (cancelled) return;
-            setSelectedMonth(m);
-            setSelectedDay(getDefaultDay(m));
+            chooseMonth(m);
             setDefaultsApplied(true);
         })();
         return () => { cancelled = true; };
-    }, [monthHasData]);
+    }, [monthHasData, chooseMonth]);
 
     // ── Build report from cached month rows for any day (no network call) ──────
     const computeReport = useCallback((rows: SupabaseDailyWaterConsumption[], day: number) => {
@@ -242,6 +262,13 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
         }
     }, []);
 
+    // ── A defaulted day follows the data: the latest day with any reading ──────
+    useEffect(() => {
+        if (!autoDayRef.current || monthData.length === 0) return;
+        autoDayRef.current = false;
+        setSelectedDay(buildDailyGrid(monthData).latestDay);
+    }, [monthData]);
+
     // ── Recompute report whenever cached data OR selected day changes ─────────
     useEffect(() => {
         if (monthData.length === 0) return;
@@ -260,8 +287,8 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
     // ── Stable slider handler — inline arrow would recreate every render and
     //    cause Radix Slider to call onValueChange in a loop (infinite updates)
     const handleSliderChange = useCallback((v: number[]) => {
-        setSelectedDay(v[0]);
-    }, []); // setSelectedDay is a stable useState dispatcher — no deps needed
+        pickDay(v[0]);
+    }, [pickDay]); // pickDay is stable (empty deps), so the handler is too
 
     // ── Auto-fetch when month changes ─────────────────────────────────────────
     // Guarded by `defaultsApplied` so we only fetch once the client-side
@@ -314,8 +341,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                 const currentAbbrev = selectedMonth.split('-')[0];
                                 const match = months.find(m => m.startsWith(currentAbbrev));
                                 const next = match ?? months[months.length - 1];
-                                setSelectedMonth(next);
-                                setSelectedDay(getDefaultDay(next));
+                                chooseMonth(next);
                             }}
                             disabled={status === 'loading'}
                             className={SELECT_CLASS}
@@ -327,7 +353,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                         <select
                             aria-label="Month"
                             value={selectedMonth}
-                            onChange={e => { const m = e.target.value; setSelectedMonth(m); setSelectedDay(getDefaultDay(m)); }}
+                            onChange={e => chooseMonth(e.target.value)}
                             disabled={status === 'loading'}
                             className={SELECT_CLASS}
                         >
@@ -342,7 +368,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                         <Button
                             variant="secondary"
                             icon={ChevronLeft}
-                            onClick={() => setSelectedDay(d => Math.max(1, d - 1))}
+                            onClick={() => pickDay(d => Math.max(1, d - 1))}
                             disabled={selectedDay <= 1 || status === 'loading'}
                             aria-label="Previous day"
                         />
@@ -358,7 +384,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                         <Button
                             variant="secondary"
                             icon={ChevronRight}
-                            onClick={() => setSelectedDay(d => Math.min(maxDay, d + 1))}
+                            onClick={() => pickDay(d => Math.min(maxDay, d + 1))}
                             disabled={selectedDay >= maxDay || status === 'loading'}
                             aria-label="Next day"
                         />
