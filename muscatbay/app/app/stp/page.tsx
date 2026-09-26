@@ -687,9 +687,9 @@ export default function STPPage() {
                 'TSE Output (m³)': op.tse_for_irrigation,
                 'Efficiency %': Number(efficiency.toFixed(1)),
                 'Tanker Trips': op.tanker_trips,
-                'Income (OMR)': Number(income.toFixed(1)),
-                'Savings (OMR)': Number(savings.toFixed(1)),
-                'Total Impact (OMR)': Number((income + savings).toFixed(1)),
+                'Income (OMR)': Number(income.toFixed(3)),
+                'Savings (OMR)': Number(savings.toFixed(3)),
+                'Total Impact (OMR)': Number((income + savings).toFixed(3)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);

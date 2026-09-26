@@ -502,7 +502,8 @@ stops at last month" problem is structurally closed:
   3. **One OMR formatter** (`lib/currency.ts`, 3 decimals): Water loss cost and
      its rate, Electricity estimated cost and budget, STP economic impact (tile,
      subtitle, Plant Watch) and tanker fee, Contractors total value and Year 1
-     expense, HVAC AMC contract values. Compact forms remain only on the
+     expense, HVAC AMC contract values, and the STP daily-operations CSV
+     export (income, savings, total impact). Compact forms remain only on the
      Overview hero deck.
 
 - **Fixed 2026-09-26 — phone-width layout (402 px, iPhone 17 Pro).** Owner
