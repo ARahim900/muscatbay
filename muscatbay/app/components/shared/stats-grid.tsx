@@ -166,7 +166,10 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                                 justChanged && "mb-value-changed-ink"
                             )}>
                                 <CountUp value={stat.value} delay={index * 0.06} />
-                                {stat.unit && <span className="ml-1 text-xs font-medium text-muted-foreground">{stat.unit}</span>}
+                                {/* The space is the break point: a long figure (OMR to 3
+                                    decimals) moves the whole unit to the next line instead
+                                    of splitting it ("O" / "MR"). */}
+                                {stat.unit && <>{" "}<span className="whitespace-nowrap text-xs font-medium text-muted-foreground">{stat.unit}</span></>}
                             </h3>
                         </div>
                     </div>
