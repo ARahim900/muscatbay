@@ -505,6 +505,8 @@ stops at last month" problem is structurally closed:
      expense, HVAC AMC contract values, and the STP daily-operations CSV
      export (income, savings, total impact). Compact forms remain only on the
      Overview hero deck.
+     Follow-up: KPI tiles now wrap the unit whole — the longer 3-decimal
+     figure had split "OMR" as "O" / "MR" at 402 px (seen in the simulator).
 
 - **Fixed 2026-09-26 — phone-width layout (402 px, iPhone 17 Pro).** Owner
   audit of all nine modules in iOS Safari found five fit faults, now fixed

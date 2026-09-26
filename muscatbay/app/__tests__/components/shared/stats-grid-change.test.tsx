@@ -101,3 +101,14 @@ describe('StatsGrid — live value change', () => {
         expect(tileFor('Electricity').className).not.toContain('mb-value-changed');
     });
 });
+
+describe('StatsGrid — unit wrapping', () => {
+    it('keeps the unit whole and gives it a space to wrap at', () => {
+        installMatchMedia(false);
+        render(<StatsGrid stats={[{ label: 'Loss Cost', value: '259,593.971', unit: 'OMR', icon: Droplets, variant: 'warning' }]} />);
+        const unit = screen.getByText('OMR');
+        // A long 3-decimal figure used to split the unit as "O" / "MR" on phones.
+        expect(unit.className).toContain('whitespace-nowrap');
+        expect(unit.previousSibling?.textContent?.endsWith(' ')).toBe(true);
+    });
+});
