@@ -132,6 +132,23 @@ Electricity, STP, Contractors, HVAC, Fire Safety, Assets):
 - **KPI labels wrap instead of truncating mid-word** on narrow viewports
   ("WATER PRODUCTI…") — command deck + shared `StatsGrid`.
 
+**2026-09-27 — alerts open the right screen, every time** (branch
+`fix/alerts-landscape`): alert links were bare module routes (`/water`,
+`/stp`, `/contractors`), so a tap opened whichever tab was used last, and a tap
+while already on that page changed nothing (App Router keeps a page mounted
+when only the query changes; the pages read `?view=` once on mount). Now
+`lib/deep-links.ts` builds and parses every alert link — water alerts open
+`/water?view=monthly&month=<Mon-YY>&section=overview|zones`, STP alerts Plant
+Watch (`/stp?tab=watch`), expired-but-active contracts the AMC Tracker and
+expiring ones Renewals (`/contractors?tab=…`). Pages react to URL changes via
+`components/shared/search-params-listener.tsx` (Suspense-wrapped
+`useSearchParams`, so the pages still prerender); `month`/`section`/`tab` are
+one-shot and removed from the URL once applied, `?view=` stays as the water
+page's URL state (back/forward unchanged). The whole alert card is now the tap
+target (stretched link; Acknowledge/Reopen stay separate 44 px buttons), session
+notifications can carry an `href`, and OS notifications open the alert's own
+link instead of `/`.
+
 **2026-07-13 — alert reliability + interface consistency pass** (cross-module):
 
 - **Data-driven operational alerts.** New pure rules engine

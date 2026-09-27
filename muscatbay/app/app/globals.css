@@ -1487,6 +1487,53 @@ main#main-content {
   padding-inline-end: env(safe-area-inset-right, 0px);
 }
 
+/* Topbar gutters (1rem phone, 1.5rem from sm) plus the insets, so the profile
+   menu on the right clears the landscape notch / screen corner. */
+.topbar-dynamic {
+  padding-inline-start: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-inline-end: calc(1rem + env(safe-area-inset-right, 0px));
+}
+@media (min-width: 640px) {
+  .topbar-dynamic {
+    padding-inline-start: calc(1.5rem + env(safe-area-inset-left, 0px));
+    padding-inline-end: calc(1.5rem + env(safe-area-inset-right, 0px));
+  }
+}
+
+/* md+: the sidebar is on screen and already widens by the left inset
+   (--sidebar-w in client-layout.tsx), so the content and topbar beside it
+   must not clear the same notch a second time — that double inset squeezed
+   the page by ~60px on an iPhone in landscape. */
+@media (min-width: 768px) {
+  main#main-content {
+    padding-inline-start: 0;
+  }
+  .topbar-dynamic {
+    padding-inline-start: 1.5rem;
+  }
+}
+
+/* Short landscape screens (iPhone: 402–440px tall): the nav list alone got
+   ~200px between the brand row and the pinned Settings / Sign out footer, so
+   only three modules showed and the rest hid behind an easily missed inner
+   scroll. Below 500px tall the whole sidebar scrolls as one column instead:
+   every module follows straight on, with Settings and Sign out at the end.
+   The gliding active rail compensates via aside.scrollTop (sidebar.tsx). */
+@media (min-width: 768px) and (max-height: 500px) {
+  .app-sidebar {
+    /* Nothing should scroll sideways. This box clips anything that pokes out
+       of it, which is why the folded rail's tooltips are portalled to <body>
+       (sidebar.tsx) rather than drawn beside each item. */
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .app-sidebar > nav {
+    flex: none;
+    overflow: visible;
+  }
+}
+
 /* Vertical inset: only installed (standalone) sessions draw under the status
    bar. The fixed topbar grows by the inset and the main content's top padding
    follows it, so nothing ends up hidden behind the notch. */

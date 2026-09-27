@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link, { useLinkStatus } from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -86,6 +87,16 @@ function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ cl
   return <Icon className={className} />;
 }
 
+/** Where the folded rail's single tooltip sits, in viewport pixels. */
+interface RailTooltip {
+  label: string;
+  /** Vertical centre of the item. */
+  top: number;
+  /** Inline-start edge: `left` in LTR, `right` in RTL. */
+  inset: number;
+  rtl: boolean;
+}
+
 // Bottom navigation items
 const bottomNavItems: NavigationItem[] = [
   { id: "settings", name: "Settings", icon: Settings, href: "/settings", module: "settings" },
@@ -99,6 +110,7 @@ export function Sidebar() {
   const asideRef = useRef<HTMLElement>(null);
   const railRef = useRef<HTMLSpanElement>(null);
   const railAnimatedRef = useRef(false);
+  const [tooltip, setTooltip] = useState<RailTooltip | null>(null);
 
   // Gliding active rail: one teal indicator that travels between nav items on
   // navigation instead of blinking on/off. The per-item static bars (class
@@ -120,7 +132,10 @@ export function Sidebar() {
       const asideRect = aside.getBoundingClientRect();
       const rect = active.getBoundingClientRect();
       // top-1.5/bottom-1.5 (6px) insets match the static bars exactly
-      const target = { y: rect.top - asideRect.top + 6, height: rect.height - 12, autoAlpha: 1 };
+      // + scrollTop: on short landscape screens the whole aside scrolls (see
+      // .app-sidebar in globals.css) and the rail scrolls with it, so it must be
+      // placed in content coordinates. scrollTop is 0 everywhere else.
+      const target = { y: rect.top - asideRect.top + aside.scrollTop + 6, height: rect.height - 12, autoAlpha: 1 };
       if (animate && railAnimatedRef.current) {
         gsap.to(rail, { ...target, duration: 0.5, ease: MOTION.ease.out, overwrite: 'auto' });
       } else {
@@ -131,6 +146,9 @@ export function Sidebar() {
 
     place(true);
 
+    // Tall layout only: the nav is the scroll box there. On short landscape
+    // screens the nav does not scroll (the whole aside does), and the rail sits
+    // inside that aside and scrolls with it, so it needs no re-placing.
     const nav = aside.querySelector('nav');
     const onScroll = () => place(false);
     nav?.addEventListener('scroll', onScroll, { passive: true });
@@ -151,6 +169,44 @@ export function Sidebar() {
     };
   }, [pathname, isCollapsed, role, isDevMode]);
 
+  // Folded-rail tooltips are portalled to <body>, not drawn inside the item.
+  // The nav (and, on short landscape screens, the whole aside) is a scroll box,
+  // and a scroll box clips anything that pokes out sideways, so in-place
+  // tooltips were cut off. The aside's transform also rules out position:fixed
+  // inside it. One tooltip, placed from the item's viewport rect.
+  const showTooltip = (label: string) => (event: React.SyntheticEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const rtl = getComputedStyle(event.currentTarget).direction === 'rtl';
+    setTooltip({
+      label,
+      top: rect.top + rect.height / 2,
+      inset: rtl ? window.innerWidth - rect.left + 12 : rect.right + 12,
+      rtl,
+    });
+  };
+  const hideTooltip = () => setTooltip(null);
+  const tooltipHandlers = (label: string) =>
+    isCollapsed
+      ? { onMouseEnter: showTooltip(label), onMouseLeave: hideTooltip, onFocus: showTooltip(label), onBlur: hideTooltip }
+      : {};
+  // Only the folded rail has tooltips; expanding hides any that is open.
+  const visibleTooltip = isCollapsed ? tooltip : null;
+
+  // A placed tooltip goes stale once anything under it moves. Capture on the
+  // aside catches the nav's scroll too (scroll events do not bubble).
+  const tooltipOpen = visibleTooltip !== null;
+  useEffect(() => {
+    if (!tooltipOpen) return;
+    const aside = asideRef.current;
+    const hide = () => setTooltip(null);
+    aside?.addEventListener('scroll', hide, { capture: true, passive: true });
+    window.addEventListener('resize', hide);
+    return () => {
+      aside?.removeEventListener('scroll', hide, { capture: true });
+      window.removeEventListener('resize', hide);
+    };
+  }, [tooltipOpen]);
+
   // RBAC filter — hide nav items the current role can't access. Dev mode
   // bypasses for local testing. This is a soft UI gate; Supabase RLS is the
   // hard gate on the data itself.
@@ -168,16 +224,17 @@ export function Sidebar() {
       <aside
         ref={asideRef}
         className={`
-          fixed top-0 start-0 h-dvh z-40
+          app-sidebar fixed top-0 start-0 h-dvh z-40
           flex flex-col
           bg-[var(--sidebar)] border-e border-white/10
           transition-[width] duration-200 ease-out
           -translate-x-full rtl:translate-x-full
-          ${isCollapsed ? "w-[72px]" : "w-[220px]"}
+          w-[var(--sidebar-w)]
           md:translate-x-0 md:rtl:translate-x-0
         `}
         // Respect notched-device safe areas in landscape so nav content doesn't
-        // sit under a hardware cutout.
+        // sit under a hardware cutout. --sidebar-w already includes the left
+        // inset, so this padding eats into the extra width, not the rail.
         style={{
           paddingInlineStart: "env(safe-area-inset-left, 0px)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
@@ -194,6 +251,8 @@ export function Sidebar() {
           ref={railRef}
           aria-hidden="true"
           className="gsap-lift pointer-events-none absolute start-0 top-0 z-10 w-[3px] rounded-e-full bg-secondary opacity-0"
+          // Sit on the inner edge of the notch padding, not under the cutout.
+          style={{ insetInlineStart: "env(safe-area-inset-left, 0px)" }}
         />
 
         {/* Brand lockup — same height as topbar (h-16 = 64px) */}
@@ -273,7 +332,7 @@ export function Sidebar() {
                           ${isCollapsed ? "justify-center px-2" : ""}
                         `}
                         aria-label={isCollapsed ? item.name : undefined}
-                        aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
+                        {...tooltipHandlers(item.name)}
                       >
                         <span
                           aria-hidden="true"
@@ -284,12 +343,6 @@ export function Sidebar() {
                           <span className={`text-sm truncate flex-1 ${isActive ? "font-semibold" : "font-medium"}`}>
                             {item.name}
                           </span>
-                        )}
-                        {isCollapsed && (
-                          <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-[opacity,visibility] duration-150 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
-                            {item.name}
-                            <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-popover rotate-45" />
-                          </div>
                         )}
                       </Link>
                     </li>
@@ -321,7 +374,7 @@ export function Sidebar() {
                   ${isCollapsed ? "justify-center px-2" : ""}
                 `}
                 aria-label={isCollapsed ? item.name : undefined}
-                aria-describedby={isCollapsed ? `tooltip-${item.id}` : undefined}
+                {...tooltipHandlers(item.name)}
               >
                 {/* Left accent bar */}
                 <span
@@ -339,13 +392,6 @@ export function Sidebar() {
                   <span className={`text-sm ${isActive ? "font-semibold" : "font-medium"}`}>{item.name}</span>
                 )}
 
-                {/* Tooltip for collapsed state */}
-                {isCollapsed && (
-                  <div id={`tooltip-${item.id}`} role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-[opacity,visibility] duration-150 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
-                    {item.name}
-                    <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-popover rotate-45" />
-                  </div>
-                )}
               </Link>
             );
           })}
@@ -359,23 +405,31 @@ export function Sidebar() {
               ${isCollapsed ? "justify-center px-2" : ""}
             `}
             aria-label={isCollapsed ? "Sign Out" : undefined}
-            aria-describedby={isCollapsed ? "tooltip-logout" : undefined}
+            {...tooltipHandlers("Sign Out")}
           >
             <LogOut className="w-5 h-5 flex-shrink-0 text-white/75 group-hover/nav:text-sidebar-danger transition-colors duration-150" />
             {!isCollapsed && (
               <span className="text-sm font-medium">Sign Out</span>
             )}
 
-            {/* Tooltip for collapsed state */}
-            {isCollapsed && (
-              <div id="tooltip-logout" role="tooltip" className="absolute start-full ms-3 px-3 py-2 bg-popover text-popover-foreground text-sm rounded-lg opacity-0 invisible group-hover/nav:opacity-100 group-hover/nav:visible group-focus-within/nav:opacity-100 group-focus-within/nav:visible transition-[opacity,visibility] duration-150 whitespace-nowrap z-50 shadow-lg font-medium pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis">
-                Sign Out
-                <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-popover rotate-45" />
-              </div>
-            )}
           </button>
         </div>
       </aside>
+
+      {/* Visual label only: each item already carries the same text as its
+          aria-label, so the tooltip is aria-hidden rather than describing the
+          item a second time. */}
+      {visibleTooltip && createPortal(
+        <div
+          aria-hidden="true"
+          className="fixed z-[60] -translate-y-1/2 px-3 py-2 bg-popover text-popover-foreground text-sm font-medium rounded-lg shadow-lg whitespace-nowrap pointer-events-none max-w-[calc(100vw-5rem)] overflow-hidden text-ellipsis motion-safe:animate-in fade-in duration-150"
+          style={{ top: visibleTooltip.top, [visibleTooltip.rtl ? 'right' : 'left']: visibleTooltip.inset }}
+        >
+          {visibleTooltip.label}
+          <div className="absolute start-0 top-1/2 -translate-y-1/2 -translate-x-1 rtl:translate-x-1 w-2 h-2 bg-popover rotate-45" />
+        </div>,
+        document.body,
+      )}
     </>
   );
 }

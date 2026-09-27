@@ -67,7 +67,9 @@ describe('evaluateWaterLossAlerts', () => {
         expect(alerts[0].level).toBe('error'); // 43.8% > 25% critical band
         expect(alerts[0].message).toContain('43.8%');
         expect(alerts[0].message).toContain('28.8 pp above the 15% target');
-        expect(alerts[0].href).toBe('/water');
+        // Deep link to the month the alert is about, on the Overview balance —
+        // a bare /water reopened whichever view was used last.
+        expect(alerts[0].href).toBe('/water?view=monthly&month=Mar-26&section=overview');
     });
 
     it('raises a WARNING between target and the critical band', () => {
@@ -112,6 +114,7 @@ describe('evaluateWaterLossAlerts', () => {
         expect(alerts).toHaveLength(1);
         expect(alerts[0].id).toBe('water-zone-loss:Mar-26');
         expect(alerts[0].level).toBe('warning');
+        expect(alerts[0].href).toBe('/water?view=monthly&month=Mar-26&section=zones');
     });
 
     it('warns on a negative balance (consumption above supply)', () => {
@@ -170,7 +173,7 @@ describe('evaluateContractAlerts', () => {
         expect(alerts[0].title).toContain('expired but still marked active');
         expect(alerts[0].message).toContain('Muna Noor International LLC');
         expect(alerts[0].message).toContain('30 Jun 2026');
-        expect(alerts[0].href).toBe('/contractors');
+        expect(alerts[0].href).toBe('/contractors?tab=tracker');
     });
 
     it('raises a WARNING for contracts expiring within 60 days', () => {
@@ -181,6 +184,7 @@ describe('evaluateContractAlerts', () => {
         expect(alerts).toHaveLength(1);
         expect(alerts[0].level).toBe('warning');
         expect(alerts[0].message).toContain('19 days');
+        expect(alerts[0].href).toBe('/contractors?tab=renewals');
     });
 
     it('ignores rows already marked Expired (administratively closed)', () => {
@@ -237,6 +241,7 @@ describe('evaluateSTPAlerts', () => {
         const zero = alerts.find((a) => a.id.startsWith('stp-zero-output'));
         expect(zero?.level).toBe('error');
         expect(zero?.message).toContain('zero TSE output');
+        expect(zero?.href).toBe('/stp?tab=watch');
     });
 
     it('raises an ERROR below the 80% recovery band and a WARNING below 90%', () => {

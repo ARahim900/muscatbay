@@ -18,6 +18,12 @@ interface AppNotification {
   timestamp: Date;
   /** If true, also fire a browser push notification */
   pushToOS?: boolean;
+  /**
+   * Where tapping the notification should go (a lib/deep-links href). Without
+   * one the feed entry is informational only and the OS notification opens
+   * the dashboard.
+   */
+  href?: string;
 }
 
 /** Configuration for a Supabase table watcher */
@@ -31,6 +37,7 @@ interface RealtimeAlert {
     level: NotificationLevel;
     title: string;
     message?: string;
+    href?: string;
   } | null;
   /** Postgres filter expression, e.g. `column=eq.value` */
   filter?: string;
@@ -48,7 +55,8 @@ interface UseNotificationsReturn {
     level: NotificationLevel,
     title: string,
     message?: string,
-    pushToOS?: boolean
+    pushToOS?: boolean,
+    href?: string
   ) => void;
   /** Dismiss a single notification by id */
   dismiss: (id: string) => void;
@@ -59,16 +67,16 @@ interface UseNotificationsReturn {
   /** Request browser notification permission from the user */
   requestPermission: () => Promise<void>;
   /** Convenience helpers — same as notify() with the level preset */
-  success: (title: string, message?: string) => void;
-  error: (title: string, message?: string) => void;
-  warning: (title: string, message?: string) => void;
-  info: (title: string, message?: string) => void;
+  success: (title: string, message?: string, href?: string) => void;
+  error: (title: string, message?: string, href?: string) => void;
+  warning: (title: string, message?: string, href?: string) => void;
+  info: (title: string, message?: string, href?: string) => void;
   /**
    * Fire ONLY a browser/OS notification without adding to the in-app list.
    * Used by the operational alert watcher, whose alerts are already rendered
    * as persistent feed entries — listing them again would duplicate them.
    */
-  pushToOS: (title: string, message?: string, level?: NotificationLevel) => void;
+  pushToOS: (title: string, message?: string, level?: NotificationLevel, href?: string) => void;
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
@@ -152,7 +160,7 @@ export function useNotifications(
 
   // ── Send a browser (OS-level) notification ───────────────────────────
   const sendBrowserNotification = useCallback(
-    (title: string, message?: string, level: NotificationLevel = "info") => {
+    (title: string, message?: string, level: NotificationLevel = "info", href = "/") => {
       if (permission !== "granted") return;
 
       // When the service worker is available, use it so notifications
@@ -173,17 +181,25 @@ export function useNotifications(
               level === "error" || level === "warning"
                 ? [200, 100, 200]
                 : [100],
-            data: { level, url: "/" },
+            // sw.js `notificationclick` opens data.url — the alert's own
+            // view, not the dashboard.
+            data: { level, url: href },
           };
           registration.showNotification(title, options);
         });
       } else {
-        // Fallback: plain Notification API (foreground only)
-        new Notification(title, {
+        // Fallback: plain Notification API (foreground only). No service
+        // worker handles its click, so route it here.
+        const notification = new Notification(title, {
           body: message,
           icon: levelToIcon(),
           tag: `muscatbay-${level}-${Date.now()}`,
         });
+        notification.onclick = () => {
+          window.focus();
+          window.location.assign(href);
+          notification.close();
+        };
       }
     },
     [permission]
@@ -195,7 +211,8 @@ export function useNotifications(
       level: NotificationLevel,
       title: string,
       message?: string,
-      pushToOS = false
+      pushToOS = false,
+      href?: string
     ) => {
       const notification: AppNotification = {
         id: uid(),
@@ -204,6 +221,7 @@ export function useNotifications(
         message,
         timestamp: new Date(),
         pushToOS,
+        href,
       };
 
       setNotifications((prev) => {
@@ -216,7 +234,7 @@ export function useNotifications(
 
       // Also send browser notification if requested
       if (pushToOS) {
-        sendBrowserNotification(title, message, level);
+        sendBrowserNotification(title, message, level, href);
       }
     },
     [maxNotifications, sendBrowserNotification]
@@ -224,20 +242,20 @@ export function useNotifications(
 
   // ── Convenience helpers ──────────────────────────────────────────────
   const success = useCallback(
-    (title: string, message?: string) => notify("success", title, message),
+    (title: string, message?: string, href?: string) => notify("success", title, message, false, href),
     [notify]
   );
   const error = useCallback(
-    (title: string, message?: string) => notify("error", title, message, true),
+    (title: string, message?: string, href?: string) => notify("error", title, message, true, href),
     [notify]
   );
   const warning = useCallback(
-    (title: string, message?: string) =>
-      notify("warning", title, message, true),
+    (title: string, message?: string, href?: string) =>
+      notify("warning", title, message, true, href),
     [notify]
   );
   const info = useCallback(
-    (title: string, message?: string) => notify("info", title, message),
+    (title: string, message?: string, href?: string) => notify("info", title, message, false, href),
     [notify]
   );
 
@@ -307,7 +325,8 @@ export function useNotifications(
                 result.level,
                 result.title,
                 result.message,
-                shouldPush
+                shouldPush,
+                result.href
               );
             }
           }

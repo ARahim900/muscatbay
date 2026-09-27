@@ -19,6 +19,9 @@
  * reloads them on controllerchange), so stale sessions self-heal on next visit.
  *
  * History:
+ *   v25 (2026-09-27) Notification tap reliably opens the notification's own
+ *                    page: top-level windows only (never the Satellite
+ *                    iframe), navigation awaited, new window as the fallback.
  *   v23 (2026-09-20) Satellite map: meters are segmented bars, not ring gauges.
  *   v24 (2026-09-20) Satellite map: one small status line per meter.
  *   v22 (2026-09-20) Satellite map: every meter is a ring filled to its share of
@@ -66,7 +69,7 @@
  *   v5 unstuck clients stranded on an app shell referencing deleted chunks.
  */
 
-const CACHE_VERSION = "v24";
+const CACHE_VERSION = "v25";
 const SHELL_CACHE = `muscatbay-shell-${CACHE_VERSION}`;
 const STATIC_CACHE = `muscatbay-static-${CACHE_VERSION}`;
 const PAGES_CACHE = `muscatbay-pages-${CACHE_VERSION}`;
@@ -316,30 +319,57 @@ self.addEventListener("push", (event) => {
 });
 
 // ─── Notification Click ─────────────────────────────────────────────────────
-// When the user clicks a browser notification, focus the app or open it.
+// Open the notification's own page (data.url) — in an existing app window when
+// there is one, otherwise in a new one.
+//
+// Why each rule below exists (a tap that "sometimes opens the screen, sometimes
+// not" came from all three):
+//  - Top-level windows only. matchAll({type:"window"}) also returns same-origin
+//    iframes — the Water Satellite view embeds /satellite/consumption.html — and
+//    navigating that frame loads the alert page inside the map while the
+//    window itself does not move.
+//  - The navigate promise is returned to waitUntil, so the worker is kept alive
+//    until it settles instead of being stopped mid-navigation.
+//  - navigate() rejects for a window this worker does not control (possible
+//    with includeUncontrolled), and resolves null for one it cannot report on;
+//    both fall back to opening the page in a new window rather than leaving the
+//    tap as a bare focus.
+
+function openNotificationTarget(targetUrl) {
+  return self.clients
+    .matchAll({ type: "window", includeUncontrolled: true })
+    .then((clientList) => {
+      const windows = clientList.filter(
+        (client) =>
+          client.frameType === "top-level" &&
+          new URL(client.url).origin === self.location.origin,
+      );
+      // Prefer the window the operator is looking at.
+      const client = windows.find((c) => c.focused) || windows[0];
+      if (!client) return self.clients.openWindow(targetUrl);
+
+      return client
+        .focus()
+        .then((focused) => (focused || client).navigate(targetUrl))
+        .then((navigated) => navigated || self.clients.openWindow(targetUrl))
+        .catch(() => self.clients.openWindow(targetUrl));
+    });
+}
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || "/";
+  // Resolve against this origin so a relative data.url ("/water?view=…") and
+  // an absolute one behave the same; anything off-origin falls back to home.
+  let targetUrl = new URL("/", self.location.origin).href;
+  try {
+    const url = new URL(event.notification.data?.url || "/", self.location.origin);
+    if (url.origin === self.location.origin) targetUrl = url.href;
+  } catch {
+    // Malformed data.url — open the home page rather than nothing.
+  }
 
-  event.waitUntil(
-    // Check if the app is already open in a tab
-    self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clientList) => {
-        // If there's already an open tab, focus it and navigate
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin)) {
-            client.focus();
-            client.navigate(targetUrl);
-            return;
-          }
-        }
-        // Otherwise open a new tab/window
-        return self.clients.openWindow(targetUrl);
-      })
-  );
+  event.waitUntil(openNotificationTarget(targetUrl));
 });
 
 // ─── Notification Close ─────────────────────────────────────────────────────

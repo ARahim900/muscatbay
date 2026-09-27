@@ -48,6 +48,8 @@ import { TermsPanel } from "@/components/contractors/terms";
 import { PricingPanel } from "@/components/contractors/pricing";
 import { YearlyCostChart } from "@/components/contractors/yearly-chart";
 import { formatOmr } from "@/lib/currency";
+import { consumeSearchParams, parseContractorTab } from "@/lib/deep-links";
+import { SearchParamsListener } from "@/components/shared/search-params-listener";
 
 // ─── Yearly cost matrix helpers ──────────────────────────────────────────────
 interface YearRow {
@@ -149,6 +151,17 @@ export default function ContractorsPage() {
     const [cached] = useState(() => getPageCache<ContractorsPageCache>(CONTRACTORS_CACHE_KEY));
     const [loading, setLoading] = useState(!cached);
     const [activeTab, setActiveTab] = useState("tracker");
+
+    // ?tab= deep link (e.g. a contract-expiry alert) — applied on arrival and
+    // whenever the query changes while the page stays mounted (App Router does
+    // not remount a page for a new query string), then removed so a repeat tap
+    // on the same alert after a manual tab change is a real URL change again.
+    const applyTabLink = useCallback((params: URLSearchParams) => {
+        const tab = parseContractorTab(params.get("tab"));
+        if (!tab) return;
+        setActiveTab(tab);
+        consumeSearchParams(["tab"]);
+    }, []);
 
     // Data
     const [contracts, setContracts] = useState<ContractorContract[]>(cached?.contracts ?? []);
@@ -579,6 +592,8 @@ export default function ContractorsPage() {
     // ── Render ───────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+            <SearchParamsListener onChange={applyTabLink} />
+
             {/* Header + Status */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* No primary action: the app has no contractor-creation flow, and

@@ -30,6 +30,7 @@ import type { WaterMeter } from "@/lib/water-data";
 import type { ContractorTracker } from "@/entities/contractor";
 import type { STPOperation } from "@/lib/mock-data";
 import { buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT } from "@/lib/water-monthly-data";
+import { contractorsHref, stpHref, waterMonthlyHref } from "@/lib/deep-links";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -46,7 +47,11 @@ export interface OperationalAlert {
     module: "water" | "contractors" | "stp";
     title: string;
     message: string;
-    /** Route the operator should open to act on it. */
+    /**
+     * Deep link to the exact view the message is about (built in
+     * lib/deep-links) — never a bare module route, which reopens whatever tab
+     * the operator used last.
+     */
     href: string;
 }
 
@@ -152,7 +157,7 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 module: "water",
                 title: "Water balance negative",
                 message: `${key}: consumption exceeds supply (${lossPct.toFixed(1)}%) — check the main bulk meter and reading timing.`,
-                href: "/water",
+                href: waterMonthlyHref({ month: key, section: "overview" }),
             });
         } else if (lossPct > TARGET_LOSS_PCT) {
             const critical = lossPct > ZONE_CRITICAL_PCT;
@@ -162,7 +167,7 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 module: "water",
                 title: critical ? "Water loss critically above target" : "Water loss above target",
                 message: `${key}: system loss is ${lossPct.toFixed(1)}% of supply — ${overTarget} pp above the ${TARGET_LOSS_PCT}% target (${Math.round(loss).toLocaleString("en-GB")} m³).${zoneNote}`,
-                href: "/water",
+                href: waterMonthlyHref({ month: key, section: "overview" }),
             });
         } else if (criticalZones.length > 0) {
             // System total within target but individual zones critical.
@@ -172,7 +177,7 @@ export function evaluateWaterLossAlerts(meters: WaterMeter[] | null | undefined)
                 module: "water",
                 title: "Zone loss critically above target",
                 message: `${key}: ${criticalZones.length} zone${criticalZones.length > 1 ? "s" : ""} above ${ZONE_CRITICAL_PCT}% loss — ${capList(criticalZones.map((z) => `${z.name} ${z.lossPct.toFixed(1)}%`))}.`,
-                href: "/water",
+                href: waterMonthlyHref({ month: key, section: "zones" }),
             });
         }
 
@@ -233,7 +238,8 @@ export function evaluateContractAlerts(
             module: "contractors",
             title: `${expired.length} contract${expired.length > 1 ? "s" : ""} expired but still marked active`,
             message: `${capList(expired.map((e) => `${e.name} (${e.service}) ended ${fmtDateUTC(e.end)}`))}. Renew or update the register.`,
-            href: "/contractors",
+            // The register rows themselves still read Active — fix them in the tracker.
+            href: contractorsHref("tracker"),
         });
     }
 
@@ -246,7 +252,8 @@ export function evaluateContractAlerts(
             module: "contractors",
             title: `${expiring.length} contract${expiring.length > 1 ? "s" : ""} expiring within ${CONTRACT_WARN_DAYS} days`,
             message: `${capList(expiring.map((e) => `${e.name} in ${e.days} day${e.days === 1 ? "" : "s"} (${fmtDateUTC(e.end)})`))}.`,
-            href: "/contractors",
+            // Upcoming end dates are what the Renewals countdown is for.
+            href: contractorsHref("renewals"),
         });
     }
 
@@ -269,6 +276,9 @@ const STP_STALE_DAYS = 3;
  * Evaluate the STP daily log for critical failures over the last 14 logged
  * days: reuse stopped while sewage arrived, recovery below the operating
  * bands, and a stale log (no rows for 3+ days — monitoring is blind).
+ *
+ * Every STP alert opens Plant Watch: its process table (including data
+ * completeness), recovery chart and findings register cover all three.
  */
 export function evaluateSTPAlerts(
     operations: STPOperation[] | null | undefined,
@@ -304,7 +314,7 @@ export function evaluateSTPAlerts(
             module: "stp",
             title: "STP daily log is stale",
             message: `No operations logged since ${fmtDateUTC(latest.date)} (${staleDays} days) — plant monitoring is blind until the log resumes.`,
-            href: "/stp",
+            href: stpHref("watch"),
         });
     }
 
@@ -318,7 +328,7 @@ export function evaluateSTPAlerts(
             module: "stp",
             title: "STP irrigation output stopped",
             message: `${zeroOutput.length} of the last ${window.length} logged days had sewage inflow but zero TSE output (last: ${fmtDateUTC(lastZero.date)}) — check TSE pumps, valves and storage.`,
-            href: "/stp",
+            href: stpHref("watch"),
         });
     }
 
@@ -334,7 +344,7 @@ export function evaluateSTPAlerts(
                 module: "stp",
                 title: "STP recovery critically low",
                 message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — below the ${STP_RECOVERY_CRITICAL}% critical band. Inspect the treatment train.`,
-                href: "/stp",
+                href: stpHref("watch"),
             });
         } else if (recovery < STP_RECOVERY_WATCH) {
             alerts.push({
@@ -343,7 +353,7 @@ export function evaluateSTPAlerts(
                 module: "stp",
                 title: "STP recovery below target",
                 message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — under the ${STP_RECOVERY_WATCH}% operating target.`,
-                href: "/stp",
+                href: stpHref("watch"),
             });
         }
     }

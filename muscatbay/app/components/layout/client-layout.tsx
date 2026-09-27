@@ -15,7 +15,10 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <div
       className="flex min-h-[100dvh] w-full overflow-x-hidden"
-      style={{ '--sidebar-w': isCollapsed ? '72px' : '220px' } as React.CSSProperties}
+      // The sidebar grows by the left safe-area inset (landscape notch) so its
+      // own padding can clear the cutout without squeezing the 72px rail's
+      // icons out of view. Topbar, main margin and sidebar all read this one var.
+      style={{ '--sidebar-w': `calc(${isCollapsed ? '72px' : '220px'} + env(safe-area-inset-left, 0px))` } as React.CSSProperties}
     >
       {/* Skip to main content — accessibility */}
       <a
@@ -39,7 +42,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           flex-1 min-w-0 transition-[margin-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]
           min-h-[100dvh] bg-background
           ms-0 pt-16 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] md:pb-0
-          ${isCollapsed ? "md:ms-[72px]" : "md:ms-[220px]"}
+          md:ms-[var(--sidebar-w)]
         `}
       >
         {/* Layout shell with mobile-first responsive padding.
