@@ -235,7 +235,13 @@ export function Sidebar() {
         // Respect notched-device safe areas in landscape so nav content doesn't
         // sit under a hardware cutout. --sidebar-w already includes the left
         // inset, so this padding eats into the extra width, not the rail.
+        // The top inset matters on iPad, where the sidebar is on screen from
+        // 768px and the installed app paints under the status bar: without it
+        // the brand lockup sat under the clock. It is 0 in a browser tab, and
+        // where it is not, the topbar grows by the same inset (globals.css §3),
+        // so the brand row still lines up with the topbar.
         style={{
+          paddingTop: "env(safe-area-inset-top, 0px)",
           paddingInlineStart: "env(safe-area-inset-left, 0px)",
           paddingBottom: "env(safe-area-inset-bottom, 0px)",
         }}
