@@ -785,6 +785,18 @@ export default function STPPage() {
             consumed.push("month");
         } else if (params.has("month") && !link?.month) {
             consumed.push("month"); // malformed — nothing to wait for
+        } else if (link?.tab) {
+            // A tab-only link (every STP alert) is about the plant now: the
+            // alerts read the latest logged days. A saved earlier year or range
+            // would filter those days out and show an unrelated past period, so
+            // the full range is shown — held as linked, so the saved period
+            // survives for the next plain visit.
+            linkedRef.current.period = true;
+            setSelectedYear('');
+            if (allMonths.length > 0) {
+                setStartMonth(allMonths[0]);
+                setEndMonth(allMonths[allMonths.length - 1]);
+            }
         }
         consumeSearchParams(consumed);
     }, [allMonths]);
