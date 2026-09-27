@@ -1534,19 +1534,22 @@ main#main-content {
   }
 }
 
-/* Vertical inset: only installed (standalone) sessions draw under the status
-   bar. The fixed topbar grows by the inset and the main content's top padding
-   follows it, so nothing ends up hidden behind the notch. */
+/* Vertical inset: the fixed topbar grows by the status-bar inset and the main
+   content's top padding follows it, so nothing ends up hidden behind the notch.
+   Unconditional, like the sidebar's (sidebar.tsx): the inset is 0 in a browser
+   tab, and every edge-to-edge session — the Home Screen PWA and the iOS app's
+   WebView, which reports display-mode "browser" — gets the same spacing in the
+   topbar, the content and the sidebar, so the brand row stays aligned. */
+.topbar-dynamic {
+  padding-block-start: env(safe-area-inset-top, 0px);
+  block-size: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
+main#main-content {
+  padding-block-start: calc(4rem + env(safe-area-inset-top, 0px));
+}
+
 @media (display-mode: standalone) {
-  .topbar-dynamic {
-    padding-block-start: env(safe-area-inset-top, 0px);
-    block-size: calc(4rem + env(safe-area-inset-top, 0px));
-  }
-
-  main#main-content {
-    padding-block-start: calc(4rem + env(safe-area-inset-top, 0px));
-  }
-
   /* Any bottom-anchored chrome clears the home indicator. */
   .bottom-nav-safe,
   nav[aria-label="Mobile navigation"] {
