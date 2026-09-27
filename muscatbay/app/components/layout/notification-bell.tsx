@@ -72,12 +72,17 @@ export function NotificationBell() {
                 )}
             </button>
 
+            {/* Below sm the panel is pinned to the viewport, not the bell. The
+                bell sits mid-topbar on a portrait phone, so an end-anchored
+                380px panel ran ~140px off the left edge and cut off each alert's
+                title and much of its tap target. The top offset clears the
+                fixed 4rem topbar, which grows by the notch inset when installed. */}
             {open && (
                 <div
                     id="notification-bell-panel"
                     role="dialog"
                     aria-label="Alerts"
-                    className="absolute end-0 mt-2 w-[380px] max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200"
+                    className="fixed inset-x-4 top-[calc(4rem+env(safe-area-inset-top,0px)+0.5rem)] sm:absolute sm:inset-x-auto sm:top-auto sm:end-0 sm:mt-2 sm:w-[380px] sm:max-w-[calc(100vw-2rem)] bg-popover text-popover-foreground rounded-xl shadow-xl border border-border z-50 motion-safe:animate-in fade-in slide-in-from-top-2 duration-200"
                 >
                     <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                         <span className="text-sm font-semibold text-foreground">Alerts</span>

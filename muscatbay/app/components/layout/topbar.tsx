@@ -54,7 +54,13 @@ export function Topbar() {
     }, [isProfileOpen]);
 
     return (
-        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-40 bg-card flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-border/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
+        // Horizontal padding lives on .topbar-dynamic in globals.css §3: it adds
+        // the landscape safe-area insets so the profile menu never sits under
+        // the notch or the rounded screen corner.
+        // z-50, one step above the sidebar's z-40: the Alerts and profile
+        // popovers hang left out of the header, and on a narrow landscape
+        // screen the sidebar (later in the DOM) otherwise painted over them.
+        <header className="topbar-dynamic h-16 fixed top-0 end-0 z-50 bg-card flex items-center justify-between gap-3 border-b border-border/80 dark:border-white/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)] transition-[inset-inline-start] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]">
 
             {/* Search / command palette — the only visible way in for pointer
                 and touch users; ⌘K alone left mobile with no access at all. */}

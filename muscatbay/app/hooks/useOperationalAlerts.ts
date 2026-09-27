@@ -89,7 +89,7 @@ interface SourceData {
  * @param pushToOS Browser-push sender from `useNotifications` (list-free).
  */
 export function useOperationalAlerts(
-    pushToOS: (title: string, message?: string, level?: "success" | "error" | "warning" | "info") => void,
+    pushToOS: (title: string, message?: string, level?: "success" | "error" | "warning" | "info", href?: string) => void,
 ): UseOperationalAlertsReturn {
     const [data, setData] = useState<SourceData | null>(null);
     const [status, setStatus] = useState<OperationalAlertStatus>("loading");
@@ -216,7 +216,7 @@ export function useOperationalAlerts(
         if (getAlertPreferences().push) {
             for (const alert of fresh) {
                 if (alert.level === "error" || alert.level === "warning") {
-                    pushToOS(alert.title, alert.message, alert.level);
+                    pushToOS(alert.title, alert.message, alert.level, alert.href);
                 }
             }
         }

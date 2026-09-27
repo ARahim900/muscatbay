@@ -31,8 +31,10 @@ import {
 import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
 import { exportToCSV, getDateForFilename } from "@/lib/export-utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { consumeSearchParams, parseStpLink, parseStpTab, stpHref } from "@/lib/deep-links";
+import { SearchParamsListener } from "@/components/shared/search-params-listener";
 import { DateRangePicker } from "@/components/water/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
@@ -294,9 +296,22 @@ export default function STPPage() {
         alertedRef.current = alertKey;
 
         latestThresholdAlerts.forEach((alert) => {
-            pushRef.current[alert.tone](`STP: ${alert.title}`, alert.message);
+            // Both are about the latest logged day — the link opens the daily
+            // log on that day's month, whatever period the operator had saved.
+            const month = format(new Date(latest.date), "MMM-yy");
+            pushRef.current[alert.tone](`STP: ${alert.title}`, alert.message, stpHref("dashboard", { month }));
         });
     }, [allOperations, latestThresholdAlerts]);
+
+    // Which visible values came from a deep link (?tab= / ?month=, e.g. an
+    // alert) rather than from the operator. Two jobs:
+    //  - the URL listener can apply the link before the saved-preference
+    //    restore below runs in the same commit — the restore must not then
+    //    overwrite what the alert asked for;
+    //  - a linked value is shown but never persisted, so the operator's saved
+    //    tab and period survive the alert and a plain visit reopens them.
+    // Cleared per control the moment the operator changes it themselves.
+    const linkedRef = useRef({ tab: false, period: false });
 
     useEffect(() => {
         // Cache hit → already rendering last data; refresh silently in background.
@@ -311,20 +326,29 @@ export default function STPPage() {
         }>('stp');
         if (savedPrefs) {
             // Guard against stale tab keys from the old layout ("dashboard"/"details").
-            if (savedPrefs.activeTab === "watch" || savedPrefs.activeTab === "dashboard") setActiveTab(savedPrefs.activeTab);
-            if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
-            if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
-            if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            const savedTab = parseStpTab(savedPrefs.activeTab);
+            if (savedTab && !linkedRef.current.tab) setActiveTab(savedTab);
+            if (!linkedRef.current.period) {
+                if (savedPrefs.startMonth) setStartMonth(savedPrefs.startMonth);
+                if (savedPrefs.endMonth) setEndMonth(savedPrefs.endMonth);
+                if (savedPrefs.selectedYear) setSelectedYear(savedPrefs.selectedYear);
+            }
         }
     }, [loadData, cached]);
 
-    // Save filter preferences when they change
+    // Save filter preferences when they change — except values a link set,
+    // for which the operator's saved value is written back unchanged.
     useEffect(() => {
+        const { tab: tabLinked, period: periodLinked } = linkedRef.current;
+        if (tabLinked && periodLinked) return;
+        const saved = tabLinked || periodLinked
+            ? loadFilterPreferences<{ activeTab?: string; startMonth?: string; endMonth?: string; selectedYear?: string }>('stp')
+            : null;
         saveFilterPreferences('stp', {
-            activeTab,
-            startMonth,
-            endMonth,
-            selectedYear,
+            activeTab: tabLinked ? saved?.activeTab ?? null : activeTab,
+            startMonth: periodLinked ? saved?.startMonth ?? null : startMonth,
+            endMonth: periodLinked ? saved?.endMonth ?? null : endMonth,
+            selectedYear: periodLinked ? saved?.selectedYear ?? null : selectedYear,
         });
     }, [activeTab, startMonth, endMonth, selectedYear]);
 
@@ -393,8 +417,9 @@ export default function STPPage() {
             // Missing or stale selection — snap to the full available range.
             if (start !== allMonths[0]) setStartMonth(allMonths[0]);
             if (end !== latestMonth) setEndMonth(latestMonth);
-        } else if (!selectedYear && end !== latestMonth) {
-            // No year filter active — extend to newest data when new months arrive.
+        } else if (!selectedYear && end !== latestMonth && !linkedRef.current.period) {
+            // No year filter active — extend to newest data when new months arrive
+            // (not while a link holds the period on the month it is about).
             setEndMonth(latestMonth);
         }
     }, [allMonths, selectedYear]);
@@ -695,14 +720,27 @@ export default function STPPage() {
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);
     };
 
+    // The operator's own tab / period changes: the control is theirs again, so
+    // it is persisted, and a month link still waiting for data is dropped.
+    const selectTab = useCallback((tab: string) => {
+        linkedRef.current.tab = false;
+        setActiveTab(tab);
+    }, []);
+    const releaseLinkedPeriod = useCallback(() => {
+        linkedRef.current.period = false;
+        consumeSearchParams(["month"]);
+    }, []);
+
     // Range change handler for DateRangePicker
     const handleRangeChange = useCallback((start: string, end: string) => {
+        releaseLinkedPeriod();
         if (start !== startMonth) setStartMonth(start);
         if (end !== endMonth) setEndMonth(end);
-    }, [startMonth, endMonth]);
+    }, [startMonth, endMonth, releaseLinkedPeriod]);
 
     // Reset date range to full
     const handleResetRange = () => {
+        releaseLinkedPeriod();
         setSelectedYear('');
         if (allMonths.length > 0) {
             setStartMonth(allMonths[0]);
@@ -721,14 +759,44 @@ export default function STPPage() {
         return newest === null ? null : new Date(newest);
     }, [allOperations]);
 
+    // ?tab= / ?month= deep link — applied on arrival and whenever the query
+    // changes while the page stays mounted (App Router does not remount a page
+    // for a new query string), then removed so it cannot go stale after a
+    // manual change and a repeat tap on the same alert is a real URL change
+    // again. A month opens as a single-month period with the daily log on it,
+    // so the flagged day's row is on screen even when the operator's saved
+    // period (e.g. a year filter) ends before it. A month the data does not
+    // have yet (a cached first render) stays in the URL until `allMonths`
+    // brings it — the new callback identity re-fires the listener.
+    const applyStpLink = useCallback((params: URLSearchParams) => {
+        const link = parseStpLink(params);
+        const consumed = ["tab"];
+        if (link?.tab) {
+            linkedRef.current.tab = true;
+            setActiveTab(link.tab);
+        }
+        if (link?.month && allMonths.includes(link.month)) {
+            linkedRef.current.period = true;
+            setSelectedYear('');
+            setStartMonth(link.month);
+            setEndMonth(link.month);
+            setSelectedMonth(format(parse(link.month, "MMM-yy", new Date()), "yyyy-MM"));
+            setLogCurrentPage(1);
+            consumed.push("month");
+        } else if (params.has("month") && !link?.month) {
+            consumed.push("month"); // malformed — nothing to wait for
+        }
+        consumeSearchParams(consumed);
+    }, [allMonths]);
+
     // Heatmap drill-through: a cell in Plant Watch opens that exact day in the
     // Daily Operations Log (right tab, right month, row pre-filtered).
     const handleInspectDay = useCallback((day: { iso: string; ym: string; dayLabel: string; date: Date }) => {
-        setActiveTab('dashboard');
+        selectTab('dashboard');
         setSelectedMonth(day.ym);
         setLogSearchTerm(format(day.date, 'dd/MM/yyyy'));
         setLogCurrentPage(1);
-    }, []);
+    }, [selectTab]);
 
     if (loading) {
         return (
@@ -773,6 +841,8 @@ export default function STPPage() {
 
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+            <SearchParamsListener onChange={applyStpLink} />
+
             {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <PageHeader
@@ -806,7 +876,7 @@ export default function STPPage() {
 
             <TabNavigation
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={selectTab}
                 ariaLabel="STP sections"
                 variant="secondary"
                 tabs={[
@@ -840,6 +910,7 @@ export default function STPPage() {
                                                 aria-label={`Filter by year ${year}`}
                                                 aria-pressed={selectedYear === year}
                                                 onClick={() => {
+                                                    releaseLinkedPeriod();
                                                     setSelectedYear(year);
                                                     const yearMonths = allMonths.filter(m => '20' + m.split('-')[1] === year);
                                                     if (yearMonths.length > 0) {

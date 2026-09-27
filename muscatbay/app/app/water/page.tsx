@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { BarChart3, CalendarDays, DatabaseZap, RefreshCw, AlertTriangle, Satellite, ClipboardPen } from "lucide-react";
 
 // Water data
@@ -15,7 +15,9 @@ import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { Badge, Breadcrumb, Button, PageHeader, SectionCard, SegmentedControl, StatusChip } from "@/components/ui";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { Skeleton } from "@/components/shared/skeleton";
+import { SearchParamsListener } from "@/components/shared/search-params-listener";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { parseWaterView, type WaterView } from "@/lib/deep-links";
 import type { ViewStatus } from "@/components/water/daily-water-report";
 
 // All three dashboard views are loaded on demand (Supabase-wired).
@@ -58,7 +60,7 @@ const HandReadingsView = dynamic(
     { loading: () => <Skeleton className="h-96 w-full rounded-card" />, ssr: false },
 );
 
-type DashboardView = "monthly" | "daily" | "satellite" | "readings";
+type DashboardView = WaterView;
 
 // Base tables behind the monthly dashboard — module-level so the array
 // reference stays stable across renders (the realtime hook re-subscribes
@@ -193,33 +195,49 @@ export default function WaterPage() {
         enabled: !error && waterMeters.length > 0,
     });
 
-    // Fetch on mount + restore the saved view. When the session cache seeded
-    // the state, fetch silently — the page is already rendering last data and
-    // this call only freshens it in place (stale-while-revalidate).
+    // Fetch on mount. When the session cache seeded the state, fetch silently —
+    // the page is already rendering last data and this call only freshens it in
+    // place (stale-while-revalidate).
     // Mount-only: `fetchWaterData` is a stable useCallback and `cached` is read
     // once from the session cache, so re-running this would only refetch.
     useEffect(() => {
         fetchWaterData(Boolean(cached));
-        const savedPrefs = loadFilterPreferences<{ dashboardView?: DashboardView }>("water");
-        // localStorage is client-only, so restoring the saved view must happen after
-        // hydration; a lazy useState initialiser would render a different value on the
-        // server than on the client.
-        const restoreView = () => {
-            const linkedView = new URLSearchParams(window.location.search).get('view');
-            const validViews: DashboardView[] = ['monthly', 'daily', 'satellite', 'readings'];
-            const view = validViews.find(value => value === linkedView) ?? savedPrefs?.dashboardView ?? 'monthly';
-            setDashboardView(view);
-        };
-        restoreView();
-        window.addEventListener('popstate', restoreView);
-        return () => window.removeEventListener('popstate', restoreView);
         // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only; deps are stable by construction
     }, []);
 
-    // Persist the selected view
-    useEffect(() => {
-        saveFilterPreferences("water", { dashboardView });
-    }, [dashboardView]);
+    // Set once the URL has chosen the view for the first time on this mount.
+    const urlViewAppliedRef = useRef(false);
+
+    // ?view= wins, and is re-applied whenever the URL changes while this page
+    // stays mounted — an alert tapped on /water must switch the view, not just
+    // change the address bar. The saved view is only the arrival fallback (a
+    // plain /water visit): later URL changes without ?view= (the sidebar's
+    // /water link, back onto a view-less entry) keep the view on screen rather
+    // than jumping to a preference read at mount. localStorage is client-only,
+    // so this runs after hydration rather than in a lazy useState initialiser
+    // (which would mismatch the server render).
+    const applyUrlView = useCallback((params: URLSearchParams) => {
+        const linked = parseWaterView(params.get("view"));
+        const first = !urlViewAppliedRef.current;
+        urlViewAppliedRef.current = true;
+        if (linked) {
+            setDashboardView(linked);
+        } else if (first) {
+            const saved = parseWaterView(loadFilterPreferences<{ dashboardView?: string }>("water")?.dashboardView);
+            setDashboardView(saved ?? "monthly");
+        }
+    }, []);
+
+    // Persist only the operator's own pick from the mode switch. A view set by
+    // a link (an alert, the iPhone app's embed) is shown but not saved, so the
+    // next plain /water visit still opens the view the operator chose.
+    const selectView = useCallback((view: DashboardView) => {
+        setDashboardView(view);
+        saveFilterPreferences("water", { dashboardView: view });
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", view);
+        window.history.pushState(null, "", url.pathname + url.search + url.hash);
+    }, []);
 
     const hasData = waterMeters.length > 0;
 
@@ -246,6 +264,8 @@ export default function WaterPage() {
 
     return (
         <div className="space-y-6">
+            <SearchParamsListener onChange={applyUrlView} />
+
             {/* Breadcrumb → PageHeader (DESIGN_SYSTEM.md §5) */}
             <div>
                 <Breadcrumb items={[{ label: "Dashboard", href: "/" }, { label: "Water" }]} />
@@ -291,12 +311,7 @@ export default function WaterPage() {
                     <SegmentedControl<DashboardView>
                         aria-label="View mode"
                         value={dashboardView}
-                        onChange={(view) => {
-                            setDashboardView(view);
-                            const url = new URL(window.location.href);
-                            url.searchParams.set('view', view);
-                            window.history.pushState(null, '', url.pathname + url.search + url.hash);
-                        }}
+                        onChange={selectView}
                         options={[
                             { value: "monthly", label: "Monthly", icon: BarChart3 },
                             { value: "daily", label: "Daily", icon: CalendarDays },

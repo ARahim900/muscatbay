@@ -28,6 +28,8 @@ interface AppNotification {
   message?: string;
   timestamp: Date;
   pushToOS?: boolean;
+  /** Where tapping the entry goes; absent = informational only. */
+  href?: string;
 }
 
 type PushPermission = "default" | "granted" | "denied" | "unsupported";
@@ -40,7 +42,8 @@ interface NotificationContextValue {
     level: NotificationLevel,
     title: string,
     message?: string,
-    pushToOS?: boolean
+    pushToOS?: boolean,
+    href?: string
   ) => void;
   /** Dismiss a notification from the history */
   dismiss: (id: string) => void;
@@ -51,13 +54,13 @@ interface NotificationContextValue {
   /** Request browser notification permission */
   requestPermission: () => Promise<void>;
   /** Convenience: fire a success notification */
-  success: (title: string, message?: string) => void;
+  success: (title: string, message?: string, href?: string) => void;
   /** Convenience: fire an error notification */
-  error: (title: string, message?: string) => void;
+  error: (title: string, message?: string, href?: string) => void;
   /** Convenience: fire a warning notification */
-  warning: (title: string, message?: string) => void;
+  warning: (title: string, message?: string, href?: string) => void;
   /** Convenience: fire an info notification */
-  info: (title: string, message?: string) => void;
+  info: (title: string, message?: string, href?: string) => void;
   /** Unread badge count: un-acknowledged operational alerts + session notifications newer than the last feed open. */
   unreadCount: number;
 
@@ -109,8 +112,10 @@ function PermissionBanner({
   // Only show when permission hasn't been decided yet
   if (!mounted || dismissed || permission !== "default") return null;
 
+  // Top offset adds the status-bar inset: the installed app paints under it
+  // (viewport-fit=cover), where a plain top-4 put the card behind the clock.
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[101] max-w-md w-[calc(100%-2rem)]">
+    <div className="fixed top-[calc(1rem+env(safe-area-inset-top,0px))] left-1/2 -translate-x-1/2 z-[101] max-w-md w-[calc(100%-2rem)]">
       <div
         role="region"
         aria-label="Notifications permission"

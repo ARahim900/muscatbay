@@ -8,19 +8,38 @@
  *  1. a monitoring-state banner when live evaluation is degraded/offline —
  *     the feed must never imply "all clear" while it is actually blind;
  *  2. active operational alerts (data-driven: water loss vs target, contract
- *     expiry, STP critical failures) with Review + Acknowledge actions;
- *  3. session notifications (transient notify() events from pages);
+ *     expiry, STP critical failures) — the whole card opens the alert's own
+ *     view, with Acknowledge / Reopen as separate buttons;
+ *  3. session notifications (transient notify() events from pages) — whole
+ *     card tappable when the notification carries an href;
  *  4. an honest empty state that names what is being monitored.
  *
  * Colours come exclusively from the --status-* tokens and every severity is
  * paired with an icon + text label (never colour-only).
+ *
+ * Tap target: the title is the one real link, stretched over the whole card
+ * with an ::after overlay. The action buttons are siblings raised above that
+ * overlay (relative z-10) — never nested inside the link, which would be
+ * invalid interactive nesting and would announce the card as one blob.
+ *
+ * Focus: the card itself draws the 3px --ring focus ring while its link has
+ * keyboard focus (`has-[a:focus-visible]`), so the ring outlines the whole
+ * card. An acknowledged card dims its content, not the card box, so that ring
+ * is never faded with it.
+ *
+ * A link to the page already on screen navigates with `replace`: the page
+ * strips the link's one-shot parameters straight after, and a pushed entry
+ * would leave two identical history entries (Back would appear to do nothing).
  */
 
+import { useId } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   AlertTriangle,
   BellOff,
   CheckCircle2,
+  ChevronRight,
   Info,
   RotateCcw,
   WifiOff,
@@ -29,6 +48,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAppNotifications } from "@/components/providers/notification-provider";
+import { isSamePageHref } from "@/lib/deep-links";
 
 /** Notification level → icon + status token (paired icon+colour, never colour-only). */
 export const LEVEL_META: Record<
@@ -66,9 +86,26 @@ export function timeAgo(date: Date): string {
 }
 
 interface AlertsFeedProps {
-  /** Called when the user follows a Review link (close the hosting sheet/popover). */
+  /** Called when the user opens an alert (close the hosting sheet/popover). */
   onNavigate?: () => void;
 }
+
+/**
+ * The stretched link: its ::after covers the nearest `relative` ancestor (the
+ * card), so a tap anywhere on the card navigates. Its own ring is switched off
+ * — the card draws the focus ring instead (CARD_FOCUS_CLASS).
+ */
+const CARD_LINK_CLASS =
+  "after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:ring-0";
+
+/** Whole-card focus ring while the card's link has keyboard focus (brand: 3px, --ring). */
+const CARD_FOCUS_CLASS = "has-[a:focus-visible]:ring-[3px] has-[a:focus-visible]:ring-ring";
+
+/** 3px --ring focus ring for the buttons raised above the overlay. */
+const BUTTON_FOCUS_CLASS = "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring";
+
+/** Card chrome shared by alert and notification cards; hover only when tappable. */
+const CARD_HOVER_CLASS = "transition-colors hover:bg-muted-bg/50 dark:hover:bg-white/[0.04]";
 
 export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
   const {
@@ -81,6 +118,9 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
     acknowledgeAlert,
     unacknowledgeAlert,
   } = useAppNotifications();
+  // The feed can be mounted twice (topbar bell + mobile sheet) — prefix ids.
+  const idPrefix = useId();
+  const pathname = usePathname();
 
   // Un-acknowledged first, then acknowledged (both remain visible while live).
   const activeAlerts = operationalAlerts.filter((a) => !a.acknowledged);
@@ -119,19 +159,20 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
       {/* ── Operational alerts (data-driven) ── */}
       {(activeAlerts.length > 0 || ackedAlerts.length > 0) && (
         <div className="space-y-2" aria-label="Active operational alerts">
-          {[...activeAlerts, ...ackedAlerts].map((alert) => {
+          {[...activeAlerts, ...ackedAlerts].map((alert, index) => {
             const meta = LEVEL_META[alert.level];
             const MetaIcon = meta.Icon;
+            const messageId = `${idPrefix}-alert-${index}`;
             return (
               <div
                 key={alert.id}
-                className={`rounded-2xl border p-3 ${
+                className={`relative rounded-2xl border p-3 ${CARD_HOVER_CLASS} ${CARD_FOCUS_CLASS} ${
                   alert.acknowledged
-                    ? "border-border/60 dark:border-white/[0.06] opacity-70"
+                    ? "border-border/60 dark:border-white/[0.06]"
                     : "border-border dark:border-white/10"
                 } bg-card dark:bg-white/[0.02]`}
               >
-                <div className="flex items-start gap-3">
+                <div className={`flex items-start gap-3 ${alert.acknowledged ? "opacity-70" : ""}`}>
                   <MetaIcon
                     className="w-5 h-5 flex-shrink-0 mt-0.5"
                     style={{ color: `var(${meta.token})` }}
@@ -139,7 +180,17 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-foreground leading-snug">{alert.title}</p>
+                      <p className="text-sm font-medium text-foreground leading-snug">
+                        <Link
+                          href={alert.href}
+                          replace={isSamePageHref(alert.href, pathname)}
+                          onClick={onNavigate}
+                          aria-describedby={messageId}
+                          className={CARD_LINK_CLASS}
+                        >
+                          {alert.title}
+                        </Link>
+                      </p>
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground bg-muted-bg dark:bg-white/[0.06] rounded px-1.5 py-0.5">
                         {MODULE_LABEL[alert.module] ?? alert.module}
                       </span>
@@ -147,26 +198,31 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                         <span className="text-[10px] font-medium text-muted-foreground">Acknowledged</span>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{alert.message}</p>
-                    <div className="flex items-center gap-1 mt-1.5 -ms-2">
-                      <Link
-                        href={alert.href}
-                        onClick={onNavigate}
-                        className="text-xs font-semibold text-secondary hover:underline px-2 h-9 inline-flex items-center rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    <p id={messageId} className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{alert.message}</p>
+                    {/* The buttons keep a 44px target but take 36px of layout
+                        (-my-1), so the 44px rule does not make every card taller. */}
+                    <div className="flex items-center gap-1 mt-1 -ms-2">
+                      {/* Visual cue only — the card itself is the link, so this
+                          is hidden from assistive tech to avoid a duplicate. */}
+                      <span
+                        aria-hidden="true"
+                        className="text-xs font-semibold text-secondary px-2 inline-flex items-center gap-0.5"
                       >
-                        Review
-                      </Link>
+                        Review <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
                       {alert.acknowledged ? (
                         <button
+                          type="button"
                           onClick={() => unacknowledgeAlert(alert.id)}
-                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center gap-1 rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className={`relative z-10 text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-11 -my-1 inline-flex items-center gap-1 rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors ${BUTTON_FOCUS_CLASS}`}
                         >
                           <RotateCcw className="w-3 h-3" aria-hidden="true" /> Reopen
                         </button>
                       ) : (
                         <button
+                          type="button"
                           onClick={() => acknowledgeAlert(alert.id)}
-                          className="text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-9 inline-flex items-center rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          className={`relative z-10 text-xs font-medium text-muted-foreground hover:text-foreground px-2 h-11 -my-1 inline-flex items-center rounded-lg hover:bg-muted-bg/60 dark:hover:bg-white/[0.06] transition-colors ${BUTTON_FOCUS_CLASS}`}
                         >
                           Acknowledge
                         </button>
@@ -188,13 +244,16 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
               Recent notifications
             </p>
           )}
-          {notifications.map((n) => {
+          {notifications.map((n, index) => {
             const meta = LEVEL_META[n.level];
             const MetaIcon = meta.Icon;
+            const messageId = `${idPrefix}-note-${index}`;
             return (
               <div
                 key={n.id}
-                className="flex items-start gap-3 p-3 rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/[0.02]"
+                className={`relative flex items-start gap-3 p-3 rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-white/[0.02] ${
+                  n.href ? `${CARD_HOVER_CLASS} ${CARD_FOCUS_CLASS}` : ""
+                }`}
               >
                 <MetaIcon
                   className="w-5 h-5 flex-shrink-0 mt-0.5"
@@ -202,15 +261,31 @@ export function AlertsFeed({ onNavigate }: AlertsFeedProps) {
                   aria-label={meta.label}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground leading-snug">{n.title}</p>
+                  <p className="text-sm font-medium text-foreground leading-snug">
+                    {n.href ? (
+                      <Link
+                        href={n.href}
+                        replace={isSamePageHref(n.href, pathname)}
+                        onClick={onNavigate}
+                        aria-describedby={n.message ? messageId : undefined}
+                        className={CARD_LINK_CLASS}
+                      >
+                        {n.title}
+                      </Link>
+                    ) : (
+                      n.title
+                    )}
+                  </p>
                   {n.message && (
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{n.message}</p>
+                    <p id={messageId} className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{n.message}</p>
                   )}
                   <p className="text-[11px] text-muted-foreground/80 mt-1">{timeAgo(n.timestamp)}</p>
                 </div>
+                {/* 44px target; the negative margin keeps the card compact. */}
                 <button
+                  type="button"
                   onClick={() => dismiss(n.id)}
-                  className="w-8 h-8 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted-bg dark:hover:bg-white/[0.06] transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className={`relative z-10 w-11 h-11 -m-1.5 flex-shrink-0 flex items-center justify-center rounded-full text-muted-foreground hover:bg-muted-bg dark:hover:bg-white/[0.06] transition-colors ${BUTTON_FOCUS_CLASS}`}
                   aria-label={`Dismiss: ${n.title}`}
                 >
                   <X className="w-3.5 h-3.5" />

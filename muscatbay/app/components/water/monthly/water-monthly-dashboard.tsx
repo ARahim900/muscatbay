@@ -36,6 +36,10 @@ import { StatsGrid, type StatItem, type StatVariant } from "@/components/shared/
 import { CHART_PALETTE } from "@/lib/tokens";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
+import { SearchParamsListener } from "@/components/shared/search-params-listener";
+import {
+    consumeSearchParams, isWaterMonthlySection, parseWaterMonthlyLink, type WaterMonthlySection,
+} from "@/lib/deep-links";
 import type { WaterMeter } from "@/lib/water-data";
 import type { DerivedMonth } from "@/functions/api/water";
 import {
@@ -316,7 +320,8 @@ function LossLink({ label, v, of }: { label: string; v: number; of: number }) {
 const TRUNK_KEY = "__trunk__";
 
 /** Section tabs, in display order (DESIGN_SYSTEM.md §7 — five, never scrolling). */
-type SectionKey = "overview" | "zones" | "assets" | "meters" | "exceptions";
+// The keys live in lib/deep-links so alert links and this strip share one list.
+type SectionKey = WaterMonthlySection;
 const SECTION_TABS: { value: SectionKey; label: string; icon: LucideIcon }[] = [
     { value: "overview", label: "Overview", icon: BarChart3 },
     { value: "zones", label: "Zone Analysis", icon: MapPin },
@@ -324,7 +329,7 @@ const SECTION_TABS: { value: SectionKey; label: string; icon: LucideIcon }[] = [
     { value: "meters", label: "Main Database", icon: Database },
     { value: "exceptions", label: "Exceptions", icon: ClipboardList },
 ];
-const isSectionTab = (v: unknown): v is SectionKey => SECTION_TABS.some((t) => t.value === v);
+const isSectionTab = isWaterMonthlySection;
 
 /* ---------- "Mon-YY" ↔ "YYYY-MM" (the DateRangePicker speaks ISO month keys) ---------- */
 const monthNames: readonly string[] = MONTHS;
@@ -1423,6 +1428,15 @@ export function WaterMonthlyDashboard({
     // re-validated against the months actually loaded before it is applied.
     // Captured at mount, which is exactly when the restore below reads it.
     const availableMonthsRef = useRef(data.meta.availableMonths);
+    // Which of the visible values came from a deep link (?month= / ?section=,
+    // e.g. an alert) rather than from the operator. Two jobs:
+    //  - the URL listener is a child, so its effect can run before the restore
+    //    below in the same commit — the restore must not then overwrite the
+    //    month the alert is about;
+    //  - a linked value is shown but never persisted: the operator's saved
+    //    range and section survive the alert, and a plain visit reopens them.
+    // Cleared per control the moment the operator changes it themselves.
+    const linkedRef = useRef({ month: false, section: false });
 
     useEffect(() => {
         const prefs = loadFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY);
@@ -1431,18 +1445,64 @@ export function WaterMonthlyDashboard({
         // happen after hydration; a lazy useState initialiser would render a
         // different value on the server than on the client.
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        if (isSectionTab(prefs.tab)) setTab(prefs.tab);
+        if (!linkedRef.current.section && isSectionTab(prefs.tab)) setTab(prefs.tab);
         const months = availableMonthsRef.current;
-        if (prefs.startMonth && prefs.endMonth
+        if (!linkedRef.current.month && prefs.startMonth && prefs.endMonth
             && months.includes(prefs.startMonth) && months.includes(prefs.endMonth)) {
             setStartMonth(prefs.startMonth);
             setEndMonth(prefs.endMonth);
         }
     }, []);
 
+    // Deep link from an alert: open that single month on that section, on
+    // mount or while already showing (the dashboard stays mounted when only
+    // the query changes). The params are one-shot — removed once applied, so
+    // they never contradict a later manual change and a second tap on the same
+    // alert is a real URL change again.
+    // A month this data does not have yet stays in the URL: the first render
+    // can come from the session cache, which may predate the alert's month, and
+    // this callback re-runs (new `data` → new identity → the listener re-fires)
+    // when the fresh load lands. The operator picking a period drops it.
+    const applyDeepLink = useCallback((params: URLSearchParams) => {
+        const link = parseWaterMonthlyLink(params);
+        const consumed = ["section"];
+        if (link?.section) {
+            setTab(link.section);
+            linkedRef.current.section = true;
+        }
+        if (link?.month && data.meta.availableMonths.includes(link.month)) {
+            setStartMonth(link.month);
+            setEndMonth(link.month);
+            linkedRef.current.month = true;
+            consumed.push("month");
+        } else if (params.has("month") && !link?.month) {
+            consumed.push("month"); // malformed — nothing to wait for
+        }
+        consumeSearchParams(consumed);
+    }, [data]);
+
+    // The operator's own changes: from here on the control is theirs again, so
+    // it is persisted, and a month link still waiting for data is dropped.
+    const selectTab = useCallback((next: SectionKey) => {
+        linkedRef.current.section = false;
+        setTab(next);
+    }, []);
+    const releaseLinkedPeriod = useCallback(() => {
+        linkedRef.current.month = false;
+        consumeSearchParams(["month"]);
+    }, []);
+
     useEffect(() => {
         if (!startMonth || !endMonth) return;
-        saveFilterPreferences(MONTHLY_PREFS_KEY, { tab, startMonth, endMonth });
+        const { month: monthLinked, section: sectionLinked } = linkedRef.current;
+        if (monthLinked && sectionLinked) return;
+        // Keep the saved value for whichever control a link is driving.
+        const saved = monthLinked || sectionLinked ? loadFilterPreferences<MonthlyPrefs>(MONTHLY_PREFS_KEY) : null;
+        saveFilterPreferences(MONTHLY_PREFS_KEY, {
+            tab: sectionLinked ? saved?.tab ?? null : tab,
+            startMonth: monthLinked ? saved?.startMonth ?? null : startMonth,
+            endMonth: monthLinked ? saved?.endMonth ?? null : endMonth,
+        });
     }, [tab, startMonth, endMonth]);
 
     // Year is derived from the selected end month, with a safe fallback.
@@ -1479,9 +1539,10 @@ export function WaterMonthlyDashboard({
         const end = fromMonthKey(v.end);
         let start = fromMonthKey(v.start);
         if (yearOf(start) !== yearOf(end)) start = monthsOfYear(yearOf(end))[0] ?? end;
+        releaseLinkedPeriod();
         setStartMonth(start);
         setEndMonth(end);
-    }, [monthsOfYear]);
+    }, [monthsOfYear, releaseLinkedPeriod]);
 
     const monthly = useMemo(
         () => (nMonths ? Array.from({ length: nMonths }, (_, i) => computePeriod(data, year, i)) : []),
@@ -1548,6 +1609,8 @@ export function WaterMonthlyDashboard({
 
     return (
         <div className="space-y-6">
+            <SearchParamsListener onChange={applyDeepLink} />
+
             {/* KPI row first, then the ONE period control, then the section tabs
                 (DESIGN_SYSTEM.md §5 / §7 — KPIs first, then Tabs, on every module page). */}
             <WaterSummary period={period} lossDelta={lossDelta} periodLabel={periodLabel} />
@@ -1575,7 +1638,7 @@ export function WaterMonthlyDashboard({
                 </div>
             )}
 
-            <Tabs<SectionKey> aria-label="Water monthly sections" value={tab} onChange={setTab} tabs={sectionTabs} />
+            <Tabs<SectionKey> aria-label="Water monthly sections" value={tab} onChange={selectTab} tabs={sectionTabs} />
 
             {/* Each section is isolated: a render failure in one must not take
                 down the whole Water page. The wrapper is the tab panel the strip's
