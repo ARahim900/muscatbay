@@ -174,10 +174,10 @@ function Legend() {
 function Figure({ stat }: { stat: StatItem }) {
   const warn = stat.dataQuality === "incomplete";
   return (
-    <div className="mb-glass-inset @container min-w-0 rounded-card px-3 py-2">
+    <div className="mb-glass-inset @container min-w-0 rounded-card px-3 py-1.5">
       <p className="truncate text-eyebrow uppercase text-muted">{stat.label}</p>
       <p
-        className="kpi-figure text-kpi text-fg"
+        className="kpi-figure kpi-figure-compact text-kpi text-fg"
         style={{ "--kpi-chars": String(stat.value).length } as React.CSSProperties}
       >
         <span className="whitespace-nowrap">{stat.value}</span>
@@ -188,7 +188,10 @@ function Figure({ stat }: { stat: StatItem }) {
         )}
       </p>
       {stat.subtitle && (
-        <p className={cn("text-caption", warn ? "text-warning" : "text-muted")}>
+        <p
+          title={stat.subtitle}
+          className={cn("truncate text-caption", warn ? "text-warning" : "text-muted")}
+        >
           {stat.subtitle}
         </p>
       )}
