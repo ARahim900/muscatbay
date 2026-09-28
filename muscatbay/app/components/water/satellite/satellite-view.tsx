@@ -8,6 +8,7 @@ import { SatelliteMap } from "./SatelliteMap";
 import {
   StatusMark,
   MetersPanel,
+  rankMeters,
   SelectedMeterPanel,
   StatusPanel,
   TrendPanel,
@@ -16,7 +17,8 @@ import {
 import { SatelliteFilters } from "./SatelliteFilters";
 import { summariseZoneBalance, summariseZoneLosses } from "./zoneBalance";
 import { UnmappedMeters } from "./UnmappedMeters";
-import { SatelliteSummary } from "./SatelliteSummary";
+import { SatelliteSummary, summaryStats } from "./SatelliteSummary";
+import { MapSheet, MapTopBar } from "./map-chrome";
 import { MeterRanking } from "./MeterRanking";
 import { useSatelliteDaily } from "./useSatelliteDaily";
 import {
@@ -65,6 +67,26 @@ export function SatelliteView({
   const [mapUnavailable, setMapUnavailable] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
   const [villaLink, setVillaLink] = useState("");
+  // Phones open straight into the map, with glass chrome over the imagery
+  // (owner-approved sketch, 2026-09-28). Closing it shows the page beneath,
+  // and it stays closed until the operator opens the map again.
+  const [isPhone, setIsPhone] = useState(false);
+  const [immersive, setImmersive] = useState(false);
+  const [mapClosed, setMapClosed] = useState(false);
+  const [focusSignal, setFocusSignal] = useState(0);
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsPhone(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
+  if (isPhone && !immersive && !mapClosed) setImmersive(true);
+  if (!isPhone && immersive) setImmersive(false);
+  const setMapOpen = useCallback((open: boolean) => {
+    setImmersive(open);
+    setMapClosed(!open);
+  }, []);
   // Until the operator picks a day, the page follows the latest recorded one —
   // yesterday is often not entered yet, and an empty map reads as broken.
   const [followLatest, setFollowLatest] = useState(() => !linkHasDate());
@@ -378,6 +400,50 @@ export function SatelliteView({
                   onZone={selectZone}
                   onMeter={selectMeter}
                   onVillaLink={setVillaLink}
+                  fullScreen={isPhone ? immersive : undefined}
+                  onFullScreen={isPhone ? setMapOpen : undefined}
+                  focusSignal={focusSignal}
+                  overlayTop={
+                    isPhone ? (
+                      <MapTopBar
+                        zones={zoneChips}
+                        zone={state.zone}
+                        date={state.date}
+                        latestDay={latestDay}
+                        loading={daily.loading}
+                        onZone={selectZone}
+                        onDate={stepDay}
+                        onClose={() => setMapOpen(false)}
+                      />
+                    ) : undefined
+                  }
+                  overlayBottom={
+                    isPhone ? (
+                      <MapSheet
+                        heading={`${state.zone ? zoneName(state.zone) : "All zones"} · ${formatDay(state.date).slice(0, 6)}`}
+                        reporting={reportingLine}
+                        reportingTone={daily.error ? "danger" : summary.partial ? "warning" : "success"}
+                        stats={summaryStats({
+                          zone: zoneRow,
+                          zones: zoneLosses,
+                          meters,
+                          statusCounts,
+                        })}
+                        meters={rankMeters(ranked)}
+                        selected={selected}
+                        date={state.date}
+                        villaLink={villaLink}
+                        query={query}
+                        onQuery={(value) => {
+                          setQuery(value);
+                          setShowAll(false);
+                        }}
+                        onMeter={selectMeter}
+                        onCloseMeter={() => change({ meter: "" })}
+                        onCentre={() => setFocusSignal((n) => n + 1)}
+                      />
+                    ) : undefined
+                  }
                 >
                   {meterSheet}
                 </SatelliteMap>

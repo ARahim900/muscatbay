@@ -25,6 +25,11 @@ export function SatelliteMap({
   onMeter,
   onUnavailable,
   onVillaLink,
+  fullScreen,
+  onFullScreen,
+  overlayTop,
+  overlayBottom,
+  focusSignal = 0,
 }: {
   meters: ConsumptionMeter[];
   zone: string;
@@ -44,6 +49,18 @@ export function SatelliteMap({
   onZone: (zone: string) => void;
   onMeter: (account: string) => void;
   onUnavailable: (unavailable: boolean) => void;
+  /** Controlled full screen (the phone map); omitted, the map keeps its own. */
+  fullScreen?: boolean;
+  onFullScreen?: (full: boolean) => void;
+  /**
+   * The phone map's glass chrome, drawn over the imagery in full screen. When
+   * either is given the map hides its own zone strip, buttons and sheet, and
+   * keeps its controls and zone framing between the two (satviz:chrome).
+   */
+  overlayTop?: ReactNode;
+  overlayBottom?: ReactNode;
+  /** Bumped to re-centre on the selected meter (or re-fit the zone). */
+  focusSignal?: number;
 }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const ready = useRef(false);
@@ -52,7 +69,21 @@ export function SatelliteMap({
   const [failed, setFailed] = useState(false);
   // Full screen is where the map is operated on a phone: one finger moves it,
   // because there is no page underneath left to scroll.
-  const [full, setFull] = useState(false);
+  const [ownFull, setOwnFull] = useState(false);
+  const full = fullScreen ?? ownFull;
+  const setFull = useCallback(
+    (next: boolean | ((current: boolean) => boolean)) => {
+      const value = typeof next === "function" ? next(full) : next;
+      if (onFullScreen) onFullScreen(value);
+      else setOwnFull(value);
+    },
+    [full, onFullScreen],
+  );
+  const hostChrome = full && Boolean(overlayTop || overlayBottom);
+  // Re-sends the chrome insets once the frame has loaded its page.
+  const [chromeTick, setChromeTick] = useState(0);
+  const topRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const latest = useRef({ meters, zone, selected, date, zones, zoneLosses });
   const callbacks = useRef({
     onLocations,
@@ -170,7 +201,38 @@ export function SatelliteMap({
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", close);
     };
-  }, [full]);
+  }, [full, setFull]);
+  // Tell the map how much of it the glass bar and sheet cover, whenever either
+  // changes size, so its controls and zone framing stay in the clear area.
+  useEffect(() => {
+    const post = () => {
+      const map = frame.current?.getBoundingClientRect();
+      const top = topRef.current?.getBoundingClientRect();
+      const bottom = bottomRef.current?.getBoundingClientRect();
+      frame.current?.contentWindow?.postMessage(
+        {
+          type: "satviz:chrome",
+          host: hostChrome,
+          top: hostChrome && map && top ? top.bottom - map.top : 0,
+          bottom: hostChrome && map && bottom ? map.bottom - bottom.top : 0,
+        },
+        location.origin,
+      );
+    };
+    post();
+    if (!hostChrome || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(post);
+    if (topRef.current) observer.observe(topRef.current);
+    if (bottomRef.current) observer.observe(bottomRef.current);
+    return () => observer.disconnect();
+  }, [hostChrome, attempt, chromeTick]);
+  useEffect(() => {
+    if (focusSignal)
+      frame.current?.contentWindow?.postMessage(
+        { type: "satviz:focus" },
+        location.origin,
+      );
+  }, [focusSignal]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setFailed(true);
@@ -287,7 +349,7 @@ export function SatelliteMap({
           )}
         </div>
       )}
-      {full && summary && (
+      {full && summary && !hostChrome && (
         <p className="truncate border-b border-line bg-card px-3 py-2 text-caption tabular-nums text-fg">
           {summary}
         </p>
@@ -295,7 +357,7 @@ export function SatelliteMap({
       {/* Everything drawn over the map is placed against the map itself, so the
           status line and the full-screen strip above never shift it. */}
       <div className={`relative min-h-0 ${full ? "flex flex-1 flex-col" : ""}`}>
-        {!failed && (
+        {!failed && !hostChrome && (
           // Full screen on a phone: the meter sheet owns the bottom edge, so the
           // buttons move under the zone strip while a meter is open.
           <div
@@ -349,16 +411,29 @@ export function SatelliteMap({
               { type: "satviz:hello" },
               location.origin,
             );
+            setChromeTick((n) => n + 1);
           }}
           key={attempt}
           ref={frame}
-          src="/satellite/consumption.html?v=25"
+          src="/satellite/consumption.html?v=26"
           title="Water consumption satellite map"
           className={`${failed ? "hidden" : "block"} w-full border-0 ${full ? "" : "rounded-b-card"}`}
         />
         {/* Embedded, the page's own panels carry the details; the sheet is for
             full screen, where those panels are out of view. */}
-        {!failed && full && children}
+        {!failed && full && !hostChrome && children}
+        {!failed && hostChrome && (
+          <>
+            {/* The wrappers pass taps through to the map; the bar and sheet
+                inside take their own. */}
+            <div ref={topRef} className="pointer-events-none absolute inset-x-0 top-0 z-30">
+              {overlayTop}
+            </div>
+            <div ref={bottomRef} className="pointer-events-none absolute inset-x-0 bottom-0 z-30">
+              {overlayBottom}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
