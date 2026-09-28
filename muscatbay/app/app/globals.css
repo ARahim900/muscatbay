@@ -1896,3 +1896,7 @@ svg.lucide {
 /* The phone map's sheet never covers more of the map than this. */
 .map-sheet-detail { max-height: 58dvh; }
 .map-sheet-list { max-height: 46dvh; }
+/* In the phone map's sheet the figures stop at 24px, so more map shows. */
+.kpi-figure.kpi-figure-compact {
+  font-size: clamp(1.125rem, calc(100cqi / var(--kpi-chars, 6) * 1.7), 1.5rem);
+}
