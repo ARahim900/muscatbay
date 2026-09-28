@@ -147,29 +147,35 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                         water/monthly Kpi tiles (the app-wide reference). */}
                     <div className="flex items-center gap-2.5">
                         <div
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[7px] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-card shadow-[inset_0_0_0_1px_rgb(78_68_86_/_0.08)] transition-transform duration-300 ease-(--ease-out-quint) motion-safe:group-hover/stat:scale-110"
                             style={{ background: tileBg }}
                         >
                             <stat.icon
-                                className={cn("h-4 w-4", !stat.color && iconClass)}
+                                className={cn("h-5 w-5", !stat.color && iconClass)}
                                 style={stat.color ? { color: stat.color } : undefined}
                             />
                         </div>
-                        <div className="min-w-0">
+                        <div className="@container min-w-0 flex-1">
                             {/* Wrap to two lines instead of truncating mid-word on
                                 narrow cards ("STP ECONOMIC I…"). */}
-                            <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
+                            <p className="text-eyebrow uppercase text-muted-foreground line-clamp-2 break-words">
                                 {stat.label}
                             </p>
-                            <p className={cn(
-                                "break-words text-kpi tabular-nums text-foreground",
-                                justChanged && "mb-value-changed-ink"
-                            )}>
-                                <CountUp value={stat.value} delay={index * 0.06} />
+                            <p
+                                className={cn(
+                                    "kpi-figure mt-0.5 text-kpi text-foreground",
+                                    justChanged && "mb-value-changed-ink"
+                                )}
+                                // The figure scales to its tile (globals.css .kpi-figure):
+                                // full size when it fits, smaller for long OMR values —
+                                // never split across lines.
+                                style={{ "--kpi-chars": String(stat.value).length } as React.CSSProperties}
+                            >
+                                <span className="whitespace-nowrap"><CountUp value={stat.value} delay={index * 0.06} /></span>
                                 {/* The space is the break point: a long figure (OMR to 3
                                     decimals) moves the whole unit to the next line instead
                                     of splitting it ("O" / "MR"). */}
-                                {stat.unit && <>{" "}<span className="whitespace-nowrap text-caption font-medium text-muted-foreground">{stat.unit}</span></>}
+                                {stat.unit && <>{" "}<span className="ms-0.5 whitespace-nowrap text-label font-medium tracking-normal text-muted-foreground">{stat.unit}</span></>}
                             </p>
                         </div>
                     </div>

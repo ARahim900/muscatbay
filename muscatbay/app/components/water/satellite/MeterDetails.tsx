@@ -1,6 +1,22 @@
 import { formatDay, shiftDay } from "./dailyModel";
 import { formatVolume, type ConsumptionMeter } from "./consumptionModel";
 
+/** "Mon" and "21" for a trend row — the weekday reads first, the date is the anchor. */
+function trendDay(date: string): { weekday: string; day: string } {
+  const d = new Date(`${date}T00:00:00Z`);
+  return {
+    weekday: d.toLocaleDateString("en-GB", { timeZone: "UTC", weekday: "short" }),
+    day: String(d.getUTCDate()),
+  };
+}
+
+/** The selected day's bar carries the meter's status colour; other days stay teal. */
+function barTone(status: ConsumptionMeter["status"]): string {
+  if (status === "high") return "bg-danger";
+  if (status === "elevated") return "bg-warning";
+  return "bg-accent";
+}
+
 export function MeterDetails({
   meter,
   date,
@@ -64,34 +80,49 @@ export function MeterDetails({
         </div>
       </dl>
       <section aria-label="Seven-day consumption trend">
-        <h4 className="mb-2 font-medium">Daily trend · m³</h4>
-        <div className="space-y-2">
-          {meter.trend.map((point) => (
-            <div
-              key={point.date}
-              className="grid grid-cols-4 items-center gap-2"
-            >
-              <span>{formatDay(point.date).slice(0, 6)}</span>
-              <svg
-                className="col-span-2 h-3 w-full"
-                viewBox="0 0 100 12"
-                preserveAspectRatio="none"
-                aria-hidden="true"
-              >
-                {point.value !== null && point.value >= 0 && (
-                  <rect
-                    width={(point.value / max) * 100}
-                    height="12"
-                    fill="#A4C5BB"
-                  />
-                )}
-              </svg>
-              <span className="text-right tabular-nums">
-                {formatVolume(point.value)}
-              </span>
-            </div>
-          ))}
+        <div className="mb-2 flex items-baseline justify-between">
+          <h4 className="text-eyebrow uppercase text-muted">Daily trend</h4>
+          <span className="text-caption text-muted">m³</span>
         </div>
+        <div>
+          {meter.trend.map((point) => {
+            const { weekday, day } = trendDay(point.date);
+            const isSelected = point.date === date;
+            const width =
+              point.value !== null && point.value >= 0
+                ? Math.max(2, (point.value / max) * 100)
+                : 0;
+            return (
+              <div
+                key={point.date}
+                className="grid h-7 grid-cols-[3.25rem_1fr_3rem] items-center gap-2.5"
+              >
+                <span className="text-caption text-muted tabular-nums">
+                  {weekday} <b className="font-semibold text-fg">{day}</b>
+                </span>
+                <span className="h-2.5 overflow-hidden rounded-pill bg-neutral-tint">
+                  {width > 0 && (
+                    <span
+                      className={`block h-full rounded-pill ${isSelected ? barTone(meter.status) : "bg-accent"}`}
+                      style={{ width: `${width}%` }}
+                    />
+                  )}
+                </span>
+                <span className="text-right text-label font-semibold tabular-nums">
+                  {point.value === null ? "—" : formatVolume(point.value)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        {meter.baseline !== null && (
+          <div className="mt-2 flex justify-between border-t border-dashed border-line pt-2 text-caption text-muted">
+            <span>Usual — average of its recent recorded days</span>
+            <span className="font-semibold text-fg tabular-nums">
+              {formatVolume(meter.baseline)} m³
+            </span>
+          </div>
+        )}
       </section>
       <div className="space-y-1 text-muted">
         <p>Zone: {meter.zoneName}</p>

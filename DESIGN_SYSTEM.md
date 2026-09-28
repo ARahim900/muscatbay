@@ -32,7 +32,7 @@
 | Primary | **Charcoal Purple `#4E4456`** — sidebar, page and section titles, table headers, one primary button per view, active segmented pill |
 | Accent | **Tiffany Blue `#A1D1D5`** — active-tab underline, focus ring, icon tiles, secondary chart series |
 | Typeface | **DM Sans** (Google Fonts, variable; weights 400 / 500 / 600 / 700) with `ui-sans-serif, system-ui` fallback |
-| Icons | **Lucide** only, 2 px stroke, monochrome. 16 px inline, 20 px in KPI tiles and navigation. **No emoji, no illustrations.** |
+| Icons | **Lucide** only, 1.75 px stroke (refined 2026-09-28, set globally on `svg.lucide`), monochrome. 16 px inline, 20 px in KPI tiles and navigation. **No emoji, no illustrations.** |
 | Logo | `/public/mb-logo.png` (primary), `/public/logo.png` (alt), favicon and PWA icons as already shipped |
 | Tone | Calm and operational. Sentence case for titles, UPPERCASE eyebrows, Title Case column headers, no exclamation marks |
 
@@ -104,7 +104,7 @@ Status dots use the text colour; badges use tint background + text colour. Every
 | `text-label` | 13 / 18 / 500 | 0 | Buttons, tabs, form labels, badges |
 | `text-caption` | 12 / 16 / 400 | 0 | Footnotes, axis ticks, timestamps |
 | `text-eyebrow` | 11 / 14 / 600 | +0.08 em, uppercase | KPI labels, nav groups, table headers |
-| `text-kpi` | 24 / 28 / 700 | −0.01 em, `tabular-nums` | KPI values (as `<p>`, never as a heading) |
+| `text-kpi` | 30 / 34 / 600 | −0.03 em, `tabular-nums` lining | KPI values (as `<p>`, never as a heading). Raised 2026-09-28 (owner, option A): large calm figures, unit in `text-label` muted |
 
 Rules: minimum size 11 px; weight 800 does not exist; italics are not used in UI (only inside quoted text); numbers always `tabular-nums` with the unit to the right in `text-caption` muted (`373,260 m³`, `4.7k OMR`).
 

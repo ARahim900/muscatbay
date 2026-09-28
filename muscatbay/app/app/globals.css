@@ -1829,3 +1829,27 @@ main#main-content {
     animation: none;
   }
 }
+
+/* ── Refinement pass (owner choice A, 2026-09-28) ──
+ * Finer icon line: every Lucide icon draws at 1.75px, whatever size it is
+ * rendered at, so icons read as one family beside DM Sans rather than heavy
+ * glyphs. Axis labels on every Recharts chart are muted and tabular, so the
+ * plotted values — not the scale — carry the weight (ChartFrame already sets
+ * this; the rule covers the legacy charts that do not use it). */
+svg.lucide {
+  stroke-width: 1.75;
+}
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-muted);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* KPI figures fit their tile: the text column is a size container, and the
+   figure takes the full KPI size when it fits, stepping down (to 18px at the
+   least) for long values such as OMR to 3 decimals. --kpi-chars is the
+   figure's length, set by StatTile. 1.7 ≈ 1 / DM Sans tabular digit width. */
+.kpi-figure {
+  font-size: clamp(1.125rem, calc(100cqi / var(--kpi-chars, 6) * 1.7), var(--text-kpi));
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums lining-nums;
+}
