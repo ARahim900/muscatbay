@@ -240,7 +240,9 @@ export function MapSheet({
   }[reportingTone];
   return (
     <div>
-      <Legend />
+      {/* The legend reads the map; with a meter or the list open the sheet
+          needs the room. */}
+      {!selected && !open && <Legend />}
       <section
         aria-label={selected ? `Meter ${selected.name}` : `${heading} figures`}
         className="mb-glass pointer-events-auto rounded-t-card border-b-0 px-3.5 pt-1.5 pb-3 text-fg"
@@ -251,7 +253,7 @@ export function MapSheet({
               <div className="min-w-0">
                 <p className="truncate text-title">{selected.name}</p>
                 <p className="text-caption text-muted">
-                  {selected.zoneName} · account {selected.account}
+                  {selected.zoneName} · account {selected.account} · {selected.level}
                 </p>
               </div>
               <div className="flex gap-1.5">
@@ -301,7 +303,7 @@ export function MapSheet({
             </p>
             {villaLink && <p className="mt-1 text-caption text-muted">{villaLink}</p>}
             <div className="-mx-4">
-              <MeterDetails meter={selected} date={date} />
+              <MeterDetails meter={selected} date={date} showHeading={false} />
             </div>
             <button
               type="button"
