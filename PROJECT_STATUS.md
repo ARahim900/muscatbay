@@ -1705,6 +1705,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-28 — feat(satellite): map-first phone layout with glass chrome over the imagery (#96)
 - 2026-09-28 — feat(ui): refinement pass — larger calm figures, finer icons, one font in the map (#95)
 - 2026-09-28 — fix(ui): bold KPI figures, visible card lift, aligned sidebar and breadcrumb (#94)
 - 2026-09-28 — fix(layout): keep the sidebar brand clear of the iPad status bar (#93)
