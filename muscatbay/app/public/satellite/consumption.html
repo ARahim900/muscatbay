@@ -276,6 +276,64 @@
         outline: 3px solid #a4c5bb;
         outline-offset: 3px;
       }
+      /* ── Host chrome: the app's phone map (satviz:chrome) ──
+         The page draws a glass bar on top and a sheet at the bottom. The map
+         drops its own zone strip and "All" button (the bar has the zone chips),
+         keeps its controls between the two, and wears the same frosted glass —
+         only over the imagery; solid when the viewer asks for less transparency. */
+      html.host-chrome .zone-chips,
+      html.host-chrome .home-button {
+        display: none !important;
+      }
+      html.host-chrome .maplibregl-ctrl-top-right {
+        top: calc(var(--chrome-top, 0px) + 4px);
+      }
+      html.host-chrome .maplibregl-ctrl-bottom-left,
+      html.host-chrome .maplibregl-ctrl-bottom-right {
+        bottom: calc(var(--chrome-bottom, 0px) + 4px);
+      }
+      html.host-chrome #message {
+        top: calc(var(--chrome-top, 0px) + 8px);
+      }
+      html.host-chrome .maplibregl-ctrl-group,
+      html.host-chrome .three-d-button,
+      html.host-chrome .maplibregl-ctrl-attrib {
+        background-color: rgb(255 255 255 / 72%);
+        -webkit-backdrop-filter: blur(18px) saturate(170%);
+        backdrop-filter: blur(18px) saturate(170%);
+        border: 1px solid rgb(255 255 255 / 60%);
+        box-shadow:
+          0 1px 2px rgb(78 68 86 / 8%),
+          0 8px 24px -8px rgb(78 68 86 / 28%);
+      }
+      html.host-chrome.dark .maplibregl-ctrl-group,
+      html.host-chrome.dark .three-d-button,
+      html.host-chrome.dark .maplibregl-ctrl-attrib {
+        background-color: rgb(22 20 27 / 72%);
+        border-color: rgb(255 255 255 / 10%);
+      }
+      html.host-chrome .three-d-button[aria-pressed="true"] {
+        background-color: var(--color-primary, #4e4456);
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        html.host-chrome .maplibregl-ctrl-group,
+        html.host-chrome .three-d-button,
+        html.host-chrome .maplibregl-ctrl-attrib {
+          background-color: var(--color-card, #fff);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
+      }
+      /* A meter is a thumb target on touch: 44px square around the small mark. */
+      @media (pointer: coarse) {
+        .meter-marker {
+          display: grid;
+          place-items: center;
+          min-width: 44px;
+          min-height: 44px;
+          padding: 0;
+        }
+      }
       .maplibregl-map {
         font: inherit;
       }

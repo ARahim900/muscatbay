@@ -29,7 +29,7 @@ import {
 } from "./consumptionModel";
 import type { ZoneLoss } from "./zoneBalance";
 
-const STATUS_TONES = {
+export const STATUS_TONES = {
   normal: "success",
   elevated: "warning",
   high: "danger",
@@ -198,6 +198,15 @@ const STATUS_ORDER: Record<MeterStatus, number> = {
   elevated: 3,
   normal: 4,
 };
+
+/** Findings first (high, zero, no reading, elevated…), then the largest reading. */
+export function rankMeters(meters: ConsumptionMeter[]): ConsumptionMeter[] {
+  return [...meters].sort(
+    (a, b) =>
+      STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
+      (b.value ?? -Infinity) - (a.value ?? -Infinity),
+  );
+}
 /** The meters on the map, findings first. A row and its dot select each other. */
 export function MetersPanel({
   meters,
@@ -217,11 +226,7 @@ export function MetersPanel({
   onQuery: (query: string) => void;
 }) {
   const list = useRef<HTMLUListElement>(null);
-  const ranked = [...meters].sort(
-    (a, b) =>
-      STATUS_ORDER[a.status] - STATUS_ORDER[b.status] ||
-      (b.value ?? -Infinity) - (a.value ?? -Infinity),
-  );
+  const ranked = rankMeters(meters);
   // A dot tapped on the map brings its row into view, inside the list only.
   useEffect(() => {
     const row = list.current?.querySelector<HTMLElement>('[aria-pressed="true"]');

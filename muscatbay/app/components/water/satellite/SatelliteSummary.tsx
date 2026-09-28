@@ -1,5 +1,5 @@
 import { AlertTriangle, Droplets, Gauge, Minus } from "lucide-react";
-import { StatsGrid } from "@/components/shared/stats-grid";
+import { StatsGrid, type StatItem } from "@/components/shared/stats-grid";
 import {
   formatMapVolume,
   type ConsumptionMeter,
@@ -20,12 +20,20 @@ const sum = (values: (number | null)[]) => {
   return recorded.length ? recorded.reduce((a, b) => a + b, 0) : null;
 };
 /** The KPI strip under the map: four figures for the level on screen. */
-export function SatelliteSummary({
+export function SatelliteSummary(props: SatelliteSummaryProps) {
+  return <StatsGrid stats={summaryStats(props)} />;
+}
+
+/**
+ * The four figures for the level on screen — shared by the KPI strip and the
+ * phone map's sheet, so the two can never disagree.
+ */
+export function summaryStats({
   zone,
   zones,
   meters,
   statusCounts,
-}: SatelliteSummaryProps) {
+}: SatelliteSummaryProps): StatItem[] {
   const findings = statusCounts.high + statusCounts.zero + statusCounts.missing;
   const findingsTile = {
     label: "Findings",
@@ -37,9 +45,7 @@ export function SatelliteSummary({
   if (!zone) {
     const main = meters.filter((m) => m.level === "L1");
     const bulks = zones.filter((z) => z.bulk !== null);
-    return (
-      <StatsGrid
-        stats={[
+    return [
           {
             label: "Main supply in",
             value: formatMapVolume(main.length === 1 ? main[0].value : null),
@@ -70,13 +76,9 @@ export function SatelliteSummary({
             variant: "secondary",
           },
           findingsTile,
-        ]}
-      />
-    );
+        ];
   }
-  return (
-    <StatsGrid
-      stats={[
+  return [
         {
           label: "Bulk in",
           value: formatMapVolume(zone.bulk),
@@ -111,7 +113,5 @@ export function SatelliteSummary({
           dataQuality: zone.partial ? "incomplete" : undefined,
         },
         findingsTile,
-      ]}
-    />
-  );
+      ];
 }

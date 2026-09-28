@@ -48,6 +48,12 @@
   let mapPick = "";
   let hoverTag = null;
   let fullScreen = false;
+  // Host chrome (the app's phone map): the page draws its own glass bar at the
+  // top and a sheet at the bottom, so the map hides its zone strip and keeps
+  // its controls and every zone fly-in between the two.
+  let hostChrome = false;
+  let chromeTop = 0;
+  let chromeBottom = 0;
   let chipBar = null;
   let previousLink = null;
   // Per-villa house outlines from the as-built model (data/villa-buildings.js).
@@ -511,8 +517,8 @@
       coordinates.forEach((coordinate) => bounds.extend(coordinate));
       map.fitBounds(bounds, {
         padding: {
-          top: fullScreen ? 90 : 40,
-          bottom: 70,
+          top: hostChrome ? chromeTop + 16 : fullScreen ? 90 : 40,
+          bottom: hostChrome ? chromeBottom + 16 : 70,
           left: width < 640 ? 30 : 60,
           right: width < 640 ? 50 : 80,
         },
@@ -638,7 +644,10 @@
       const outside = coordinates.some((coordinate) => {
         const point = map.project(coordinate);
         return (
-          point.x < 24 || point.x > width - 24 || point.y < 40 || point.y > height - 48
+          point.x < 24 ||
+          point.x > width - 24 ||
+          point.y < (hostChrome ? chromeTop + 8 : 40) ||
+          point.y > height - (hostChrome ? chromeBottom + 8 : 48)
         );
       });
       if (!outside) return;
@@ -822,7 +831,7 @@
     threeDBadge = badge;
     const home = document.createElement("button");
     home.type = "button";
-    home.className = "three-d-button";
+    home.className = "three-d-button home-button";
     home.textContent = "All";
     home.setAttribute("aria-label", "Back to the whole site");
     home.addEventListener("click", () => send("satviz:select-zone", { zone: "" }));
@@ -1008,6 +1017,20 @@
       }
       previousFocus = "";
       previousZone = null; // re-run the zone fly-in
+      update();
+      return;
+    }
+    if (data.type === "satviz:chrome") {
+      hostChrome = data.host === true;
+      chromeTop = Math.max(0, Math.min(400, Number(data.top) || 0));
+      chromeBottom = Math.max(0, Math.min(800, Number(data.bottom) || 0));
+      const root = document.documentElement;
+      root.classList.toggle("host-chrome", hostChrome);
+      root.style.setProperty("--chrome-top", `${chromeTop}px`);
+      root.style.setProperty("--chrome-bottom", `${chromeBottom}px`);
+      // Re-frame the zone between the bar and the sheet.
+      previousFocus = "";
+      previousZone = null;
       update();
       return;
     }

@@ -1853,3 +1853,46 @@ svg.lucide {
   line-height: 1.15;
   font-variant-numeric: tabular-nums lining-nums;
 }
+
+/* Frosted glass — ONLY for panels floating over the satellite imagery (owner
+   request 2026-09-28; page cards stay solid per the brand). 72% card tint and
+   18px blur keep text at AA over busy terrain; solid when the viewer asks for
+   reduced transparency or the browser has no backdrop filter. */
+.mb-glass {
+  background-color: rgb(255 255 255 / 72%);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border: 1px solid rgb(255 255 255 / 60%);
+  box-shadow:
+    0 1px 2px rgb(78 68 86 / 8%),
+    0 8px 24px -8px rgb(78 68 86 / 28%),
+    inset 0 1px 0 rgb(255 255 255 / 70%);
+}
+.dark .mb-glass {
+  background-color: rgb(22 20 27 / 72%);
+  border-color: rgb(255 255 255 / 10%);
+  box-shadow:
+    0 8px 24px -8px rgb(0 0 0 / 60%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+.mb-glass-inset {
+  background-color: rgb(255 255 255 / 62%);
+  border: 1px solid rgb(255 255 255 / 70%);
+}
+.dark .mb-glass-inset {
+  background-color: rgb(255 255 255 / 6%);
+  border-color: rgb(255 255 255 / 8%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mb-glass { background-color: var(--color-card); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .mb-glass {
+    background-color: var(--color-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+/* The phone map's sheet never covers more of the map than this. */
+.map-sheet-detail { max-height: 58dvh; }
+.map-sheet-list { max-height: 46dvh; }
