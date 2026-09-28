@@ -88,14 +88,16 @@ export function MeterDetails({
           {meter.trend.map((point) => {
             const { weekday, day } = trendDay(point.date);
             const isSelected = point.date === date;
+            // A recorded zero draws no bar — the minimum sliver is only for a
+            // small positive reading, never for zero, missing or negative.
             const width =
-              point.value !== null && point.value >= 0
+              point.value !== null && point.value > 0
                 ? Math.max(2, (point.value / max) * 100)
                 : 0;
             return (
               <div
                 key={point.date}
-                className="grid h-7 grid-cols-[3.25rem_1fr_3rem] items-center gap-2.5"
+                className="grid h-7 grid-cols-[3.25rem_1fr_auto] items-center gap-2.5"
               >
                 <span className="text-caption text-muted tabular-nums">
                   {weekday} <b className="font-semibold text-fg">{day}</b>
@@ -108,7 +110,7 @@ export function MeterDetails({
                     />
                   )}
                 </span>
-                <span className="text-right text-label font-semibold tabular-nums">
+                <span className="min-w-12 text-right text-label font-semibold tabular-nums">
                   {point.value === null ? "—" : formatVolume(point.value)}
                 </span>
               </div>
