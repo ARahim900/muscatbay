@@ -280,12 +280,12 @@ export function Sidebar() {
                   <Image src="/logo.png" alt="Muscat Bay" width={26} height={26} className="object-contain" priority />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-title font-bold leading-tight">
+                  <p className="whitespace-nowrap text-lg font-bold leading-none">
                     <span className="text-white">MUSCAT </span>
                     <span className="text-secondary">BAY</span>
                   </p>
-                  <p className="text-eyebrow uppercase text-white/55 truncate">
-                    Resource Management
+                  <p className="mt-1 text-eyebrow uppercase tracking-[0.16em] text-white/60 truncate">
+                    Operations
                   </p>
                 </div>
               </Link>

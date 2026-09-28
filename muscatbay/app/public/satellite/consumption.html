@@ -207,7 +207,10 @@
         border-radius: 8px;
         background: transparent;
         color: var(--color-muted, #454545);
-        font: 500 14px/1 inherit;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 1;
         white-space: nowrap;
         cursor: pointer;
         transition:
@@ -235,7 +238,10 @@
       .three-d-button {
         width: 44px;
         height: 44px;
-        font: 600 14px/1 inherit;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1;
         color: var(--color-fg, #0a0a0a);
       }
       .three-d-button[aria-pressed="true"] {
@@ -272,6 +278,13 @@
       }
       .maplibregl-map {
         font: inherit;
+      }
+      /* Form controls do not inherit the page font by default, so every map
+         button fell back to the browser's Arial. One family inside the map. */
+      button,
+      input,
+      select {
+        font-family: inherit;
       }
       .maplibregl-ctrl-group,
       .maplibregl-ctrl-attrib,
