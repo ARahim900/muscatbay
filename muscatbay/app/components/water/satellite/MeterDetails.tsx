@@ -20,9 +20,12 @@ function barTone(status: ConsumptionMeter["status"]): string {
 export function MeterDetails({
   meter,
   date,
+  showHeading = true,
 }: {
   meter: ConsumptionMeter;
   date: string;
+  /** Off where the surrounding sheet already names the meter. */
+  showHeading?: boolean;
 }) {
   const comparable =
     meter.value !== null &&
@@ -35,12 +38,14 @@ export function MeterDetails({
   const max = Math.max(1, ...meter.trend.map((p) => Math.max(0, p.value ?? 0)));
   return (
     <div className="space-y-4 p-4 text-body">
-      <div>
-        <h3 className="text-title text-primary dark:text-fg">{meter.name}</h3>
-        <p className="text-muted">
-          Account {meter.account} · {meter.level}
-        </p>
-      </div>
+      {showHeading && (
+        <div>
+          <h3 className="text-title text-primary dark:text-fg">{meter.name}</h3>
+          <p className="text-muted">
+            Account {meter.account} · {meter.level}
+          </p>
+        </div>
+      )}
       <dl className="grid grid-cols-2 gap-3">
         <div>
           <dt>{formatDay(date)}</dt>

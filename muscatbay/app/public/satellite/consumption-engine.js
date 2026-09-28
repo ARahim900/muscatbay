@@ -533,6 +533,9 @@
       map.easeTo({
         center: selectedPosition.coordinates,
         zoom: Math.max(map.getZoom(), 17.5),
+        // Under host chrome, centre the meter in the clear gap between the
+        // bar and the sheet, not behind the sheet.
+        offset: hostChrome ? [0, (chromeTop - chromeBottom) / 2] : [0, 0],
         duration: reducedMotion ? 0 : 600,
       });
       previousFocus = focus;
