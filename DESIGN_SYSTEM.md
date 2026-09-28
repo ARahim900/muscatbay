@@ -117,8 +117,8 @@ Rules: minimum size 11 px; weight 800 does not exist; italics are not used in UI
 | `rounded-card` | 10.5 px | Cards, modals, iframe frames |
 | `rounded-control` | 6 px | Buttons, inputs, segmented control, icon tiles |
 | `rounded-pill` | 9999 px | Badges, status chips, avatars |
-| `shadow-card` | `0 1px 2px rgba(0,0,0,.04), 0 2px 6px rgba(0,0,0,.06)` | Every card at rest |
-| `shadow-card-hover` | `0 2px 4px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.08)` | Interactive cards on hover, popovers |
+| `shadow-card` | `0 1px 2px rgba(78,68,86,.06), 0 6px 16px -4px rgba(78,68,86,.12)` — brand-tinted, raised 2026-09-28 at the owner's request (the neutral one read as flat on iPad) | Every card at rest |
+| `shadow-card-hover` | `0 2px 4px rgba(78,68,86,.08), 0 12px 28px -6px rgba(78,68,86,.18)` | Interactive cards on hover, popovers |
 | Dark mode shadows | `0 4px 12px rgba(0,0,0,.30), 0 2px 4px rgba(0,0,0,.20)` | Automatic via token |
 | Motion | `200 ms cubic-bezier(.4,0,.2,1)`; hover lift `translateY(-1px)`; no bounces; all loops off under `prefers-reduced-motion` | |
 | Focus | `outline: 2px solid var(--color-accent); outline-offset: 2px` on `:focus-visible` | |

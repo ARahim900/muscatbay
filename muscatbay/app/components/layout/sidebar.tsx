@@ -262,7 +262,7 @@ export function Sidebar() {
         />
 
         {/* Brand lockup — same height as topbar (h-16 = 64px) */}
-        <div className="h-16 flex items-center flex-shrink-0 border-b border-white/10 px-3">
+        <div className={`h-16 flex items-center flex-shrink-0 border-b border-white/10 ${isCollapsed ? "px-3" : "ps-5 pe-3"}`}>
           {isCollapsed ? (
             /* Collapsed: centred logo icon doubles as expand trigger on desktop */
             <button
@@ -275,16 +275,16 @@ export function Sidebar() {
           ) : (
             /* Expanded: full brand lockup + collapse button */
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Link href="/" className="flex items-center gap-2.5 group flex-1 min-w-0" aria-label="Muscat Bay home">
-                <div className="w-9 h-9 flex-shrink-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-80">
+              <Link href="/" className="flex items-center gap-2 group flex-1 min-w-0" aria-label="Muscat Bay home">
+                <div className="w-7 h-9 flex-shrink-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-80">
                   <Image src="/logo.png" alt="Muscat Bay" width={26} height={26} className="object-contain" priority />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold tracking-tight leading-none">
+                  <p className="text-title font-bold leading-tight">
                     <span className="text-white">MUSCAT </span>
                     <span className="text-secondary">BAY</span>
                   </p>
-                  <p className="text-[10px] uppercase tracking-[0.13em] text-white/50 mt-0.5 truncate">
+                  <p className="text-eyebrow uppercase text-white/55 truncate">
                     Resource Management
                   </p>
                 </div>
@@ -310,7 +310,7 @@ export function Sidebar() {
               aria-label={group.label}
             >
               {group.label && (
-                <h2 className={`px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/45 select-none ${isCollapsed ? "sr-only" : ""}`}>
+                <h2 className={`px-3 mb-1 text-eyebrow uppercase text-white/55 select-none ${isCollapsed ? "sr-only" : ""}`}>
                   {group.label}
                 </h2>
               )}

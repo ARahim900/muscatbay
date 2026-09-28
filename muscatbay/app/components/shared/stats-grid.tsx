@@ -161,16 +161,16 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                             <p className="text-muted-foreground text-[11px] font-semibold mb-0.5 uppercase tracking-[0.06em] leading-tight line-clamp-2 break-words">
                                 {stat.label}
                             </p>
-                            <h3 className={cn(
-                                "break-words text-lg font-semibold tabular-nums leading-tight tracking-tight text-foreground sm:text-xl",
+                            <p className={cn(
+                                "break-words text-kpi tabular-nums text-foreground",
                                 justChanged && "mb-value-changed-ink"
                             )}>
                                 <CountUp value={stat.value} delay={index * 0.06} />
                                 {/* The space is the break point: a long figure (OMR to 3
                                     decimals) moves the whole unit to the next line instead
                                     of splitting it ("O" / "MR"). */}
-                                {stat.unit && <>{" "}<span className="whitespace-nowrap text-xs font-medium text-muted-foreground">{stat.unit}</span></>}
-                            </h3>
+                                {stat.unit && <>{" "}<span className="whitespace-nowrap text-caption font-medium text-muted-foreground">{stat.unit}</span></>}
+                            </p>
                         </div>
                     </div>
 
@@ -218,7 +218,7 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
             );
 
             const baseCardClassName = cn(
-        "mb-glow group/stat min-h-24 overflow-hidden rounded-lg border border-border bg-card p-3 shadow-[0_1px_2px_rgb(15_23_42_/_0.06)] transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) hover:border-secondary/40 hover:shadow-[0_6px_18px_-10px_rgb(15_23_42_/_0.35)] motion-safe:active:scale-[0.99] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)]",
+        "mb-glow group/stat min-h-24 overflow-hidden rounded-card border border-border bg-card p-3 shadow-card transition-[box-shadow,border-color,transform] duration-200 ease-(--ease-out-quint) hover:border-secondary/40 hover:shadow-card-hover motion-safe:active:scale-[0.99]",
         // Only present for the ~1.4s after this figure actually moved.
         justChanged && "mb-value-changed"
     );

@@ -17,7 +17,7 @@ export function Breadcrumb({ items }: { items: Crumb[] }) {
           <span key={c.label} className="flex items-center gap-1.5">
             {i > 0 && <ChevronRight size={14} strokeWidth={2} aria-hidden />}
             {c.href && !last
-              ? <Link href={c.href} className="hover:text-fg">{c.label}</Link>
+              ? <Link href={c.href} className="inline-flex items-center hover:text-fg">{c.label}</Link>
               : <span aria-current={last ? 'page' : undefined} className={last ? 'font-medium text-fg' : undefined}>{c.label}</span>}
           </span>
         );
