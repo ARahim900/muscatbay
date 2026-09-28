@@ -250,6 +250,9 @@ export function SatelliteMap({
       const message = event.data as Record<string, unknown>;
       if (message.type === "satviz:ready") {
         ready.current = true;
+        // The engine listens only once its scripts have run, which can be
+        // after the frame's load event — send the chrome insets again now.
+        setChromeTick((n) => n + 1);
         callbacks.current.onLocations(parseLocations(message.locations));
         frame.current?.contentWindow?.postMessage(
           { type: "satviz:data", payload: latest.current },

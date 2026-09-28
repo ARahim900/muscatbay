@@ -166,6 +166,15 @@ export function SatelliteView({
     () => [...new Set(waterMeters.map((m) => m.zone).filter(Boolean))].sort(),
     [waterMeters],
   );
+  // The phone bar offers the zones that have a bulk-against-metered balance —
+  // the same list the Zones panel ranks — not supply points like Main Bulk.
+  const mapZones = useMemo(
+    () =>
+      [...zoneLosses]
+        .map((z) => ({ id: z.id, name: z.name }))
+        .sort((a, b) => a.name.localeCompare(b.name, "en-GB", { numeric: true })),
+    [zoneLosses],
+  );
   const zoneChips = useMemo(
     () => zones.map((id) => ({ id, name: zoneName(id) })),
     [zones],
@@ -406,7 +415,7 @@ export function SatelliteView({
                   overlayTop={
                     isPhone ? (
                       <MapTopBar
-                        zones={zoneChips}
+                        zones={mapZones}
                         zone={state.zone}
                         date={state.date}
                         latestDay={latestDay}
