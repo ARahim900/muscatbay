@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -63,6 +63,13 @@ export function MapTopBar({
   onDate: (date: string) => void;
   onClose: () => void;
 }) {
+  const chips = useRef<HTMLDivElement>(null);
+  // The chosen zone's chip is always in view, even far along the strip.
+  useEffect(() => {
+    const chip = chips.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (chip && typeof chip.scrollIntoView === "function")
+      chip.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [zone]);
   const next = shiftDay(date, 1);
   const canGoForward = next <= omanToday();
   const note = loading
@@ -86,6 +93,7 @@ export function MapTopBar({
         </button>
       </div>
       <div
+        ref={chips}
         role="group"
         aria-label="Zone"
         className="flex gap-1 overflow-x-auto [scrollbar-width:none]"
