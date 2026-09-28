@@ -67,7 +67,7 @@ describe('StatsGrid — live value change', () => {
 
         expect(tileFor('Water Supply').className).toContain('mb-value-changed');
         // The number itself lifts to the info colour via its own class.
-        const figure = tileFor('Water Supply').querySelector('h3');
+        const figure = tileFor('Water Supply').querySelector('p.text-kpi');
         expect(figure?.className).toContain('mb-value-changed-ink');
     });
 
