@@ -498,13 +498,17 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                             // (e.g. two 0% + one 2% slice) and their outside labels overlap —
                                             // those move into the legend too, same threshold as the line below.
                                             label={isPhone ? false : (props: { percent?: number; name?: string | number }) => {
-                                                const p = Math.round((props.percent ?? 0) * 100);
-                                                return p < SMALL_SLICE_PCT ? "" : `${props.name}: ${p}%`;
+                                                // Compare the exact share, not the rounded display figure — rounding
+                                                // first (e.g. 2.6% → 3) let a slice clear the threshold here while
+                                                // the legend (below, unrounded) still carried it too.
+                                                const exact = (props.percent ?? 0) * 100;
+                                                if (exact < SMALL_SLICE_PCT) return "";
+                                                return `${props.name}: ${Math.round(exact)}%`;
                                             }}
                                             labelLine={isPhone ? false : (props: { percent?: number; points?: Array<{ x: number; y: number }> }) => {
-                                                const p = Math.round((props.percent ?? 0) * 100);
+                                                const exact = (props.percent ?? 0) * 100;
                                                 const pts = props.points;
-                                                if (p < SMALL_SLICE_PCT || !pts || pts.length < 2) return <path d="" fill="none" stroke="none" />;
+                                                if (exact < SMALL_SLICE_PCT || !pts || pts.length < 2) return <path d="" fill="none" stroke="none" />;
                                                 return <path d={`M${pts[0].x},${pts[0].y}L${pts[1].x},${pts[1].y}`} fill="none" stroke="var(--color-muted)" strokeWidth={1} />;
                                             }}
                                             {...chartMotion}
