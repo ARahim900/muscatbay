@@ -69,7 +69,10 @@ export function SatelliteView({
   const [villaLink, setVillaLink] = useState("");
   // Phones open straight into the map, with glass chrome over the imagery
   // (owner-approved sketch, 2026-09-28). Closing it shows the page beneath,
-  // and it stays closed until the operator opens the map again.
+  // and it stays closed until the operator opens the map again. Desktop and
+  // iPad start in the normal panel layout and reach the same glass full-screen
+  // view on request, via the map's own "Full screen" button (owner request,
+  // 2026-09-29 — bring the phone experience to larger screens too).
   const [isPhone, setIsPhone] = useState(false);
   const [immersive, setImmersive] = useState(false);
   const [mapClosed, setMapClosed] = useState(false);
@@ -81,8 +84,20 @@ export function SatelliteView({
     query.addEventListener("change", apply);
     return () => query.removeEventListener("change", apply);
   }, []);
-  if (isPhone && !immersive && !mapClosed) setImmersive(true);
-  if (!isPhone && immersive) setImmersive(false);
+  // Reacts only to isPhone actually crossing the breakpoint (same render-time
+  // pattern as `followLatest` below) — entering phone width auto-opens the
+  // map (unless the operator just closed it); leaving it returns to the
+  // normal layout. Edge-triggered on `lastIsPhone` so a desktop/iPad
+  // operator's own full-screen toggle isn't fought on every later render.
+  const [lastIsPhone, setLastIsPhone] = useState(isPhone);
+  if (isPhone !== lastIsPhone) {
+    setLastIsPhone(isPhone);
+    if (isPhone) {
+      if (!mapClosed) setImmersive(true);
+    } else {
+      setImmersive(false);
+    }
+  }
   const setMapOpen = useCallback((open: boolean) => {
     setImmersive(open);
     setMapClosed(!open);
@@ -409,49 +424,45 @@ export function SatelliteView({
                   onZone={selectZone}
                   onMeter={selectMeter}
                   onVillaLink={setVillaLink}
-                  fullScreen={isPhone ? immersive : undefined}
-                  onFullScreen={isPhone ? setMapOpen : undefined}
+                  fullScreen={immersive}
+                  onFullScreen={setMapOpen}
                   focusSignal={focusSignal}
                   overlayTop={
-                    isPhone ? (
-                      <MapTopBar
-                        zones={mapZones}
-                        zone={state.zone}
-                        date={state.date}
-                        latestDay={latestDay}
-                        loading={daily.loading}
-                        onZone={selectZone}
-                        onDate={stepDay}
-                        onClose={() => setMapOpen(false)}
-                      />
-                    ) : undefined
+                    <MapTopBar
+                      zones={mapZones}
+                      zone={state.zone}
+                      date={state.date}
+                      latestDay={latestDay}
+                      loading={daily.loading}
+                      onZone={selectZone}
+                      onDate={stepDay}
+                      onClose={() => setMapOpen(false)}
+                    />
                   }
                   overlayBottom={
-                    isPhone ? (
-                      <MapSheet
-                        heading={`${state.zone ? zoneName(state.zone) : "All zones"} · ${formatDay(state.date).slice(0, 6)}`}
-                        reporting={reportingLine}
-                        reportingTone={daily.error ? "danger" : summary.partial ? "warning" : "success"}
-                        stats={summaryStats({
-                          zone: zoneRow,
-                          zones: zoneLosses,
-                          meters,
-                          statusCounts,
-                        })}
-                        meters={rankMeters(ranked)}
-                        selected={selected}
-                        date={state.date}
-                        villaLink={villaLink}
-                        query={query}
-                        onQuery={(value) => {
-                          setQuery(value);
-                          setShowAll(false);
-                        }}
-                        onMeter={selectMeter}
-                        onCloseMeter={() => change({ meter: "" })}
-                        onCentre={() => setFocusSignal((n) => n + 1)}
-                      />
-                    ) : undefined
+                    <MapSheet
+                      heading={`${state.zone ? zoneName(state.zone) : "All zones"} · ${formatDay(state.date).slice(0, 6)}`}
+                      reporting={reportingLine}
+                      reportingTone={daily.error ? "danger" : summary.partial ? "warning" : "success"}
+                      stats={summaryStats({
+                        zone: zoneRow,
+                        zones: zoneLosses,
+                        meters,
+                        statusCounts,
+                      })}
+                      meters={rankMeters(ranked)}
+                      selected={selected}
+                      date={state.date}
+                      villaLink={villaLink}
+                      query={query}
+                      onQuery={(value) => {
+                        setQuery(value);
+                        setShowAll(false);
+                      }}
+                      onMeter={selectMeter}
+                      onCloseMeter={() => change({ meter: "" })}
+                      onCentre={() => setFocusSignal((n) => n + 1)}
+                    />
                   }
                 >
                   {meterSheet}

@@ -51,13 +51,17 @@
          the mouse. They take the app's card tokens, like every other control. */
       .zone-marker,
       .meter-label {
-        border: 1px solid var(--color-line, #e5e7eb);
         border-radius: var(--radius-control, 6px);
-        background: var(--color-card, #fff);
         color: var(--color-fg, #0a0a0a);
         box-shadow: var(--shadow-card);
         font: inherit;
         white-space: nowrap;
+      }
+      /* Meter name tags stay solid — they're brief, on-demand (hover/selected)
+         and read fine against the imagery without extra contrast help. */
+      .meter-label {
+        border: 1px solid var(--color-line, #e5e7eb);
+        background: var(--color-card, #fff);
       }
       /* A meter is one small line in the colour of its band, and the further
          above its own usual it read, the longer that line. A meter that read
@@ -130,9 +134,41 @@
       .zone-marker b {
         font-size: 14px;
         font-weight: 600;
+        text-shadow: 0 1px 2px rgb(255 255 255 / 45%);
+      }
+      /* Zone names sit directly on the imagery and are read at a glance while
+         panning — liquid glass, at higher opacity than the map's other glass
+         chrome, keeps them legible over sand, water and buildings alike. */
+      .zone-marker {
+        background-color: rgb(255 255 255 / 82%);
+        -webkit-backdrop-filter: blur(18px) saturate(170%);
+        backdrop-filter: blur(18px) saturate(170%);
+        border: 1px solid rgb(255 255 255 / 65%);
+        box-shadow:
+          0 1px 2px rgb(78 68 86 / 10%),
+          0 8px 20px -6px rgb(78 68 86 / 32%);
+      }
+      .dark .zone-marker {
+        background-color: rgb(22 20 27 / 82%);
+        border-color: rgb(255 255 255 / 14%);
+      }
+      .dark .zone-marker b {
+        text-shadow: 0 1px 3px rgb(0 0 0 / 55%);
       }
       .zone-marker:hover {
         border-color: var(--color-primary, #4e4456);
+      }
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        .zone-marker {
+          background-color: var(--color-card, #fff);
+        }
+      }
+      @media (prefers-reduced-transparency: reduce) {
+        .zone-marker {
+          background-color: var(--color-card, #fff);
+          -webkit-backdrop-filter: none;
+          backdrop-filter: none;
+        }
       }
       .meter-label {
         display: grid;
