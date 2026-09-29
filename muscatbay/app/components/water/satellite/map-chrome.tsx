@@ -80,7 +80,7 @@ export function MapTopBar({
         ? null
         : "No readings recorded this month";
   return (
-    <div className="mb-glass pointer-events-auto m-2.5 rounded-card p-2 text-fg">
+    <div className="mb-glass pointer-events-auto m-2.5 rounded-card p-2 text-fg sm:mx-auto sm:max-w-2xl">
       <div className="flex items-center justify-between gap-2 px-1 pb-1.5">
         <p className="text-title">Water · Satellite</p>
         <button
@@ -159,7 +159,7 @@ function Legend() {
   return (
     <ul
       aria-label="Legend"
-      className="mb-glass pointer-events-auto mx-2.5 mb-2 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-control px-2.5 py-1.5 text-caption text-fg"
+      className="mb-glass pointer-events-auto mx-2.5 mb-2 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-control px-2.5 py-1.5 text-caption text-fg sm:mx-auto"
     >
       {STATUSES.map((status) => (
         <li key={status} className="inline-flex items-center gap-1.5">
@@ -245,7 +245,7 @@ export function MapSheet({
       {!selected && !open && <Legend />}
       <section
         aria-label={selected ? `Meter ${selected.name}` : `${heading} figures`}
-        className="mb-glass pointer-events-auto rounded-t-card border-b-0 px-3.5 pt-1.5 pb-3 text-fg"
+        className="mb-glass pointer-events-auto rounded-t-card border-b-0 px-3.5 pt-1.5 pb-3 text-fg sm:mx-auto sm:max-w-2xl"
       >
         {selected ? (
           <div className="map-sheet-detail overflow-y-auto overscroll-contain">
@@ -380,7 +380,7 @@ export function MapSheet({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {stats.map((stat) => (
                     <Figure key={stat.label} stat={stat} />
                   ))}

@@ -105,6 +105,11 @@ const severityTone = (label: string): StatusTone =>
 const LOSS_PCT_SERIES = "Loss %";
 const TARGET_SERIES = `Target ${TARGET_LOSS_PCT}%`;
 
+// Below this share, the "Consumption by type" donut's outside label moves into
+// the legend instead — small adjacent slices (e.g. two 0% + a 2%) sit at
+// nearly the same angle and their outside labels/lines collide otherwise.
+const SMALL_SLICE_PCT = 3;
+
 /* ---------- stable Recharts formatters (module-level: identity-stable across renders) ----------
  * Param types mirror Recharts' Formatter signature (value may be a number/string/array or undefined,
  * name is string | number) so these are assignable to <Tooltip formatter={...}> without casts. */
@@ -489,8 +494,23 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                             innerRadius={60} outerRadius={100} paddingAngle={2}
                                             // Phones: outside labels collide and run off the card edge, so the
                                             // share moves into the legend below instead (same figure, no loss).
-                                            label={isPhone ? false : (props: { name?: string | number; percent?: number }) => `${props.name}: ${Math.round((props.percent ?? 0) * 100)}%`}
-                                            labelLine={isPhone ? false : { stroke: "var(--color-muted)", strokeWidth: 1 }}
+                                            // Desktop: slices under SMALL_SLICE_PCT sit at nearly the same angle
+                                            // (e.g. two 0% + one 2% slice) and their outside labels overlap —
+                                            // those move into the legend too, same threshold as the line below.
+                                            label={isPhone ? false : (props: { percent?: number; name?: string | number }) => {
+                                                // Compare the exact share, not the rounded display figure — rounding
+                                                // first (e.g. 2.6% → 3) let a slice clear the threshold here while
+                                                // the legend (below, unrounded) still carried it too.
+                                                const exact = (props.percent ?? 0) * 100;
+                                                if (exact < SMALL_SLICE_PCT) return "";
+                                                return `${props.name}: ${Math.round(exact)}%`;
+                                            }}
+                                            labelLine={isPhone ? false : (props: { percent?: number; points?: Array<{ x: number; y: number }> }) => {
+                                                const exact = (props.percent ?? 0) * 100;
+                                                const pts = props.points;
+                                                if (exact < SMALL_SLICE_PCT || !pts || pts.length < 2) return <path d="" fill="none" stroke="none" />;
+                                                return <path d={`M${pts[0].x},${pts[0].y}L${pts[1].x},${pts[1].y}`} fill="none" stroke="var(--color-muted)" strokeWidth={1} />;
+                                            }}
                                             {...chartMotion}
                                         >
                                             {typePie.map((e, i) => <Cell key={i} fill={CHART_PALETTE[i % CHART_PALETTE.length]} />)}
@@ -501,11 +521,15 @@ function Overview({ period: t, monthly, sel, periodLabel }: OverviewProps) {
                                             // Phones: let Recharts measure the (longer, wrapping) legend.
                                             height={isPhone ? undefined : 36}
                                             iconSize={10}
-                                            formatter={(value: string) => (
-                                                <span className="text-caption text-muted">
-                                                    {isPhone && typePct.has(value) ? `${value} · ${typePct.get(value)}%` : value}
-                                                </span>
-                                            )}
+                                            formatter={(value: string) => {
+                                                const p = typePct.get(value);
+                                                const showPct = isPhone || (p !== undefined && p < SMALL_SLICE_PCT);
+                                                return (
+                                                    <span className="text-caption text-muted">
+                                                        {showPct && p !== undefined ? `${value} · ${p}%` : value}
+                                                    </span>
+                                                );
+                                            }}
                                         />
                                     </PieChart>
                                 </ResponsiveContainer>
