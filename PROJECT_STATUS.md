@@ -1706,6 +1706,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-09-30 — feat(theme): follow the device appearance; iOS app always matches the iPhone (#101)
 - 2026-09-29 — fix(water): donut label overlap; desktop/iPad glass map; zone-pin glass (#100)
 - 2026-09-28 — fix(satellite): meter opens in the map's clear gap; tidier meter sheet (#99)
 - 2026-09-28 — fix(satellite): compact phone sheet so more map shows (#98)
