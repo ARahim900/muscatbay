@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Search, ArrowRight, Sun, LogOut } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { useTheme } from "@/components/providers/app-providers";
+import { THEME_LABEL, nextPreference } from "@/lib/theme";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canAccessModule, MODULE_ROUTE, type ModuleKey } from "@/lib/rbac";
 import { cn } from "@/lib/utils";
@@ -62,7 +63,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     const router = useRouter();
     const pathname = usePathname();
     const { logout, isDevMode } = useAuth();
-    const { resolvedTheme, setTheme } = useTheme();
+    const { theme, setTheme, canChooseTheme } = useTheme();
     const role = useUserRole();
     const [query, setQuery] = useState("");
     const [activeIdx, setActiveIdx] = useState(0);
@@ -83,9 +84,9 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
     // topbar toggle, bottom-nav appearance switch and every resolvedTheme
     // consumer) pointing at the OLD theme.
     const toggleTheme = useCallback(() => {
-        setTheme(resolvedTheme === "dark" ? "light" : "dark");
+        setTheme(nextPreference(theme));
         onClose();
-    }, [onClose, resolvedTheme, setTheme]);
+    }, [onClose, theme, setTheme]);
 
     // Build the full command list, filtered by role
     const commands: CommandItem[] = useMemo(() => {
@@ -101,13 +102,16 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
             }));
 
         const actions: CommandItem[] = [
-            { id: "theme-toggle", label: `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`, icon: Sun, run: toggleTheme },
+            // Hidden in the iOS app, which always follows the iPhone's appearance.
+            ...(canChooseTheme
+                ? [{ id: "theme-toggle", label: `Appearance: switch to ${THEME_LABEL[nextPreference(theme)]}`, icon: Sun, run: toggleTheme }]
+                : []),
             { id: "board-mode", label: "Open dashboard in Board mode", hint: "Adds ?present=1", icon: LayoutDashboard, run: () => navigate("/?present=1") },
             { id: "sign-out", label: "Sign out", icon: LogOut, run: () => { logout(); handleClose(); } },
         ];
 
         return [...navCommands, ...actions];
-    }, [role, isDevMode, navigate, toggleTheme, resolvedTheme, logout, handleClose]);
+    }, [role, isDevMode, navigate, toggleTheme, theme, canChooseTheme, logout, handleClose]);
 
     // Filter by query (case-insensitive, fuzzy-ish)
     const filtered = useMemo(() => {

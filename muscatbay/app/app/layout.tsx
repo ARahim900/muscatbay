@@ -6,6 +6,7 @@ import { NotificationProvider } from "@/components/providers/notification-provid
 import { RegisterSW } from "@/components/pwa/register-sw";
 import { LayoutRouter } from "@/components/layout/layout-router";
 import { DM_Sans, Geist_Mono } from "next/font/google";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 
 // DM Sans — the app typeface (DESIGN_SYSTEM.md §1, v2.0, 2026-09-02).
 // Variable font, four weights (400 / 500 / 600 / 700 — weight 800 does not exist
@@ -117,6 +118,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
+        {/* Sets the light/dark class before first paint, so a dark-mode
+            iPhone never flashes the light page while React loads. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" />
         <link rel="preconnect" href="https://utnlgeuqajmwibqmdmgt.supabase.co" crossOrigin="anonymous" />

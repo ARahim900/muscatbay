@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-provider';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useTheme } from '@/components/providers/app-providers';
+import { THEME_LABEL, type ThemePreference } from '@/lib/theme';
 import { useAppNotifications } from '@/components/providers/notification-provider';
 import { canAccessModule, ROLE_LABEL, type ModuleKey } from '@/lib/rbac';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -29,6 +30,7 @@ import {
   Loader2,
   Sun,
   Moon,
+  Monitor,
   ChevronRight,
 } from 'lucide-react';
 
@@ -79,11 +81,17 @@ function NavLinkIcon({ icon: Icon, className }: { icon: React.ComponentType<{ cl
   return <Icon className={className} />;
 }
 
+const THEME_OPTIONS: { value: ThemePreference; Icon: typeof Sun }[] = [
+  { value: 'system', Icon: Monitor },
+  { value: 'light', Icon: Sun },
+  { value: 'dark', Icon: Moon },
+];
+
 export function BottomNav() {
   const pathname = usePathname();
   const { profile, user, logout, isDevMode } = useAuth();
   const role = useUserRole();
-  const { resolvedTheme, setTheme } = useTheme();
+  const { theme, setTheme, canChooseTheme } = useTheme();
   const { notifications, unreadCount, clearAll, permission, requestPermission, markFeedOpened } = useAppNotifications();
 
   // Which sheet is open (null = dock only). `renderedSheet` holds the last
@@ -320,34 +328,29 @@ export function BottomNav() {
                   </div>
                 </div>
 
-                {/* Appearance */}
-                <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-border dark:border-white/10">
-                  <span className="text-sm font-medium text-foreground">Appearance</span>
-                  <div className="flex items-center gap-1 p-1 rounded-xl bg-muted-bg dark:bg-white/[0.06]" role="group" aria-label="Theme">
-                    <button
-                      onClick={() => setTheme("light")}
-                      aria-pressed={resolvedTheme === "light"}
-                      className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                        resolvedTheme === "light"
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Sun className="w-4 h-4" /> Light
-                    </button>
-                    <button
-                      onClick={() => setTheme("dark")}
-                      aria-pressed={resolvedTheme === "dark"}
-                      className={`flex items-center gap-1.5 px-3 h-9 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
-                        resolvedTheme === "dark"
-                          ? "bg-[var(--background)] text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Moon className="w-4 h-4" /> Dark
-                    </button>
+                {/* Appearance — System / Light / Dark. Hidden in the iOS app, which always follows the iPhone. */}
+                {canChooseTheme && (
+                  <div className="flex flex-col gap-2.5 p-3 rounded-2xl border border-border dark:border-white/10">
+                    <span className="text-sm font-medium text-foreground">Appearance</span>
+                    {/* Three equal columns: side by side with the label, "Dark" overflowed a 375 px phone. */}
+                    <div className="grid grid-cols-3 gap-1 p-1 rounded-xl bg-muted-bg dark:bg-white/[0.06]" role="group" aria-label="Appearance">
+                      {THEME_OPTIONS.map(({ value, Icon }) => (
+                        <button
+                          key={value}
+                          onClick={() => setTheme(value)}
+                          aria-pressed={theme === value}
+                          className={`flex items-center justify-center gap-1.5 px-2 h-9 rounded-lg text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                            theme === value
+                              ? "bg-card text-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" /> {THEME_LABEL[value]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Settings */}
                 {canOpenSettings && (
