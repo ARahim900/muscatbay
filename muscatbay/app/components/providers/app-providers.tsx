@@ -2,23 +2,41 @@
 
 import { createContext, useContext, useCallback, useEffect, useState, useMemo, type ReactNode } from "react";
 import { LoadingOverlay } from "@/components/ui/loading-overlay";
+import {
+    DARK_MEDIA_QUERY,
+    THEME_STORAGE_KEY,
+    effectivePreference,
+    isInAppShell,
+    parseStoredPreference,
+    resolveTheme,
+    type ResolvedTheme,
+    type ThemePreference,
+} from "@/lib/theme";
 
-type Theme = "light" | "dark" | "system";
+type Theme = ThemePreference;
 
 interface ThemeContextValue {
+    /** Saved preference; always "system" inside the iOS app. */
     theme: Theme;
-    resolvedTheme: "light" | "dark";
+    resolvedTheme: ResolvedTheme;
     setTheme: (theme: Theme) => void;
+    /** False inside the iOS app, where the page always follows the iPhone — hide theme controls. */
+    canChooseTheme: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "theme";
-const MEDIA_QUERY = "(prefers-color-scheme: dark)";
+function systemPrefersDark(): boolean {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia(DARK_MEDIA_QUERY).matches;
+}
 
-function getSystemTheme(): "light" | "dark" {
-    if (typeof window === "undefined") return "dark";
-    return window.matchMedia(MEDIA_QUERY).matches ? "dark" : "light";
+function readStoredPreference(): Theme {
+    try {
+        return parseStoredPreference(localStorage.getItem(THEME_STORAGE_KEY));
+    } catch {
+        return "system";
+    }
 }
 
 export function useTheme() {
@@ -29,8 +47,9 @@ export function useTheme() {
 
 export function Providers({ children }: { children: ReactNode }) {
     const [theme, setThemeState] = useState<Theme>("system");
-    const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
-    const applyTheme = useCallback((resolved: "light" | "dark") => {
+    const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("dark");
+    const [inApp, setInApp] = useState(false);
+    const applyTheme = useCallback((resolved: ResolvedTheme) => {
         const root = document.documentElement;
         root.classList.remove("light", "dark");
         root.classList.add(resolved);
@@ -39,29 +58,36 @@ export function Providers({ children }: { children: ReactNode }) {
     }, []);
 
     const setTheme = useCallback((newTheme: Theme) => {
+        // Inside the iOS app the iPhone decides; ignore stray calls.
+        if (isInAppShell(navigator.userAgent)) return;
         setThemeState(newTheme);
-        localStorage.setItem(STORAGE_KEY, newTheme);
-        const resolved = newTheme === "system" ? getSystemTheme() : newTheme;
-        applyTheme(resolved);
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+        } catch {
+            // Storage blocked (private mode): the choice lasts for this page only.
+        }
+        applyTheme(resolveTheme(newTheme, systemPrefersDark()));
     }, [applyTheme]);
 
-    // Sync theme from localStorage on mount — hydration-safe: localStorage
-    // and window.matchMedia are browser-only, must run after mount to avoid
-    // SSR/CSR theme mismatch.
+    // Sync from storage on mount — hydration-safe: localStorage, navigator and
+    // matchMedia are browser-only. The <head> script (lib/theme.ts) has already
+    // painted the right theme; this only brings React state in line with it.
     useEffect(() => {
-        const stored = (localStorage.getItem(STORAGE_KEY) as Theme) || "system";
+        const app = isInAppShell(navigator.userAgent);
+        const pref = effectivePreference(readStoredPreference(), app);
         // eslint-disable-next-line react-hooks/set-state-in-effect
-        setThemeState(stored);
-        const resolved = stored === "system" ? getSystemTheme() : stored;
-        applyTheme(resolved);
+        setInApp(app);
+        setThemeState(pref);
+        applyTheme(resolveTheme(pref, systemPrefersDark()));
     }, [applyTheme]);
 
-    // Listen for system theme changes
+    // Follow the device live when the preference is System (e.g. iOS switches
+    // to dark at sunset while the app is open).
     useEffect(() => {
-        const mq = window.matchMedia(MEDIA_QUERY);
+        const mq = window.matchMedia(DARK_MEDIA_QUERY);
         const handler = () => {
             if (theme === "system") {
-                applyTheme(getSystemTheme());
+                applyTheme(resolveTheme("system", mq.matches));
             }
         };
         mq.addEventListener("change", handler);
@@ -71,17 +97,19 @@ export function Providers({ children }: { children: ReactNode }) {
     // Listen for cross-tab storage changes
     useEffect(() => {
         const handler = (e: StorageEvent) => {
-            if (e.key === STORAGE_KEY && e.newValue) {
-                const newTheme = e.newValue as Theme;
-                setThemeState(newTheme);
-                applyTheme(newTheme === "system" ? getSystemTheme() : newTheme);
-            }
+            if (e.key !== THEME_STORAGE_KEY || isInAppShell(navigator.userAgent)) return;
+            const newTheme = parseStoredPreference(e.newValue);
+            setThemeState(newTheme);
+            applyTheme(resolveTheme(newTheme, systemPrefersDark()));
         };
         window.addEventListener("storage", handler);
         return () => window.removeEventListener("storage", handler);
     }, [applyTheme]);
 
-    const value = useMemo(() => ({ theme, resolvedTheme, setTheme }), [theme, resolvedTheme, setTheme]);
+    const value = useMemo(
+        () => ({ theme, resolvedTheme, setTheme, canChooseTheme: !inApp }),
+        [theme, resolvedTheme, setTheme, inApp],
+    );
 
     return (
         <ThemeContext.Provider value={value}>

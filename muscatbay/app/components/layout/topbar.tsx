@@ -2,15 +2,16 @@
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sun, Moon, Settings, LogOut, ChevronDown, Search } from "lucide-react";
+import { Sun, Moon, Monitor, Settings, LogOut, ChevronDown, Search } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useTheme } from "@/components/providers/app-providers";
+import { THEME_LABEL, nextPreference } from "@/lib/theme";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { openCommandPalette } from "@/components/shared/command-palette";
 
 export function Topbar() {
-    const { setTheme, resolvedTheme } = useTheme();
+    const { theme, setTheme, canChooseTheme } = useTheme();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const { profile, user, logout } = useAuth();
@@ -81,18 +82,22 @@ export function Topbar() {
                 {/* Alerts */}
                 <NotificationBell />
 
-                {/* Theme Toggle */}
-                <button
-                    onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-                    className="w-11 h-11 flex items-center justify-center hover:bg-muted-bg dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
-                    aria-label={`Switch to ${resolvedTheme === "dark" ? "light" : "dark"} mode`}
-                    aria-pressed={resolvedTheme === "dark"}
-                >
-                    {resolvedTheme === "dark"
-                        ? <Moon className="w-[17px] h-[17px]" />
-                        : <Sun className="w-[17px] h-[17px]" />
-                    }
-                </button>
+                {/* Theme: System → Light → Dark. Hidden in the iOS app, which always follows the iPhone. */}
+                {canChooseTheme && (
+                    <button
+                        onClick={() => setTheme(nextPreference(theme))}
+                        className="w-11 h-11 flex items-center justify-center hover:bg-muted-bg dark:hover:bg-white/[0.06] rounded-lg text-muted-foreground hover:text-foreground dark:hover:text-foreground transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:outline-none"
+                        aria-label={`Appearance: ${THEME_LABEL[theme]}. Switch to ${THEME_LABEL[nextPreference(theme)]}`}
+                        title={`Appearance: ${THEME_LABEL[theme]}`}
+                    >
+                        {theme === "system"
+                            ? <Monitor className="w-[17px] h-[17px]" />
+                            : theme === "dark"
+                                ? <Moon className="w-[17px] h-[17px]" />
+                                : <Sun className="w-[17px] h-[17px]" />
+                        }
+                    </button>
+                )}
 
                 {/* Settings */}
                 <Link
