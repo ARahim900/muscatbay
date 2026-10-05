@@ -722,7 +722,7 @@
         return (
           point.x < 24 ||
           point.x > width - 24 ||
-          point.y < (hostChrome ? chromeTop + 8 : 40) ||
+          point.y < (hostChrome ? topInset() + 8 : 40) ||
           point.y > height - (hostChrome ? chromeBottom + 8 : 48)
         );
       });
