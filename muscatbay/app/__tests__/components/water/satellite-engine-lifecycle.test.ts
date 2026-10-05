@@ -1,8 +1,13 @@
 // @vitest-environment node
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { runInNewContext } from "node:vm";
 import { describe, expect, it, vi } from "vitest";
 const engine = readFileSync("public/satellite/consumption-engine.js", "utf8");
+// Exercise the bundled vendor's actual addTo(), which overwrites aria-label.
+const vendor = createRequire(import.meta.url)(`${process.cwd()}/public/satellite/vendor/maplibre-gl.js`) as {
+  Marker: { prototype: { addTo: (map: unknown) => unknown } };
+};
 function environment(fail = false, extra: Record<string, unknown> = {}) {
   const listeners: Record<string, (event: Record<string, unknown>) => void> =
     {};
@@ -18,6 +23,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
   const fallback = {
     update: vi.fn(),
     focus: vi.fn(),
+    setChrome: vi.fn(),
     resize: vi.fn(),
     remove: vi.fn(),
   };
@@ -27,10 +33,17 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     children: unknown[];
     style: { visibility?: string };
   }[] = [];
+  let activeElement: { dataset: Record<string, string>; matches: (selector: string) => boolean } | null = null;
   const createElement = () => {
     const element = {
       textContent: "",
       className: "",
+      matches: vi.fn(() => true),
+      isConnected: true,
+      showModal: vi.fn(),
+      close: vi.fn(() => element.listeners.close?.()),
+      remove: vi.fn(),
+      focus: vi.fn(() => { activeElement = element; }),
       children: [] as unknown[],
       dataset: {} as Record<string, string>,
       style: {} as { visibility?: string },
@@ -43,7 +56,12 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
       addEventListener(name: string, callback: () => void) {
         this.listeners[name] = callback;
       },
-      removeAttribute() {},
+      getAttribute(name: string) {
+        return this.attributes[name] ?? null;
+      },
+      removeAttribute(name: string) {
+        delete this.attributes[name];
+      },
       replaceChildren() {
         this.children = [];
       },
@@ -74,11 +92,12 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     easeTo: vi.fn(),
     once: vi.fn(),
     getZoom: () => 16,
+    getMaxZoom: () => 22,
     fitBounds: vi.fn(),
     remove: vi.fn(),
     resize: vi.fn(),
     getContainer: () => ({ clientWidth: 1000, clientHeight: 800 }),
-    project: () => ({ x: 400, y: 400 }),
+    project: (coordinate: number[]) => ({ x: 400 + (coordinate[0] - 58.64) * 100000, y: 400 }),
   };
   const construct = vi.fn(function () {
     if (fail) throw new Error("Failed to initialise WebGL");
@@ -114,6 +133,7 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     window,
     location: { origin: "https://example.com" },
     document: {
+      get activeElement() { return activeElement; },
       getElementById: () => ({ textContent: "" }),
       body: { append: vi.fn() },
       documentElement,
@@ -125,12 +145,20 @@ function environment(fail = false, extra: Record<string, unknown> = {}) {
     maplibregl: {
       Map: construct,
       NavigationControl: function () {},
-      Marker: function () {
+      Marker: function ({ element }: { element: ReturnType<typeof createElement> }) {
         return {
+          _element: element,
+          _update: vi.fn(),
+          setDraggable: vi.fn(),
           setLngLat() {
             return this;
           },
           addTo() {
+            vendor.Marker.prototype.addTo.call(this, {
+              _getUIString: () => "Map marker",
+              getCanvasContainer: () => ({ appendChild: vi.fn() }),
+              on: vi.fn(),
+            });
             return this;
           },
           remove: vi.fn(),
@@ -196,6 +224,96 @@ const payload = {
   ],
 };
 describe("consumption renderer", () => {
+  it("retains reading labels after the actual bundled vendor addTo overwrites them", () => {
+    const env = environment();
+    env.send("satviz:data", {
+      ...payload,
+      meters: [{ ...payload.meters[0], status: "high", ratio: 2 }],
+    });
+    env.mapEvents.load();
+    const labels = env.elements.map((element) =>
+      (element as unknown as { attributes: Record<string, string> }).attributes["aria-label"],
+    ).filter(Boolean);
+    expect(labels).toContain("A, 2026-09-14, 10.00 cubic metres, 200% of its usual, High usage. Open meter details");
+    expect(labels).toContain("A, 2026-09-14, 10.00 cubic metres, High usage. Open meter details");
+    expect(labels).not.toContain("Map marker");
+    env.send("satviz:update", { ...payload, meters: [{ ...payload.meters[0], value: null }] });
+    const lastRing = rings(env, 1)[0] as unknown as { attributes: Record<string, string> };
+    expect(lastRing.attributes["aria-label"]).toContain("no reading");
+    expect(lastRing.attributes["aria-label"]).not.toContain("0 cubic metres");
+  });
+  it("centres the selected meter explicitly and after chrome changes without framing the zone", () => {
+    const env = environment();
+    env.send("satviz:data", payload);
+    env.mapEvents.load();
+    env.map.getZoom = () => 16;
+    // The meter is still clear of the bar and sheet: the operator's view stays put.
+    env.listeners.message({ origin: "https://example.com", source: env.parent,
+      data: { type: "satviz:chrome", host: true, top: 100, bottom: 300 } });
+    expect(env.map.easeTo).not.toHaveBeenCalled();
+    // Once the sheet covers it, the camera brings it back between the two.
+    env.map.project = () => ({ x: 400, y: 600 });
+    env.listeners.message({ origin: "https://example.com", source: env.parent,
+      data: { type: "satviz:chrome", host: true, top: 100, bottom: 320 } });
+    expect(env.map.easeTo).toHaveBeenLastCalledWith(expect.objectContaining({
+      center: [58.64, 23.55], zoom: 16, offset: [0, -110],
+    }));
+    ring(env, 0).listeners.click();
+    env.send("satviz:focus", undefined);
+    expect(env.map.easeTo).toHaveBeenLastCalledWith(expect.objectContaining({ zoom: 17.5 }));
+    env.map.getZoom = () => 18;
+    env.send("satviz:focus", undefined);
+    expect(env.map.easeTo).toHaveBeenLastCalledWith(expect.objectContaining({ zoom: 18 }));
+    expect(env.map.easeTo).toHaveBeenCalledTimes(3);
+    expect(env.map.fitBounds).toHaveBeenCalledTimes(1);
+    const degraded = environment(true);
+    degraded.send("satviz:data", payload);
+    degraded.listeners.message({ origin: "https://example.com", source: degraded.parent,
+      data: { type: "satviz:chrome", host: true, top: 100, bottom: 300 } });
+    expect(degraded.fallback.setChrome).toHaveBeenLastCalledWith({ top: 100, bottom: 300 });
+  });
+  it("restores keyboard marker focus across reading updates without focusing pointer selections", () => {
+    const env = environment();
+    env.send("satviz:data", payload);
+    env.mapEvents.load();
+    const latestRing = () => rings(env, 1)[0] as unknown as {
+      focus: ReturnType<typeof vi.fn>;
+      matches: ReturnType<typeof vi.fn>;
+    };
+    latestRing().focus();
+    env.send("satviz:update", payload);
+    expect(latestRing().focus).toHaveBeenCalledWith({ preventScroll: true });
+    latestRing().matches.mockReturnValue(false);
+    env.send("satviz:update", payload);
+    expect(latestRing().focus).not.toHaveBeenCalled();
+  });
+  it("draws every meter as its own mark, however close together", () => {
+    const env = environment();
+    const meter = (account: string, offset: number, value: number | null, level = "L3", status = "normal") => ({
+      account, name: account, zone: "Zone_05", level, status, value,
+      location: { coordinates: [58.64 + offset, 23.55] },
+    });
+    env.send("satviz:data", { ...payload, meters: [
+      meter("a", 0, 2), meter("h", 0.0001, 20, "L3", "high"),
+      meter("m", 0.0002, null, "L3", "missing"), meter("bulk", 0, 30, "L2"),
+      meter("n", 0.0003, 0, "L3", "zero"),
+    ] });
+    env.mapEvents.load();
+    const controls = env.elements as unknown as { className: string; dataset: Record<string, string> }[];
+    expect(controls.filter((element) => element.className === "meter-marker")
+      .map((element) => element.dataset.meterAccount).sort()).toEqual(["a", "bulk", "h", "m", "n"]);
+    expect(controls.some((element) => element.className.includes("cluster"))).toBe(false);
+  });
+  it("mutes only the raster imagery while retaining overlay colours", () => {
+    const env = environment();
+    env.send("satviz:data", payload);
+    env.mapEvents.load();
+    expect(env.construct.mock.calls[0][0]).toMatchObject({
+      style: { layers: [{ id: "imagery", paint: { "raster-saturation": -0.25 } }] },
+    });
+    for (const [layer] of env.map.addLayer.mock.calls as [{ paint?: Record<string, unknown> }][])
+      expect(layer.paint?.["raster-saturation"]).toBeUndefined();
+  });
   it("lights the selected villa's outline and house connection, once per selection", () => {
     const ring = [[58.64, 23.55], [58.6401, 23.55], [58.6401, 23.5501], [58.64, 23.55]];
     const env = environment(false, {
@@ -331,7 +449,7 @@ describe("consumption renderer", () => {
       (e) => (e as { className?: string }).className === "meter-tick",
     ) as unknown as { style: { width?: string } }[];
     // One line each: 10px normal, 18px high, and a 5px dot for the zero reading.
-    expect(marks.map((m) => m.style.width)).toEqual(["10px", "18px", "5px", "10px"]);
+    expect(marks.map((m) => m.style.width).sort()).toEqual(["10px", "10px", "18px", "5px"]);
     // Overview: a zone is a named pin; its loss is in the Zones panel (and in the pin's spoken label).
     env.send("satviz:update", { ...payload, selected: "", zone: "", meters,
       zones: [{ id: "Zone_05", name: "Zone 5" }],
@@ -347,7 +465,8 @@ describe("consumption renderer", () => {
       { account: "b", name: "B", zone: "Zone_08", level: "L3", value: 2, location: at(2) },
     ] });
     env.mapEvents.load();
-    // Both zone centres project to the same screen point in this mock map.
+    // Simulate coincident screen positions to exercise zone-label collision handling.
+    env.map.project = () => ({ x: 400, y: 400 });
     for (const element of env.elements) Object.assign(element, { offsetWidth: 120, offsetHeight: 60 });
     env.mapEvents.moveend();
     const placed = env.elements

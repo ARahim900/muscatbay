@@ -78,7 +78,10 @@ export function SatelliteView({
   const [mapClosed, setMapClosed] = useState(false);
   const [focusSignal, setFocusSignal] = useState(0);
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 767px)");
+    // A phone on its side is ~850px wide but under 500px tall: still a phone.
+    const query = window.matchMedia(
+      "(max-width: 767px), (max-height: 500px) and (orientation: landscape)",
+    );
     const apply = () => setIsPhone(query.matches);
     apply();
     query.addEventListener("change", apply);
@@ -86,16 +89,14 @@ export function SatelliteView({
   }, []);
   // Reacts only to isPhone actually crossing the breakpoint (same render-time
   // pattern as `followLatest` below) — entering phone width auto-opens the
-  // map (unless the operator just closed it); leaving it returns to the
-  // normal layout. Edge-triggered on `lastIsPhone` so a desktop/iPad
+  // map (unless the operator just closed it). Keep an open map open when a
+  // phone rotates past the breakpoint. Edge-triggered so a desktop/iPad
   // operator's own full-screen toggle isn't fought on every later render.
   const [lastIsPhone, setLastIsPhone] = useState(isPhone);
   if (isPhone !== lastIsPhone) {
     setLastIsPhone(isPhone);
     if (isPhone) {
       if (!mapClosed) setImmersive(true);
-    } else {
-      setImmersive(false);
     }
   }
   const setMapOpen = useCallback((open: boolean) => {

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MapSheet, MapTopBar } from "@/components/water/satellite/map-chrome";
@@ -64,6 +65,92 @@ describe("phone map sheet", () => {
     expect(row?.textContent).not.toContain("0 m³");
     fireEvent.click(screen.getByText("Z3-32 (Villa)"));
     expect(sheetProps.onMeter).toHaveBeenCalledWith("2");
+  });
+
+  it("starts with the exact reading and date, then expands the supporting detail", () => {
+    render(<MapSheet {...sheetProps} selected={sheetProps.meters[0]} />);
+    const toggle = screen.getByRole("button", { name: "More detail" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 6.10 m³");
+    expect(screen.getByText(/27 Sept? 2026/)).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Seven-day consumption trend" })).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("region", { name: "Seven-day consumption trend" })).toBeTruthy();
+    expect(document.getElementById(toggle.getAttribute("aria-controls") ?? "")?.hidden).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Less detail" }));
+    expect(screen.queryByRole("region", { name: "Seven-day consumption trend" })).toBeNull();
+  });
+
+  it("collapses detail when changing the selected meter or reading date", () => {
+    const { rerender } = render(<MapSheet {...sheetProps} selected={sheetProps.meters[0]} />);
+    fireEvent.click(screen.getByRole("button", { name: "More detail" }));
+    rerender(<MapSheet {...sheetProps} selected={sheetProps.meters[1]} />);
+    expect(screen.getByRole("button", { name: "More detail" }).getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "More detail" }));
+    rerender(<MapSheet {...sheetProps} selected={sheetProps.meters[1]} date="2026-09-28" />);
+    expect(screen.getByRole("button", { name: "More detail" }).getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("preserves navigation focus as meter and date changes collapse the detail", () => {
+    function NavigationHarness() {
+      const [account, setAccount] = useState("1");
+      const [date, setDate] = useState("2026-09-27");
+      return (
+        <>
+          <MapTopBar zones={[]} zone="" date={date} latestDay={null} loading={false}
+            onZone={vi.fn()} onDate={setDate} onClose={vi.fn()} />
+          <MapSheet {...sheetProps} date={date} onMeter={setAccount}
+            selected={sheetProps.meters.find((item) => item.account === account)} />
+        </>
+      );
+    }
+    render(<NavigationHarness />);
+    fireEvent.click(screen.getByRole("button", { name: "More detail" }));
+    const next = screen.getByRole("button", { name: "Next meter" });
+    next.focus();
+    fireEvent.click(next);
+    expect(screen.getByRole("heading", { name: "Z3-32 (Villa)" })).toBeTruthy();
+    expect(document.activeElement).toBe(next);
+    expect(screen.getByRole("button", { name: "More detail" }).getAttribute("aria-expanded")).toBe("false");
+    const previous = screen.getByRole("button", { name: "Previous meter" });
+    previous.focus();
+    fireEvent.click(previous);
+    expect(screen.getByRole("heading", { name: "Z3-36 (Villa)" })).toBeTruthy();
+    expect(document.activeElement).toBe(previous);
+    // Returning to a previously expanded meter must not resurrect its disclosure.
+    expect(screen.getByRole("button", { name: "More detail" }).getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "More detail" }));
+    const previousDay = screen.getByRole("button", { name: "Previous day" });
+    previousDay.focus();
+    fireEvent.click(previousDay);
+    expect(document.activeElement).toBe(previousDay);
+    expect(screen.getByRole("button", { name: "More detail" }).getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("distinguishes a missing reading from a recorded zero in the compact summary", () => {
+    const { rerender } = render(<MapSheet {...sheetProps} selected={sheetProps.meters[2]} />);
+    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: No reading");
+    rerender(<MapSheet {...sheetProps} selected={meter("4", "Zero meter", 0)} />);
+    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 0.00 m³");
+    fireEvent.click(screen.getByRole("button", { name: "More detail" }));
+    expect(screen.getByText("Recorded")).toBeTruthy();
+    expect(screen.getByText("Unavailable for missing or invalid days, or a zero baseline.")).toBeTruthy();
+  });
+
+  it("uses Escape to collapse detail and returns keyboard focus without closing the map", () => {
+    const onEscape = vi.fn();
+    render(<div onKeyDown={onEscape}><MapSheet {...sheetProps} selected={sheetProps.meters[0]} /></div>);
+    const toggle = screen.getByRole("button", { name: "More detail" });
+    fireEvent.click(toggle);
+    const centre = screen.getByRole("button", { name: "Centre on meter" });
+    centre.focus();
+    fireEvent.keyDown(centre, { key: "Escape" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(toggle);
+    expect(onEscape).not.toHaveBeenCalled();
+    fireEvent.keyDown(toggle, { key: "Escape" });
+    expect(onEscape).toHaveBeenCalledOnce();
   });
 
   it("steps between meters in list order and stops at the ends", () => {

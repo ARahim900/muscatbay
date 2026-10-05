@@ -74,9 +74,8 @@
         line-height: 0;
         cursor: pointer;
       }
-      .meter-marker.selected {
-        z-index: 2;
-      }
+      .meter-marker.bulk { z-index: 2; }
+      .meter-marker.selected { z-index: 3; }
       .meter-tick {
         display: block;
         height: 4px;
@@ -159,12 +158,14 @@
         border-color: var(--color-primary, #4e4456);
       }
       @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-        .zone-marker {
+        .zone-marker,
+        .dark .zone-marker {
           background-color: var(--color-card, #fff);
         }
       }
       @media (prefers-reduced-transparency: reduce) {
-        .zone-marker {
+        .zone-marker,
+        .dark .zone-marker {
           background-color: var(--color-card, #fff);
           -webkit-backdrop-filter: none;
           backdrop-filter: none;
@@ -351,10 +352,23 @@
       html.host-chrome .three-d-button[aria-pressed="true"] {
         background-color: var(--color-primary, #4e4456);
       }
+      @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+        html.host-chrome .maplibregl-ctrl-group,
+        html.host-chrome .three-d-button,
+        html.host-chrome .maplibregl-ctrl-attrib,
+        html.host-chrome.dark .maplibregl-ctrl-group,
+        html.host-chrome.dark .three-d-button,
+        html.host-chrome.dark .maplibregl-ctrl-attrib {
+          background-color: var(--color-card, #fff);
+        }
+      }
       @media (prefers-reduced-transparency: reduce) {
         html.host-chrome .maplibregl-ctrl-group,
         html.host-chrome .three-d-button,
-        html.host-chrome .maplibregl-ctrl-attrib {
+        html.host-chrome .maplibregl-ctrl-attrib,
+        html.host-chrome.dark .maplibregl-ctrl-group,
+        html.host-chrome.dark .three-d-button,
+        html.host-chrome.dark .maplibregl-ctrl-attrib {
           background-color: var(--color-card, #fff);
           -webkit-backdrop-filter: none;
           backdrop-filter: none;
@@ -423,6 +437,7 @@
       }
       .compat-imagery {
         overflow: hidden;
+        filter: saturate(0.75);
       }
       .compat-imagery-tile {
         position: absolute;
@@ -484,6 +499,45 @@
       .compat-controls button + button {
         border-top: 1px solid var(--color-line, #e5e7eb);
       }
+      html.host-chrome .compat-controls {
+        top: calc(var(--chrome-top, 0px) + 14px);
+      }
+      html.host-chrome .compat-attribution {
+        bottom: calc(var(--chrome-bottom, 0px) + 6px);
+      }
+      /* Little map left between the bar and the sheet: the controls lie in a
+         row so they never run into the imagery credit. */
+      html.host-chrome.tight-chrome .maplibregl-ctrl-top-right {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 10px;
+      }
+      html.host-chrome.tight-chrome .maplibregl-ctrl-top-right > .maplibregl-ctrl {
+        float: none;
+        clear: none;
+        margin: 0;
+      }
+      html.host-chrome.tight-chrome .maplibregl-ctrl-top-right .maplibregl-ctrl-group {
+        display: flex;
+      }
+      html.host-chrome.tight-chrome .maplibregl-ctrl-top-right button + button,
+      html.host-chrome.tight-chrome .compat-controls button + button {
+        border-top: 0;
+        border-left: 1px solid var(--color-line, #e5e7eb);
+      }
+      html.host-chrome.tight-chrome .three-d-control {
+        flex-direction: row-reverse;
+        align-items: center;
+      }
+      html.host-chrome.tight-chrome .three-d-badge {
+        max-width: 110px;
+        padding: 4px 6px;
+        white-space: normal;
+      }
+      html.host-chrome.tight-chrome .compat-controls {
+        display: flex;
+      }
       .compat-attribution {
         position: absolute;
         z-index: 4;
@@ -509,7 +563,7 @@
     <script src="data/network-service-zones.js"></script>
     <script src="data/villa-buildings.js?v=1"></script>
     <script src="network-context.js"></script>
-    <script src="consumption-fallback.js?v=24"></script>
-    <script src="consumption-engine.js?v=24"></script>
+    <script src="consumption-fallback.js?v=28"></script>
+    <script src="consumption-engine.js?v=31"></script>
   </body>
 </html>

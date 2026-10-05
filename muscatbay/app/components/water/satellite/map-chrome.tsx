@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   ChevronDown,
   ChevronLeft,
@@ -14,11 +14,12 @@ import { cn } from "@/lib/utils";
 import type { StatItem } from "@/components/shared/stats-grid";
 import { MeterDetails } from "./MeterDetails";
 import { StatusMark, STATUS_TONES } from "./SatellitePanels";
-import { omanToday, shiftDay } from "./dailyModel";
+import { formatDay, omanToday, shiftDay } from "./dailyModel";
 import {
   STATUSES,
   STATUS_LABELS,
   formatMapVolume,
+  formatVolume,
   type ConsumptionMeter,
 } from "./consumptionModel";
 
@@ -80,8 +81,8 @@ export function MapTopBar({
         ? null
         : "No readings recorded this month";
   return (
-    <div className="mb-glass pointer-events-auto m-2.5 rounded-card p-2 text-fg sm:mx-auto sm:max-w-2xl">
-      <div className="flex items-center justify-between gap-2 px-1 pb-1.5">
+    <div className="map-topbar mb-glass pointer-events-auto m-2.5 rounded-card p-2 text-fg sm:mx-auto sm:max-w-2xl">
+      <div className="map-topbar-heading flex items-center justify-between gap-2 px-1 pb-1.5">
         <p className="text-title">Water · Satellite</p>
         <button
           type="button"
@@ -96,7 +97,7 @@ export function MapTopBar({
         ref={chips}
         role="group"
         aria-label="Zone"
-        className="flex gap-1 overflow-x-auto [scrollbar-width:none]"
+        className="map-topbar-zones flex min-w-0 gap-1 overflow-x-auto [scrollbar-width:none]"
       >
         {[{ id: "", name: "All zones" }, ...zones].map((z) => {
           const on = z.id === zone;
@@ -116,7 +117,7 @@ export function MapTopBar({
           );
         })}
       </div>
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="map-topbar-date mt-1.5 flex items-center justify-between gap-2">
         <button
           type="button"
           onClick={() => onDate(shiftDay(date, -1))}
@@ -128,13 +129,13 @@ export function MapTopBar({
         <div className="min-w-0 text-center">
           <p className="text-label font-semibold tabular-nums">{dayLabel(date)}</p>
           {note ? (
-            <p className="text-caption text-muted">{note}</p>
+            <p className="map-topbar-note text-caption text-muted">{note}</p>
           ) : (
             latestDay && (
               <button
                 type="button"
                 onClick={() => onDate(latestDay)}
-                className="min-h-6 text-caption font-semibold text-primary underline underline-offset-2 dark:text-accent"
+                className="min-h-11 text-caption font-semibold text-primary underline underline-offset-2 dark:text-accent"
               >
                 Go to latest · {dayLabel(latestDay)}
               </button>
@@ -159,7 +160,7 @@ function Legend() {
   return (
     <ul
       aria-label="Legend"
-      className="mb-glass pointer-events-auto mx-2.5 mb-2 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-control px-2.5 py-1.5 text-caption text-fg sm:mx-auto"
+      className="map-legend mb-glass pointer-events-auto mx-2.5 mb-2 flex w-fit flex-wrap items-center gap-x-3 gap-y-1 rounded-control px-2.5 py-1.5 text-caption text-fg sm:mx-auto"
     >
       {STATUSES.map((status) => (
         <li key={status} className="inline-flex items-center gap-1.5">
@@ -190,11 +191,106 @@ function Figure({ stat }: { stat: StatItem }) {
       {stat.subtitle && (
         <p
           title={stat.subtitle}
-          className={cn("truncate text-caption", warn ? "text-warning" : "text-muted")}
+          className={cn("map-figure-sub truncate text-caption", warn ? "font-semibold text-fg" : "text-muted")}
         >
           {stat.subtitle}
         </p>
       )}
+    </div>
+  );
+}
+
+interface SelectedMeterSheetProps {
+  meter: ConsumptionMeter;
+  date: string;
+  previous: ConsumptionMeter | undefined;
+  following: ConsumptionMeter | undefined;
+  villaLink: string;
+  onMeter: (account: string) => void;
+  onClose: () => void;
+  onCentre: () => void;
+}
+
+function SelectedMeterSheet({
+  meter, date, previous, following, villaLink, onMeter, onClose, onCentre,
+}: SelectedMeterSheetProps) {
+  const selectionKey = `${meter.account}:${date}`;
+  const [disclosure, setDisclosure] = useState({ selectionKey, expanded: false });
+  const expanded = disclosure.selectionKey === selectionKey && disclosure.expanded;
+  const detailsId = useId();
+  const toggle = useRef<HTMLButtonElement>(null);
+  const tone = STATUS_TONES[meter.status];
+  // Reset only disclosure state; remounting would discard keyboard focus on navigation.
+  if (disclosure.selectionKey !== selectionKey) {
+    setDisclosure({ selectionKey, expanded: false });
+  }
+  const collapse = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key !== "Escape" || !expanded) return;
+    event.stopPropagation();
+    setDisclosure({ selectionKey, expanded: false });
+    toggle.current?.focus();
+  };
+
+  return (
+    <div className="map-meter-sheet min-w-0" onKeyDown={collapse}>
+      <div className="map-meter-heading flex min-w-0 items-start justify-between gap-2 pt-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-title" title={meter.name}>{meter.name}</h3>
+          <p className="break-words text-caption text-muted">
+            {meter.zoneName} · {meter.account} · {meter.level}
+          </p>
+        </div>
+        <div className="flex shrink-0 gap-1">
+          <button type="button" className={iconButton} disabled={!previous}
+            onClick={() => previous && onMeter(previous.account)} aria-label="Previous meter">
+            <ChevronLeft size={18} aria-hidden />
+          </button>
+          <button type="button" className={iconButton} disabled={!following}
+            onClick={() => following && onMeter(following.account)} aria-label="Next meter">
+            <ChevronRight size={18} aria-hidden />
+          </button>
+          <button type="button" className={iconButton} onClick={onClose} aria-label="Close meter details">
+            <X size={18} aria-hidden />
+          </button>
+        </div>
+      </div>
+      <div className="map-meter-summary mt-1 flex min-w-0 flex-wrap items-end justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
+          <p className="text-caption text-muted">{formatDay(date)}</p>
+          <p className="break-words text-title font-semibold tabular-nums">
+            <span className="sr-only">Selected day consumption: </span>
+            {meter.value === null ? "No reading" : `${formatVolume(meter.value)} m³`}
+          </p>
+        </div>
+        <p className="flex items-center gap-1.5 text-caption">
+          <StatusMark status={meter.status} />
+          <span className={cn("font-semibold", tone === "danger" || tone === "warning" ? "text-fg" : "text-muted")}>
+            {STATUS_LABELS[meter.status]}
+          </span>
+        </p>
+      </div>
+      <div className="map-meter-actions mt-2 flex gap-2">
+        <button ref={toggle} type="button" onClick={() => setDisclosure({ selectionKey, expanded: !expanded })}
+          aria-expanded={expanded} aria-controls={detailsId}
+          className="mb-glass-inset flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-control text-label font-semibold text-primary focus-visible:outline-3 focus-visible:outline-accent dark:text-fg">
+          {expanded ? <ChevronDown size={18} aria-hidden /> : <ChevronUp size={18} aria-hidden />}
+          {expanded ? "Less detail" : "More detail"}
+        </button>
+        <button type="button" onClick={onCentre}
+          className="mb-glass-inset flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-control text-label font-semibold text-primary focus-visible:outline-3 focus-visible:outline-accent dark:text-fg">
+          <Crosshair size={16} aria-hidden />
+          Centre on meter
+        </button>
+      </div>
+      <div id={detailsId} hidden={!expanded} className="map-sheet-detail min-w-0">
+        {expanded && (
+          <>
+            {meter.statusNote && <p className="mt-2 break-words text-caption text-muted">{meter.statusNote}</p>}
+            {villaLink && <p className="mt-1 break-words text-caption text-muted">{villaLink}</p>}
+            <MeterDetails meter={meter} date={date} showHeading={false} />
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -233,10 +329,11 @@ export function MapSheet({
   const index = selected ? meters.findIndex((m) => m.account === selected.account) : -1;
   const previous = index > 0 ? meters[index - 1] : undefined;
   const following = index >= 0 && index < meters.length - 1 ? meters[index + 1] : undefined;
-  const toneClass = {
-    success: "text-success",
-    warning: "text-warning",
-    danger: "text-danger",
+  // Status colour sits in the dot; text on glass stays at full contrast.
+  const toneDot = {
+    success: "bg-success",
+    warning: "bg-warning",
+    danger: "bg-danger",
   }[reportingTone];
   return (
     <div>
@@ -245,75 +342,19 @@ export function MapSheet({
       {!selected && !open && <Legend />}
       <section
         aria-label={selected ? `Meter ${selected.name}` : `${heading} figures`}
-        className="mb-glass pointer-events-auto rounded-t-card border-b-0 px-3.5 pt-1.5 pb-3 text-fg sm:mx-auto sm:max-w-2xl"
+        className="map-bottom-sheet mb-glass pointer-events-auto min-w-0 rounded-t-card px-3.5 pt-1.5 pb-3 text-fg sm:mx-auto sm:max-w-2xl"
       >
         {selected ? (
-          <div className="map-sheet-detail overflow-y-auto overscroll-contain">
-            <div className="flex items-start justify-between gap-2 pt-2">
-              <div className="min-w-0">
-                <p className="truncate text-title">{selected.name}</p>
-                <p className="text-caption text-muted">
-                  {selected.zoneName} · account {selected.account} · {selected.level}
-                </p>
-              </div>
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  className={iconButton}
-                  disabled={!previous}
-                  onClick={() => previous && onMeter(previous.account)}
-                  aria-label="Previous meter"
-                >
-                  <ChevronLeft size={18} aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={iconButton}
-                  disabled={!following}
-                  onClick={() => following && onMeter(following.account)}
-                  aria-label="Next meter"
-                >
-                  <ChevronRight size={18} aria-hidden />
-                </button>
-                <button
-                  type="button"
-                  className={iconButton}
-                  onClick={onCloseMeter}
-                  aria-label="Close meter details"
-                >
-                  <X size={18} aria-hidden />
-                </button>
-              </div>
-            </div>
-            <p className="mt-1.5 flex flex-wrap items-center gap-2 text-caption">
-              <StatusMark status={selected.status} />
-              <span
-                className={cn(
-                  "font-semibold",
-                  STATUS_TONES[selected.status] === "danger"
-                    ? "text-danger"
-                    : STATUS_TONES[selected.status] === "warning"
-                      ? "text-warning"
-                      : "text-muted",
-                )}
-              >
-                {STATUS_LABELS[selected.status]}
-              </span>
-              <span className="text-muted">{selected.statusNote}</span>
-            </p>
-            {villaLink && <p className="mt-1 text-caption text-muted">{villaLink}</p>}
-            <div className="-mx-4">
-              <MeterDetails meter={selected} date={date} showHeading={false} />
-            </div>
-            <button
-              type="button"
-              onClick={onCentre}
-              className="mb-glass-inset flex h-11 w-full items-center justify-center gap-2 rounded-control text-label font-semibold text-primary dark:text-fg"
-            >
-              <Crosshair size={16} aria-hidden />
-              Centre on meter
-            </button>
-          </div>
+          <SelectedMeterSheet
+            meter={selected}
+            date={date}
+            previous={previous}
+            following={following}
+            villaLink={villaLink}
+            onMeter={onMeter}
+            onClose={onCloseMeter}
+            onCentre={onCentre}
+          />
         ) : (
           <>
             <button
@@ -327,13 +368,14 @@ export function MapSheet({
             </button>
             <div className="mb-2 flex items-baseline justify-between gap-2">
               <p className="truncate text-title">{heading}</p>
-              <p className={cn("shrink-0 text-caption font-semibold", toneClass)}>
+              <p className="flex shrink-0 items-center gap-1.5 text-caption font-semibold text-fg">
+                <span aria-hidden className={cn("size-2 rounded-pill", toneDot)} />
                 {reporting}
               </p>
             </div>
             {open ? (
               <div>
-                <label className="mb-glass-inset mb-1.5 flex h-11 items-center gap-2 rounded-control px-3">
+                <label className="mb-glass-inset mb-1.5 flex h-11 items-center gap-2 rounded-control px-3 focus-within:outline-3 focus-within:outline-accent">
                   <Search size={16} className="text-muted" aria-hidden />
                   <input
                     type="search"
@@ -347,7 +389,7 @@ export function MapSheet({
                 {meters.length === 0 ? (
                   <p className="py-4 text-body text-muted">No meter matches this view.</p>
                 ) : (
-                  <ul className="map-sheet-list overflow-y-auto overscroll-contain">
+                  <ul className="map-sheet-list">
                     {meters.map((meter) => (
                       <li key={meter.account} className="border-b border-line/60 last:border-b-0">
                         <button
