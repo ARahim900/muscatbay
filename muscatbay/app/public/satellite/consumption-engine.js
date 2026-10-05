@@ -965,12 +965,14 @@
         "line-width": ["case", ["==", ["get", "kind"], 0], 5, 3.5],
       },
     });
+    // Pipes in the brand's water colour; teal stays for the selected
+    // meter's own connection (villa-link), so it still stands out.
     map.addLayer({
       id: "network-line",
       type: "line",
       source: "network",
       paint: {
-        "line-color": "#A4C5BB",
+        "line-color": "#6B9AC4",
         "line-width": ["case", ["==", ["get", "kind"], 0], 2.5, 1.5],
       },
     });
@@ -983,7 +985,7 @@
       type: "line",
       source: "fm-connections",
       paint: {
-        "line-color": "#A4C5BB",
+        "line-color": "#6B9AC4",
         "line-width": 2.5,
         "line-dasharray": [2, 2],
       },
