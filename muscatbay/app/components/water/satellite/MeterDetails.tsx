@@ -37,7 +37,7 @@ export function MeterDetails({
     : null;
   const max = Math.max(1, ...meter.trend.map((p) => Math.max(0, p.value ?? 0)));
   return (
-    <div className="space-y-4 p-4 text-body">
+    <div className={`min-w-0 space-y-4 py-4 text-body [overflow-wrap:anywhere] ${showHeading ? "px-4" : ""}`}>
       {showHeading && (
         <div>
           <h3 className="text-title text-primary dark:text-fg">{meter.name}</h3>
@@ -49,13 +49,13 @@ export function MeterDetails({
       <dl className="grid grid-cols-2 gap-3">
         <div>
           <dt>{formatDay(date)}</dt>
-          <dd className="text-kpi font-semibold tabular-nums">
+          <dd className="text-title font-semibold tabular-nums sm:text-kpi">
             {formatVolume(meter.value)} m³
           </dd>
         </div>
         <div>
           <dt>{formatDay(shiftDay(date, -1))}</dt>
-          <dd className="text-kpi font-semibold tabular-nums">
+          <dd className="text-title font-semibold tabular-nums sm:text-kpi">
             {formatVolume(meter.previous)} m³
           </dd>
         </div>
@@ -102,7 +102,7 @@ export function MeterDetails({
             return (
               <div
                 key={point.date}
-                className="grid h-7 grid-cols-[3.25rem_1fr_auto] items-center gap-2.5"
+                className="grid h-7 grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-2.5"
               >
                 <span className="text-caption text-muted tabular-nums">
                   {weekday} <b className="font-semibold text-fg">{day}</b>
@@ -123,9 +123,9 @@ export function MeterDetails({
           })}
         </div>
         {meter.baseline !== null && (
-          <div className="mt-2 flex justify-between border-t border-dashed border-line pt-2 text-caption text-muted">
+          <div className="mt-2 flex flex-wrap justify-between gap-x-3 gap-y-1 border-t border-dashed border-line pt-2 text-caption text-muted">
             <span>Usual — average of its recent recorded days</span>
-            <span className="font-semibold text-fg tabular-nums">
+            <span className="shrink-0 font-semibold text-fg tabular-nums">
               {formatVolume(meter.baseline)} m³
             </span>
           </div>

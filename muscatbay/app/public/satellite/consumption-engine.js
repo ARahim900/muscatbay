@@ -27,6 +27,14 @@
   let zoneMarkers = [];
   let meterLabels = [];
   let meterRings = [];
+  // WebKit before 15.4 throws on :focus-visible; treat that as "not keyboard".
+  const isFocusVisible = (element) => {
+    try {
+      return Boolean(element?.matches?.(":focus-visible"));
+    } catch {
+      return false;
+    }
+  };
   const hoverable =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(hover: hover)").matches;
@@ -53,6 +61,7 @@
   // its controls and every zone fly-in between the two.
   let hostChrome = false;
   let chromeTop = 0;
+  let tightChrome = false;
   let chromeBottom = 0;
   let chipBar = null;
   let previousLink = null;
@@ -100,6 +109,10 @@
       maximumFractionDigits: size < 10 ? 1 : 0,
     });
   };
+  // Spoken labels give the same two-decimal figure as the meter panel, so a
+  // screen reader never hears 0.1 where the panel shows 0.05.
+  const spokenVolume = (value) =>
+    value.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   // Zone and main bulk meters measure everything entering; they are drawn
   // apart from the individual meters and never sized against them.
   const isBulk = (meter) => meter.level === "L2" || meter.level === "L1";
@@ -166,15 +179,27 @@
     button.type = "button";
     button.className = "meter-marker";
     button.dataset.status = statusOf(meter);
+    button.dataset.meterAccount = meter.account;
+    button.dataset.meterControl = "point";
     button.classList.toggle("selected", meter.account === selected);
     button.classList.toggle("bulk", isBulk(meter));
     button.append(buildTick(meter));
     const status = statusOf(meter);
     button.setAttribute(
       "aria-label",
-      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${share(meter.ratio) ? `, ${share(meter.ratio)} of its usual` : ""}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : spokenVolume(meter.value) + " cubic metres"}${share(meter.ratio) ? `, ${share(meter.ratio)} of its usual` : ""}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
     );
     return button;
+  }
+  function addMarker(element, coordinates, options = {}) {
+    const label = element.getAttribute("aria-label");
+    const marker = new maplibregl.Marker({ element, anchor: "center", ...options })
+      .setLngLat(coordinates)
+      .addTo(map);
+    // MapLibre 4.7.1 replaces custom labels in addTo(), including button labels.
+    if (label) element.setAttribute("aria-label", label);
+    else element.removeAttribute("aria-label");
+    return marker;
   }
   // The map carries no figures: they live in the page's panels. A meter gets a
   // name tag only when it is selected, when it is the zone bulk, or (with a
@@ -186,6 +211,8 @@
     element.classList.toggle("selected", meter.account === selected);
     element.classList.toggle("bulk", isBulk(meter));
     element.dataset.status = status;
+    element.dataset.meterAccount = meter.account;
+    element.dataset.meterControl = "label";
     const name = document.createElement("span");
     name.textContent =
       isBulk(meter) && meter.account !== selected && !withValue ? "Zone bulk" : meter.name;
@@ -197,7 +224,7 @@
     }
     element.setAttribute(
       "aria-label",
-      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
+      `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : spokenVolume(meter.value) + " cubic metres"}${status === "normal" ? "" : ", " + (STATUS_TAGS[status] || status)}. Open meter details`,
     );
   }
   // Overview: a zone is a pin with its name. Its figures are in the Zones panel.
@@ -363,6 +390,15 @@
     const { meters, selected, zone } = latest;
     const overview = !zone && !selected;
     const points = meters.filter((m) => m.location);
+    // A rebuild replaces every button; keyboard focus follows its meter.
+    const active = document.activeElement;
+    const focused = isFocusVisible(active) ? active.dataset : null;
+    clearHover();
+    const restoreFocus = (element) => {
+      if (focused?.meterAccount && focused.meterAccount === element.dataset.meterAccount &&
+          focused.meterControl === element.dataset.meterControl)
+        element.focus({ preventScroll: true });
+    };
     meterRings.forEach((marker) => marker.remove());
     meterRings = [];
     // Every mapped meter is one ring of the same size — no dot is bigger or
@@ -375,11 +411,8 @@
           element.addEventListener("mouseenter", () => showHover(meter));
           element.addEventListener("mouseleave", clearHover);
         }
-        meterRings.push(
-          new maplibregl.Marker({ element, anchor: "center" })
-            .setLngLat(meter.location.coordinates)
-            .addTo(map),
-        );
+        meterRings.push(addMarker(element, meter.location.coordinates));
+        restoreFocus(element);
       }
     zoneMarkers.forEach(({ marker }) => marker.remove());
     zoneMarkers = [];
@@ -400,19 +433,17 @@
         element.type = "button";
         fillMeterLabel(element, meter, selected, false);
         element.addEventListener("click", () => pickMeter(meter.account));
-        const marker = new maplibregl.Marker({
-          element,
+        const marker = addMarker(element, meter.location.coordinates, {
           anchor: "bottom",
           offset: [0, -22],
-        })
-          .setLngLat(meter.location.coordinates)
-          .addTo(map);
+        });
         meterLabels.push({
           marker,
           element,
           coordinates: meter.location.coordinates,
           keep: meter.account === selected || isBulk(meter),
         });
+        restoreFocus(element);
       }
       layoutMeterLabels();
     }
@@ -442,9 +473,7 @@
         zoneMarkers.push({
           element: el,
           coordinates: centre,
-          marker: new maplibregl.Marker({ element: anchor, anchor: "center" })
-            .setLngLat(centre)
-            .addTo(map),
+          marker: addMarker(anchor, centre),
         });
       }
       layoutZoneMarkers();
@@ -509,16 +538,27 @@
     const selectedPosition =
       points.find((m) => m.account === selected)?.location ||
       locations.find((p) => p.account === selected);
-    const { clientWidth: width } = map.getContainer();
+    const { clientWidth: width, clientHeight: height } = map.getContainer();
     if (zoneChanged || !selectedPosition) {
       // Auto fly: only a change of zone (or of 2D/3D) moves the whole camera.
       if (!coordinates.length) return;
       const bounds = new maplibregl.LngLatBounds();
       coordinates.forEach((coordinate) => bounds.extend(coordinate));
+      let top = hostChrome ? topInset() + 16 : fullScreen ? 90 : 40;
+      let bottom = hostChrome ? chromeBottom + 16 : 70;
+      // On a phone on its side the bar and sheet can cover most of the map;
+      // MapLibre refuses a padding taller than the canvas, so shrink it to
+      // leave at least 60px to frame the zone in.
+      const room = height - 60;
+      if (room > 0 && top + bottom > room) {
+        const scale = room / (top + bottom);
+        top *= scale;
+        bottom *= scale;
+      }
       map.fitBounds(bounds, {
         padding: {
-          top: hostChrome ? chromeTop + 16 : fullScreen ? 90 : 40,
-          bottom: hostChrome ? chromeBottom + 16 : 70,
+          top,
+          bottom,
           left: width < 640 ? 30 : 60,
           right: width < 640 ? 50 : 80,
         },
@@ -535,11 +575,44 @@
         zoom: Math.max(map.getZoom(), 17.5),
         // Under host chrome, centre the meter in the clear gap between the
         // bar and the sheet, not behind the sheet.
-        offset: hostChrome ? [0, (chromeTop - chromeBottom) / 2] : [0, 0],
+        offset: hostChrome ? [0, (topInset() - chromeBottom) / 2] : [0, 0],
         duration: reducedMotion ? 0 : 600,
       });
       previousFocus = focus;
     } else previousFocus = focus; // tapped on the map: the camera stays put
+  }
+
+  // Covered height at the top: the bar, plus the control row when the
+  // controls lie flat (tight-chrome) across the top of the open map.
+  const topInset = () => chromeTop + (tightChrome ? 52 : 0);
+
+  function selectedHidden() {
+    if (!loaded || !map || !latest?.selected) return false;
+    const position = latest.meters.find((meter) => meter.account === latest.selected)?.location ||
+      locations.find((location) => location.account === latest.selected);
+    if (!position) return false;
+    const point = map.project(position.coordinates);
+    const { clientWidth: width, clientHeight: height } = map.getContainer();
+    const margin = 24;
+    // The name tag stands ~50px above its mark; keep it clear of the bar.
+    return point.x < margin || point.x > width - margin ||
+      point.y < (hostChrome ? topInset() : 0) + 56 ||
+      point.y > height - (hostChrome ? chromeBottom : 0) - margin;
+  }
+
+  function focusSelectedMeter(explicitFocus = false) {
+    if (!loaded || !map || !latest?.selected) return false;
+    const position = latest.meters.find((meter) => meter.account === latest.selected)?.location ||
+      locations.find((location) => location.account === latest.selected);
+    if (!position) return false;
+    map.easeTo({
+      center: position.coordinates,
+      zoom: explicitFocus ? Math.max(map.getZoom(), 17.5) : map.getZoom(),
+      offset: hostChrome ? [0, (topInset() - chromeBottom) / 2] : [0, 0],
+      duration: reducedMotion ? 0 : 600,
+    });
+    previousFocus = `${latest.zone}:${latest.selected}`;
+    return true;
   }
 
   const clearHover = () => {
@@ -556,9 +629,9 @@
     element.classList.add("hover");
     hoverTag = {
       account: meter.account,
-      marker: new maplibregl.Marker({ element, anchor: "bottom", offset: [0, -22] })
-        .setLngLat(meter.location.coordinates)
-        .addTo(map),
+      marker: addMarker(element, meter.location.coordinates, {
+        anchor: "bottom", offset: [0, -22],
+      }),
     };
   }
   const pickMeter = (account) => {
@@ -649,7 +722,7 @@
         return (
           point.x < 24 ||
           point.x > width - 24 ||
-          point.y < (hostChrome ? chromeTop + 8 : 40) ||
+          point.y < (hostChrome ? topInset() + 8 : 40) ||
           point.y > height - (hostChrome ? chromeBottom + 8 : 48)
         );
       });
@@ -711,6 +784,7 @@
         statusOf,
         buildTick,
       });
+      fallback.setChrome({ top: hostChrome ? chromeTop : 0, bottom: hostChrome ? chromeBottom : 0 });
       loaded = true;
       report(
         "degraded",
@@ -891,12 +965,14 @@
         "line-width": ["case", ["==", ["get", "kind"], 0], 5, 3.5],
       },
     });
+    // Pipes in the brand's water colour; teal stays for the selected
+    // meter's own connection (villa-link), so it still stands out.
     map.addLayer({
       id: "network-line",
       type: "line",
       source: "network",
       paint: {
-        "line-color": "#A4C5BB",
+        "line-color": "#6B9AC4",
         "line-width": ["case", ["==", ["get", "kind"], 0], 2.5, 1.5],
       },
     });
@@ -909,7 +985,7 @@
       type: "line",
       source: "fm-connections",
       paint: {
-        "line-color": "#A4C5BB",
+        "line-color": "#6B9AC4",
         "line-width": 2.5,
         "line-dasharray": [2, 2],
       },
@@ -946,7 +1022,12 @@
               attribution: "Imagery © Esri",
             },
           },
-          layers: [{ id: "imagery", type: "raster", source: "imagery" }],
+          layers: [{
+            id: "imagery",
+            type: "raster",
+            source: "imagery",
+            paint: { "raster-saturation": -0.25 },
+          }],
         },
       });
       applyMode();
@@ -1004,6 +1085,14 @@
       activateFallback(error);
     }
   }
+  // Under ~320px of open map (short screens, or an expanded sheet) the
+  // vertical control stack would collide with the imagery credit.
+  function applyTightChrome() {
+    const open = window.innerHeight - (hostChrome ? chromeTop + chromeBottom : 0);
+    tightChrome = hostChrome && (window.innerHeight <= 700 || open < 320);
+    document.documentElement.classList.toggle("tight-chrome", tightChrome);
+  }
+  window.addEventListener("resize", applyTightChrome);
   window.addEventListener("message", (event) => {
     if (event.origin !== location.origin || event.source !== window.parent)
       return;
@@ -1018,6 +1107,7 @@
         fallback.focus();
         return;
       }
+      if (focusSelectedMeter(true)) return;
       previousFocus = "";
       previousZone = null; // re-run the zone fly-in
       update();
@@ -1031,6 +1121,16 @@
       root.classList.toggle("host-chrome", hostChrome);
       root.style.setProperty("--chrome-top", `${chromeTop}px`);
       root.style.setProperty("--chrome-bottom", `${chromeBottom}px`);
+      applyTightChrome();
+      if (fallback) {
+        fallback.setChrome({ top: hostChrome ? chromeTop : 0, bottom: hostChrome ? chromeBottom : 0 });
+        return;
+      }
+      if (latest?.selected) {
+        // A sheet resize only moves the camera if it now covers the meter.
+        if (selectedHidden()) focusSelectedMeter();
+        return;
+      }
       // Re-frame the zone between the bar and the sheet.
       previousFocus = "";
       previousZone = null;

@@ -2,10 +2,7 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const fallbackSource = readFileSync(
-  "public/satellite/consumption-fallback.js",
-  "utf8",
-);
+const fallbackSource = readFileSync("public/satellite/consumption-fallback.js", "utf8");
 
 type FallbackPayload = {
   date: string;
@@ -17,6 +14,8 @@ type FallbackPayload = {
     zone: string;
     zoneName: string;
     value: number | null;
+    level?: string;
+    status?: string;
     location: { coordinates: [number, number] };
   }[];
 };
@@ -24,6 +23,7 @@ type FallbackPayload = {
 type CompatibilityMap = {
   update: (payload: FallbackPayload) => void;
   focus: () => void;
+  setChrome: (insets: { top: number; bottom: number }) => void;
   resize: () => void;
   remove: () => void;
 };
@@ -69,7 +69,7 @@ describe("non-WebGL satellite compatibility map", () => {
       onStatus,
       volume: (value: number | null) => (value === null ? "—" : value.toFixed(2)),
       // The engine hands both renderers the same label builders; stand-ins here.
-      statusOf: (meter: { value: number | null }) => (meter.value === null ? "missing" : "normal"),
+      statusOf: (meter: { value: number | null; status?: string }) => meter.status || (meter.value === null ? "missing" : "normal"),
       fillMeterLabel: (element: HTMLElement, meter: { name: string; value: number | null }) => {
         element.classList.add("meter-label");
         element.textContent = `${meter.name} ${meter.value === null ? "—" : meter.value.toFixed(2)} m³`;
@@ -148,6 +148,47 @@ describe("non-WebGL satellite compatibility map", () => {
     );
     meter?.click();
     expect(onMeter).toHaveBeenCalledWith("4300155");
+
+    // jsdom has no keyboard/pointer modality; supply the browser's focus-visible result.
+    vi.spyOn(meter!, "matches").mockReturnValue(true);
+    meter!.focus();
+    map.resize();
+    const keyboardReplacement = container.querySelector<HTMLButtonElement>('button[aria-label*="Villa meter"]')!;
+    expect(document.activeElement).toBe(keyboardReplacement);
+    vi.spyOn(keyboardReplacement, "matches").mockReturnValue(false);
+    map.resize();
+    const pointerReplacement = container.querySelector<HTMLButtonElement>('button[aria-label*="Villa meter"]')!;
+    expect(document.activeElement).not.toBe(pointerReplacement);
+
+    // The selected point stays halfway between the top controls and expanded sheet.
+    map.setChrome({ top: 80, bottom: 280 });
+    const selectedY = () => parseFloat(container.querySelector<HTMLElement>(".compat-meter-point.selected")!.style.top);
+    expect(selectedY()).toBeCloseTo(160, 5);
+    map.focus();
+    expect(selectedY()).toBeCloseTo(160, 5);
+    Object.defineProperty(container, "clientHeight", { configurable: true, value: 390 });
+    map.setChrome({ top: 60, bottom: 160 });
+    map.resize();
+    // Still clear of the bar and sheet (84–206 px): the view is left alone.
+    expect(selectedY()).toBeCloseTo(120, 5);
+    map.setChrome({ top: 0, bottom: 0 });
+    expect(selectedY()).toBeCloseTo(120, 5);
+    // A tall sheet now covers it: re-centred between the bar and the sheet.
+    map.setChrome({ top: 60, bottom: 260 });
+    expect(selectedY()).toBeCloseTo(95, 5);
+    map.setChrome({ top: 0, bottom: 0 });
+    map.focus();
+    expect(selectedY()).toBeCloseTo(195, 5);
+
+    // Neighbouring meters stay individual marks — never grouped.
+    map.update({ date: "2026-09-12", zone: "Zone_05", selected: "selected", meters: [
+      { account: "selected", name: "Selected", zone: "Zone_05", zoneName: "Zone 5", value: 2, location: { coordinates: [58.64, 23.55] } },
+      { account: "bulk", name: "Bulk", level: "L2", zone: "Zone_05", zoneName: "Zone 5", value: 25, location: { coordinates: [58.64, 23.55] } },
+      { account: "high", name: "High meter", status: "high", zone: "Zone_05", zoneName: "Zone 5", value: 23, location: { coordinates: [58.6401, 23.55] } },
+      { account: "none", name: "No reading meter", zone: "Zone_05", zoneName: "Zone 5", value: null, location: { coordinates: [58.6401, 23.55] } },
+    ] });
+    expect(container.querySelectorAll(".meter-marker")).toHaveLength(4);
+    expect(container.querySelector(".meter-cluster")).toBeNull();
 
     tiles[0].dispatchEvent(new Event("load"));
     tiles.slice(1).forEach((tile) => tile.dispatchEvent(new Event("error")));

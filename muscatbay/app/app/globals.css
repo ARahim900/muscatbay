@@ -1883,19 +1883,46 @@ svg.lucide {
   background-color: rgb(255 255 255 / 6%);
   border-color: rgb(255 255 255 / 8%);
 }
+/* Secondary text on glass: the brand's #454545 holds AA over any imagery
+   behind 72% white; warm near-white does the same on dark glass. */
+.mb-glass .text-muted { color: #454545; }
+.dark .mb-glass .text-muted { color: #E5E7EB; }
+/* A teal ring alone vanishes on pale glass; a purple halo carries it. */
+.mb-glass :focus-visible:not(input), .mb-glass label:focus-within {
+  box-shadow: 0 0 0 5px var(--mb-purple);
+}
+.dark .mb-glass :focus-visible, .dark .mb-glass label:focus-within { box-shadow: none; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .mb-glass { background-color: var(--color-card); }
+  .mb-glass, .dark .mb-glass { background-color: var(--color-card); border-color: var(--color-line); }
 }
 @media (prefers-reduced-transparency: reduce) {
-  .mb-glass {
+  .mb-glass, .dark .mb-glass {
     background-color: var(--color-card);
+    border-color: var(--color-line);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
   }
 }
 /* The phone map's sheet never covers more of the map than this. */
-.map-sheet-detail { max-height: 50dvh; }
-.map-sheet-list { max-height: 46dvh; }
+.map-bottom-sheet { border-bottom-width: 0; max-height: 54dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+@media (max-height: 700px) {
+  .map-bottom-sheet { max-height: 44dvh; }
+}
+/* A phone on its side has ~375px of height: the bar collapses to one row,
+   the legend gives way (each meter's status is spelt out in its sheet) and
+   figure subtitles drop, so the map keeps most of the screen. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .map-topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; column-gap: 8px; padding: 6px; }
+  .map-topbar-heading { grid-column: 3; grid-row: 1; padding: 0; }
+  .map-topbar-heading > p { display: none; }
+  .map-topbar-zones { grid-column: 1; grid-row: 1; }
+  .map-topbar-date { grid-column: 2; grid-row: 1; margin-top: 0; }
+  .map-topbar-note, .map-legend, .map-figure-sub { display: none; }
+  .map-meter-sheet { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 14px; }
+  .map-meter-summary { margin-top: 0; }
+  .map-meter-actions, .map-sheet-detail { grid-column: 1 / -1; }
+  .map-bottom-sheet { max-height: 44dvh; }
+}
 /* In the phone map's sheet the figures stop at 24px, so more map shows. */
 .kpi-figure.kpi-figure-compact {
   font-size: clamp(1.125rem, calc(100cqi / var(--kpi-chars, 6) * 1.7), 1.5rem);

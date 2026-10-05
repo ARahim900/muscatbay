@@ -18,6 +18,18 @@
     );
   };
 
+  // WebKit before 15.4 throws on :focus-visible; treat that as "not keyboard".
+  const isFocusVisible = (element) => {
+    try {
+      return Boolean(element?.matches?.(":focus-visible"));
+    } catch {
+      return false;
+    }
+  };
+
+  const worldToLatitude = (world) =>
+    (Math.atan(Math.sinh(Math.PI * (1 - 2 * world))) * 180) / Math.PI;
+
   const extent = (coordinates) => {
     if (!coordinates.length) return [...DEFAULT_BOUNDS];
     const lngs = coordinates.map((point) => point[0]);
@@ -92,6 +104,8 @@
     let imageryGeneration = 0;
     let drag = null;
     let imageryUnavailable = false;
+    let chromeTop = 0;
+    let chromeBottom = 0;
 
     const size = () => ({
       width: Math.max(container.clientWidth || 390, 1),
@@ -170,6 +184,8 @@
     };
 
     const renderMarkers = () => {
+      const active = document.activeElement;
+      const focusedAccount = isFocusVisible(active) ? active.dataset.meterAccount : null;
       markers.replaceChildren();
       if (!latest) return;
       const points = latest.meters.filter((meter) => meter.location);
@@ -209,11 +225,13 @@
         // The same mark the WebGL map draws, so the two never disagree.
         button.className = "meter-marker compat-meter-point";
         button.classList.toggle("selected", meter.account === latest.selected);
+        button.classList.toggle("bulk", meter.level === "L1" || meter.level === "L2");
         button.dataset.status = statusOf(meter);
+        button.dataset.meterAccount = meter.account;
         button.append(buildTick(meter));
         button.setAttribute(
           "aria-label",
-          `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : volume(meter.value) + " cubic metres"}. Open meter details`,
+          `${meter.name}, ${latest.date}, ${meter.value === null ? "no reading" : meter.value.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " cubic metres"}. Open meter details`,
         );
         button.addEventListener("click", () => onMeter(meter.account));
         const point = project(meter.location.coordinates);
@@ -221,6 +239,7 @@
         button.style.top = `${point.y}px`;
         button.style.transform = "translate(-50%, -50%)";
         markers.append(button);
+        if (meter.account === focusedAccount) button.focus({ preventScroll: true });
 
         // Name tags only for the selected meter and the zone bulk; figures are
         // in the page's panels.
@@ -335,6 +354,34 @@
       renderMarkers();
     };
 
+    const centreCoordinate = ([longitude, latitude]) => {
+      const { height } = size();
+      const target = Math.max(0, Math.min(1, (height + chromeTop - chromeBottom) / (2 * height)));
+      const halfWidth = (bounds[2] - bounds[0]) / 2;
+      const worldHeight = latitudeToWorld(bounds[1]) - latitudeToWorld(bounds[3]);
+      const north = latitudeToWorld(latitude) - target * worldHeight;
+      bounds = [longitude - halfWidth, worldToLatitude(north + worldHeight),
+        longitude + halfWidth, worldToLatitude(north)];
+    };
+
+    const centreSelected = () => {
+      const selected = latest?.meters.find((meter) => meter.account === latest.selected);
+      if (selected?.location) centreCoordinate(selected.location.coordinates);
+    };
+
+    // Only move the camera when the selected meter is actually covered by the
+    // bar or the sheet; an operator who panned away keeps their view.
+    const centreSelectedIfHidden = () => {
+      const selected = latest?.meters.find((meter) => meter.account === latest.selected);
+      if (!selected?.location) return;
+      const { width, height } = size();
+      const point = project(selected.location.coordinates);
+      const margin = 24;
+      if (point.x < margin || point.x > width - margin ||
+          point.y < chromeTop + margin || point.y > height - chromeBottom - margin)
+        centreCoordinate(selected.location.coordinates);
+    };
+
     const fit = (force = false) => {
       if (!latest) return;
       const focus = `${latest.zone}:${latest.selected}`;
@@ -346,6 +393,7 @@
         points.map((meter) => meter.location.coordinates);
       if (selected) bounds = centreBounds(selected.location.coordinates);
       else if (coordinates.length) bounds = extent(coordinates);
+      centreSelected();
       previousFocus = focus;
     };
 
@@ -405,8 +453,15 @@
         fit(true);
         render();
       },
+      setChrome({ top, bottom }) {
+        chromeTop = top;
+        chromeBottom = bottom;
+        centreSelectedIfHidden();
+        render();
+      },
       resize() {
         imageKey = "";
+        centreSelectedIfHidden();
         render();
       },
       remove() {
