@@ -5,5 +5,6 @@ import WidgetKit
 struct MuscatBayWidgets: WidgetBundle {
     var body: some Widget {
         WaterWidget()
+        ZoneWaterWidget()
     }
 }
