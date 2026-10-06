@@ -113,7 +113,9 @@ struct ZoneListView: View {
                     .foregroundStyle(Color.mbHeading)
                     .widgetAccentable()
                 Spacer(minLength: 4)
-                Text(stale ? "As of \(Format.time(fetchedAt))" : Format.day(summary.date, weekday: true))
+                Text(stale
+                     ? "\(Format.day(summary.date)) · as of \(Format.time(fetchedAt))"
+                     : Format.day(summary.date, weekday: true))
                     .font(.system(size: 14))
                     .foregroundStyle(Color.mbMuted)
             }
