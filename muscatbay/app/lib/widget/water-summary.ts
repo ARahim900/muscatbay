@@ -33,6 +33,22 @@ export interface WidgetZoneLoss {
     severity: DailySeverity;
 }
 
+/** One zone's balance for the day, as the Daily page computes it. */
+export interface WidgetZoneBalance {
+    name: string;
+    /** Zone bulk meter (L2) reading, m³; null when the bulk was not read. */
+    bulkM3: number | null;
+    /** Sum of the zone's meters (L3) that were read, m³. Unread meters add nothing. */
+    metersM3: number;
+    /** Bulk minus meters, m³; null when the bulk was not read. */
+    lossM3: number | null;
+    /** Loss as a share of the bulk; null when the bulk was not read or read 0. */
+    lossPct: number | null;
+    severity: DailySeverity;
+    metersRead: number;
+    metersTotal: number;
+}
+
 export interface WidgetWaterSummary {
     /** ISO date of the day shown, e.g. "2026-10-05". */
     date: string;
@@ -47,6 +63,8 @@ export interface WidgetWaterSummary {
     metersTotal: number;
     /** True when any zone meter has no reading for the day. */
     partial: boolean;
+    /** Every zone, in the Daily page's order. */
+    zones: WidgetZoneBalance[];
 }
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -70,20 +88,46 @@ function isoDate(month: string, year: number, day: number): string | null {
     return `${year}-${String(index + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+function lossShare(zone: ZoneRow): number | null {
+    if (zone.diff === null || zone.l2Value === null || zone.l2Value === 0) return null;
+    return Math.round((zone.diff / zone.l2Value) * 1000) / 10;
+}
+
 function worstZoneOf(zoneRows: ZoneRow[]): WidgetZoneLoss | null {
     let worst: ZoneRow | null = null;
     for (const zone of zoneRows) {
         if (zone.diff === null) continue;
         if (!worst || zone.diff > (worst.diff ?? -Infinity)) worst = zone;
     }
-    if (!worst || worst.diff === null || worst.l2Value === null) return null;
-    const lossPct = worst.l2Value === 0 ? null : Math.round((worst.diff / worst.l2Value) * 1000) / 10;
+    if (!worst || worst.diff === null) return null;
+    const lossPct = lossShare(worst);
     return {
         name: worst.zoneName,
         lossM3: worst.diff,
         lossPct,
         severity: dailySeverity(worst.diff, lossPct),
     };
+}
+
+function zoneBalances(
+    zoneRows: ZoneRow[],
+    readings: Record<string, number | null>,
+): WidgetZoneBalance[] {
+    return zoneRows.map((zone) => {
+        const accounts =
+            ZONE_BULK_CONFIG.find((config) => config.l2Account === zone.l2Account)?.l3Accounts ?? [];
+        const lossPct = lossShare(zone);
+        return {
+            name: zone.zoneName,
+            bulkM3: zone.l2Value,
+            metersM3: zone.l3Sum,
+            lossM3: zone.diff,
+            lossPct,
+            severity: dailySeverity(zone.diff, lossPct),
+            metersRead: accounts.filter((account) => readings[account] != null).length,
+            metersTotal: accounts.length,
+        };
+    });
 }
 
 /**
@@ -128,5 +172,6 @@ export function summariseWidgetWater(
         metersRead,
         metersTotal: ZONE_ACCOUNTS.length,
         partial: metersRead < ZONE_ACCOUNTS.length,
+        zones: zoneBalances(report.zoneRows, readings),
     };
 }
