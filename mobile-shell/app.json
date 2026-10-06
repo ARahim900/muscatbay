@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Muscat Bay",
+    "slug": "muscatbay-shell",
+    "scheme": "muscatbayshell",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "bundleIdentifier": "work.muscatbay.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "plugins": [
+      "./plugins/with-scene-lifecycle",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "backgroundColor": "#4E4456",
+          "dark": {
+            "backgroundColor": "#0A090C"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "85fd36ca-9b1d-4341-95ec-f4f839dcbb7d"
+      }
+    },
+    "owner": "arpro900"
+  }
+}
