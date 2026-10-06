@@ -95,9 +95,13 @@ export function summariseWidgetWater(
     month: string,
     year: number,
 ): WidgetWaterSummary | null {
+    const monthIndex = MONTHS.indexOf(month.split("-")[0] ?? "");
+    if (monthIndex === -1 || !Number.isInteger(year)) return null;
+    // Only the month's real days: a stray day_31 in a 30-day month is not a date.
+    const lastDay = new Date(year, monthIndex + 1, 0).getDate();
     let day = 0;
     for (const row of rows) {
-        for (let d = 31; d > day; d--) {
+        for (let d = lastDay; d > day; d--) {
             if (reading(row, d) !== null) {
                 day = d;
                 break;

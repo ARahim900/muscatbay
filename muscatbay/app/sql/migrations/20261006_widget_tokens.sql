@@ -150,7 +150,7 @@ begin
      order by w.year desc,
               array_position(
                   array['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
-                  split_part(w.month, '-', 1)) desc
+                  split_part(w.month, '-', 1)) desc nulls last
      limit 1;
 
     if v_month is null then

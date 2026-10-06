@@ -64,10 +64,12 @@ export function WidgetPairing() {
         const client = getSupabaseClient();
         if (!client) return;
         let cancelled = false;
+        let settled = false;
         void (async () => {
             const { data, error } = await client.rpc("create_widget_token", {
                 p_label: bridge.label,
             });
+            settled = true;
             if (cancelled) return;
             if (error || typeof data !== "string" || !/^[0-9a-f]{64}$/.test(data)) {
                 // Not fatal: the widget keeps asking to be connected, and the
@@ -79,6 +81,9 @@ export function WidgetPairing() {
         })();
         return () => {
             cancelled = true;
+            // A request cut short by a re-render may be retried by the next one;
+            // a finished request keeps the guard.
+            if (!settled) attempted.current = false;
         };
     }, [user, loading, isDevMode]);
 

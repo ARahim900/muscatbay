@@ -55,3 +55,12 @@ describe("summariseWidgetWater", () => {
         expect(summariseWidgetWater(month(() => 1), "Octo", 2026)).toBeNull();
     });
 });
+
+describe("summariseWidgetWater calendar", () => {
+    it("ignores a reading in a day the month does not have", () => {
+        const rows: WidgetWaterRow[] = [
+            { account_number: "4300343", day_27: 80, day_30: 99, day_31: 99 },
+        ];
+        expect(summariseWidgetWater(rows, "Feb-26", 2026)?.date).toBe("2026-02-27");
+    });
+});
