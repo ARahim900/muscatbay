@@ -1,4 +1,4 @@
-import type { ReportData } from './inline-shared';
+import type { ReportData } from './report-data';
 
 /** Round to 2 decimals (local copy — keeps this module free of UI deps). */
 const r2 = (v: number) => Math.round(v * 100) / 100;
