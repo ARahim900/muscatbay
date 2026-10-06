@@ -32,6 +32,23 @@ struct ZoneLoss: Codable, Equatable {
     let severity: String
 }
 
+/// One zone's balance for the day, as the Daily page computes it.
+struct ZoneBalance: Codable, Equatable, Identifiable {
+    let name: String
+    /// Zone bulk reading; nil when the bulk was not read.
+    let bulkM3: Double?
+    /// Sum of the zone's meters that were read.
+    let metersM3: Double
+    /// Bulk minus meters; nil when the bulk was not read.
+    let lossM3: Double?
+    let lossPct: Double?
+    let severity: String
+    let metersRead: Int
+    let metersTotal: Int
+
+    var id: String { name }
+}
+
 struct WaterSummary: Codable, Equatable {
     let date: String
     let supplyM3: Double
@@ -42,6 +59,8 @@ struct WaterSummary: Codable, Equatable {
     let metersRead: Int
     let metersTotal: Int
     let partial: Bool
+    /// Every zone; absent in figures cached before the zone feed existed.
+    let zones: [ZoneBalance]?
 }
 
 struct FeedResponse: Codable {
