@@ -64,3 +64,38 @@ describe("summariseWidgetWater calendar", () => {
         expect(summariseWidgetWater(rows, "Feb-26", 2026)?.date).toBe("2026-02-27");
     });
 });
+
+describe("summariseWidgetWater zones", () => {
+    it("gives every zone its bulk, the meters that were read, and how many were missing", () => {
+        const zone5 = ZONE_BULK_CONFIG.find((z) => z.l2Account === "4300345");
+        if (!zone5) throw new Error("Zone 5 is not configured");
+        const missing = new Set(zone5.l3Accounts.slice(0, 3));
+        const rows = month((account) => {
+            if (account === zone5.l2Account) return 87.7;
+            if (zone5.l3Accounts.includes(account)) return missing.has(account) ? null : 1;
+            return null;
+        });
+        const zone = summariseWidgetWater(rows, "Oct-26", 2026)?.zones.find((z) => z.name === zone5.zoneName);
+        const read = zone5.l3Accounts.length - 3;
+        expect(zone).toEqual({
+            name: zone5.zoneName,
+            bulkM3: 87.7,
+            metersM3: read,
+            lossM3: Math.round((87.7 - read) * 100) / 100,
+            lossPct: Math.round(((87.7 - read) / 87.7) * 1000) / 10,
+            severity: expect.any(String),
+            metersRead: read,
+            metersTotal: zone5.l3Accounts.length,
+        });
+    });
+
+    it("never invents a loss for a zone whose bulk was not read", () => {
+        const rows = month((account) => (account === "4300343" ? 50 : null));
+        const zones = summariseWidgetWater(rows, "Oct-26", 2026)?.zones ?? [];
+        const unread = zones.find((z) => z.bulkM3 === null);
+        expect(zones).toHaveLength(ZONE_BULK_CONFIG.length);
+        expect(unread?.lossM3).toBeNull();
+        expect(unread?.lossPct).toBeNull();
+        expect(unread?.severity).toBe("nodata");
+    });
+});
