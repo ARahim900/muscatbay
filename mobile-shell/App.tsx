@@ -1,10 +1,11 @@
+import { ExtensionStorage } from '@bacons/apple-targets';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as WebBrowser from 'expo-web-browser';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, View, useColorScheme } from 'react-native';
 import { WebView } from 'react-native-webview';
-import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
+import type { ShouldStartLoadRequest, WebViewMessageEvent } from 'react-native-webview/lib/WebViewTypes';
 
 /**
  * Muscat Bay — iOS shell around the live web app.
@@ -64,6 +65,40 @@ const INJECT_SAFE_AREA = `(function () {
 })();
 true;`;
 
+// ── Home Screen widget ──────────────────────────────────────────────────────
+// The widget (targets/water-widget) cannot use the web view's session, so it
+// reads its own per-device key from this App Group. The page asks for that key
+// when the app announces `window.MuscatBayNative.widget` with paired: false
+// (muscatbay/app/components/providers/widget-pairing.tsx), and posts it back
+// as { type: 'mb-widget-key', key }. A null key (sign-out) forgets it. The
+// widget marks a key the server refused, so the app pairs again on next launch.
+const APP_GROUP = 'group.work.muscatbay.app';
+const WIDGET_KEY = 'widgetKey';
+const WIDGET_KEY_REJECTED = 'widgetKeyRejected';
+const WIDGET_KEY_MESSAGE = 'mb-widget-key';
+const WIDGET_LABEL = Platform.OS === 'ios' && Platform.isPad ? 'iPad widget' : 'iPhone widget';
+const widgetStorage = new ExtensionStorage(APP_GROUP);
+
+function widgetPaired(): boolean {
+  return Boolean(widgetStorage.get(WIDGET_KEY)) && widgetStorage.get(WIDGET_KEY_REJECTED) !== '1';
+}
+
+function bridgeScript(paired: boolean): string {
+  const bridge = JSON.stringify({ widget: { paired, label: WIDGET_LABEL } });
+  return `window.MuscatBayNative = ${bridge};`;
+}
+
+// Widget taps open muscatbayshell://water/daily; each route maps to a page.
+const DEEP_LINKS: Record<string, string> = {
+  'water/daily': 'https://www.muscatbay.work/water?view=daily',
+};
+
+function deepLinkTarget(url: string | null): string | null {
+  if (!url) return null;
+  const match = /^muscatbayshell:\/\/\/?([^?#]*)/i.exec(url);
+  return match ? DEEP_LINKS[match[1].replace(/\/+$/, '').toLowerCase()] ?? null : null;
+}
+
 const THEME = {
   light: { page: '#F7F8F9', text: '#0A0A0A', muted: '#454545' },
   dark: { page: '#0A090C', text: '#F7F8F9', muted: '#E5E7EB' },
@@ -95,6 +130,54 @@ export default function App() {
   const webViewRef = useRef<WebView>(null);
   const splashHidden = useRef(false);
   const [offline, setOffline] = useState(false);
+  const [paired, setPaired] = useState(widgetPaired);
+  const [sourceUrl, setSourceUrl] = useState(APP_URL);
+
+  // A widget tap opens the app on the page it summarises — at launch or later.
+  useEffect(() => {
+    const open = (url: string | null) => {
+      const target = deepLinkTarget(url);
+      if (target) setSourceUrl(target);
+    };
+    void Linking.getInitialURL().then(open);
+    const subscription = Linking.addEventListener('url', (event) => open(event.url));
+    return () => subscription.remove();
+  }, []);
+
+  // The page reads `paired` on every load; keep the open page in step too.
+  const announceBridge = useCallback((value: boolean) => {
+    webViewRef.current?.injectJavaScript(`${bridgeScript(value)} true;`);
+  }, []);
+
+  const handleMessage = useCallback(
+    (event: WebViewMessageEvent) => {
+      const host = hostOf(event.nativeEvent.url);
+      if (!host || !IN_APP_HOSTS.has(host)) return;
+      let message: unknown;
+      try {
+        message = JSON.parse(event.nativeEvent.data);
+      } catch {
+        return;
+      }
+      if (!message || typeof message !== 'object') return;
+      const { type, key } = message as { type?: unknown; key?: unknown };
+      if (type !== WIDGET_KEY_MESSAGE) return;
+      if (key === null) {
+        widgetStorage.remove(WIDGET_KEY);
+        widgetStorage.remove('widgetCache');
+      } else if (typeof key === 'string' && /^[0-9a-f]{64}$/.test(key)) {
+        widgetStorage.set(WIDGET_KEY, key);
+        widgetStorage.remove(WIDGET_KEY_REJECTED);
+      } else {
+        return;
+      }
+      ExtensionStorage.reloadWidget();
+      const next = widgetPaired();
+      setPaired(next);
+      announceBridge(next);
+    },
+    [announceBridge],
+  );
 
   const hideSplash = useCallback(() => {
     if (splashHidden.current) return;
@@ -154,7 +237,7 @@ export default function App() {
       <StatusBar style="auto" />
       <WebView
         ref={webViewRef}
-        source={{ uri: APP_URL }}
+        source={{ uri: sourceUrl }}
         style={[styles.fill, { backgroundColor: colors.page }]}
         originWhitelist={['http://*', 'https://*', 'about:*']}
         contentInsetAdjustmentBehavior="never"
@@ -165,7 +248,8 @@ export default function App() {
         allowsInlineMediaPlayback
         applicationNameForUserAgent="MuscatBayApp/1.0"
         webviewDebuggingEnabled={__DEV__}
-        injectedJavaScriptBeforeContentLoaded={INJECT_SAFE_AREA}
+        injectedJavaScriptBeforeContentLoaded={`${bridgeScript(paired)}\n${INJECT_SAFE_AREA}`}
+        onMessage={handleMessage}
         onShouldStartLoadWithRequest={handleNavigation}
         onOpenWindow={(event) => handleOpenWindow(event.nativeEvent.targetUrl)}
         onLoadEnd={hideSplash}

@@ -6,3 +6,4 @@ android/
 *.p8
 *.p12
 *.mobileprovision
+targets/*/Assets.xcassets/
