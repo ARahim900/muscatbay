@@ -11,12 +11,12 @@
  * Two kinds of parameter:
  *  - `view` on /water is the page's own URL state: the view switch keeps it in
  *    the address bar, so back/forward walks between views.
- *  - `month` / `section` (water monthly), `tab` + `month` (STP) and `tab`
- *    (contractors) are one-shot deep links: the page applies them and then
- *    removes them from the URL (`consumeSearchParams`). Left in place they
- *    would go stale the moment the operator changed tab, and tapping the same
- *    alert again would target an identical URL — a navigation the page never
- *    sees. A `month` the page has no data for yet (it rendered from the
+ *  - `month` / `section` (water monthly), `zone` (water daily), `tab` +
+ *    `month` (STP) and `tab` (contractors) are one-shot deep links: the page
+ *    applies them and then removes them from the URL (`consumeSearchParams`).
+ *    Left in place they would go stale the moment the operator changed tab,
+ *    and tapping the same alert again would target an identical URL — a
+ *    navigation the page never sees. A `month` the page has no data for yet (it rendered from the
  *    session cache) stays in the URL until the fresh load brings it, or until
  *    the operator picks a period themselves.
  *
@@ -35,6 +35,7 @@
  */
 
 import { MONTHS } from "@/lib/water-monthly-data";
+import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
 
 /* ------------------------------------------------------------------ */
 /*  Water                                                              */
@@ -96,6 +97,19 @@ export function waterMonthlyHref(opts: { month?: string; section?: WaterMonthlyS
     if (month) params.set("month", month);
     if (opts.section) params.set("section", opts.section);
     return `/water?${params.toString()}`;
+}
+
+/**
+ * `?zone=` on the daily view → a zone the Daily report knows (its exact
+ * name, e.g. "Zone 5"), or null. The iPhone widget links each zone row here.
+ */
+export function parseWaterDailyZone(value: string | null | undefined): string | null {
+    return ZONE_BULK_CONFIG.find((zone) => zone.zoneName === value)?.zoneName ?? null;
+}
+
+/** /water?view=daily&zone=<zone> — the Daily report open on one zone's analysis. */
+export function waterDailyZoneHref(zone: string): string {
+    return `/water?${new URLSearchParams({ view: "daily", zone }).toString()}`;
 }
 
 /* ------------------------------------------------------------------ */

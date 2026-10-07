@@ -7,9 +7,11 @@ import {
     parseStpLink,
     parseStpTab,
     parseMonthKey,
+    parseWaterDailyZone,
     parseWaterMonthlyLink,
     parseWaterView,
     stpHref,
+    waterDailyZoneHref,
     waterMonthlyHref,
     waterViewHref,
 } from '@/lib/deep-links';
@@ -105,6 +107,26 @@ describe('isSamePageHref', () => {
         expect(isSamePageHref('/water?view=monthly#x', '/water')).toBe(true);
         expect(isSamePageHref('/stp?tab=watch', '/water')).toBe(false);
         expect(isSamePageHref('/stp', null)).toBe(false);
+    });
+});
+
+describe('water daily zone link', () => {
+    it('accepts only zone names the Daily report knows', () => {
+        expect(parseWaterDailyZone('Zone 5')).toBe('Zone 5');
+        expect(parseWaterDailyZone('ZEN Project')).toBe('ZEN Project');
+        expect(parseWaterDailyZone('Village Square')).toBe('Village Square');
+        expect(parseWaterDailyZone('zone 5')).toBeNull();
+        expect(parseWaterDailyZone('Zone_05')).toBeNull();
+        expect(parseWaterDailyZone('')).toBeNull();
+        expect(parseWaterDailyZone(null)).toBeNull();
+    });
+
+    it('builds a daily link that round-trips through the parser', () => {
+        const href = waterDailyZoneHref('Zone 3A');
+        expect(href).toBe('/water?view=daily&zone=Zone+3A');
+        const params = new URLSearchParams(href.split('?')[1]);
+        expect(parseWaterView(params.get('view'))).toBe('daily');
+        expect(parseWaterDailyZone(params.get('zone'))).toBe('Zone 3A');
     });
 });
 
