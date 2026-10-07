@@ -537,8 +537,13 @@ describe("consumption renderer", () => {
     // The compatibility map (mostly iOS) keeps the one-tap zone chips.
     expect(env.elements.some((e) => (e as { className?: string }).className === "zone-chip")).toBe(true);
     expect(env.fallback.update).toHaveBeenCalledWith(payload);
+    // The notice says why, so a device that always falls back can be diagnosed.
     expect(env.parent.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ type: "satviz:status", status: "degraded" }),
+      expect.objectContaining({
+        type: "satviz:status",
+        status: "degraded",
+        message: expect.stringContaining("(WebGL could not start on this device)"),
+      }),
       "https://example.com",
     );
     const active = environment();
@@ -546,7 +551,10 @@ describe("consumption renderer", () => {
     active.mapEvents.webglcontextlost();
     expect(active.createSatelliteFallback).toHaveBeenCalledTimes(1);
     expect(active.parent.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({ status: "degraded" }),
+      expect.objectContaining({
+        status: "degraded",
+        message: expect.stringContaining("(the graphics context was lost)"),
+      }),
       "https://example.com",
     );
   });

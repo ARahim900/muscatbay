@@ -764,8 +764,24 @@
     // Words go to the page's panel; the map only lights the outline and the pipe.
   }
 
+  // Why the WebGL map gave way, in words an operator can pass on. Shown with
+  // the compatibility notice so a device that always falls back says why.
+  let fallbackReason = "";
+  function describeFallback(error) {
+    const text = String(error?.message || error || "");
+    if (/context was lost/i.test(text)) return "the graphics context was lost";
+    if (/webgl/i.test(text)) return "WebGL could not start on this device";
+    if (/library did not load/i.test(text)) return "the map library did not load";
+    return text.slice(0, 80) || "reason not reported";
+  }
+  const withReason = (text) =>
+    fallbackReason && text.startsWith("Compatibility satellite map active.")
+      ? text.replace("active.", `active (${fallbackReason}).`)
+      : text;
+
   function activateFallback(error) {
     console.error("[water-satellite] WebGL map unavailable", error);
+    fallbackReason = describeFallback(error);
     try {
       if (map) map.remove();
       map = null;
@@ -778,7 +794,7 @@
         volume,
         onMeter: (account) => send("satviz:select-meter", { account }),
         onZone: (zone) => send("satviz:select-zone", { zone }),
-        onStatus: (text) => report("degraded", text),
+        onStatus: (text) => report("degraded", withReason(text)),
         fillMeterLabel,
         fillZoneMarker,
         statusOf,
@@ -788,7 +804,7 @@
       loaded = true;
       report(
         "degraded",
-        "Compatibility satellite map active. Daily meters and network lines remain interactive.",
+        withReason("Compatibility satellite map active. Daily meters and network lines remain interactive."),
       );
       update();
     } catch (fallbackError) {
