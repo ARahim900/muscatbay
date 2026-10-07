@@ -1708,6 +1708,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-07 — feat(water): open the Daily report on a zone from ?zone= (#107)
 - 2026-10-06 — feat(mobile-shell): Large "Water by zone" Home Screen widget (v1.2.0) (#106)
 - 2026-10-06 — feat(widget): per-zone water balance in the widget feed (#105)
 - 2026-10-06 — feat(mobile-shell): iOS app shell + Home Screen water widget (v1.1.0) (#104)
