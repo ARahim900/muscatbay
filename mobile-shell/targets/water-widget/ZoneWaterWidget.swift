@@ -9,6 +9,10 @@ import WidgetKit
 // meters; the rest is the loss, in its severity colour. Unread meters are
 // never filled in: a zone with missing meters says how many.
 //
+// Tapping a zone row opens the Daily report on that zone; anywhere else opens
+// the Daily report. On a tinted or clear Home Screen the severity dots give
+// way to the words beside them and High/Critical losses take the tint.
+//
 // Shares the feed, cache and states of WaterWidget.swift.
 
 extension Format {
@@ -27,6 +31,7 @@ extension Format {
 /// Teal = share of the bulk that reached the meters; the rest = loss.
 struct ZoneRing: View {
     let zone: ZoneBalance
+    @Environment(\.widgetRenderingMode) private var renderingMode
 
     private var reached: Double? {
         guard let bulk = zone.bulkM3, bulk > 0 else { return nil }
@@ -35,9 +40,11 @@ struct ZoneRing: View {
 
     var body: some View {
         ZStack {
+            // Tinted or clear: the track is a faint ring so the tinted share reads.
             Circle()
                 .stroke(reached == nil ? Color.severity("nodata") : Color.severity(zone.severity),
                         lineWidth: 5)
+                .opacity(renderingMode == .fullColor ? 1 : 0.35)
             if let reached {
                 Circle()
                     .trim(from: 0, to: reached)
@@ -83,10 +90,9 @@ struct ZoneRow: View {
                 Text(Format.wholePercent(zone.lossPct))
                     .font(.system(size: 16, weight: .bold).monospacedDigit())
                     .foregroundStyle(Color.mbText)
+                    .widgetAccentable(Format.isAlarm(zone.severity))
                 HStack(spacing: 4) {
-                    Circle()
-                        .fill(Color.severity(zone.severity))
-                        .frame(width: 7, height: 7)
+                    SeverityDot(severity: zone.severity, size: 7)
                     Text(Format.severityLabel(zone.severity))
                         .font(.system(size: 14))
                         .foregroundStyle(Color.mbMuted)
@@ -122,10 +128,14 @@ struct ZoneListView: View {
             .lineLimit(1)
             .padding(.bottom, 4)
 
+            // Each row opens the Daily report on that zone; the rest of the
+            // widget opens the Daily report as before (widgetURL).
             ForEach(zones) { zone in
                 Divider()
-                ZoneRow(zone: zone)
-                    .padding(.vertical, 5)
+                Link(destination: Shared.openZone(zone.name)) {
+                    ZoneRow(zone: zone)
+                        .padding(.vertical, 5)
+                }
             }
             Spacer(minLength: 0)
         }

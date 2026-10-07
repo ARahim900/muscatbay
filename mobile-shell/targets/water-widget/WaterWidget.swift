@@ -18,6 +18,17 @@ enum Shared {
     static let cacheName = "widgetCache"
     static let feed = URL(string: "https://www.muscatbay.work/api/widget/water")!
     static let openDaily = URL(string: "muscatbayshell://water/daily")!
+
+    /// The Daily report opened on one zone's meters.
+    static func openZone(_ name: String) -> URL {
+        var link = URLComponents()
+        link.scheme = "muscatbayshell"
+        link.host = "water"
+        link.path = "/daily"
+        link.queryItems = [URLQueryItem(name: "zone", value: name)]
+        return link.url ?? openDaily
+    }
+
     static let refresh: TimeInterval = 30 * 60
 
     static var defaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
@@ -223,13 +234,29 @@ enum Format {
 
 // MARK: - Views
 
+/// Colour-only, so shown in full colour only: on a tinted or clear Home Screen
+/// every dot turns the same tint, and the severity word beside it carries the
+/// meaning instead.
 struct SeverityDot: View {
     let severity: String
+    var size: CGFloat = 10
+    @Environment(\.widgetRenderingMode) private var renderingMode
+
     var body: some View {
-        Circle()
-            .fill(Color.severity(severity))
-            .frame(width: 10, height: 10)
-            .accessibilityHidden(true)
+        if renderingMode == .fullColor {
+            Circle()
+                .fill(Color.severity(severity))
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+        }
+    }
+}
+
+extension Format {
+    /// High and Critical take the Home Screen tint, so they still stand out
+    /// when the widget is tinted or clear.
+    static func isAlarm(_ severity: String) -> Bool {
+        severity == "high" || severity == "critical"
     }
 }
 

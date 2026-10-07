@@ -88,15 +88,35 @@ function bridgeScript(paired: boolean): string {
   return `window.MuscatBayNative = ${bridge};`;
 }
 
-// Widget taps open muscatbayshell://water/daily; each route maps to a page.
+// Widget taps open muscatbayshell://water/daily (optionally ?zone=<zone name>);
+// each route maps to a page. Only the zone parameter is carried across — the
+// page itself ignores a zone it does not know.
 const DEEP_LINKS: Record<string, string> = {
   'water/daily': 'https://www.muscatbay.work/water?view=daily',
 };
 
 function deepLinkTarget(url: string | null): string | null {
   if (!url) return null;
-  const match = /^muscatbayshell:\/\/\/?([^?#]*)/i.exec(url);
-  return match ? DEEP_LINKS[match[1].replace(/\/+$/, '').toLowerCase()] ?? null : null;
+  const match = /^muscatbayshell:\/\/\/?([^?#]*)(?:\?([^#]*))?/i.exec(url);
+  if (!match) return null;
+  const page = DEEP_LINKS[match[1].replace(/\/+$/, '').toLowerCase()];
+  if (!page) return null;
+  const zone = queryValue(match[2] ?? '', 'zone');
+  return zone ? `${page}&zone=${encodeURIComponent(zone)}` : page;
+}
+
+// React Native's URLSearchParams polyfill is incomplete, so read one value by hand.
+function queryValue(query: string, name: string): string | null {
+  for (const pair of query.split('&')) {
+    const [key, value = ''] = pair.split('=');
+    if (key !== name) continue;
+    try {
+      return decodeURIComponent(value.replace(/\+/g, ' ')) || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 const THEME = {
@@ -135,12 +155,22 @@ export default function App() {
 
   // A widget tap opens the app on the page it summarises — at launch or later.
   useEffect(() => {
-    const open = (url: string | null) => {
+    // At launch the page has not loaded yet, so the link becomes the start
+    // page. Later taps navigate the open page: setting the same source again
+    // (the same zone tapped twice) would not reload it.
+    void Linking.getInitialURL().then((url) => {
       const target = deepLinkTarget(url);
       if (target) setSourceUrl(target);
-    };
-    void Linking.getInitialURL().then(open);
-    const subscription = Linking.addEventListener('url', (event) => open(event.url));
+    });
+    const subscription = Linking.addEventListener('url', (event) => {
+      const target = deepLinkTarget(event.url);
+      if (!target) return;
+      if (webViewRef.current) {
+        webViewRef.current.injectJavaScript(`window.location.assign(${JSON.stringify(target)}); true;`);
+      } else {
+        setSourceUrl(target);
+      }
+    });
     return () => subscription.remove();
   }, []);
 
