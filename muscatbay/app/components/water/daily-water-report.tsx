@@ -10,6 +10,8 @@ import { getSupabaseClient } from "@/lib/supabase";
 import { DAILY_WATER_CONSUMPTION_SELECT_COLUMNS, type SupabaseDailyWaterConsumption } from "@/entities/water";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
+import { consumeSearchParams, parseWaterDailyZone } from "@/lib/deep-links";
+import { SearchParamsListener } from "@/components/shared/search-params-listener";
 import {
     ChevronLeft, ChevronRight, CalendarDays, RefreshCw,
     Gauge, MapPin, Plug, Database, ClipboardList,
@@ -146,15 +148,47 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
         setSelectedDay(day);
     }, []);
 
+    // True while the tab and zone on screen were set by a deep link (the iPhone
+    // widget's zone rows) rather than by the operator.
+    const linkedRef = useRef(false);
+
     // ── Restore / persist the selected tab & zone (client-only) ────────────────
     useEffect(() => {
+        if (linkedRef.current) return;
         const prefs = loadFilterPreferences<{ tab?: string; zone?: string }>('water-daily');
         if (isDailyTab(prefs?.tab)) setActiveTab(prefs.tab);
         if (prefs?.zone && ZONE_BULK_CONFIG.some(z => z.zoneName === prefs.zone)) setActiveZone(prefs.zone);
     }, []);
     useEffect(() => {
+        // A linked zone is shown, not saved: the next plain visit opens the
+        // operator's own last choice.
+        if (linkedRef.current) return;
         saveFilterPreferences('water-daily', { tab: activeTab, zone: activeZone });
     }, [activeTab, activeZone]);
+
+    // Deep link `?zone=` — open that zone's analysis, on mount or while already
+    // showing. One-shot: removed once applied, so a second tap on the same row
+    // is a real URL change again (see lib/deep-links).
+    const applyZoneLink = useCallback((params: URLSearchParams) => {
+        if (!params.has('zone')) return;
+        const zone = parseWaterDailyZone(params.get('zone'));
+        if (zone) {
+            linkedRef.current = true;
+            setActiveZone(zone);
+            setActiveTab('zones');
+        }
+        consumeSearchParams(['zone']);
+    }, []);
+
+    // The operator's own choices: from here on tab and zone are theirs again.
+    const chooseTab = useCallback((tab: DailyTab) => {
+        linkedRef.current = false;
+        setActiveTab(tab);
+    }, []);
+    const chooseZone = useCallback((zone: string) => {
+        linkedRef.current = false;
+        setActiveZone(zone);
+    }, []);
 
     // Days the selected month actually has — the slider and the chevrons are
     // bounded by this, so e.g. day 30 is unreachable in February.
@@ -169,6 +203,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
     // ── Cross-navigation: Zone Watch cards/heatmap → Zone Analysis drill-down ──
     const inspectZone = useCallback((zone: string, day?: number) => {
         if (day !== undefined) pickDay(day);
+        linkedRef.current = false;
         setActiveZone(zone);
         setActiveTab('zones');
     }, [pickDay]);
@@ -327,6 +362,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
     // ── Controls bar ──────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
+            <SearchParamsListener onChange={applyZoneLink} />
             <SectionCard>
                 <SectionCard.Body className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                     {/* Year + Month selector */}
@@ -420,7 +456,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                     <Tabs<DailyTab>
                         aria-label="Water daily sections"
                         value={activeTab}
-                        onChange={setActiveTab}
+                        onChange={chooseTab}
                         tabs={DAILY_TABS}
                     />
 
@@ -451,7 +487,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                     <select
                                         aria-label="Select zone"
                                         value={activeZone}
-                                        onChange={e => setActiveZone(e.target.value)}
+                                        onChange={e => chooseZone(e.target.value)}
                                         className="cursor-pointer rounded-control bg-transparent text-label text-fg outline-none focus-visible:ring-2 focus-visible:ring-accent"
                                     >
                                         {ZONE_BULK_CONFIG.map(z => (
