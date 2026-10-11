@@ -316,3 +316,4 @@ Clean enterprise dashboard — flat, minimal, data-first. References: Grafana, L
 - `eslint` — stay on 9.x until plugins support 10.x
 - `jsdom` — stay on 27.x (vitest compatibility)
 - `@vitejs/plugin-react` — stay on 5.x (vitest compatibility)
+- `eslint-plugin-react-hooks` — pinned at 7.0.1 (and `eslint-config-next` on 16.2.x): 7.1.x adds React Compiler rules that fail 41 places in existing code. Lift the pin only in a change that fixes those (`next` itself is free to move — it is the security-relevant one)
