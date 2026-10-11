@@ -172,6 +172,132 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
     );
 });
 
+// ─── STP Electricity tab ────────────────────────────────────────────────────
+// Same idiom as the three charts above (same colours, axes, tooltip, legend,
+// point-count line), so the Electricity tab reads as part of the same page.
+
+export interface STPElectricityChartPoint {
+    month: string;
+    /** OWATCO report kWh; null = no report for this month (a gap, never 0). */
+    owatco: number | null;
+    /** Nama-billed kWh, only for months with no OWATCO report. */
+    nama: number | null;
+    /** Reliable bill before VAT (OMR); null = no reliable bill. */
+    billed: number | null;
+    /** Indicative baisa/kWh (bill ÷ OWATCO kWh); null when either is missing. */
+    rate: number | null;
+}
+
+export const STPElectricityKwhChart = memo(function STPElectricityKwhChart({ data }: { data: STPElectricityChartPoint[] }) {
+    const chartMotion = useChartMotion();
+    return (
+        <div className="w-full min-w-0">
+            <div
+                role="img"
+                aria-label="STP electricity consumption area chart in kilowatt-hours per month, OWATCO reports and Nama-billed figures"
+                className="h-[320px] min-h-[260px] w-full"
+            >
+                <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                            <linearGradient id="stp-owatco-area" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={CHART_COLORS.brand} stopOpacity={0.28} />
+                                <stop offset="100%" stopColor={CHART_COLORS.brand} stopOpacity={0.04} />
+                            </linearGradient>
+                            <linearGradient id="stp-nama-area" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor={CHART_COLORS.primary} stopOpacity={0.24} />
+                                <stop offset="100%" stopColor={CHART_COLORS.primary} stopOpacity={0.04} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
+                        <XAxis dataKey="month" tick={X_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} dy={6} />
+                        <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} tickFormatter={compact} width={56}
+                            label={{ value: "kWh", angle: -90, position: "insideLeft", style: { textAnchor: "middle", fill: "var(--chart-axis)", fontSize: 11 } }} />
+                        <Tooltip
+                            contentStyle={TIP_STYLE}
+                            cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }}
+                            formatter={(v: TipValue, name) => [v == null ? "no figure" : fmt(Number(v), "kWh"), name]}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
+                        <Area type="monotone" dataKey="owatco" name="OWATCO Report" stroke={CHART_COLORS.brand} fill="url(#stp-owatco-area)" strokeWidth={3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
+                        <Area type="monotone" dataKey="nama" name="Nama Bill (no report)" stroke={CHART_COLORS.primary} fill="url(#stp-nama-area)" strokeWidth={3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
+                    </AreaChart>
+                </ResponsiveContainer>
+            </div>
+            <PointCount count={data.length} view="monthly" />
+        </div>
+    );
+});
+
+export const STPElectricityBillChart = memo(function STPElectricityBillChart({ data }: { data: STPElectricityChartPoint[] }) {
+    const chartMotion = useChartMotion();
+    return (
+        <div className="w-full min-w-0">
+            <div
+                role="img"
+                aria-label="STP electricity bill bar chart in Omani Rials before VAT per month"
+                className="h-[280px] min-h-[240px] w-full"
+            >
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
+                        <XAxis dataKey="month" tick={X_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} dy={6} />
+                        <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} tickFormatter={compact} width={56}
+                            label={{ value: "OMR", angle: -90, position: "insideLeft", style: { textAnchor: "middle", fill: "var(--chart-axis)", fontSize: 11 } }} />
+                        <Tooltip
+                            contentStyle={TIP_STYLE}
+                            cursor={{ fill: "var(--chart-cursor-fill)", radius: 6 }}
+                            formatter={(v: TipValue, name) => [v == null ? "no reliable bill" : fmt(Number(v), "OMR"), name]}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
+                        <Bar dataKey="billed" name="Bill (before VAT)" fill={CHART_COLORS.inlet} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+            <PointCount count={data.length} view="monthly" />
+        </div>
+    );
+});
+
+export const STPElectricityRateChart = memo(function STPElectricityRateChart({ data }: { data: STPElectricityChartPoint[] }) {
+    const chartMotion = useChartMotion();
+    return (
+        <div className="w-full min-w-0">
+            <div
+                role="img"
+                aria-label="Indicative electricity cost line chart in baisa per kilowatt-hour per month"
+                className="h-[280px] min-h-[240px] w-full"
+            >
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="4 4" stroke="var(--chart-grid)" vertical={false} />
+                        <XAxis dataKey="month" tick={X_TICK} axisLine={false} tickLine={false} interval="preserveStartEnd" minTickGap={24} dy={6} />
+                        <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={44}
+                            label={{ value: "baisa/kWh", angle: -90, position: "insideLeft", style: { textAnchor: "middle", fill: "var(--chart-axis)", fontSize: 11 } }} />
+                        <Tooltip
+                            contentStyle={TIP_STYLE}
+                            cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }}
+                            formatter={(v: TipValue, name) => [v == null ? "no figure" : `${Number(v).toFixed(1)} baisa/kWh`, name]}
+                        />
+                        <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
+                        <Line
+                            type="monotone"
+                            dataKey="rate"
+                            name="Indicative Cost"
+                            stroke={CHART_COLORS.amber}
+                            strokeWidth={3}
+                            dot={{ r: 3, strokeWidth: 1, fill: "var(--card)" }}
+                            activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }}
+                            {...chartMotion}
+                        />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+            <PointCount count={data.length} view="monthly" />
+        </div>
+    );
+});
+
 export const STPTankerChart = memo(function STPTankerChart({ data, view }: { data: STPChartDataPoint[]; view: ChartView }) {
     const chartMotion = useChartMotion();
     return (

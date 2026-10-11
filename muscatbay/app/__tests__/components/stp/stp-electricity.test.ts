@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
-    energyIntensity, indicativeRateBaisa, latestCompleteYear, latestReported, monthLabel, yearSummary,
+    energyIntensity, indicativeRateBaisa, latestCompleteYear, latestReported, monthLabel, periodLabel, rowStatus, yearSummary,
 } from "@/components/stp/stp-electricity";
 import { transformStpElectricityMonth } from "@/functions/api/stp-electricity";
 import type { StpElectricityMonth } from "@/entities/stp-electricity";
@@ -91,5 +91,22 @@ describe("year summaries", () => {
     it("finds the latest reported month, skipping a report not yet received", () => {
         expect(latestReported(rows)?.reportMonth).toBe("2026-01-01");
         expect(monthLabel("2026-01-01")).toBe("Jan-26");
+    });
+});
+
+describe("record table helpers", () => {
+    it("labels the OWATCO cycle without years, and '—' when the period is unknown", () => {
+        expect(periodLabel(month("2026-08-01", { periodStart: "2026-07-26", periodEnd: "2026-08-25" }))).toBe("26 Jul – 25 Aug");
+        expect(periodLabel(month("2026-08-01"))).toBe("—");
+    });
+
+    it("gives one status per month: the first problem, or Complete", () => {
+        const billed = { owatcoKwh: 1, owatcoStatus: "reported" as const, billedOmr: 1, billedStatus: "billed" as const };
+        expect(rowStatus(month("2026-08-01", billed))).toEqual({ label: "Complete", tone: "good" });
+        expect(rowStatus(month("2026-09-01", { owatcoStatus: "not_received" })).label).toBe("Report awaited");
+        expect(rowStatus(month("2024-01-01")).label).toBe("No report");
+        expect(rowStatus(month("2025-06-01", { ...billed, owatcoStatus: "reported_discrepancy" })).tone).toBe("watch");
+        expect(rowStatus(month("2026-05-01", { ...billed, billedOmr: null, billedStatus: "unreliable" })).label).toBe("Bill unreliable");
+        expect(rowStatus(month("2024-10-01", { owatcoKwh: 1, owatcoStatus: "reported" }))).toEqual({ label: "No bill", tone: "missing" });
     });
 });
