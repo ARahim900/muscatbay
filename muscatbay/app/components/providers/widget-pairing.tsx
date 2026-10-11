@@ -46,31 +46,39 @@ function postKey(win: Window, key: string | null) {
 
 export function WidgetPairing() {
     const { user, loading, isDevMode } = useAuth();
-    const attempted = useRef(false);
+    const userId = user?.id ?? null;
+    // The user a key was asked for, kept until sign-out. The auth provider
+    // publishes the same user several times as a page opens; the request is
+    // never abandoned and re-sent for those, because an abandoned request
+    // still creates a key on the server.
+    const requestedFor = useRef<string | null>(null);
+    // Who is signed in now, read when the key arrives.
+    const currentUser = useRef<string | null>(userId);
+    useEffect(() => {
+        currentUser.current = userId;
+    }, [userId]);
 
     useEffect(() => {
         if (loading || isDevMode) return;
         const bridge = nativeWidgetBridge(window);
         if (!bridge) return;
 
-        if (!user) {
+        if (!userId) {
             if (bridge.paired) postKey(window, null);
-            attempted.current = false;
+            requestedFor.current = null;
             return;
         }
-        if (bridge.paired || attempted.current) return;
-        attempted.current = true;
+        if (bridge.paired || requestedFor.current === userId) return;
 
         const client = getSupabaseClient();
         if (!client) return;
-        let cancelled = false;
-        let settled = false;
+        requestedFor.current = userId;
         void (async () => {
             const { data, error } = await client.rpc("create_widget_token", {
                 p_label: bridge.label,
             });
-            settled = true;
-            if (cancelled) return;
+            // Signed out (or switched account) while the key was on its way.
+            if (currentUser.current !== userId) return;
             if (error || typeof data !== "string" || !/^[0-9a-f]{64}$/.test(data)) {
                 // Not fatal: the widget keeps asking to be connected, and the
                 // next app launch tries again.
@@ -79,13 +87,7 @@ export function WidgetPairing() {
             }
             postKey(window, data);
         })();
-        return () => {
-            cancelled = true;
-            // A request cut short by a re-render may be retried by the next one;
-            // a finished request keeps the guard.
-            if (!settled) attempted.current = false;
-        };
-    }, [user, loading, isDevMode]);
+    }, [userId, loading, isDevMode]);
 
     return null;
 }
