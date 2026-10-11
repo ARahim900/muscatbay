@@ -28,6 +28,7 @@ import {
     Download,
     ChevronDown,
     AlertTriangle,
+    Zap,
 } from "lucide-react";
 import { TablePagination, TableToolbar, StatusBadge, SortableTableHead, type BadgeColor, type PageSizeOption } from "@/components/shared/data-table";
 import { Table, TableHeader, TableBody, TableFooter, TableRow, TableCell } from "@/components/ui/table";
@@ -49,6 +50,7 @@ import dynamic from "next/dynamic";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
 import { addReading, fmtReading, stpEfficiency } from "@/components/stp/stp-analytics";
+import { StpElectricityPanel } from "@/components/stp/stp-electricity-panel";
 import { formatOmr, formatOmrRate } from "@/lib/currency";
 
 // ─── Recharts is loaded on demand ──────────────────────────────────────────
@@ -949,14 +951,17 @@ export default function STPPage() {
                 tabs={[
                     { key: "watch", label: "Plant Watch", icon: Gauge },
                     { key: "dashboard", label: "Operations & Trends", icon: Activity },
+                    { key: "electricity", label: "Electricity", icon: Zap },
                 ]}
             />
 
-            <StatsGrid stats={stats} />
+            {/* The operations KPIs and the period filter belong to the daily log;
+                the Electricity tab carries its own monthly figures. */}
+            {activeTab !== "electricity" && <StatsGrid stats={stats} />}
 
             {/* Shared period filter — drives BOTH Plant Watch and Operations & Trends,
                 so an operator never has to change tabs to re-scope the range. */}
-            {allMonths.length > 0 && (
+            {activeTab !== "electricity" && allMonths.length > 0 && (
                 <PeriodFilterPanel
                     periodLabel={selectedDateRange.start && selectedDateRange.end
                         ? `${selectedDateRange.start} – ${selectedDateRange.end}`
@@ -1013,6 +1018,14 @@ export default function STPPage() {
             {activeTab === "watch" && (
                 <div id="panel-watch" role="tabpanel" aria-labelledby="tab-watch" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
                     <PlantWatch operations={operations} onInspectDay={handleInspectDay} />
+                </div>
+            )}
+
+            {activeTab === "electricity" && (
+                <div id="panel-electricity" role="tabpanel" aria-labelledby="tab-electricity" tabIndex={0} className="motion-safe:animate-in motion-safe:fade-in duration-200">
+                    <SectionBoundary title="STP electricity">
+                        <StpElectricityPanel operations={allOperations} />
+                    </SectionBoundary>
                 </div>
             )}
 

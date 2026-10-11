@@ -22,6 +22,7 @@ export * from './electricity';
 
 // STP entity
 export * from './stp';
+export * from './stp-electricity';
 
 // Water entity
 export * from './water';

@@ -26,6 +26,7 @@ export * from './assets';
 export * from './contractors';
 export * from './electricity';
 export * from './stp';
+export * from './stp-electricity';
 export * from './water';
 export * from './manual-readings';
 export * from './csv-upload';

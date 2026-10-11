@@ -116,7 +116,7 @@ export function waterDailyZoneHref(zone: string): string {
 /*  STP                                                                */
 /* ------------------------------------------------------------------ */
 
-export const STP_TABS = ["watch", "dashboard"] as const;
+export const STP_TABS = ["watch", "dashboard", "electricity"] as const;
 export type StpTab = (typeof STP_TABS)[number];
 
 export function parseStpTab(value: string | null | undefined): StpTab | null {
