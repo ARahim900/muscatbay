@@ -520,12 +520,13 @@ stops at last month" problem is structurally closed:
   the Dashboard deck cells; figures are final from first paint. Recorded in
   `DESIGN_SYSTEM.md` §7.
 
-- **Open 2026-10-11 — STP electricity: data gaps and one pending step.**
+- **Open 2026-10-11 — STP electricity: data gaps.**
   `sql/migrations/20261011_stp_electricity_monthly.sql` creates
   `stp_electricity_monthly` (read: STP readers; write: admin) and loads Jan-24
-  to Sep-26 — **it must be applied to the Supabase project before the
-  Electricity tab shows data** (until then the tab says it could not load).
-  Data on file: OWATCO kWh Sep-24 → Aug-26 (2025 complete, 280,755 kWh);
+  to Sep-26. **Applied to the live project 2026-10-11** with owner approval
+  (history version `20261011170000`, `stp_electricity_monthly`); 33 rows,
+  totals re-checked live. Applied statement by statement because the
+  `apply_migration` tool timed out on the full file. Data on file: OWATCO kWh Sep-24 → Aug-26 (2025 complete, 280,755 kWh);
   Nama-billed kWh Jan–Aug 2024 only; bills before VAT for all of 2025
   (9,237.118 OMR) and Jan–Apr, Jun–Aug 2026. Gaps: OWATCO reports Jan–Aug
   2024 not found; **Sep-26 OWATCO report not yet received**; **May-26 bill
