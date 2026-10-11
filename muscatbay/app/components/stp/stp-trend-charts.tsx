@@ -29,11 +29,12 @@ export type ChartView = "daily" | "monthly";
 export interface STPChartDataPoint {
     month: string;
     sortKey: string;
-    inlet: number;
-    tse: number;
-    income: number;
-    savings: number;
-    trips: number;
+    // null = nothing recorded for this day/month — plotted as a gap, never 0.
+    inlet: number | null;
+    tse: number | null;
+    income: number | null;
+    savings: number | null;
+    trips: number | null;
 }
 
 const CHART_COLORS = {
@@ -127,7 +128,7 @@ export const STPVolumeChart = memo(function STPVolumeChart({ data, view }: { dat
                         <Tooltip
                             contentStyle={TIP_STYLE}
                             cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }}
-                            formatter={(v: TipValue, name) => [fmt(Number(v), "m³"), name]}
+                            formatter={(v: TipValue, name) => [v == null ? "no reading" : fmt(Number(v), "m³"), name]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
                         <Area type="monotone" dataKey="inlet" name="Sewage Inlet" stroke={CHART_COLORS.brand} fill="url(#stp-inlet-area)" strokeWidth={view === "daily" ? 2 : 3} activeDot={{ r: 5, stroke: "var(--card)", strokeWidth: 2 }} {...chartMotion}/>
@@ -158,7 +159,7 @@ export const STPEconomicChart = memo(function STPEconomicChart({ data, view }: {
                         <Tooltip
                             contentStyle={TIP_STYLE}
                             cursor={{ fill: "var(--chart-cursor-fill)", radius: 6 }}
-                            formatter={(v: TipValue, name) => [fmt(Number(v), "OMR"), name]}
+                            formatter={(v: TipValue, name) => [v == null ? "no reading" : fmt(Number(v), "OMR"), name]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
                         <Bar dataKey="income" name="Income" fill={CHART_COLORS.success} radius={[3, 3, 0, 0]} maxBarSize={18} {...chartMotion}/>
@@ -189,7 +190,7 @@ export const STPTankerChart = memo(function STPTankerChart({ data, view }: { dat
                         <Tooltip
                             contentStyle={TIP_STYLE}
                             cursor={{ stroke: "var(--chart-cursor-stroke)", strokeWidth: 2 }}
-                            formatter={(v: TipValue, name) => [`${Number(v).toLocaleString("en-US")} trips`, name]}
+                            formatter={(v: TipValue, name) => [v == null ? "no reading" : `${Number(v).toLocaleString("en-US")} trips`, name]}
                         />
                         <Legend iconType="circle" wrapperStyle={{ paddingTop: 8, fontSize: 11 }} />
                         <Line

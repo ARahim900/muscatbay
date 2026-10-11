@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { saveFilterPreferences, loadFilterPreferences } from "@/lib/filter-preferences";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { EmptyState } from "@/components/shared/empty-state";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend } from "@/lib/trends";
 
@@ -715,6 +716,36 @@ export default function ElectricityPage() {
 
     if (loading) {
         return <ElectricityLoadingSkeleton />;
+    }
+
+    // A failed (or empty) live read with no meters: say so, with Retry. The
+    // empty states further down would otherwise blame the operator's filters.
+    if (debugError && meters.length === 0) {
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <PageHeader
+                        title="Electricity"
+                        description="Track power consumption and costs across all meters"
+                    />
+                    <PageStatusBar
+                        isConnected={false}
+                        isLive={isLive}
+                        lastUpdated={lastUpdated}
+                        latestDataDate={latestDataDate}
+                        error={`Error: ${debugError}`}
+                    />
+                </div>
+                <div role="alert" className="ops-table-shell">
+                    <EmptyState
+                        variant="error"
+                        title="Failed to load electricity data"
+                        description={debugError}
+                        action={{ label: "Retry", onClick: () => loadData() }}
+                    />
+                </div>
+            </div>
+        );
     }
 
     return (

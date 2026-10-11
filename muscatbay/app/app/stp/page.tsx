@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatsGrid } from "@/components/shared/stats-grid";
 import { TabNavigation } from "@/components/shared/tab-navigation";
 import { PageStatusBar } from "@/components/shared/page-status-bar";
+import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +48,7 @@ import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import dynamic from "next/dynamic";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
+import { addReading, fmtReading, stpEfficiency } from "@/components/stp/stp-analytics";
 import { formatOmr } from "@/lib/currency";
 
 // ─── Recharts is loaded on demand ──────────────────────────────────────────
@@ -266,7 +268,7 @@ export default function STPPage() {
         if (!latest) return [];
 
         const alerts: Array<{ key: string; title: string; message: string; tone: "warning" | "info" }> = [];
-        if (latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
+        if (latest.inlet_sewage !== null && latest.inlet_sewage > STP_THRESHOLDS.INLET_TOAST_M3) {
             alerts.push({
                 key: "high-inlet",
                 title: "High inlet sewage",
@@ -274,7 +276,7 @@ export default function STPPage() {
                 tone: "warning",
             });
         }
-        if (latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
+        if (latest.tanker_trips !== null && latest.tanker_trips > STP_THRESHOLDS.TANKER_TOAST_TRIPS) {
             alerts.push({
                 key: "high-tanker-activity",
                 title: "High tanker activity",
@@ -495,19 +497,25 @@ export default function STPPage() {
 
     // Calculate statistics from filtered operations
     const stats = useMemo(() => {
-        const totalInlet = operations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const totalTSE = operations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const totalTrips = operations.reduce((sum, op) => sum + op.tanker_trips, 0);
+        // A missing reading (null) adds nothing to a total — it is not zero flow.
+        const totalInlet = operations.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+        const totalTSE = operations.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
+        const totalTrips = operations.reduce((sum, op) => sum + (op.tanker_trips ?? 0), 0);
         const generatedIncome = totalTrips * TANKER_FEE;
         const waterSavings = totalTSE * TSE_SAVING_RATE;
         const totalEconomicImpact = generatedIncome + waterSavings;
-        const treatmentEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
-        const dailyAverageInlet = operations.length > 0 ? totalInlet / operations.length : 0;
+        // Recovery only from days with BOTH figures recorded; null when none.
+        const paired = operations.filter(op => op.inlet_sewage !== null && op.tse_for_irrigation !== null);
+        const pairedInlet = paired.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+        const pairedTSE = paired.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
+        const treatmentEfficiency = pairedInlet > 0 ? (pairedTSE / pairedInlet) * 100 : null;
+        const inletDays = operations.filter(op => op.inlet_sewage !== null).length;
+        const dailyAverageInlet = inletDays > 0 ? totalInlet / inletDays : null;
 
         // Previous period totals for trend comparison
-        const prevInlet = prevOperations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const prevTSE = prevOperations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const prevTrips = prevOperations.reduce((sum, op) => sum + op.tanker_trips, 0);
+        const prevInlet = prevOperations.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+        const prevTSE = prevOperations.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
+        const prevTrips = prevOperations.reduce((sum, op) => sum + (op.tanker_trips ?? 0), 0);
         const prevIncome = prevTrips * TANKER_FEE;
         const prevSavings = prevTSE * TSE_SAVING_RATE;
         const prevEconomicImpact = prevIncome + prevSavings;
@@ -537,7 +545,9 @@ export default function STPPage() {
                 label: "Inlet Sewage",
                 value: totalInlet.toLocaleString('en-US', { maximumFractionDigits: 1 }),
                 unit: "m³",
-                subtitle: `avg ${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³/day over this range`,
+                subtitle: dailyAverageInlet === null
+                    ? "no inlet recorded in this range"
+                    : `avg ${Math.round(dailyAverageInlet).toLocaleString('en-US')} m³/day over this range`,
                 icon: Droplets,
                 variant: "primary" as const,
                 ...(inletTrend && { trend: inletTrend.trend, trendValue: inletTrend.trendValue }),
@@ -546,7 +556,9 @@ export default function STPPage() {
                 label: "TSE for Irrigation",
                 value: totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 }),
                 unit: "m³",
-                subtitle: `${treatmentEfficiency.toFixed(1)}% of inlet recycled`,
+                subtitle: treatmentEfficiency === null
+                    ? "recovery not computable — inlet or TSE not recorded"
+                    : `${treatmentEfficiency.toFixed(1)}% of inlet recycled`,
                 icon: Recycle,
                 variant: "secondary" as const,
                 ...(tseTrend && { trend: tseTrend.trend, trendValue: tseTrend.trendValue }),
@@ -579,13 +591,15 @@ export default function STPPage() {
             const monthKey = format(new Date(op.date), "MMM-yy");
             const sortKey = format(new Date(op.date), "yyyy-MM");
             if (!monthly[monthKey]) {
-                monthly[monthKey] = { month: monthKey, sortKey, inlet: 0, tse: 0, income: 0, savings: 0, trips: 0 };
+                monthly[monthKey] = { month: monthKey, sortKey, inlet: null, tse: null, income: null, savings: null, trips: null };
             }
-            monthly[monthKey].inlet += op.inlet_sewage;
-            monthly[monthKey].tse += op.tse_for_irrigation;
-            monthly[monthKey].income += (op.tanker_trips * TANKER_FEE);
-            monthly[monthKey].savings += (op.tse_for_irrigation * TSE_SAVING_RATE);
-            monthly[monthKey].trips += op.tanker_trips;
+            // A period with nothing recorded stays null (a gap), never 0.
+            const m = monthly[monthKey];
+            m.inlet = addReading(m.inlet, op.inlet_sewage);
+            m.tse = addReading(m.tse, op.tse_for_irrigation);
+            m.income = addReading(m.income, op.tanker_trips === null ? null : op.tanker_trips * TANKER_FEE);
+            m.savings = addReading(m.savings, op.tse_for_irrigation === null ? null : op.tse_for_irrigation * TSE_SAVING_RATE);
+            m.trips = addReading(m.trips, op.tanker_trips);
         });
 
         return Object.values(monthly).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
@@ -598,13 +612,14 @@ export default function STPPage() {
         operations.forEach(op => {
             const dateKey = format(new Date(op.date), "yyyy-MM-dd");
             if (!daily[dateKey]) {
-                daily[dateKey] = { month: format(new Date(op.date), "dd MMM"), sortKey: dateKey, inlet: 0, tse: 0, income: 0, savings: 0, trips: 0 };
+                daily[dateKey] = { month: format(new Date(op.date), "dd MMM"), sortKey: dateKey, inlet: null, tse: null, income: null, savings: null, trips: null };
             }
-            daily[dateKey].inlet += op.inlet_sewage;
-            daily[dateKey].tse += op.tse_for_irrigation;
-            daily[dateKey].income += op.tanker_trips * TANKER_FEE;
-            daily[dateKey].savings += op.tse_for_irrigation * TSE_SAVING_RATE;
-            daily[dateKey].trips += op.tanker_trips;
+            const d = daily[dateKey];
+            d.inlet = addReading(d.inlet, op.inlet_sewage);
+            d.tse = addReading(d.tse, op.tse_for_irrigation);
+            d.income = addReading(d.income, op.tanker_trips === null ? null : op.tanker_trips * TANKER_FEE);
+            d.savings = addReading(d.savings, op.tse_for_irrigation === null ? null : op.tse_for_irrigation * TSE_SAVING_RATE);
+            d.trips = addReading(d.trips, op.tanker_trips);
         });
 
         return Object.values(daily).sort((a, b) => a.sortKey.localeCompare(b.sortKey));
@@ -633,35 +648,40 @@ export default function STPPage() {
             filtered = filtered.filter(op => {
                 const dateStr = format(new Date(op.date), "dd/MM/yyyy");
                 return dateStr.includes(term) ||
-                    op.inlet_sewage.toString().includes(term) ||
-                    op.tse_for_irrigation.toString().includes(term) ||
-                    op.tanker_trips.toString().includes(term);
+                    String(op.inlet_sewage ?? '').includes(term) ||
+                    String(op.tse_for_irrigation ?? '').includes(term) ||
+                    String(op.tanker_trips ?? '').includes(term);
             });
         }
 
         // Sort based on logSortField and logSortDirection
         filtered.sort((a, b) => {
+            // A missing reading sorts below every recorded one (never as 0).
+            const key = (v: number | null) => (v === null ? Number.NEGATIVE_INFINITY : v);
             let aVal: number | string = 0;
             let bVal: number | string = 0;
-            const aEfficiency = a.inlet_sewage > 0 ? (a.tse_for_irrigation / a.inlet_sewage) * 100 : 0;
-            const bEfficiency = b.inlet_sewage > 0 ? (b.tse_for_irrigation / b.inlet_sewage) * 100 : 0;
-            const aIncome = a.tanker_trips * TANKER_FEE;
-            const bIncome = b.tanker_trips * TANKER_FEE;
-            const aSavings = a.tse_for_irrigation * TSE_SAVING_RATE;
-            const bSavings = b.tse_for_irrigation * TSE_SAVING_RATE;
+            const aEfficiency = key(stpEfficiency(a.inlet_sewage, a.tse_for_irrigation));
+            const bEfficiency = key(stpEfficiency(b.inlet_sewage, b.tse_for_irrigation));
+            const aIncome = (a.tanker_trips ?? 0) * TANKER_FEE;
+            const bIncome = (b.tanker_trips ?? 0) * TANKER_FEE;
+            const aSavings = (a.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
+            const bSavings = (b.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
 
             switch (logSortField) {
                 case 'date': aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime(); break;
-                case 'inlet': aVal = a.inlet_sewage; bVal = b.inlet_sewage; break;
-                case 'tse': aVal = a.tse_for_irrigation; bVal = b.tse_for_irrigation; break;
+                case 'inlet': aVal = key(a.inlet_sewage); bVal = key(b.inlet_sewage); break;
+                case 'tse': aVal = key(a.tse_for_irrigation); bVal = key(b.tse_for_irrigation); break;
                 case 'efficiency': aVal = aEfficiency; bVal = bEfficiency; break;
-                case 'trips': aVal = a.tanker_trips; bVal = b.tanker_trips; break;
+                case 'trips': aVal = key(a.tanker_trips); bVal = key(b.tanker_trips); break;
                 case 'income': aVal = aIncome; bVal = bIncome; break;
                 case 'savings': aVal = aSavings; bVal = bSavings; break;
                 case 'total': aVal = aIncome + aSavings; bVal = bIncome + bSavings; break;
                 default: aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime();
             }
-            return logSortDirection === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+            const diff = (aVal as number) - (bVal as number);
+            // -Infinity − -Infinity is NaN; two missing readings are equal.
+            const order = Number.isNaN(diff) ? 0 : diff;
+            return logSortDirection === 'asc' ? order : -order;
         });
 
         return filtered;
@@ -679,10 +699,13 @@ export default function STPPage() {
     // Month totals — computed from ALL daily operations (not paginated) for the selected month
     const monthTotals = useMemo(() => {
         if (dailyOperations.length === 0) return null;
-        const totalInlet = dailyOperations.reduce((sum, op) => sum + op.inlet_sewage, 0);
-        const totalTSE = dailyOperations.reduce((sum, op) => sum + op.tse_for_irrigation, 0);
-        const totalTrips = dailyOperations.reduce((sum, op) => sum + op.tanker_trips, 0);
-        const avgEfficiency = totalInlet > 0 ? (totalTSE / totalInlet) * 100 : 0;
+        const totalInlet = dailyOperations.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+        const totalTSE = dailyOperations.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
+        const totalTrips = dailyOperations.reduce((sum, op) => sum + (op.tanker_trips ?? 0), 0);
+        const paired = dailyOperations.filter(op => op.inlet_sewage !== null && op.tse_for_irrigation !== null);
+        const pairedInlet = paired.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+        const pairedTSE = paired.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
+        const avgEfficiency = pairedInlet > 0 ? (pairedTSE / pairedInlet) * 100 : null;
         const totalIncome = totalTrips * TANKER_FEE;
         const totalSavings = totalTSE * TSE_SAVING_RATE;
         const totalImpact = totalIncome + totalSavings;
@@ -703,18 +726,19 @@ export default function STPPage() {
     // Export daily ops to CSV
     const handleLogExportCSV = () => {
         const data = dailyOperations.map(op => {
-            const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-            const income = op.tanker_trips * TANKER_FEE;
-            const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
+            // Missing readings export as empty cells, never as 0.
+            const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
+            const income = op.tanker_trips === null ? null : op.tanker_trips * TANKER_FEE;
+            const savings = op.tse_for_irrigation === null ? null : op.tse_for_irrigation * TSE_SAVING_RATE;
             return {
                 Date: format(new Date(op.date), "dd/MM/yyyy"),
-                'Inlet (m³)': op.inlet_sewage,
-                'TSE Output (m³)': op.tse_for_irrigation,
-                'Efficiency %': Number(efficiency.toFixed(1)),
-                'Tanker Trips': op.tanker_trips,
-                'Income (OMR)': Number(income.toFixed(3)),
-                'Savings (OMR)': Number(savings.toFixed(3)),
-                'Total Impact (OMR)': Number((income + savings).toFixed(3)),
+                'Inlet (m³)': op.inlet_sewage ?? '',
+                'TSE Output (m³)': op.tse_for_irrigation ?? '',
+                'Efficiency %': efficiency === null ? '' : Number(efficiency.toFixed(1)),
+                'Tanker Trips': op.tanker_trips ?? '',
+                'Income (OMR)': income === null ? '' : Number(income.toFixed(3)),
+                'Savings (OMR)': savings === null ? '' : Number(savings.toFixed(3)),
+                'Total Impact (OMR)': income === null && savings === null ? '' : Number(((income ?? 0) + (savings ?? 0)).toFixed(3)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);
@@ -846,6 +870,37 @@ export default function STPPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                     <ChartSkeleton height="h-[350px]" />
                     <ChartSkeleton height="h-[350px]" />
+                </div>
+            </div>
+        );
+    }
+
+    // A failed (or empty) live read with nothing to show: say so, with Retry,
+    // instead of rendering KPI tiles totalled over an empty log ("0 m³").
+    if (loadError && allOperations.length === 0) {
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+                <SearchParamsListener onChange={applyStpLink} />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <PageHeader
+                        title="STP Plant"
+                        description="Treatment performance and daily operations"
+                    />
+                    <PageStatusBar
+                        isConnected={isLiveData}
+                        isLive={isLive}
+                        lastUpdated={lastUpdated}
+                        latestDataDate={latestDataDate}
+                        error={loadError}
+                    />
+                </div>
+                <div role="alert" className="ops-table-shell">
+                    <EmptyState
+                        variant="error"
+                        title="Failed to load STP data"
+                        description={loadError}
+                        action={{ label: "Retry", onClick: () => loadData() }}
+                    />
                 </div>
             </div>
         );
@@ -1087,30 +1142,31 @@ export default function STPPage() {
                         {/* Mobile card view */}
                         <div className="md:hidden space-y-3">
                             {paginatedDailyOperations.map((op) => {
-                                const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-                                const income = op.tanker_trips * TANKER_FEE;
-                                const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
+                                const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
+                                const income = (op.tanker_trips ?? 0) * TANKER_FEE;
+                                const savings = (op.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
                                 const totalImpact = income + savings;
-                                const efficiencyBadgeColor: BadgeColor = efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                const efficiencyBadgeColor: BadgeColor = efficiency === null ? 'slate' : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                const efficiencyLabel = efficiency === null ? 'No reading' : `${efficiency.toFixed(1)}%`;
 
                                 return (
                                     <div key={op.id} className="rounded-xl border border-border/80 bg-card p-4 shadow-sm space-y-3">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm font-medium text-foreground">{format(new Date(op.date), "dd/MM/yyyy")}</span>
-                                            <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
+                                            <StatusBadge label={efficiencyLabel} color={efficiencyBadgeColor} />
                                         </div>
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Inlet</span>
-                                                <p className="font-mono font-medium text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
+                                                <p className="font-mono font-medium text-primary">{fmtReading(op.inlet_sewage)} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">TSE Output</span>
-                                                <p className="font-mono font-medium text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })} m³</p>
+                                                <p className="font-mono font-medium text-mb-info-text">{fmtReading(op.tse_for_irrigation)} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Tanker Trips</span>
-                                                <p className="font-mono font-medium text-[var(--mb-warning-text)]">{op.tanker_trips}</p>
+                                                <p className="font-mono font-medium text-[var(--mb-warning-text)]">{fmtReading(op.tanker_trips, 0)}</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Total Impact</span>
@@ -1175,23 +1231,24 @@ export default function STPPage() {
                                 </TableHeader>
                                 <TableBody>
                                     {paginatedDailyOperations.map((op) => {
-                                        const efficiency = op.inlet_sewage > 0 ? (op.tse_for_irrigation / op.inlet_sewage) * 100 : 0;
-                                        const income = op.tanker_trips * TANKER_FEE;
-                                        const savings = op.tse_for_irrigation * TSE_SAVING_RATE;
+                                        const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
+                                        const income = (op.tanker_trips ?? 0) * TANKER_FEE;
+                                        const savings = (op.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
                                         const totalImpact = income + savings;
-                                        const efficiencyBadgeColor: BadgeColor = efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                        const efficiencyBadgeColor: BadgeColor = efficiency === null ? 'slate' : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
+                                        const efficiencyLabel = efficiency === null ? 'No reading' : `${efficiency.toFixed(1)}%`;
 
                                         return (
                                             <TableRow key={op.id}>
                                                 <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
-                                                <TableCell className="num text-primary">{op.inlet_sewage.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
-                                                <TableCell className="num text-mb-info-text">{op.tse_for_irrigation.toLocaleString('en-US', { maximumFractionDigits: 1 })}</TableCell>
+                                                <TableCell className="num text-primary">{fmtReading(op.inlet_sewage)}</TableCell>
+                                                <TableCell className="num text-mb-info-text">{fmtReading(op.tse_for_irrigation)}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end">
-                                                        <StatusBadge label={`${efficiency.toFixed(1)}%`} color={efficiencyBadgeColor} />
+                                                        <StatusBadge label={efficiencyLabel} color={efficiencyBadgeColor} />
                                                     </div>
                                                 </TableCell>
-                                                <TableCell className="num text-mb-warning-text">{op.tanker_trips}</TableCell>
+                                                <TableCell className="num text-mb-warning-text">{fmtReading(op.tanker_trips, 0)}</TableCell>
                                                 <TableCell className="num text-mb-success-text">{income.toFixed(1)}</TableCell>
                                                 <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
                                                 <TableCell className="num text-mb-success-text">{totalImpact.toFixed(1)}</TableCell>
@@ -1215,7 +1272,8 @@ export default function STPPage() {
                                     suffix that could not adapt to dark mode). */}
                                 {monthTotals && (() => {
                                     const { RECOVERY_GOOD, RECOVERY_WATCH } = STP_THRESHOLDS;
-                                    const effColor: BadgeColor = monthTotals.avgEfficiency >= RECOVERY_GOOD ? 'green' : monthTotals.avgEfficiency >= RECOVERY_WATCH ? 'amber' : 'red';
+                                    const avgEff = monthTotals.avgEfficiency;
+                                    const effColor: BadgeColor = avgEff === null ? 'slate' : avgEff >= RECOVERY_GOOD ? 'green' : avgEff >= RECOVERY_WATCH ? 'amber' : 'red';
                                     const cell = "px-4 sm:px-6 py-4 align-middle text-sm font-semibold text-right tabular-nums text-foreground";
                                     return (
                                         <TableFooter>
@@ -1230,7 +1288,7 @@ export default function STPPage() {
                                                 <td className={cell}>{monthTotals.totalTSE.toLocaleString('en-US', { maximumFractionDigits: 1 })}</td>
                                                 <td className="px-4 sm:px-6 py-4 align-middle text-sm text-right">
                                                     <div className="flex justify-end">
-                                                        <StatusBadge label={`${monthTotals.avgEfficiency.toFixed(1)}%`} color={effColor} />
+                                                        <StatusBadge label={avgEff === null ? 'No reading' : `${avgEff.toFixed(1)}%`} color={effColor} />
                                                     </div>
                                                 </td>
                                                 <td className={cell}>{monthTotals.totalTrips}</td>

@@ -202,8 +202,12 @@ export default function FirefightingPage() {
         { label: "DESIGNATED ZONES", value: String(ZONES.length), subtitle: "Z1 · Z3 · Z5 · Village Sq", icon: Layers, variant: "info" as const },
         { label: "PPM CYCLES / YEAR", value: String(CYCLES.length), subtitle: "BEC AMC · every ~4 months", icon: Calendar, variant: "primary" as const },
         { label: "CYCLES COMPLETE", value: `${completedCycles} / ${CYCLES.length}`, subtitle: "Year 1 · Dec & Apr done", icon: CheckCircle, variant: "success" as const },
-        { label: "OPEN ISSUES", value: openIssues.length.toString(), subtitle: "Defects & access items", icon: AlertTriangle, variant: openIssues.length > 0 ? "danger" as const : "success" as const },
-    ], [completedCycles, openIssues.length]);
+        // The only live-data tile. When the issues register could not be read it
+        // says so — a green "0" would claim there are no open issues.
+        connected
+            ? { label: "OPEN ISSUES", value: openIssues.length.toString(), subtitle: "Defects & access items", icon: AlertTriangle, variant: openIssues.length > 0 ? "danger" as const : "success" as const }
+            : { label: "OPEN ISSUES", value: "—", subtitle: "Issues register could not be read", icon: AlertTriangle, variant: "default" as const, status: "missing" as const },
+    ], [completedCycles, openIssues.length, connected]);
 
     // ── Maintenance tracker filtering, sorting & pagination ──
     const sortValue = useCallback((a: PpmActivity, field: string): string => {

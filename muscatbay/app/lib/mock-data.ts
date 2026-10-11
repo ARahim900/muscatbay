@@ -77,9 +77,10 @@ export interface MeterReading {
 export interface STPOperation {
     id: string;
     date: string;
-    inlet_sewage: number;
-    tse_for_irrigation: number;
-    tanker_trips: number;
+    /** null = not recorded for this day. Never read a missing reading as 0. */
+    inlet_sewage: number | null;
+    tse_for_irrigation: number | null;
+    tanker_trips: number | null;
     generated_income?: number;
     water_savings?: number;
     total_impact?: number;

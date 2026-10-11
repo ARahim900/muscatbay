@@ -305,13 +305,22 @@ export function toStpSummary(operations: STPOperation[]): StpSummary {
   const window = days.slice(-30);
   const inlet = window.reduce((sum, d) => sum + d.inlet, 0);
   const tse = window.reduce((sum, d) => sum + d.tse, 0);
+  // Recovery only from days with BOTH figures recorded: a day whose TSE is not
+  // yet entered must not read as zero recovery.
+  const recordedOps = operations.filter(
+    (op) => op.inlet_sewage !== null && op.tse_for_irrigation !== null,
+  );
+  const windowStart = window[0].time;
+  const paired = recordedOps.filter((op) => new Date(op.date).getTime() >= windowStart);
+  const pairedInlet = paired.reduce((sum, op) => sum + (op.inlet_sewage ?? 0), 0);
+  const pairedTse = paired.reduce((sum, op) => sum + (op.tse_for_irrigation ?? 0), 0);
 
   return {
     latestLogDate: days[days.length - 1].date,
     windowDays: window.length,
     inlet,
     tse,
-    recoveryPct: inlet > 0 ? +((tse / inlet) * 100).toFixed(1) : null,
+    recoveryPct: pairedInlet > 0 ? +((pairedTse / pairedInlet) * 100).toFixed(1) : null,
     tankerTrips: window.reduce((sum, d) => sum + d.trips, 0),
     daily: window.map((d) => ({ date: d.date, inlet: d.inlet, tse: d.tse })),
     error: null,

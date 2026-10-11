@@ -53,7 +53,7 @@ function contractor(partial: Partial<ContractorTracker>): ContractorTracker {
     };
 }
 
-function stpOp(date: string, inlet: number, tse: number): STPOperation {
+function stpOp(date: string, inlet: number | null, tse: number | null): STPOperation {
     return { id: date, date, inlet_sewage: inlet, tse_for_irrigation: tse, tanker_trips: 2 };
 }
 
@@ -271,6 +271,32 @@ describe('evaluateSTPAlerts', () => {
         const alerts = evaluateSTPAlerts(ops, NOW);
         expect(alerts.find((a) => a.id.startsWith('stp-zero-output'))).toBeUndefined();
         expect(alerts.find((a) => a.id.startsWith('stp-stale-log'))).toBeUndefined();
+    });
+});
+
+describe('evaluateSTPAlerts — missing readings', () => {
+    it('does not report "output stopped" for a day whose TSE is not yet recorded', () => {
+        const ops = [stpOp('2026-07-11', 500, 480), stpOp('2026-07-12', 600, null)];
+        const alerts = evaluateSTPAlerts(ops, NOW);
+        expect(alerts.some((a) => a.id.startsWith('stp-zero-output'))).toBe(false);
+    });
+
+    it('still reports "output stopped" for a RECORDED zero', () => {
+        const ops = [stpOp('2026-07-11', 500, 480), stpOp('2026-07-12', 600, 0)];
+        const alerts = evaluateSTPAlerts(ops, NOW);
+        expect(alerts.some((a) => a.id.startsWith('stp-zero-output'))).toBe(true);
+    });
+
+    it('computes recovery only from days with both figures recorded', () => {
+        // 95% on the two complete days; the half-entered day must not drag it
+        // into the critical band.
+        const ops = [
+            stpOp('2026-07-10', 1000, 950),
+            stpOp('2026-07-11', 1000, 950),
+            stpOp('2026-07-12', 1000, null),
+        ];
+        const alerts = evaluateSTPAlerts(ops, NOW);
+        expect(alerts.some((a) => a.id.includes('recovery'))).toBe(false);
     });
 });
 

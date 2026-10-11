@@ -178,24 +178,22 @@ export async function getContractorSummary(): Promise<AmcContractorSummary[]> {
  * count 3 of the 8 engaged agreements and quietly under-report the deck.
  */
 export async function getContractorCounts(): Promise<{ total: number; active: number }> {
+    // A failed count throws: "0 contracts" would be a plausible wrong number.
     const client = getSupabaseClient();
-    if (!client) return { total: 0, active: 0 };
+    if (!client) failed('Unable to count contracts', 'Supabase is not configured');
 
     const [totalRes, activeRes] = await Promise.all([
         client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }),
         client.from('amc_contractor_summary').select('id', { count: 'exact', head: true }).ilike('status', 'Active%'),
     ]);
 
-    if (totalRes.error) {
-        console.error('Error counting amc_contractor_summary:', totalRes.error.message);
-        return { total: 0, active: 0 };
-    }
-    if (activeRes.error) {
-        console.error('Error counting active amc_contractor_summary:', activeRes.error.message);
-        return { total: 0, active: 0 };
+    if (totalRes.error) failed('Unable to count contracts', totalRes.error.message);
+    if (activeRes.error) failed('Unable to count active contracts', activeRes.error.message);
+    if (totalRes.count === null || activeRes.count === null) {
+        failed('Unable to count contracts', 'no count returned');
     }
 
-    return { total: totalRes.count || 0, active: activeRes.count || 0 };
+    return { total: totalRes.count, active: activeRes.count };
 }
 
 export async function getContractorDetails(): Promise<AmcContractorDetails[]> {

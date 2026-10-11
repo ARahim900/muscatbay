@@ -33,10 +33,10 @@ export interface STPDay {
     dayLabel: string;     // "dd MMM"
     ym: string;           // yyyy-MM
     dom: number;          // day of month
-    inlet: number;
-    tse: number;          // kept RAW — a negative value is preserved, never clamped
-    trips: number;
-    eff: number | null;   // tse/inlet %, null when no inlet
+    inlet: number | null; // null = not recorded that day (never read as 0)
+    tse: number | null;   // kept RAW — a negative value is preserved, never clamped; null = not recorded
+    trips: number | null; // null = not recorded
+    eff: number | null;   // tse/inlet %, null when no inlet or either figure is missing
     /** True when the logged TSE is below zero — physically impossible, so a data fault. */
     tseNegative: boolean;
 }
@@ -65,6 +65,43 @@ export interface STPModel {
 
 const num = (x: number, frac = 0) => x.toLocaleString("en-US", { maximumFractionDigits: frac });
 
+/**
+ * TSE recovery % for one day, or null when inlet is zero/missing or TSE was
+ * not recorded — a missing figure gives no verdict rather than a false 0%.
+ */
+export function stpEfficiency(inlet: number | null, tse: number | null): number | null {
+    return inlet !== null && inlet > 0 && tse !== null ? (tse / inlet) * 100 : null;
+}
+
+/** Add a reading to a running total; a missing reading adds nothing. Stays null until something is recorded. */
+export function addReading(total: number | null, value: number | null): number | null {
+    return value === null ? total : (total ?? 0) + value;
+}
+
+/** A reading for display: "—" when not recorded. */
+export function fmtReading(value: number | null, digits = 1): string {
+    return value === null ? "—" : value.toLocaleString("en-US", { maximumFractionDigits: digits });
+}
+
+/** A numeric reading, or null when missing or not a number. Negatives are kept. */
+function reading(x: number | string | null | undefined): number | null {
+    if (x === null || x === undefined || x === "") return null;
+    const n = Number(x);
+    return Number.isFinite(n) ? n : null;
+}
+
+/** The recorded (non-null) values of one field. */
+function recorded(days: STPDay[], pick: (d: STPDay) => number | null): number[] {
+    const out: number[] = [];
+    for (const d of days) {
+        const v = pick(d);
+        if (v !== null) out.push(v);
+    }
+    return out;
+}
+
+const sum = (values: number[]) => values.reduce((s, v) => s + v, 0);
+
 function median(values: number[]): number {
     if (values.length === 0) return 0;
     const s = [...values].sort((a, b) => a - b);
@@ -80,14 +117,15 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
         // which would otherwise crash the whole Plant Watch render on one bad row.
         .filter(({ date }) => !Number.isNaN(date.getTime()))
         .map(({ op, date }) => {
-            // Coerce numerics defensively — a string/null from Supabase would
-            // otherwise poison every downstream sum with NaN. `Number(x) || 0`
-            // maps NaN/null to 0 but PRESERVES negatives, which is deliberate:
-            // a negative TSE is a real, documented data fault and must stay
-            // visible rather than being flattened into "reuse stopped".
-            const inlet = Number(op.inlet_sewage) || 0;
-            const tse = Number(op.tse_for_irrigation) || 0;
-            const trips = Number(op.tanker_trips) || 0;
+            // Coerce numerics defensively — a string from Supabase would
+            // otherwise poison every downstream sum with NaN. A missing reading
+            // stays null: it is "not recorded", never zero flow, so it cannot
+            // raise a false "reuse stopped" finding. Negatives are PRESERVED,
+            // deliberately: a negative TSE is a real, documented data fault and
+            // must stay visible rather than being flattened.
+            const inlet = reading(op.inlet_sewage);
+            const tse = reading(op.tse_for_irrigation);
+            const trips = reading(op.tanker_trips);
             return {
                 id: op.id,
                 date,
@@ -98,18 +136,24 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
                 inlet,
                 tse,
                 trips,
-                eff: inlet > 0 ? (tse / inlet) * 100 : null,
-                tseNegative: tse < 0,
+                eff: inlet !== null && inlet > 0 && tse !== null ? (tse / inlet) * 100 : null,
+                tseNegative: tse !== null && tse < 0,
             };
         })
         .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-    const baselineInlet = median(days.filter((d) => d.inlet > 0).map((d) => d.inlet));
-    const baselineTrips = median(days.map((d) => d.trips));
+    const baselineInlet = median(recorded(days, (d) => d.inlet).filter((v) => v > 0));
+    const baselineTrips = median(recorded(days, (d) => d.trips));
 
-    const totalInlet = days.reduce((s, d) => s + d.inlet, 0);
-    const totalTSE = days.reduce((s, d) => s + d.tse, 0);
-    const totalTrips = days.reduce((s, d) => s + d.trips, 0);
+    // Totals sum what was recorded; a missing day adds nothing (it is not 0).
+    const totalInlet = sum(recorded(days, (d) => d.inlet));
+    const totalTSE = sum(recorded(days, (d) => d.tse));
+    const totalTrips = sum(recorded(days, (d) => d.trips));
+    // Efficiency only from days where BOTH figures were recorded — otherwise a
+    // half-entered day would pull recovery down (or up).
+    const paired = days.filter((d) => d.inlet !== null && d.tse !== null);
+    const pairedInlet = sum(recorded(paired, (d) => d.inlet));
+    const pairedTSE = sum(recorded(paired, (d) => d.tse));
     const income = totalTrips * TANKER_FEE;
     const savings = totalTSE * TSE_SAVING_RATE;
 
@@ -135,7 +179,7 @@ export function buildSTPModel(operations: STPOperation[]): STPModel {
             totalInlet,
             totalTSE,
             totalTrips,
-            avgEfficiency: totalInlet > 0 ? (totalTSE / totalInlet) * 100 : null,
+            avgEfficiency: pairedInlet > 0 ? (pairedTSE / pairedInlet) * 100 : null,
             income,
             savings,
             economicImpact: income + savings,
@@ -155,9 +199,10 @@ export const effSeverity = classifyRecovery;
 const loadSeverity = classifyHydraulicLoad;
 const tripsSeverity = classifyTankerTrips;
 
-function tseSeverity(tse: number, inlet: number): Severity {
+function tseSeverity(tse: number | null, inlet: number | null): Severity {
+    if (tse === null) return "nodata";             // not recorded — no verdict
     if (tse < 0) return "critical";                // impossible value — data fault
-    if (inlet <= 0) return "nodata";
+    if (inlet === null || inlet <= 0) return "nodata";
     if (tse === 0) return "critical";              // reuse stopped while sewage came in
     return classifyRecovery((tse / inlet) * 100);
 }
@@ -184,25 +229,28 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
     }
 
     // 2 — Hydraulic load
-    const recentInlet = tail(effDays.length ? days.filter((d) => d.inlet > 0) : days, 7);
-    const recentAvgInlet = recentInlet.length ? recentInlet.reduce((s, d) => s + d.inlet, 0) / recentInlet.length : 0;
+    const inlets = recorded(days, (d) => d.inlet);
+    const recentInlet = tail(effDays.length ? inlets.filter((v) => v > 0) : inlets, 7);
+    const recentAvgInlet = recentInlet.length ? sum(recentInlet) / recentInlet.length : 0;
     const loadSev = loadSeverity(recentAvgInlet, baselineInlet);
-    const surgeDays = days.filter((d) => d.inlet > 0 && baselineInlet > 0 && d.inlet / baselineInlet >= LOAD_WATCH).length;
-    const peakInlet = days.reduce((m, d) => Math.max(m, d.inlet), 0);
+    const surgeDays = inlets.filter((v) => v > 0 && baselineInlet > 0 && v / baselineInlet >= LOAD_WATCH).length;
+    const peakInlet = inlets.reduce((m, v) => Math.max(m, v), 0);
 
     // 3 — TSE reuse. Negative days are counted separately from zero days: a
     // negative is a metering/data fault, a zero is "reuse stopped".
     const negativeReuse = days.filter((d) => d.tseNegative).length;
-    const zeroReuse = days.filter((d) => d.inlet > 0 && d.tse === 0).length;
-    const recovery = summary.totalInlet > 0 ? (summary.totalTSE / summary.totalInlet) * 100 : null;
+    // Only a RECORDED zero counts; an unentered TSE figure is not "reuse stopped".
+    const zeroReuse = days.filter((d) => d.inlet !== null && d.inlet > 0 && d.tse === 0).length;
+    const recovery = summary.avgEfficiency;
     const tseSev: Severity = negativeReuse > 0 || zeroReuse > 0
         ? "critical"
         : classifyRecovery(recovery);
 
     // 4 — Tanker load
-    const highTankerDays = days.filter((d) => tripsSeverity(d.trips, baselineTrips) !== "good").length;
-    const tankerSev = highTankerDays === 0 ? "good" : days.some((d) => tripsSeverity(d.trips, baselineTrips) === "high") ? "high" : "watch";
-    const avgTrips = days.length ? summary.totalTrips / days.length : 0;
+    const trips = recorded(days, (d) => d.trips);
+    const highTankerDays = trips.filter((t) => tripsSeverity(t, baselineTrips) !== "good").length;
+    const tankerSev = highTankerDays === 0 ? "good" : trips.some((t) => tripsSeverity(t, baselineTrips) === "high") ? "high" : "watch";
+    const avgTrips = trips.length ? summary.totalTrips / trips.length : 0;
 
     // 5 — Data completeness. Previously computed and never rendered, which meant
     // a period missing a third of its days looked as trustworthy as a full one.
@@ -331,9 +379,9 @@ export function buildHeatmap(
         columns,
         rows: [
             mk("Efficiency", (d) => classifyRecovery(d.eff), (d) => (d.eff !== null ? String(Math.round(d.eff)) : "·")),
-            mk("Inlet load", (d) => loadSeverity(d.inlet, baselineInlet), (d) => (d.inlet > 0 ? String(Math.round(d.inlet / 100) / 10) : "0")),
-            mk("TSE reuse", (d) => tseSeverity(d.tse, d.inlet), (d) => (d.tse !== 0 ? String(Math.round(d.tse / 100) / 10) : "0")),
-            mk("Tankers", (d) => tripsSeverity(d.trips, baselineTrips), (d) => String(d.trips)),
+            mk("Inlet load", (d) => (d.inlet === null ? "nodata" : loadSeverity(d.inlet, baselineInlet)), (d) => (d.inlet === null ? "—" : d.inlet > 0 ? String(Math.round(d.inlet / 100) / 10) : "0")),
+            mk("TSE reuse", (d) => tseSeverity(d.tse, d.inlet), (d) => (d.tse === null ? "—" : d.tse !== 0 ? String(Math.round(d.tse / 100) / 10) : "0")),
+            mk("Tankers", (d) => (d.trips === null ? "nodata" : tripsSeverity(d.trips, baselineTrips)), (d) => (d.trips === null ? "—" : String(d.trips))),
         ],
     };
 }
@@ -378,14 +426,14 @@ export function buildSTPFindings(model: STPModel): Finding[] {
                 id: `tse-neg-${d.iso}`, date: d.dayLabel, category: "Data Integrity",
                 item: "Negative TSE reading",
                 severity: "Critical",
-                value: `${num(d.tse, 1)} m³`,
+                value: `${num(d.tse ?? 0, 1)} m³`,
                 remarks: "impossible value — treated effluent cannot be negative",
                 action: "Negative irrigation output logged — correct the daily entry and check the TSE flow meter for a reset or reversed reading.",
             });
         }
 
         // Reuse stopped while sewage arrived
-        if (d.inlet > 0 && d.tse === 0) {
+        if (d.inlet !== null && d.inlet > 0 && d.tse === 0) {
             reuse.push({
                 id: `reuse-${d.iso}`, date: d.dayLabel, category: "TSE Reuse",
                 item: "No irrigation output",
@@ -397,7 +445,7 @@ export function buildSTPFindings(model: STPModel): Finding[] {
         }
 
         // Hydraulic surge
-        if (d.inlet > 0 && baselineInlet > 0 && d.inlet / baselineInlet >= LOAD_HIGH) {
+        if (d.inlet !== null && d.inlet > 0 && baselineInlet > 0 && d.inlet / baselineInlet >= LOAD_HIGH) {
             load.push({
                 id: `surge-${d.iso}`, date: d.dayLabel, category: "Hydraulic Load",
                 item: "Inlet surge",
@@ -408,8 +456,18 @@ export function buildSTPFindings(model: STPModel): Finding[] {
             });
         }
 
-        // No inlet on a day that exists in the log
-        if (d.inlet <= 0) {
+        // A day in the log with no inlet figure at all — a missing entry, kept
+        // apart from a recorded zero so the two never read as the same thing.
+        if (d.inlet === null) {
+            uptime.push({
+                id: `noinlet-${d.iso}`, date: d.dayLabel, category: "Data / Uptime",
+                item: "Inlet reading missing",
+                severity: "Watch",
+                value: "—",
+                remarks: "day present in the log with no inlet figure",
+                action: "Inlet not entered for this day — complete the daily log so totals and recovery include it.",
+            });
+        } else if (d.inlet <= 0) {
             uptime.push({
                 id: `noinlet-${d.iso}`, date: d.dayLabel, category: "Data / Uptime",
                 item: "No inlet recorded",
@@ -421,7 +479,7 @@ export function buildSTPFindings(model: STPModel): Finding[] {
         }
 
         // Elevated tanker discharge
-        if (tripsSeverity(d.trips, baselineTrips) === "high") {
+        if (d.trips !== null && tripsSeverity(d.trips, baselineTrips) === "high") {
             tankers.push({
                 id: `tanker-${d.iso}`, date: d.dayLabel, category: "Tanker Load",
                 item: "High tanker discharge",

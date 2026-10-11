@@ -291,8 +291,9 @@ export function evaluateSTPAlerts(
             const date = new Date(op.date);
             return {
                 date,
-                inlet: Number(op.inlet_sewage) || 0,
-                tse: Number(op.tse_for_irrigation) || 0,
+                // null = not recorded. A missing TSE figure is not "zero output".
+                inlet: op.inlet_sewage,
+                tse: op.tse_for_irrigation,
             };
         })
         .filter((d) => !Number.isNaN(d.date.getTime()) && d.date.getTime() <= now.getTime())
@@ -319,7 +320,9 @@ export function evaluateSTPAlerts(
     }
 
     // Reuse stopped while sewage arrived — treated effluent leaving unused.
-    const zeroOutput = window.filter((d) => d.inlet > 0 && d.tse <= 0);
+    // Only a RECORDED zero counts — a day whose TSE is not yet entered is not
+    // evidence that output stopped.
+    const zeroOutput = window.filter((d) => d.inlet !== null && d.inlet > 0 && d.tse !== null && d.tse <= 0);
     if (zeroOutput.length > 0) {
         const lastZero = zeroOutput[zeroOutput.length - 1];
         alerts.push({
@@ -332,9 +335,11 @@ export function evaluateSTPAlerts(
         });
     }
 
-    // Recovery over the window.
-    const totalInlet = window.reduce((s, d) => s + d.inlet, 0);
-    const totalTse = window.reduce((s, d) => s + d.tse, 0);
+    // Recovery over the window, from days where both figures were recorded —
+    // a half-entered day would otherwise drag recovery down (or up).
+    const paired = window.filter((d) => d.inlet !== null && d.tse !== null);
+    const totalInlet = paired.reduce((s, d) => s + (d.inlet ?? 0), 0);
+    const totalTse = paired.reduce((s, d) => s + (d.tse ?? 0), 0);
     if (totalInlet > 0) {
         const recovery = (totalTse / totalInlet) * 100;
         if (recovery < STP_RECOVERY_CRITICAL) {
@@ -343,7 +348,7 @@ export function evaluateSTPAlerts(
                 level: "error",
                 module: "stp",
                 title: "STP recovery critically low",
-                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — below the ${STP_RECOVERY_CRITICAL}% critical band. Inspect the treatment train.`,
+                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${paired.length} fully recorded days — below the ${STP_RECOVERY_CRITICAL}% critical band. Inspect the treatment train.`,
                 href: stpHref("watch"),
             });
         } else if (recovery < STP_RECOVERY_WATCH) {
@@ -352,7 +357,7 @@ export function evaluateSTPAlerts(
                 level: "warning",
                 module: "stp",
                 title: "STP recovery below target",
-                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${window.length} logged days — under the ${STP_RECOVERY_WATCH}% operating target.`,
+                message: `TSE recovery is ${recovery.toFixed(1)}% of inlet over the last ${paired.length} fully recorded days — under the ${STP_RECOVERY_WATCH}% operating target.`,
                 href: stpHref("watch"),
             });
         }

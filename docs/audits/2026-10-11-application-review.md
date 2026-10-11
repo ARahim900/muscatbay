@@ -4,6 +4,8 @@
 
 **Not covered:** live data, the logged-in app in a browser, real iPhone/iPad testing, and git history for secrets (the clone is shallow).
 
+> **Status update (same day):** priorities 1–3 are fixed in the same pull request — Next.js 16.4.0 (production `npm audit` 0), sign-out clears cached data and alerts, STP missing readings stay missing end to end (F1), the STP / Electricity / contractor-count readers throw on failure (F3) with STP paging past 1,000 rows (F8) and electricity paging in a stable order (F7), and no page shows zeros after a failed read (U1). See `PROJECT_STATUS.md` §4 for the detail and what remains open.
+
 Findings marked **(open since 3 Sep)** were already raised in `2026-09-03-technical-audit.md` and have not been closed.
 
 ---

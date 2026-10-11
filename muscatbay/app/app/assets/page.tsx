@@ -219,6 +219,9 @@ export default function AssetsPage() {
     // cache so revisits render instantly; the mount fetch refreshes silently.
     const [cached] = useState(() => getPageCache<AssetsPageCache>(ASSETS_CACHE_KEY));
     const [summary, setSummary] = useState<AssetSummary>(cached?.summary ?? EMPTY_SUMMARY);
+    // Whether `summary` holds figures actually read from Supabase. EMPTY_SUMMARY
+    // is all zeros, so without this a failed summary read rendered "0 assets".
+    const [summaryLoaded, setSummaryLoaded] = useState(Boolean(cached));
     const [assets, setAssets] = useState<Asset[]>(cached?.assets ?? []);
     const [distributions, setDistributions] = useState<AssetDistributions | null>(
         () => getPageCache<AssetDistributions>(ASSETS_PROFILE_CACHE_KEY) ?? null
@@ -291,9 +294,14 @@ export default function AssetsPage() {
             setError(null);
             const now = new Date();
             setLastUpdated(now);
-            if (!summaryRes.error) {
+            if (summaryRes.error) {
+                // Keep a previously loaded summary on a background refresh;
+                // otherwise the KPI tiles say the summary is unavailable.
+                if (!silent) setSummaryLoaded(false);
+            } else {
                 const summaryData = stripError(summaryRes);
                 setSummary(summaryData);
+                setSummaryLoaded(true);
                 if (isDefaultView) {
                     setPageCache<AssetsPageCache>(ASSETS_CACHE_KEY, {
                         assets: data ?? [],
@@ -317,6 +325,7 @@ export default function AssetsPage() {
             setError(`Could not load the asset register from Supabase: ${message}`);
             setAssets([]);
             setTotalCount(0);
+            setSummaryLoaded(false);
             setDataSource('supabase');
         } finally {
             if (!silent) setLoading(false);
@@ -413,6 +422,20 @@ export default function AssetsPage() {
     // functions/api/assets.ts) — the label and the predicate say the same thing.
     const stats = useMemo(() => {
         const live = dataSource === 'supabase';
+        // Live, but the figures could not be read: every tile says so with
+        // "—" rather than a count of zero.
+        if (live && !summaryLoaded) {
+            const missing = { value: "—", variant: "default" as const, status: "missing" as const };
+            const why = error ? "Asset register could not be read" : "Register summary could not be read";
+            return [
+                { label: "TOTAL ASSETS",        ...missing, subtitle: why, icon: Boxes },
+                { label: "ACTIVE / WORKING",    ...missing, subtitle: why, icon: ClipboardCheck },
+                { label: "HIGH CRITICALITY",    ...missing, subtitle: why, icon: AlertTriangle },
+                { label: "WITH AMC CONTRACTOR", ...missing, subtitle: why, icon: Wrench },
+                { label: "RESERVE FUND LINKED", ...missing, subtitle: why, icon: FileText },
+                { label: "NEEDS VERIFICATION",  ...missing, subtitle: why, icon: ShieldAlert },
+            ];
+        }
         const totalItems = live ? (summary.total || totalCount) : totalCount;
         return [
             { label: "TOTAL ASSETS",       value: totalItems.toString(), subtitle: "Rows in the master register", icon: Boxes, variant: "primary" as const },
@@ -422,7 +445,7 @@ export default function AssetsPage() {
             { label: "RESERVE FUND LINKED", value: (live ? summary.boqCoverage : assets.filter(a => a.boqProjectRef).length).toString(), subtitle: "Assets with BOQ reference", icon: FileText, variant: "success" as const },
             { label: "NEEDS VERIFICATION",  value: (live ? summary.toVerify : assets.filter(a => a.status === 'TO VERIFY').length).toString(), subtitle: "Status = TO VERIFY", icon: ShieldAlert, variant: "warning" as const },
         ];
-    }, [assets, totalCount, dataSource, summary]);
+    }, [assets, totalCount, dataSource, summary, summaryLoaded, error]);
 
     const getStatusColor = (s: string): 'green' | 'orange' | 'red' | 'slate' | 'amber' => {
         switch (s) {
@@ -531,7 +554,9 @@ export default function AssetsPage() {
                     </SectionBoundary>
                 )}
 
-                {activeTab === 'overview' && dataSource === 'supabase' && !firstLoad && (
+                {/* Only with a summary actually read — an all-zero summary would
+                    read as "nothing needs attention". */}
+                {activeTab === 'overview' && dataSource === 'supabase' && !firstLoad && summaryLoaded && (
                     <SectionBoundary title="Needs attention">
                         <AssetAttention summary={summary} />
                     </SectionBoundary>

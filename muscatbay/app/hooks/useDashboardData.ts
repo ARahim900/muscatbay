@@ -381,15 +381,23 @@ export function useDashboardData() {
             const TANKER_FEE = 4.50;
             const TSE_SAVING_RATE = 1.32;
 
-            const stpMonthlyCalc: Record<string, { inlet: number; tse: number; days: number }> = {};
+            // A missing reading (null) adds nothing to a total. `days` counts only
+            // days with an inlet figure, so an unentered day cannot make a month
+            // look complete; recovery uses only days with BOTH figures recorded.
+            const stpMonthlyCalc: Record<string, { inlet: number; tse: number; days: number; pairedInlet: number; pairedTse: number }> = {};
             stpData.forEach(op => {
                 if (op.date) {
                     try {
                         const monthKey = format(new Date(op.date), "yyyy-MM");
-                        if (!stpMonthlyCalc[monthKey]) stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0, days: 0 };
-                        stpMonthlyCalc[monthKey].inlet += op.inlet_sewage || 0;
-                        stpMonthlyCalc[monthKey].tse += op.tse_for_irrigation || 0;
-                        stpMonthlyCalc[monthKey].days += 1;
+                        if (!stpMonthlyCalc[monthKey]) stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
+                        const m = stpMonthlyCalc[monthKey];
+                        m.inlet += op.inlet_sewage ?? 0;
+                        m.tse += op.tse_for_irrigation ?? 0;
+                        if (op.inlet_sewage !== null) m.days += 1;
+                        if (op.inlet_sewage !== null && op.tse_for_irrigation !== null) {
+                            m.pairedInlet += op.inlet_sewage;
+                            m.pairedTse += op.tse_for_irrigation;
+                        }
                     } catch { /* skip invalid dates */ }
                 }
             });
@@ -406,8 +414,9 @@ export function useDashboardData() {
             }
             const stpLatestMonth = stpSortedMonths[stpStatsMonthIdx];
             const stpPrevMonth = stpStatsMonthIdx > 0 ? stpSortedMonths[stpStatsMonthIdx - 1] : undefined;
-            const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : { inlet: 0, tse: 0, days: 0 };
-            const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : { inlet: 0, tse: 0, days: 0 };
+            const emptyStpMonth = { inlet: 0, tse: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
+            const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : emptyStpMonth;
+            const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : emptyStpMonth;
             // === ELECTRICITY CALCULATIONS ===
             const allReadings: Record<string, number> = {};
             elecData.forEach(meter => {
@@ -467,8 +476,8 @@ export function useDashboardData() {
                             : "danger",
                 };
 
-            const stpRecoveryPct = stpLatestData.inlet > 0
-                ? (stpLatestData.tse / stpLatestData.inlet) * 100
+            const stpRecoveryPct = stpLatestData.pairedInlet > 0
+                ? (stpLatestData.pairedTse / stpLatestData.pairedInlet) * 100
                 : null;
             const stpTarget: DashboardStats["target"] = stpRecoveryPct === null
                 ? { label: `Recovery unavailable · target ≥ ${STP_RECOVERY_TARGET_PCT}%`, status: "unknown" }

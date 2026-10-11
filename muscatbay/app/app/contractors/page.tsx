@@ -590,6 +590,36 @@ export default function ContractorsPage() {
         (selectedTypes.length > 0 && selectedTypes.length < uniqueContractTypes.length);
 
     // ── Render ───────────────────────────────────────────────────────────────
+    // A failed read with nothing loaded: report it, with Retry, instead of
+    // KPI tiles reading 0 and tabs saying "No contracts" beneath the banner.
+    if (error && !loading && contracts.length === 0 && trackerData.length === 0) {
+        return (
+            <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
+                <SearchParamsListener onChange={applyTabLink} />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <PageHeader
+                        title="Contractors"
+                        description="Contracts, renewals, terms and year-by-year costs"
+                    />
+                    <PageStatusBar
+                        isConnected={false}
+                        isLive={isLive}
+                        lastUpdated={lastUpdated}
+                        error={error}
+                    />
+                </div>
+                <div role="alert" className="ops-table-shell">
+                    <EmptyState
+                        variant="error"
+                        title="Contractor data could not be loaded"
+                        description={error}
+                        action={{ label: "Retry", onClick: () => loadData() }}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6 sm:space-y-7 md:space-y-8 w-full">
             <SearchParamsListener onChange={applyTabLink} />

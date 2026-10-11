@@ -27,6 +27,13 @@ export interface SupabaseSTPOperation {
     updated_at?: string;
 }
 
+/** A numeric reading, or null when the column is NULL or not a number. */
+function toReading(value: number | string | null | undefined): number | null {
+    if (value === null || value === undefined || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
 /**
  * Transform Supabase STP record to match the app's STPOperation interface
  */
@@ -34,9 +41,11 @@ export function transformSTPOperation(dbRecord: SupabaseSTPOperation): STPOperat
     return {
         id: String(dbRecord.id),
         date: dbRecord.date,
-        inlet_sewage: Number(dbRecord.inlet_sewage) || 0,
-        tse_for_irrigation: Number(dbRecord.tse_for_irrigation) || 0,
-        tanker_trips: Number(dbRecord.tanker_trips) || 0,
+        // A NULL column is a day not yet recorded: keep it null so totals,
+        // averages and alerts skip it instead of reading it as zero flow.
+        inlet_sewage: toReading(dbRecord.inlet_sewage),
+        tse_for_irrigation: toReading(dbRecord.tse_for_irrigation),
+        tanker_trips: toReading(dbRecord.tanker_trips),
         generated_income: dbRecord.generated_income != null ? Number(dbRecord.generated_income) : undefined,
         water_savings: dbRecord.water_savings != null ? Number(dbRecord.water_savings) : undefined,
         total_impact: dbRecord.total_impact != null ? Number(dbRecord.total_impact) : undefined,

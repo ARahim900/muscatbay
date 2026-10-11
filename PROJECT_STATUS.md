@@ -37,7 +37,7 @@ in one Next.js app backed by Supabase.
 | iOS Home Screen widget feed | **Water widget data (2026-10-06).** `GET /api/widget/water` with a per-device bearer key returns the latest recorded day's zone supply, loss, worst zone, meters read and a per-zone balance (`zones`: bulk, meters read, loss, severity, N of M meters) — computed with the Daily page's own `processReport`/`computeBriefing` (`lib/widget/water-summary.ts`). Each zone row in the Large widget links to `/water?view=daily&zone=<zone>`, which opens the Daily report on that zone's Zone Analysis (one-shot `zone` link, `lib/deep-links.ts`; shown, not saved as the operator's preference). Keys: `widget_tokens` (SHA-256 only), issued by `create_widget_token` from the signed-in page inside the app (`WidgetPairing`), checked by `widget_water_latest` (`sql/migrations/20261006_widget_tokens.sql`). Spec: `docs/superpowers/specs/2026-10-06-ios-home-widget-design.md`. |
 | iOS app (`mobile-shell/`) | **Full-screen WebView of www.muscatbay.work** (Expo 57, bundle `work.muscatbay.app`, EAS project @arpro900/muscatbay-shell, private TestFlight only). **1.1.0 adds the Home Screen water widget; 1.2.0 adds the Large "Water by zone" widget** (all 7 zones: bulk → meters read, loss %, severity, N missing); **1.3.0 adds dark and tinted app icons, tinted/clear widget looks (severity words, no colour-only dots) and per-zone taps** (a zone row opens the Daily report on that zone) (`targets/water-widget`, WidgetKit via `@bacons/apple-targets`): small + medium + large, Home Screen only, App Group `group.work.muscatbay.app`, polls `/api/widget/water` every 30 min, keeps last figures offline, tap opens `/water?view=daily` (a Large-widget zone row adds `&zone=<zone>`). `App.tsx` exposes `window.MuscatBayNative.widget` and stores the key the page issues. |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (334 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-09-03 |
+| Tests / checks | Vitest (576 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-11 |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -504,19 +504,43 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
-- **Open 2026-10-11 — application review** (`docs/audits/2026-10-11-application-review.md`).
-  Builds, lint, `tsc` and 555/555 tests pass. Open items, highest first:
-  (1) **`next` 16.2.6 carries a critical security advisory — upgrade to 16.4.0
-  and run `npm audit fix`**; (2) sign-out does not clear `lib/page-cache.ts` or
-  alert state, so a shared tablet can show the previous user's data; (3)
-  missing/failed reads still become 0 in places — `entities/stp.ts`
-  (`Number(x) || 0`), Electricity/STP/Contractors readers returning `[]` on
-  error, and KPI tiles on STP, Fire, Assets and Contractors after a failed read;
-  (4) no CI runs tests/lint/build on pull requests; (5) asset search breaks on
-  commas/brackets. Also still open from the 2026-09-03 audit: realtime refetch
-  without debounce, STP 1,000-row cap, missing focus rings on Water filters,
-  light-mode teal text contrast, Dashboard/STP tickers. Fire Safety's hard-coded
-  PPM schedule still shows Cycle 3 (~Aug 2026) as "upcoming".
+- **2026-10-11 — application review** (`docs/audits/2026-10-11-application-review.md`).
+  **Fixed in the same PR (priorities 1–3):**
+  1. **`next` 16.2.6 → 16.4.0** (critical + high advisories); production
+     `npm audit` now reports 0. `eslint-config-next` stays on 16.2.1 and
+     `eslint-plugin-react-hooks` is pinned at 7.0.1: the 16.4.0 config pulls
+     hooks plugin 7.1.1, whose React Compiler rules fail 41 places in existing
+     code — adopting them is its own task (see CLAUDE.md pins).
+  2. **Sign-out is a full page load** to `/login`, and the page cache
+     (`lib/page-cache.ts`) is cleared whenever the signed-in user changes;
+     `useOperationalAlerts` drops and re-reads its alert set on a user change.
+     A shared tablet no longer shows the previous user's figures or alerts.
+  3. **STP missing readings stay missing.** `entities/stp.ts` keeps NULL as
+     `null` (`STPOperation` fields are `number | null`); totals add nothing
+     for a missing day, recovery/efficiency use only days with both inlet and
+     TSE recorded, the alert engine and Plant Watch raise "output stopped"
+     only for a RECORDED zero, the heatmap and daily log show "—", charts gap,
+     and the CSV leaves the cell empty. A logged day with no inlet figure is
+     its own finding ("Inlet reading missing"). Mobile's STP recovery uses
+     the same paired-days rule.
+  4. **Readers fail loudly.** `getSTPOperationsFromSupabase`,
+     `getElectricityMetersFromSupabase` and `getContractorCounts` throw on a
+     failed read (`[]` only when Supabase is not configured). STP now pages
+     past the 1,000-row cap; electricity readings page in `id` order.
+  5. **No zeros after a failed read.** STP, Electricity and Contractors show
+     an error panel with Retry when nothing loaded; Fire Safety's "Open
+     issues" and the six Assets tiles read "—" with a "could not be read"
+     note (Assets' "Needs attention" hides until a summary is read).
+
+  **Still open, highest first:** no CI runs tests/lint/build on pull requests;
+  asset search breaks on commas/brackets; realtime refetch without debounce;
+  missing focus rings on Water filters; light-mode teal text contrast;
+  Dashboard/STP tickers; Fire Safety's hard-coded PPM schedule still shows
+  Cycle 3 (~Aug 2026) as "upcoming"; the Dashboard's STP economic impact
+  estimates tanker trips as `inlet ÷ 15` (`hooks/useDashboardData.ts`)
+  instead of using the recorded `tanker_trips` — an estimate shown as a
+  figure, to be confirmed with the owner; mobile's STP daily chart still
+  plots a missing day as 0 (`mobile/src/features/data/queries.ts`).
 
 - **Fixed 2026-09-26 — three data-honesty faults from the iPhone app UX review.**
   1. **Water → Daily false all-clear.** The view opened on "yesterday" from the
