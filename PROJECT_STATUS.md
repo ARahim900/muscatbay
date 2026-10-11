@@ -1746,6 +1746,10 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-11 — fix(data): keep missing STP readings missing; fail loudly on failed reads
+- 2026-10-11 — fix(auth): clear cached data and alerts when the signed-in user changes
+- 2026-10-11 — chore(deps): upgrade next to 16.4.0 for critical security advisories
+- 2026-10-11 — docs(audit): application review — QA, UI/UX, security and dependencies (2026-10-11)
 - 2026-10-07 — fix(satellite): say why the compatibility map is showing (#109)
 - 2026-10-07 — feat(ios): dark and tinted icons, tinted widget looks, per-zone taps (1.3.0) (#108)
 - 2026-10-07 — feat(water): open the Daily report on a zone from ?zone= (#107)
