@@ -70,4 +70,31 @@ describe("useOperationalAlerts", () => {
         });
         await waitFor(() => expect(getWaterMetersFromSupabase).toHaveBeenCalledTimes(1));
     });
+
+    it("re-reads under the new user when a different user signs in on the same browser", async () => {
+        getCurrentUser.mockResolvedValue({ id: "u1" });
+        render();
+        await waitFor(() => expect(getWaterMetersFromSupabase).toHaveBeenCalledTimes(1));
+        getCurrentUser.mockResolvedValue({ id: "u2" });
+        await act(async () => {
+            authListener?.({ id: "u2" });
+        });
+        await waitFor(() => expect(getWaterMetersFromSupabase).toHaveBeenCalledTimes(2));
+    });
+
+    it("drops the previous user's alerts on sign-out", async () => {
+        getCurrentUser.mockResolvedValue({ id: "u1" });
+        getWaterMetersFromSupabase.mockResolvedValueOnce([
+            { label: "Main Bulk", accountNumber: "C43659", level: "L1", zone: "Main_Bulk", parentMeter: "", type: "Bulk", consumption: {} },
+        ] as never);
+        const { result } = render();
+        await waitFor(() => expect(result.current.status).toBe("ready"));
+        getCurrentUser.mockResolvedValue(null);
+        await act(async () => {
+            authListener?.(null);
+        });
+        await waitFor(() => expect(result.current.status).toBe("unavailable"));
+        expect(result.current.alerts).toEqual([]);
+        expect(result.current.unavailableSources).toEqual(["water", "contractors", "stp"]);
+    });
 });

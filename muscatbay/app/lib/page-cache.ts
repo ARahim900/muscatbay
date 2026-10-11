@@ -30,7 +30,11 @@ export function setPageCache<T>(key: string, value: T): void {
     cache.set(key, value);
 }
 
-/** Drop one key, or the whole cache when no key is given (used in tests). */
+/**
+ * Drop one key, or the whole cache when no key is given. The auth provider
+ * clears it whenever the signed-in user changes, so a shared device never
+ * seeds a page with another user's figures.
+ */
 export function clearPageCache(key?: string): void {
     if (key === undefined) cache.clear();
     else cache.delete(key);

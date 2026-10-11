@@ -103,8 +103,9 @@ export function useOperationalAlerts(
         setAckedIds(getAcknowledgedAlertIds());
     }, []);
 
-    // Whether the last fetch found a signed-in session (null = not yet asked).
-    const hadSession = useRef<boolean | null>(null);
+    // Whose session the last fetch ran under (undefined = not yet asked,
+    // null = signed out). Alerts are read under that user's access rules.
+    const lastUserId = useRef<string | null | undefined>(undefined);
 
     const fetchSources = useCallback(async () => {
         if (!isSupabaseConfigured()) {
@@ -118,7 +119,7 @@ export function useOperationalAlerts(
         // answers 401 and logs a read failure while nothing is actually wrong.
         // getCurrentUser() reads the stored session — no network round-trip.
         const user = await getCurrentUser();
-        hadSession.current = Boolean(user);
+        lastUserId.current = user?.id ?? null;
         if (!user) {
             setData(null);
             setStatus("unavailable");
@@ -130,8 +131,9 @@ export function useOperationalAlerts(
             getContractorTrackerData(),
             getSTPOperationsFromSupabase(),
         ]);
-        // The fetchers return [] on failure; a live deployment always has rows,
-        // so [] means "source unavailable", never "all clear".
+        // A failed read rejects (STP) or returns [] (water, contractors); a live
+        // deployment always has rows, so either means "source unavailable",
+        // never "all clear".
         const waterMeters = waterRes.status === "fulfilled" && waterRes.value.length > 0 ? waterRes.value : null;
         const contractors = trackerRes.status === "fulfilled" && trackerRes.value.length > 0 ? trackerRes.value : null;
         const stpOperations = stpRes.status === "fulfilled" && stpRes.value.length > 0 ? stpRes.value : null;
@@ -148,12 +150,19 @@ export function useOperationalAlerts(
         fetchSources();
     }, [fetchSources]);
 
-    // Signing in is what makes the sources readable, so read them then. Only a
-    // fetch that found no session arms this, so a page opened already signed in
-    // does not fetch twice.
+    // Re-read whenever the signed-in user changes: signing in makes the sources
+    // readable, and a different user (or none) must never inherit the previous
+    // user's alert set. The old set is dropped at once, before the new read
+    // lands. A token refresh for the same user changes nothing, and a page
+    // opened already signed in does not fetch twice.
     useEffect(() => {
         const { data: { subscription } } = onAuthStateChange((user) => {
-            if (user && hadSession.current === false) fetchSources();
+            const id = user?.id ?? null;
+            if (lastUserId.current === undefined || lastUserId.current === id) return;
+            lastUserId.current = id;
+            setData(null);
+            setStatus("loading");
+            fetchSources();
         });
         return () => subscription.unsubscribe();
     }, [fetchSources]);

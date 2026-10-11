@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { useRouter, usePathname } from "next/navigation";
 import { getCurrentUser, getUserProfile, onAuthStateChange, signOut, AuthUser, UserProfile } from "@/lib/auth";
 import { SplashScreen } from "@/components/ui/splash-screen";
+import { clearPageCache } from "@/lib/page-cache";
 
 interface AuthContextType {
     user: AuthUser | null;
@@ -78,11 +79,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
             await signOut();
             setUser(null);
             setProfile(null);
-            router.push("/login");
+            clearPageCache();
+            // A full document load, not router.push: it discards every piece of
+            // in-memory state (page cache, alert feed, session notifications),
+            // so the next person on a shared control-room tablet starts clean.
+            window.location.replace("/login");
         } catch (error) {
             console.error("Logout error:", error);
         }
     };
+
+    // Whenever the signed-in user changes (sign-out, session expiry, sign-out
+    // in another tab, a different user signing in) drop the page cache, so no
+    // module page is ever seeded with figures read under someone else's access.
+    const lastUserId = useRef<string | null | undefined>(undefined);
+    useEffect(() => {
+        if (loading) return;
+        const id = user?.id ?? null;
+        if (lastUserId.current !== undefined && lastUserId.current !== id) {
+            clearPageCache();
+        }
+        lastUserId.current = id;
+    }, [user, loading]);
 
     useEffect(() => {
         let mounted = true;
