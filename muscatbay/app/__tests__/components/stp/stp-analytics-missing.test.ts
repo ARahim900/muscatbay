@@ -84,3 +84,16 @@ describe("STP reading helpers", () => {
         expect(fmtReading(0)).toBe("0");
     });
 });
+
+describe("tanker income", () => {
+    it("is the recorded trips × 5 OMR — five trips in a day earn 25 OMR", () => {
+        const model = buildSTPModel([op("2026-07-12", 600, 550, 5)]);
+        expect(model.summary.totalTrips).toBe(5);
+        expect(model.summary.income).toBe(25);
+    });
+
+    it("adds nothing for a day whose trips were not recorded", () => {
+        const model = buildSTPModel([op("2026-07-11", 600, 550, 5), op("2026-07-12", 600, 550, null)]);
+        expect(model.summary.income).toBe(25);
+    });
+});

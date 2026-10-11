@@ -4,7 +4,7 @@ import { CONFIG, STP_RATES, ELECTRICITY_RATES, WATER_RATES, PAGINATION, UI_CONFI
 describe('Configuration', () => {
     describe('STP_RATES', () => {
         it('should have valid TANKER_FEE', () => {
-            expect(STP_RATES.TANKER_FEE).toBe(4.50);
+            expect(STP_RATES.TANKER_FEE).toBe(5);
             expect(typeof STP_RATES.TANKER_FEE).toBe('number');
         });
 

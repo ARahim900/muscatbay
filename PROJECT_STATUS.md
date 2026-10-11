@@ -520,6 +520,16 @@ stops at last month" problem is structurally closed:
   the Dashboard deck cells; figures are final from first paint. Recorded in
   `DESIGN_SYSTEM.md` §7.
 
+- **Fixed 2026-10-11 — tanker income = recorded trips × 5 OMR (owner
+  ruling).** `STP_RATES.TANKER_FEE` is **5 OMR per trip** (was 4.50), and
+  every income figure is the recorded `tanker_trips` × that fee — five trips
+  in a day earn 25.0 OMR. The Dashboard's STP economic impact used to estimate
+  trips as `inlet ÷ 15 m³` at a hard-coded 4.50 (`hooks/useDashboardData.ts`);
+  it now sums the recorded trips per month and reads the shared `STP_RATES`,
+  so the Dashboard, the STP page and Plant Watch use one fee and one count. A
+  day with no trips recorded adds nothing. The `generated_income` column in
+  `stp_operations` is not read by the app.
+
 - **2026-10-11 — application review** (`docs/audits/2026-10-11-application-review.md`).
   **Fixed in the same PR (priorities 1–3):**
   1. **`next` 16.2.6 → 16.4.0** (critical + high advisories); production
@@ -552,10 +562,7 @@ stops at last month" problem is structurally closed:
   asset search breaks on commas/brackets; realtime refetch without debounce;
   missing focus rings on Water filters; light-mode teal text contrast;
   Dashboard/STP tickers; Fire Safety's hard-coded PPM schedule still shows
-  Cycle 3 (~Aug 2026) as "upcoming"; the Dashboard's STP economic impact
-  estimates tanker trips as `inlet ÷ 15` (`hooks/useDashboardData.ts`)
-  instead of using the recorded `tanker_trips` — an estimate shown as a
-  figure, to be confirmed with the owner; mobile's STP daily chart still
+  Cycle 3 (~Aug 2026) as "upcoming"; mobile's STP daily chart still
   plots a missing day as 0 (`mobile/src/features/data/queries.ts`).
 
 - **Fixed 2026-09-26 — three data-honesty faults from the iPhone app UX review.**

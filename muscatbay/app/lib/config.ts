@@ -14,8 +14,8 @@
  * STP (Sewage Treatment Plant) Rates
  */
 export const STP_RATES = {
-    /** Fee charged per tanker trip in OMR */
-    TANKER_FEE: 4.50,
+    /** Fee charged per tanker trip in OMR — income = recorded trips × fee (owner, 2026-10-11) */
+    TANKER_FEE: 5,
     /** Savings rate for TSE (Treated Sewage Effluent) water in OMR per m³ */
     TSE_SAVING_RATE: 1.32,
 } as const;

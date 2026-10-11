@@ -354,7 +354,10 @@ export function TrendPanel({
                 <CartesianGrid {...chartTheme.grid} />
                 <XAxis dataKey="day" {...chartTheme.axis} />
                 <YAxis {...chartTheme.axis} />
-                <Tooltip {...chartTheme.tooltip} />
+                <Tooltip
+                  {...chartTheme.tooltip}
+                  formatter={(value) => (value === null || value === undefined ? "—" : `${Number(value).toLocaleString("en-GB", { maximumFractionDigits: 1 })} m³`)}
+                />
                 {/* Gaps are never joined: a day with no reading breaks the line. */}
                 <Line dataKey="bulk" name="Bulk in" stroke={chartTheme.series[0]} connectNulls={false} {...chartTheme.line} />
                 <Line dataKey="metered" name="Metered (L3)" stroke={chartTheme.series[1]} connectNulls={false} {...chartTheme.line} />

@@ -10,7 +10,7 @@ import {
 } from "@/lib/supabase";
 import { fetchWaterMeters, type DerivedMonth } from "@/functions/api/water";
 import { getContractorCounts } from "@/functions";
-import { ELECTRICITY_RATES } from "@/lib/config";
+import { ELECTRICITY_RATES, STP_RATES } from "@/lib/config";
 import { useSupabaseRealtime } from "@/hooks/useSupabaseRealtime";
 import { getPageCache, setPageCache } from "@/lib/page-cache";
 import { calcTrend, describeTrend } from "@/lib/trends";
@@ -378,21 +378,22 @@ export function useDashboardData() {
             }
 
             // === STP CALCULATIONS ===
-            const TANKER_FEE = 4.50;
-            const TSE_SAVING_RATE = 1.32;
+            // One source for the rates — the STP page and Plant Watch read the same.
+            const { TANKER_FEE, TSE_SAVING_RATE } = STP_RATES;
 
             // A missing reading (null) adds nothing to a total. `days` counts only
             // days with an inlet figure, so an unentered day cannot make a month
             // look complete; recovery uses only days with BOTH figures recorded.
-            const stpMonthlyCalc: Record<string, { inlet: number; tse: number; days: number; pairedInlet: number; pairedTse: number }> = {};
+            const stpMonthlyCalc: Record<string, { inlet: number; tse: number; trips: number; days: number; pairedInlet: number; pairedTse: number }> = {};
             stpData.forEach(op => {
                 if (op.date) {
                     try {
                         const monthKey = format(new Date(op.date), "yyyy-MM");
-                        if (!stpMonthlyCalc[monthKey]) stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
+                        if (!stpMonthlyCalc[monthKey]) stpMonthlyCalc[monthKey] = { inlet: 0, tse: 0, trips: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
                         const m = stpMonthlyCalc[monthKey];
                         m.inlet += op.inlet_sewage ?? 0;
                         m.tse += op.tse_for_irrigation ?? 0;
+                        m.trips += op.tanker_trips ?? 0;
                         if (op.inlet_sewage !== null) m.days += 1;
                         if (op.inlet_sewage !== null && op.tse_for_irrigation !== null) {
                             m.pairedInlet += op.inlet_sewage;
@@ -414,7 +415,7 @@ export function useDashboardData() {
             }
             const stpLatestMonth = stpSortedMonths[stpStatsMonthIdx];
             const stpPrevMonth = stpStatsMonthIdx > 0 ? stpSortedMonths[stpStatsMonthIdx - 1] : undefined;
-            const emptyStpMonth = { inlet: 0, tse: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
+            const emptyStpMonth = { inlet: 0, tse: 0, trips: 0, days: 0, pairedInlet: 0, pairedTse: 0 };
             const stpLatestData = stpLatestMonth ? stpMonthlyCalc[stpLatestMonth] : emptyStpMonth;
             const stpPrevData = stpPrevMonth ? stpMonthlyCalc[stpPrevMonth] : emptyStpMonth;
             // === ELECTRICITY CALCULATIONS ===
@@ -451,9 +452,11 @@ export function useDashboardData() {
             const stpInletTrend = calcTrend(stpLatestData.inlet, stpPrevData.inlet);
             const stpTseTrend = calcTrend(stpLatestData.tse, stpPrevData.tse);
 
-            const prevTotalTrips = Math.floor(stpPrevData.inlet / 15);
-            const prevIncome = (prevTotalTrips * TANKER_FEE) + (stpPrevData.tse * TSE_SAVING_RATE);
-            const currentIncome = (Math.floor(stpLatestData.inlet / 15) * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
+            // Economic impact = RECORDED tanker trips × the per-trip fee + TSE
+            // savings (owner ruling 2026-10-11). It used to estimate trips as
+            // inlet ÷ 15 m³ — an invented figure, not the trips actually logged.
+            const prevIncome = (stpPrevData.trips * TANKER_FEE) + (stpPrevData.tse * TSE_SAVING_RATE);
+            const currentIncome = (stpLatestData.trips * TANKER_FEE) + (stpLatestData.tse * TSE_SAVING_RATE);
             const stpEconomicTrend = calcTrend(currentIncome, prevIncome);
 
             // Month labels — the app-standard "Mon-YY" everywhere (electricity keys
