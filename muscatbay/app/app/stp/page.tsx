@@ -1171,7 +1171,7 @@ export default function STPPage() {
                                         <div className="grid grid-cols-2 gap-2 text-xs">
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Inlet</span>
-                                                <p className="font-mono font-medium text-primary">{fmtReading(op.inlet_sewage)} m³</p>
+                                                <p className="font-mono font-medium text-primary dark:text-foreground">{fmtReading(op.inlet_sewage)} m³</p>
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">TSE Output</span>
@@ -1254,7 +1254,7 @@ export default function STPPage() {
                                         return (
                                             <TableRow key={op.id}>
                                                 <TableCell className="font-semibold">{format(new Date(op.date), "dd/MM/yyyy")}</TableCell>
-                                                <TableCell className="num text-primary">{fmtReading(op.inlet_sewage)}</TableCell>
+                                                <TableCell className="num text-primary dark:text-foreground">{fmtReading(op.inlet_sewage)}</TableCell>
                                                 <TableCell className="num text-mb-info-text">{fmtReading(op.tse_for_irrigation)}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end">
@@ -1263,7 +1263,7 @@ export default function STPPage() {
                                                 </TableCell>
                                                 <TableCell className="num text-mb-warning-text">{fmtReading(op.tanker_trips, 0)}</TableCell>
                                                 <TableCell className="num text-mb-success-text">{income.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-primary dark:text-foreground">{savings.toFixed(1)}</TableCell>
                                                 <TableCell className="num text-mb-success-text">{totalImpact.toFixed(1)}</TableCell>
                                             </TableRow>
                                         );

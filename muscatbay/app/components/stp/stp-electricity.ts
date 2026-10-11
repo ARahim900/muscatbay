@@ -116,6 +116,35 @@ export function latestReported(rows: StpElectricityMonth[]): StpElectricityMonth
     return null;
 }
 
+/** "26 Jul – 25 Aug" — the OWATCO cycle without years, for narrow table cells. */
+export function periodLabel(row: StpElectricityMonth): string {
+    if (!row.periodStart || !row.periodEnd) return "—";
+    const short = (iso: string) => {
+        const [, m, d] = iso.slice(0, 10).split("-");
+        return `${Number(d)} ${MONTHS[Number(m) - 1]}`;
+    };
+    return `${short(row.periodStart)} – ${short(row.periodEnd)}`;
+}
+
+export type RowStatusTone = "good" | "watch" | "missing";
+
+/**
+ * One status per month for the record table: the first problem found, or
+ * "Complete" when both the report and a reliable bill are on file.
+ */
+export function rowStatus(row: StpElectricityMonth): { label: string; tone: RowStatusTone } {
+    switch (row.owatcoStatus) {
+        case "not_received": return { label: "Report awaited", tone: "missing" };
+        case "not_found": return { label: "No report", tone: "missing" };
+        case "summary_only": return { label: "Summary only", tone: "watch" };
+        case "reported_discrepancy": return { label: "Report differs", tone: "watch" };
+        case "reported": break;
+    }
+    if (row.billedStatus === "unreliable") return { label: "Bill unreliable", tone: "watch" };
+    if (row.billedStatus === "not_available") return { label: "No bill", tone: "missing" };
+    return { label: "Complete", tone: "good" };
+}
+
 /** Plain-English status of the OWATCO figure, for tables and tooltips. */
 export function owatcoStatusLabel(row: StpElectricityMonth): string {
     switch (row.owatcoStatus) {

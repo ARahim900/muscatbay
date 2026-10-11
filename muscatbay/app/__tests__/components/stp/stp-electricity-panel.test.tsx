@@ -34,7 +34,9 @@ describe("StpElectricityPanel", () => {
         getStpElectricityMonths.mockResolvedValue([aug26]);
         render(<StpElectricityPanel operations={[]} />);
         await waitFor(() => expect(screen.getAllByText("27,010").length).toBeGreaterThan(0));
-        expect(screen.getByText("1,088.7")).toBeTruthy();
+        // The bill appears in the row and in the year-total row.
+        expect(screen.getAllByText("1,088.7").length).toBeGreaterThan(0);
+        expect(screen.getByText("Monthly Electricity Record")).toBeTruthy();
         // No complete inlet log → no energy-per-m³ figure, stated as missing.
         expect(screen.getByText("Needs a complete daily inlet log for a report period")).toBeTruthy();
     });
