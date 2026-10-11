@@ -504,6 +504,20 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Open 2026-10-11 — application review** (`docs/audits/2026-10-11-application-review.md`).
+  Builds, lint, `tsc` and 555/555 tests pass. Open items, highest first:
+  (1) **`next` 16.2.6 carries a critical security advisory — upgrade to 16.4.0
+  and run `npm audit fix`**; (2) sign-out does not clear `lib/page-cache.ts` or
+  alert state, so a shared tablet can show the previous user's data; (3)
+  missing/failed reads still become 0 in places — `entities/stp.ts`
+  (`Number(x) || 0`), Electricity/STP/Contractors readers returning `[]` on
+  error, and KPI tiles on STP, Fire, Assets and Contractors after a failed read;
+  (4) no CI runs tests/lint/build on pull requests; (5) asset search breaks on
+  commas/brackets. Also still open from the 2026-09-03 audit: realtime refetch
+  without debounce, STP 1,000-row cap, missing focus rings on Water filters,
+  light-mode teal text contrast, Dashboard/STP tickers. Fire Safety's hard-coded
+  PPM schedule still shows Cycle 3 (~Aug 2026) as "upcoming".
+
 - **Fixed 2026-09-26 — three data-honesty faults from the iPhone app UX review.**
   1. **Water → Daily false all-clear.** The view opened on "yesterday" from the
      device clock (25 Sep) although readings ran only to 24 Sep, and the
