@@ -49,7 +49,7 @@ import dynamic from "next/dynamic";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
 import { addReading, fmtReading, stpEfficiency } from "@/components/stp/stp-analytics";
-import { formatOmr } from "@/lib/currency";
+import { formatOmr, formatOmrRate } from "@/lib/currency";
 
 // ─── Recharts is loaded on demand ──────────────────────────────────────────
 // Plant Watch and the three trend charts are the only Recharts consumers on
@@ -566,7 +566,7 @@ export default function STPPage() {
             {
                 label: "Tanker Trips",
                 value: `${totalTrips.toLocaleString('en-US', { maximumFractionDigits: 1 })}`,
-                subtitle: `at ${formatOmr(TANKER_FEE)} OMR / trip`,
+                subtitle: `at ${formatOmrRate(TANKER_FEE)} OMR / trip`,
                 icon: Truck,
                 variant: "warning" as const,
                 ...(tripsTrend && { trend: tripsTrend.trend, trendValue: tripsTrend.trendValue }),
@@ -736,9 +736,9 @@ export default function STPPage() {
                 'TSE Output (m³)': op.tse_for_irrigation ?? '',
                 'Efficiency %': efficiency === null ? '' : Number(efficiency.toFixed(1)),
                 'Tanker Trips': op.tanker_trips ?? '',
-                'Income (OMR)': income === null ? '' : Number(income.toFixed(3)),
-                'Savings (OMR)': savings === null ? '' : Number(savings.toFixed(3)),
-                'Total Impact (OMR)': income === null && savings === null ? '' : Number(((income ?? 0) + (savings ?? 0)).toFixed(3)),
+                'Income (OMR)': income === null ? '' : Number(income.toFixed(1)),
+                'Savings (OMR)': savings === null ? '' : Number(savings.toFixed(1)),
+                'Total Impact (OMR)': income === null && savings === null ? '' : Number(((income ?? 0) + (savings ?? 0)).toFixed(1)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);

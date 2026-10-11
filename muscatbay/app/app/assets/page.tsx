@@ -1,5 +1,6 @@
 "use client";
 
+import { formatOmr } from "@/lib/currency";
 import { useEffect, useState, useMemo, useCallback, useRef, type ReactNode } from "react";
 import { getAssets } from "@/lib/mock-data";
 import type { Asset } from "@/entities/asset";
@@ -157,7 +158,7 @@ function fmtYrs(n: number | null | undefined): string {
 
 function fmtOMR(n: number | null | undefined): string {
     if (n === null || n === undefined || n === 0) return '-';
-    return n.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' OMR';
+    return formatOmr(n) + ' OMR';
 }
 
 /** Drop the server action's `error` field so only the payload is cached/stored. */

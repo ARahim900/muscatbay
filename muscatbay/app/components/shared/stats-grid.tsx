@@ -5,8 +5,6 @@ import {
     LucideIcon, TrendingUp, TrendingDown, Minus,
     AlertTriangle, CheckCircle2, Clock, HelpCircle, XCircle,
 } from "lucide-react";
-import { useScrollAnimation } from "@/hooks/useScrollAnimation";
-import { CountUp } from "@/components/motion/count-up";
 import { useValueChanged } from "@/hooks/useValueChanged";
 import Link from "next/link";
 
@@ -45,8 +43,6 @@ interface StatsGridProps {
     stats: StatItem[];
     className?: string;
 }
-
-const SCROLL_ANIMATION_CONFIG = { y: 30, duration: 0.5, stagger: 0.1 } as const;
 
 const variantIconClass: Record<StatVariant, string> = {
     primary: "text-primary",
@@ -87,8 +83,6 @@ const variantTileBg: Record<StatVariant, string> = {
 };
 
 export function StatsGrid({ stats, className }: StatsGridProps) {
-    const gridRef = useScrollAnimation<HTMLDivElement>(SCROLL_ANIMATION_CONFIG);
-
     const count = stats.length;
     const gridCols =
         count === 3 ? "grid-cols-2 sm:grid-cols-3" :
@@ -98,13 +92,16 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
         "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4";
 
     return (
-        <div ref={gridRef} className={cn(
+        // No entrance or count-up animation (owner, 2026-10-11): figures that
+        // roll up from 0 or slide in on every load read as a page that is
+        // lagging or broken. The value is on screen, final, from first paint.
+        <div className={cn(
             "grid gap-3 sm:gap-4 w-full",
             gridCols,
             className
         )}>
-            {stats.map((stat, index) => (
-                <StatTile key={stat.label} stat={stat} index={index} />
+            {stats.map((stat) => (
+                <StatTile key={stat.label} stat={stat} />
             ))}
         </div>
     );
@@ -121,7 +118,7 @@ export function StatsGrid({ stats, className }: StatsGridProps) {
  * this exact tile — the owner's decision on 2026-09-02: every module's KPI card
  * is the HVAC tile, nothing else.
  */
-export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
+export function StatTile({ stat }: { stat: StatItem }) {
     const justChanged = useValueChanged(stat.value);
 
             const variant = stat.variant || "primary";
@@ -171,7 +168,7 @@ export function StatTile({ stat, index }: { stat: StatItem; index: number }) {
                                 // never split across lines.
                                 style={{ "--kpi-chars": String(stat.value).length } as React.CSSProperties}
                             >
-                                <span className="whitespace-nowrap"><CountUp value={stat.value} delay={index * 0.06} /></span>
+                                <span className="whitespace-nowrap">{stat.value}</span>
                                 {/* The space is the break point: a long figure (OMR to 3
                                     decimals) moves the whole unit to the next line instead
                                     of splitting it ("O" / "MR"). */}

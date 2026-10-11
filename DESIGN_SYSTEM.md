@@ -120,7 +120,7 @@ Rules: minimum size 11 px; weight 800 does not exist; italics are not used in UI
 | `shadow-card` | `0 1px 2px rgba(78,68,86,.06), 0 6px 16px -4px rgba(78,68,86,.12)` — brand-tinted, raised 2026-09-28 at the owner's request (the neutral one read as flat on iPad) | Every card at rest |
 | `shadow-card-hover` | `0 2px 4px rgba(78,68,86,.08), 0 12px 28px -6px rgba(78,68,86,.18)` | Interactive cards on hover, popovers |
 | Dark mode shadows | `0 4px 12px rgba(0,0,0,.30), 0 2px 4px rgba(0,0,0,.20)` | Automatic via token |
-| Motion | `200 ms cubic-bezier(.4,0,.2,1)`; hover lift `translateY(-1px)`; no bounces; all loops off under `prefers-reduced-motion` | |
+| Motion | `200 ms cubic-bezier(.4,0,.2,1)`; hover lift `translateY(-1px)`; no bounces; all loops off under `prefers-reduced-motion`; **no count-up or entrance animation on KPI figures** (§7, 2026-10-11) | |
 | Focus | `outline: 2px solid var(--color-accent); outline-offset: 2px` on `:focus-visible` | |
 
 Two shadows. Three radii. That is the whole list.
@@ -220,6 +220,12 @@ geometry, which fixes all eight unmigrated pages at once:
   while the socket is healthy; realtime being down maps to `connecting`, as
   `/water` already does. Record counts and per-page connected/disconnected
   labels do not belong in the header.
+
+### Figures and KPI motion — 2026-10-11 (owner ruling)
+
+- **One decimal place for figures.** OMR amounts read `12,886.3`, never `12,886.301` (`formatOmr` in `lib/currency.ts`; supersedes the 3-decimal rule of 2026-09-26). Per-unit **rates** keep the precision they were set with (`formatOmrRate`: `1.32 OMR / m³`, `0.025 OMR/kWh`) — rounding a tariff misstates it. A non-zero reading that would round to `0.0` shows `<0.1`, never a false zero.
+- **Water gauges show the full figure** — `1,432 m³`, never `1.4k m³`: losses are tracked to the cubic metre (`LiquidProgressRing`).
+- **KPI tiles do not animate on load.** No count-up and no fade/slide entrance on `StatsGrid` tiles or the Dashboard deck cells: numbers that roll up from 0 on every refresh read as a page that is lagging or broken. The value is final from first paint. The brief highlight when a live update changes a figure stays.
 
 ---
 

@@ -81,15 +81,22 @@ export {
 
 // ─── Number formatters ────────────────────────────────────────────────────────
 
+// One decimal place (owner ruling 2026-10-11). A non-zero reading smaller
+// than 0.05 m³ would round to "0.0" and read as a recorded zero, so it shows
+// "<0.1" instead — the same rule as the Satellite map labels.
+const ONE_DP = { minimumFractionDigits: 1, maximumFractionDigits: 1 } as const;
+
 export function n(v: number | null, fallback = '—'): string {
     if (v === null) return fallback;
-    return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (v !== 0 && Math.abs(v) < 0.05) return (v < 0 ? '-' : '') + '<0.1';
+    return v.toLocaleString(undefined, ONE_DP);
 }
 
 export function diffCell(diff: number | null): string {
     if (diff === null) return '—';
-    if (diff === 0) return '0.00';
-    const formatted = Math.abs(diff).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (diff === 0) return '0.0';
+    const size = Math.abs(diff);
+    const formatted = size < 0.05 ? '<0.1' : size.toLocaleString(undefined, ONE_DP);
     return (diff > 0 ? '+' : '-') + formatted;
 }
 

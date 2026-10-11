@@ -44,7 +44,7 @@ export { DCAnalyticsPanel, SupplyReconciliationTable };
 /** Loose value type matching Recharts' Formatter signature. */
 type TipValue = number | string | ReadonlyArray<number | string> | undefined;
 const fmtM3 = (v: TipValue, name: number | string | undefined): [string, string] =>
-    [v == null ? "—" : `${Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 })} m³`, String(name)];
+    [v == null ? "—" : `${n(Number(v))} m³`, String(name)];
 
 // ─── DC Analytics Panel (mirrors ZoneAnalyticsPanel) ─────────────────────────
 

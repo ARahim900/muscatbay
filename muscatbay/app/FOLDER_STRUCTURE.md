@@ -144,7 +144,7 @@ and break the build.
 `supabase.ts` (compat re-exports), `supabase-server.ts`, `auth.ts`, `rbac.ts`,
 `validation.ts`, `config.ts`, `utils.ts` (`cn`), `tokens.ts`, `thresholds.ts`,
 `trends.ts`, `export-utils.ts`, `filter-preferences.ts`, `alert-preferences.ts`,
-`operational-alerts.ts`, `page-cache.ts`, `count-format.ts`, `loading.ts`,
+`operational-alerts.ts`, `page-cache.ts`, `loading.ts`,
 `logger.ts`, `motion.ts`, `mock-data.ts`, `water-data.ts`,
 `water-monthly-data.ts`, `water-accounts.ts`.
 

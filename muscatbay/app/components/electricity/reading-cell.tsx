@@ -98,7 +98,7 @@ export function describeReading(
 
     const ratio = value / baseline;
     const severity = classifyLoadRatio(ratio);
-    const common = `${month}: ${value.toLocaleString("en-US", { maximumFractionDigits: 1 })} kWh · ${ratio.toFixed(2)}× this meter's baseline of ${Math.round(baseline).toLocaleString("en-US")} kWh`;
+    const common = `${month}: ${value.toLocaleString("en-US", { maximumFractionDigits: 1 })} kWh · ${ratio.toFixed(1)}× this meter's baseline of ${Math.round(baseline).toLocaleString("en-US")} kWh`;
 
     if (severity === "critical") {
         return {

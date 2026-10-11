@@ -3,6 +3,7 @@
 // ─── Overview-tab chart row — extracted verbatim from
 //     app/electricity/page.tsx. Pure relocation; no behavior changes.
 
+import { formatOmr, formatOmrRate } from "@/lib/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     ResponsiveContainer, AreaChart, Area, XAxis, YAxis,
@@ -53,7 +54,7 @@ export function ElectricityOverviewCharts({ filteredMonthlyData, consumptionByTy
                     <CardTitle>Monthly Consumption Trend</CardTitle>
                     <p className="mt-1 text-xs text-muted-foreground">
                         {targetKWh !== null
-                            ? `Dashed line = the configured monthly target of ${Math.round(targetKWh).toLocaleString("en-US")} kWh (${(targetKWh * ELECTRICITY_RATES.RATE_PER_KWH).toLocaleString("en-US", { maximumFractionDigits: 0 })} OMR at ${ELECTRICITY_RATES.RATE_PER_KWH} OMR/kWh).`
+                            ? `Dashed line = the configured monthly target of ${Math.round(targetKWh).toLocaleString("en-US")} kWh (${formatOmr(targetKWh * ELECTRICITY_RATES.RATE_PER_KWH)} OMR at ${formatOmrRate(ELECTRICITY_RATES.RATE_PER_KWH)} OMR/kWh).`
                             : `No monthly consumption target or budget has been configured, so this trend has no reference line — it can only be compared with its own history. ${ELECTRICITY_TARGETS.SOURCE_NOTE}.`}
                     </p>
                 </CardHeader>

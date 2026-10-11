@@ -71,7 +71,7 @@ describe("phone map sheet", () => {
     render(<MapSheet {...sheetProps} selected={sheetProps.meters[0]} />);
     const toggle = screen.getByRole("button", { name: "More detail" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 6.10 m³");
+    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 6.1 m³");
     expect(screen.getByText(/27 Sept? 2026/)).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Seven-day consumption trend" })).toBeNull();
     fireEvent.click(toggle);
@@ -132,7 +132,7 @@ describe("phone map sheet", () => {
     const { rerender } = render(<MapSheet {...sheetProps} selected={sheetProps.meters[2]} />);
     expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: No reading");
     rerender(<MapSheet {...sheetProps} selected={meter("4", "Zero meter", 0)} />);
-    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 0.00 m³");
+    expect(screen.getByText("Selected day consumption:", { exact: false }).parentElement?.textContent).toBe("Selected day consumption: 0.0 m³");
     fireEvent.click(screen.getByRole("button", { name: "More detail" }));
     expect(screen.getByText("Recorded")).toBeTruthy();
     expect(screen.getByText("Unavailable for missing or invalid days, or a zero baseline.")).toBeTruthy();

@@ -504,6 +504,22 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Fixed 2026-10-11 — figures to one decimal, full gauge figures, no KPI
+  animation (owner request).** (1) `formatOmr` now shows **1 decimal**
+  (`12,886.3`, was `12,886.301`) everywhere it is used, and the OMR figures
+  that were hand-formatted to 0 decimals (STP Plant Watch income/savings,
+  Electricity Load Watch cost, the Electricity target note, Assets costs) now
+  go through it; per-unit rates use the new `formatOmrRate` so a tariff keeps
+  its real precision (1.32 OMR/m³, 0.025 OMR/kWh). Water Daily figures, the
+  Satellite panel volumes and the Electricity "× baseline" ratios moved from 2
+  decimals to 1; a non-zero reading under 0.05 shows `<0.1`, never `0.0`. The
+  STP daily-ops CSV writes OMR to 1 decimal. (2) The Water Daily gauges
+  (`LiquidProgressRing`) show the full figure — `1,432`, never `1.4k`. (3) The
+  KPI count-up (`components/motion/count-up.tsx`, deleted with
+  `lib/count-format.ts`) and the tile entrance are removed from `StatsGrid` and
+  the Dashboard deck cells; figures are final from first paint. Recorded in
+  `DESIGN_SYSTEM.md` §7.
+
 - **2026-10-11 — application review** (`docs/audits/2026-10-11-application-review.md`).
   **Fixed in the same PR (priorities 1–3):**
   1. **`next` 16.2.6 → 16.4.0** (critical + high advisories); production
@@ -557,7 +573,7 @@ stops at last month" problem is structurally closed:
      tile now reads "Sep-26 · month to date (to day 24)" with no trend, the
      chart insight compares only complete months and names the part month,
      and the running average excludes it.
-  3. **One OMR formatter** (`lib/currency.ts`, 3 decimals): Water loss cost and
+  3. **One OMR formatter** (`lib/currency.ts`, 3 decimals — *superseded 2026-10-11: one decimal, see the entry above*): Water loss cost and
      its rate, Electricity estimated cost and budget, STP economic impact (tile,
      subtitle, Plant Watch) and tanker fee, Contractors total value and Year 1
      expense, HVAC AMC contract values, and the STP daily-operations CSV

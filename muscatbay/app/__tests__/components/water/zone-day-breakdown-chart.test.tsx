@@ -31,7 +31,7 @@ describe('ZoneDayBreakdownChart', () => {
             />,
         );
         expect(screen.getByText('Where the water went — Day 1')).toBeInTheDocument();
-        expect(screen.getByText(/Unmetered loss 40\.00 m³ · 40\.0% of the 100\.00 m³ bulk · High · 16 meters not read/)).toBeInTheDocument();
+        expect(screen.getByText(/Unmetered loss 40\.0 m³ · 40\.0% of the 100\.0 m³ bulk · High · 16 meters not read/)).toBeInTheDocument();
     });
 
     it('says the bulk was not read instead of showing a zero loss', () => {

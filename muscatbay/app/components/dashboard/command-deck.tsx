@@ -6,7 +6,6 @@ import Link from "next/link";
 import { TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Breadcrumbs } from "@/components/shared/breadcrumbs";
-import { CountUp } from "@/components/motion/count-up";
 import { DeckBrandMark } from "@/components/dashboard/deck-brand-mark";
 import { MOTION, prefersReducedMotion, useIsomorphicLayoutEffect } from "@/lib/motion";
 import type { StatItem, StatVariant } from "@/components/shared/stats-grid";
@@ -87,16 +86,18 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
         const deck = deckRef.current;
         if (!deck || prefersReducedMotion()) return;
 
+        // Header items only. The KPI cells render final and still from first
+        // paint (owner, 2026-10-11): figures that fade or roll in on every
+        // load read as a page that is lagging.
         const items = deck.querySelectorAll<HTMLElement>("[data-deck-item]");
-        const cells = deck.querySelectorAll<HTMLElement>("[data-deck-cell]");
-        if (items.length === 0 && cells.length === 0) return;
+        if (items.length === 0) return;
 
         /* Compositor hint, held only for the length of the tween. will-change
            costs memory for as long as it is set, so it goes on immediately
            before the entrance (which starts on mount, not on scroll) and comes
-           off in onComplete. The bounded set here — a few header items plus
-           the KPI cells — is exactly the "staggered tile" case .gsap-lift is
-           for; it must never become a permanent class on the cells. */
+           off in onComplete. The bounded set here — a few header items — is
+           exactly the "staggered tile" case .gsap-lift is for; it must never
+           become a permanent class. */
         const lift = (els: NodeListOf<HTMLElement>, on: boolean) =>
             els.forEach((el) => el.classList.toggle("gsap-lift", on));
 
@@ -115,19 +116,6 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                     onComplete: () => lift(items, false),
                 });
             }
-            if (cells.length > 0) {
-                gsap.set(cells, { autoAlpha: 0, y: 14 });
-                lift(cells, true);
-                tl.to(cells, {
-                    autoAlpha: 1,
-                    y: 0,
-                    duration: MOTION.dur.md,
-                    ease: MOTION.ease.out,
-                    stagger: MOTION.stagger.tight,
-                    clearProps: "opacity,visibility,transform",
-                    onComplete: () => lift(cells, false),
-                }, items.length > 0 ? "-=0.55" : 0);
-            }
         }, deck);
 
         return () => {
@@ -135,7 +123,6 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
             // revert() undoes GSAP's own writes; the hint is ours to clear in
             // case the deck unmounts mid-entrance.
             lift(items, false);
-            lift(cells, false);
         };
     }, []);
 
@@ -211,7 +198,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                         lattice
                     )}
                 >
-                    {stats.map((stat, index) => {
+                    {stats.map((stat) => {
                         const variant = stat.variant || "primary";
 
                         const isGoodTrend = stat.trend === "neutral" ? false :
@@ -237,7 +224,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                                     </p>
                                 </div>
                                 <p className="mt-2 break-words text-lg font-semibold tabular-nums leading-tight text-white sm:mt-2.5 sm:text-xl print:text-(--primary)">
-                                    <CountUp value={stat.value} delay={0.3 + index * 0.06} />
+                                    {stat.value}
                                 </p>
                                 {/* The period label is ALWAYS rendered. It used to be
                                     suppressed whenever a trend existed — and every KPI
@@ -293,7 +280,6 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                             <Link
                                 key={stat.label}
                                 href={stat.href}
-                                data-deck-cell
                                 data-glow
                                 aria-label={`${stat.label}: ${stat.value}${stat.subtitle ? `, ${stat.subtitle}` : ""}.${stat.trend ? ` ${stat.trend === "up" ? "Up" : stat.trend === "down" ? "Down" : "No change"} ${stat.trendValue || ""} compared to the previous period.` : ""}${stat.target ? ` ${stat.target.label}.` : ""} Click to view details.`}
                                 className={cn(
@@ -306,7 +292,7 @@ export function CommandDeck({ title, description, actions, stats, periodNote, cl
                                 {cellContent}
                             </Link>
                         ) : (
-                            <div key={stat.label} data-deck-cell className={cellClassName}>
+                            <div key={stat.label} className={cellClassName}>
                                 {cellContent}
                             </div>
                         );

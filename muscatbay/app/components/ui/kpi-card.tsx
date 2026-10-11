@@ -56,7 +56,7 @@ export function KpiCard({ label, value, unit, footnote, icon, tone = 'neutral', 
   };
   return (
     <div className={className}>
-      <StatTile stat={stat} index={0} />
+      <StatTile stat={stat} />
     </div>
   );
 }

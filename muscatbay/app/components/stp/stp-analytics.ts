@@ -9,6 +9,7 @@
  * the dashboard alert feed and this module can never tell different stories.
  */
 
+import { formatOmr } from "@/lib/currency";
 import { format } from "date-fns";
 import type { STPOperation } from "@/lib/mock-data";
 import { STP_RATES } from "@/lib/config";
@@ -297,7 +298,7 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             headline: `${num(summary.totalTSE)} m³`,
             headlineNote: recovery !== null ? `${recovery.toFixed(0)}% of inlet reused for irrigation` : "no inlet in range",
             facts: [
-                { label: "savings", value: `${num(summary.savings, 0)} OMR` },
+                { label: "savings", value: `${formatOmr(summary.savings)} OMR` },
                 negativeReuse > 0
                     ? { label: "negative", value: String(negativeReuse) }
                     : { label: "zero-days", value: String(zeroReuse) },
@@ -315,7 +316,7 @@ export function buildHealthMetrics(model: STPModel): HealthMetric[] {
             headline: `${num(summary.totalTrips)}`,
             headlineNote: `trips · ~${avgTrips.toFixed(1)}/day · typical ${num(baselineTrips)}/day`,
             facts: [
-                { label: "income", value: `${num(summary.income, 0)} OMR` },
+                { label: "income", value: `${formatOmr(summary.income)} OMR` },
                 { label: "busy-days", value: String(highTankerDays) },
             ],
             spark: last14.map((d) => d.trips),

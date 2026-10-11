@@ -12,6 +12,7 @@
  * is exactly how the surfaces drifted apart before.
  */
 
+import { formatOmr } from "@/lib/currency";
 import type { MeterReading } from "@/lib/mock-data";
 import { ELECTRICITY_RATES } from "@/lib/config";
 import {
@@ -194,7 +195,7 @@ export function buildCategoryMetrics(model: ElectricityModel): HealthMetric[] {
             // Single fact keeps the card calm; the "N flagged" signal badge and the
             // severity chip already carry the attention cue.
             facts: [
-                { label: "cost", value: `${num(c.total * RATE)} OMR` },
+                { label: "cost", value: `${formatOmr(c.total * RATE)} OMR` },
             ],
             spark: c.monthTotals.slice(-14),
             sparkNote: `${Math.min(14, c.monthTotals.length)}-month trend`,
@@ -236,7 +237,7 @@ export function buildCategoryHeatmap(
                     : baseline <= 0
                         ? "good"
                         : classifyLoadRatio(ratio);
-                const ratioNote = Number.isFinite(ratio) ? ` · ${ratio.toFixed(2)}× the category baseline (${num(baseline)} kWh)` : "";
+                const ratioNote = Number.isFinite(ratio) ? ` · ${ratio.toFixed(1)}× the category baseline (${num(baseline)} kWh)` : "";
                 return {
                     severity,
                     label: total > 0 ? String(Math.round(total / 1000)) : "0",
@@ -309,7 +310,7 @@ export function buildElectricityFindings(model: ElectricityModel): Finding[] {
                 value,
                 remarks: [
                     m.baseline > 0 ? `baseline ${num(m.baseline)} kWh` : "no baseline in range",
-                    ratio !== null ? `${ratio.toFixed(2)}× baseline` : null,
+                    ratio !== null ? `${ratio.toFixed(1)}× baseline` : null,
                     `gate: ${meta.gate}`,
                 ].filter(Boolean).join(" · "),
                 action: meta.action,

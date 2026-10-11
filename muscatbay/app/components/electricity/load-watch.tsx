@@ -242,7 +242,7 @@ function CategoryTable({
                                                 <div className="h-full rounded-full bg-secondary" style={{ width: `${barWidth}%` }} />
                                             </div>
                                             <p className="mt-1 text-[11px] font-normal text-muted-foreground md:hidden">
-                                                {num(category.total * RATE)} OMR
+                                                {formatOmr(category.total * RATE)} OMR
                                             </p>
                                         </div>
                                     </TableCell>

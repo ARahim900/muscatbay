@@ -13,9 +13,9 @@ import { StatsGrid, type StatItem } from '@/components/shared/stats-grid';
  */
 
 /**
- * jsdom implements neither of these. `CountUp` and `useScrollAnimation` both
- * construct an IntersectionObserver on mount, so without a stub every render
- * of StatsGrid throws before a single assertion runs.
+ * jsdom implements no IntersectionObserver. StatsGrid used to construct one on
+ * mount (the count-up and scroll entrance, both removed 2026-10-11); the stub
+ * stays so a future observer in a tile cannot crash every render here.
  */
 class NoopIntersectionObserver {
     observe() {}

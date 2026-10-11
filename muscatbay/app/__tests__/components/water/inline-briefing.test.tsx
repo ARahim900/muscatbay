@@ -49,13 +49,13 @@ describe('DailyBriefing', () => {
 
     it('states the loss in m³ and as a share of supply', () => {
         render(<DailyBriefing metrics={base} month="Mar-26" day={15} />);
-        expect(screen.getAllByText(/150\.00 m³ lost · 15\.0% of supply/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/150\.0 m³ lost · 15\.0% of supply/).length).toBeGreaterThan(0);
     });
 
     it('omits the percentage when it cannot be computed, rather than showing 0%', () => {
         const m: BriefingMetrics = { ...base, lossPct: null };
         render(<DailyBriefing metrics={m} month="Mar-26" day={15} />);
-        expect(screen.getAllByText(/150\.00 m³ lost$/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/150\.0 m³ lost$/).length).toBeGreaterThan(0);
         expect(screen.queryAllByText(/of supply/)).toHaveLength(0);
     });
 

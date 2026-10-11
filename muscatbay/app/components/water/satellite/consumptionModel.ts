@@ -67,13 +67,15 @@ export const LEVELS: WaterMeter["level"][] = [
   "DC",
   "N/A",
 ];
-export const formatVolume = (value: number | null): string =>
-  value === null
-    ? "—"
-    : value.toLocaleString("en-GB", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
+/** Panel figures: one decimal (owner ruling 2026-10-11), never a false "0.0". */
+export const formatVolume = (value: number | null): string => {
+  if (value === null) return "—";
+  if (value !== 0 && Math.abs(value) < 0.05) return (value < 0 ? "-" : "") + "<0.1";
+  return value.toLocaleString("en-GB", {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+};
 /** Map figures: whole numbers, one decimal below 10, never a false "0". */
 export const formatMapVolume = (value: number | null): string => {
   if (value === null) return "—";

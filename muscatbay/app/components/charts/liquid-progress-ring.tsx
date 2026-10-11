@@ -39,12 +39,15 @@ export function LiquidProgressRing({
     const circumference = radius * 2 * Math.PI;
     const offset = circumference - percentage * circumference;
 
+    // Full figures, never "1.4k" (owner ruling 2026-10-11): losses are tracked
+    // to the cubic metre, and "1.4k" hides up to 50 m³ either way. Whole
+    // numbers with separators from 10 up ("1,432"), one decimal below 10, and
+    // "<0.1" for a non-zero reading that would otherwise round to a false 0.
     const formatValue = (v: number) => {
         const sign = v < 0 ? '-' : '';
         const absValue = Math.abs(v);
-        if (absValue >= 10000) return `${sign}${(absValue / 1000).toFixed(1)}k`;
-        if (absValue >= 1000) return `${sign}${(absValue / 1000).toFixed(1)}k`;
         if (absValue === 0) return '0';
+        if (absValue < 0.05) return `${sign}<0.1`;
         if (absValue < 10) return `${sign}${absValue.toFixed(1)}`;
         return `${sign}${Math.round(absValue).toLocaleString('en-US')}`;
     };
