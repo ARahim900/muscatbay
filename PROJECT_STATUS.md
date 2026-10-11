@@ -1789,6 +1789,9 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-11 — feat(stp): Electricity tab — monthly kWh and Nama bill for the STP
+- 2026-10-11 — fix(stp): tanker income = recorded trips x 5 OMR
+- 2026-10-11 — feat(ui): one-decimal figures, full water gauge values, no KPI count-up
 - 2026-10-11 — fix(data): keep missing STP readings missing; fail loudly on failed reads
 - 2026-10-11 — fix(auth): clear cached data and alerts when the signed-in user changes
 - 2026-10-11 — chore(deps): upgrade next to 16.4.0 for critical security advisories
