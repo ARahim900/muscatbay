@@ -1827,6 +1827,10 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-20 — fix(realtime): keep the max-wait deadline across re-subscribes
+- 2026-10-20 — fix(realtime): carry a pending change across a re-subscribe
+- 2026-10-20 — fix(realtime): bound the debounce so a steady stream still refreshes
+- 2026-10-20 — fix: production-readiness pass — honest missing data, safe asset search, CI
 - 2026-10-11 — feat(stp): Electricity tab — monthly kWh and Nama bill for the STP
 - 2026-10-11 — fix(stp): tanker income = recorded trips x 5 OMR
 - 2026-10-11 — feat(ui): one-decimal figures, full water gauge values, no KPI count-up
