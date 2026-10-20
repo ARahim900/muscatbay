@@ -53,6 +53,20 @@ describe("useSupabaseRealtime", () => {
         expect(onChanged.mock.calls.length).toBe(before + 1);
     });
 
+    it("keeps a pending change across a re-subscribe", () => {
+        vi.useFakeTimers();
+        const onChanged = vi.fn();
+        const { rerender } = renderHook(
+            ({ filter }: { filter: string }) => useSupabaseRealtime({ table: "t", channelName: "t", onChanged, filter }),
+            { initialProps: { filter: "month=eq.Sep-26" } },
+        );
+
+        handlers[0]();
+        rerender({ filter: "month=eq.Oct-26" }); // tears down the old channel mid-debounce
+        vi.advanceTimersByTime(1000);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
     it("drops a pending call when the component unmounts", () => {
         vi.useFakeTimers();
         const onChanged = vi.fn();
