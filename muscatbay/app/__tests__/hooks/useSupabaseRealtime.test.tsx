@@ -67,6 +67,26 @@ describe("useSupabaseRealtime", () => {
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
 
+    it("keeps the max-wait deadline running across re-subscribes", () => {
+        vi.useFakeTimers();
+        const onChanged = vi.fn();
+        const { rerender } = renderHook(
+            ({ filter }: { filter: string }) => useSupabaseRealtime({ table: "t", channelName: "t", onChanged, filter, debounceMs: 750, maxWaitMs: 2000 }),
+            { initialProps: { filter: "f0" } },
+        );
+
+        // An event, then a re-subscribe plus a fresh event every 500 ms: the
+        // quiet period never arrives, and each re-subscribe must not restart
+        // the 2 s deadline.
+        handlers[handlers.length - 1]();
+        for (let i = 1; i <= 4; i++) {
+            vi.advanceTimersByTime(500);
+            rerender({ filter: `f${i}` });
+            handlers[handlers.length - 1]();
+        }
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
     it("drops a pending call when the component unmounts", () => {
         vi.useFakeTimers();
         const onChanged = vi.fn();

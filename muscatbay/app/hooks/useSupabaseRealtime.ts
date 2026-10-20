@@ -98,10 +98,11 @@ export function useSupabaseRealtime({
     // array instance with the same contents do not re-subscribe every render.
     const tablesKey = JSON.stringify(Array.isArray(table) ? table : [table]);
 
-    // A change received but not yet delivered. It outlives a re-subscribe
-    // (filter, tables or timing changed) so that change is not lost; on
-    // unmount no new subscription starts, so it is simply dropped.
-    const pendingRef = useRef(false);
+    // When the oldest undelivered change arrived (null = nothing pending). It
+    // outlives a re-subscribe (filter, tables or timing changed) so the change
+    // is not lost and its maxWaitMs deadline keeps running; on unmount no new
+    // subscription starts, so it is simply dropped.
+    const pendingSinceRef = useRef<number | null>(null);
 
     // isLive is external-world state (Supabase subscription status), not
     // derivable from props alone; guard clauses must reset it when
@@ -125,19 +126,16 @@ export function useSupabaseRealtime({
         // Trailing debounce: a burst of row events becomes one onChanged call,
         // but a steady stream can never postpone it past maxWaitMs.
         let timer: ReturnType<typeof setTimeout> | null = null;
-        let firstPendingAt: number | null = null;
         const fire = () => {
             if (timer) clearTimeout(timer);
             timer = null;
-            firstPendingAt = null;
-            pendingRef.current = false;
+            pendingSinceRef.current = null;
             onChangedRef.current();
         };
         const notify = () => {
-            pendingRef.current = true;
             const now = Date.now();
-            if (firstPendingAt === null) firstPendingAt = now;
-            const waited = now - firstPendingAt;
+            if (pendingSinceRef.current === null) pendingSinceRef.current = now;
+            const waited = now - pendingSinceRef.current;
             if (waited >= maxWaitMs) {
                 fire();
                 return;
@@ -174,7 +172,7 @@ export function useSupabaseRealtime({
         });
 
         // Deliver a change carried over from the previous subscription.
-        if (pendingRef.current) notify();
+        if (pendingSinceRef.current !== null) notify();
 
         return () => {
             if (timer) clearTimeout(timer);
