@@ -1846,6 +1846,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-20 — ci: nightly encrypted database backup; status log pushes via deploy key
 - 2026-10-20 — fix(realtime): keep the max-wait deadline across re-subscribes
 - 2026-10-20 — fix(realtime): carry a pending change across a re-subscribe
 - 2026-10-20 — fix(realtime): bound the debounce so a steady stream still refreshes
