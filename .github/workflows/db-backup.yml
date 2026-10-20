@@ -1,0 +1,110 @@
+# Nightly logical backup of the Supabase database.
+#
+# Why: the Supabase project is on the free plan, which has no automatic
+# backups and no point-in-time recovery. This job takes the three-file dump
+# Supabase documents for backup and restore (roles, schema, data), encrypts
+# it, and keeps it as a workflow artifact for 30 days.
+#
+# The repository is PUBLIC and artifacts of a public repository can be
+# downloaded by any signed-in GitHub user, so the dump is encrypted with
+# AES-256 (GnuPG, symmetric) before upload. Nothing unencrypted leaves the
+# runner. Lose BACKUP_PASSPHRASE and every backup is unreadable — keep it in
+# a password manager.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL    Session pooler connection string (port 5432) from
+#                      Supabase → Connect. Not the direct db.<ref> string:
+#                      that host is IPv6-only and GitHub runners are not.
+#   BACKUP_PASSPHRASE  Long random passphrase used to encrypt each backup.
+#
+# Restore and test-restore steps: docs/runbooks/database-backup.md
+
+name: Database backup
+
+on:
+  schedule:
+    - cron: "17 22 * * *" # 02:17 Muscat time (UTC+4), daily
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Encrypted database backup
+    if: github.repository == 'ARahim900/muscatbay'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check secrets
+        run: |
+          missing=0
+          [ -n "$SUPABASE_DB_URL" ] || { echo "::error::Secret SUPABASE_DB_URL is not set — see docs/runbooks/database-backup.md"; missing=1; }
+          [ -n "$BACKUP_PASSPHRASE" ] || { echo "::error::Secret BACKUP_PASSPHRASE is not set — see docs/runbooks/database-backup.md"; missing=1; }
+          if [ -n "$BACKUP_PASSPHRASE" ] && [ "${#BACKUP_PASSPHRASE}" -lt 20 ]; then
+            echo "::error::BACKUP_PASSPHRASE is shorter than 20 characters"; missing=1
+          fi
+          exit $missing
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.119.0
+
+      - name: Dump roles, schema and data
+        run: |
+          set -euo pipefail
+          STAMP="$(date -u +%Y%m%dT%H%MZ)"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          mkdir -p "dump/$STAMP"
+          cd "dump/$STAMP"
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f roles.sql --role-only
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f schema.sql
+          supabase db dump --db-url "$SUPABASE_DB_URL" -f data.sql --use-copy --data-only
+          sha256sum roles.sql schema.sql data.sql > SHA256SUMS
+
+      - name: Sanity-check the dump
+        run: |
+          set -euo pipefail
+          cd "dump/$STAMP"
+          for f in roles.sql schema.sql data.sql; do
+            [ -s "$f" ] || { echo "::error::$f is empty"; exit 1; }
+          done
+          # A real dump of this project holds dozens of tables; a handful
+          # means the connection reached the wrong database or dumped nothing.
+          tables=$(grep -c '^COPY ' data.sql || true)
+          echo "Tables with data: $tables"
+          [ "$tables" -ge 20 ] || { echo "::error::Only $tables tables in data.sql — refusing to keep a suspect backup"; exit 1; }
+          grep -Eq '^COPY "?public"?\."?stp_operations"? ' data.sql || { echo "::error::stp_operations missing from data.sql"; exit 1; }
+          grep -Eq '^COPY "?auth"?\."?users"? ' data.sql || { echo "::error::auth.users missing from data.sql"; exit 1; }
+          ls -l
+
+      - name: Encrypt
+        run: |
+          set -euo pipefail
+          tar -C dump -czf "muscatbay-db-$STAMP.tar.gz" "$STAMP"
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --yes --quiet \
+            --pinentry-mode loopback --passphrase-fd 0 \
+            --symmetric --cipher-algo AES256 \
+            --output "muscatbay-db-$STAMP.tar.gz.gpg" "muscatbay-db-$STAMP.tar.gz"
+          # Prove the file decrypts before keeping it, then remove every
+          # unencrypted copy from the runner.
+          printf '%s' "$BACKUP_PASSPHRASE" | gpg --batch --quiet \
+            --pinentry-mode loopback --passphrase-fd 0 \
+            --decrypt "muscatbay-db-$STAMP.tar.gz.gpg" | tar -tzf - > /dev/null
+          rm -rf dump "muscatbay-db-$STAMP.tar.gz"
+          ls -l "muscatbay-db-$STAMP.tar.gz.gpg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: muscatbay-db-${{ env.STAMP }}
+          path: muscatbay-db-${{ env.STAMP }}.tar.gz.gpg
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

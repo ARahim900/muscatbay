@@ -536,10 +536,29 @@ stops at last month" problem is structurally closed:
      matching mobile. `eslint-config-next` range tightened to `~16.2.1`.
 
   **Still needs the owner (not code):** confirm the leaked `service_role` key
-  was rotated (`SECURITY_REMEDIATION.md` step 1); Supabase is on the free plan
-  with no backups or PITR; make the CI checks required on `main`; electricity
-  readings stop at 1 Aug 2026; the login/sign-up copy still says Google
-  "creates your account instantly" while the database requires an invitation.
+  was rotated (`SECURITY_REMEDIATION.md` step 1); electricity readings stop at
+  1 Aug 2026; the login/sign-up copy still says Google "creates your account
+  instantly" while the database requires an invitation.
+
+- **Added 2026-10-20 — required checks on `main` and nightly backups.**
+  1. **`main` is protected** by the repository ruleset "main: checks must
+     pass": "Web app" and "Mobile type check" (`quality.yml`) must pass before
+     a commit can reach `main`, and `main` cannot be deleted or force-pushed.
+     So nothing reaches the Vercel production deploy unchecked. Work goes on a
+     branch, checks run there, then it lands on `main`. Exempt: repository
+     admins (emergency override) and the status-log bot, which now pushes with
+     a write deploy key (secret `STATUS_LOG_DEPLOY_KEY`, the repo's only
+     deploy key) because a personal repository cannot exempt GitHub Actions.
+  2. **Database backups.** The Supabase organisation is on the **free plan**
+     (confirmed 2026-10-20): no Supabase backups, no PITR.
+     `.github/workflows/db-backup.yml` dumps roles, schema and data nightly
+     (02:17 Muscat), checks the dump, encrypts it (AES-256, the repo is
+     public) and keeps it 30 days as an artifact. **Inactive until the owner
+     adds two secrets** — `SUPABASE_DB_URL` (Session pooler string) and
+     `BACKUP_PASSPHRASE`; until then each run fails with a message naming the
+     missing secret. Not covered: Storage files and Vault secrets. Setup,
+     download, decrypt, restore and quarterly test-restore:
+     `docs/runbooks/database-backup.md`.
 
 - **Fixed 2026-10-11 — figures to one decimal, full gauge figures, no KPI
   animation (owner request).** (1) `formatOmr` now shows **1 decimal**

@@ -2,8 +2,15 @@
 # PROJECT_STATUS.md, so the project's living status file documents every
 # merged task with zero human action.
 #
+# Pushing to main: main is protected by the "main: checks must pass" ruleset,
+# which this bot's docs-only commit cannot satisfy (it has no CI run of its
+# own). On a personal repository a ruleset cannot exempt GitHub Actions, so
+# the bot pushes with a write deploy key (secret STATUS_LOG_DEPLOY_KEY) and
+# the ruleset exempts deploy keys. This is the repository's only deploy key.
+#
 # Loop safety (three layers):
-#   1. Pushes made with the default GITHUB_TOKEN do not trigger workflows.
+#   1. The bot's commit message carries "[skip ci]", so its push triggers no
+#      workflows (a deploy-key push would otherwise trigger them).
 #   2. The job skips entirely when the pusher is github-actions[bot].
 #   3. The bot's own commit subjects start with "docs(status):" and are
 #      filtered out of the log, and already-present lines are deduped.
@@ -36,6 +43,8 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+          # Push over SSH with the deploy key the ruleset exempts (see above).
+          ssh-key: ${{ secrets.STATUS_LOG_DEPLOY_KEY }}
 
       - name: Append pushed changes to PROJECT_STATUS.md
         run: |
