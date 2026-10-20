@@ -37,7 +37,7 @@ in one Next.js app backed by Supabase.
 | iOS Home Screen widget feed | **Water widget data (2026-10-06).** `GET /api/widget/water` with a per-device bearer key returns the latest recorded day's zone supply, loss, worst zone, meters read and a per-zone balance (`zones`: bulk, meters read, loss, severity, N of M meters) — computed with the Daily page's own `processReport`/`computeBriefing` (`lib/widget/water-summary.ts`). Each zone row in the Large widget links to `/water?view=daily&zone=<zone>`, which opens the Daily report on that zone's Zone Analysis (one-shot `zone` link, `lib/deep-links.ts`; shown, not saved as the operator's preference). Keys: `widget_tokens` (SHA-256 only), issued by `create_widget_token` from the signed-in page inside the app (`WidgetPairing`), checked by `widget_water_latest` (`sql/migrations/20261006_widget_tokens.sql`). Spec: `docs/superpowers/specs/2026-10-06-ios-home-widget-design.md`. |
 | iOS app (`mobile-shell/`) | **Full-screen WebView of www.muscatbay.work** (Expo 57, bundle `work.muscatbay.app`, EAS project @arpro900/muscatbay-shell, private TestFlight only). **1.1.0 adds the Home Screen water widget; 1.2.0 adds the Large "Water by zone" widget** (all 7 zones: bulk → meters read, loss %, severity, N missing); **1.3.0 adds dark and tinted app icons, tinted/clear widget looks (severity words, no colour-only dots) and per-zone taps** (a zone row opens the Daily report on that zone) (`targets/water-widget`, WidgetKit via `@bacons/apple-targets`): small + medium + large, Home Screen only, App Group `group.work.muscatbay.app`, polls `/api/widget/water` every 30 min, keeps last figures offline, tap opens `/water?view=daily` (a Large-widget zone row adds `&zone=<zone>`). `App.tsx` exposes `window.MuscatBayNative.widget` and stores the key the page issues. |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (576 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-11 |
+| Tests / checks | Vitest (595 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-20, and run by CI (`.github/workflows/quality.yml`) on every PR and push to `main` |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -504,6 +504,41 @@ stops at last month" problem is structurally closed:
 
 ## 4. Known gaps & data debt
 
+- **Fixed 2026-10-20 — production-readiness pass** (live signed-in test, an
+  iPhone 17 Pro / iOS 27 simulator check and a CodeRabbit review of the
+  7–19 Oct changes, then fixes):
+  1. **CI.** `.github/workflows/quality.yml` runs `tsc`, ESLint, Vitest,
+     `next build` and `npm audit --omit=dev` on every pull request and push to
+     `main`, plus `mobile/` `tsc`. It reports; it does not block Vercel's
+     deploy until "Web app" and "Mobile type check" are made required checks
+     on `main` (GitHub → Settings → Branches).
+  2. **No zeros for missing data.** STP daily log: a day with no tanker trips
+     or TSE recorded shows "—", not 0.0 OMR (`stpDayImpact` in
+     `components/stp/stp-analytics.ts`, shared by the table, phone cards, sort
+     and CSV). Fire Safety zone cards show "—" for equipment and open issues
+     when the registers could not be read, not "0".
+  3. **STP electricity:** the indicative rate (and the summer/winter split)
+     uses only confirmed bills — the unreliable May-26 bill no longer sets one.
+  4. **Asset search** matches its text literally: values are quoted and LIKE
+     wildcards escaped, so "Pump, Zone 3" or "AHU (Main)" no longer break the
+     register (verified against the live database: the old filter returned
+     HTTP 400, the new one 200, same counts for plain words). Sort column is
+     allow-listed, page size capped at 500, ties broken on `asset_uid`.
+  5. **Realtime:** `useSupabaseRealtime` debounces events (750 ms default), so
+     a 300-row sync triggers one refetch instead of 300, and gives each
+     subscription a unique channel name so a re-subscribe cannot go dead.
+     `useOperationalAlerts` ignores a superseded fetch.
+  6. **Notification prompt** shows only to a signed-in user — no longer on
+     `/login`, `/signup` or the legal pages, where it covered the heading.
+  7. Electricity Load Watch desktop cost column uses `formatOmr` (1 decimal),
+     matching mobile. `eslint-config-next` range tightened to `~16.2.1`.
+
+  **Still needs the owner (not code):** confirm the leaked `service_role` key
+  was rotated (`SECURITY_REMEDIATION.md` step 1); Supabase is on the free plan
+  with no backups or PITR; make the CI checks required on `main`; electricity
+  readings stop at 1 Aug 2026; the login/sign-up copy still says Google
+  "creates your account instantly" while the database requires an invitation.
+
 - **Fixed 2026-10-11 — figures to one decimal, full gauge figures, no KPI
   animation (owner request).** (1) `formatOmr` now shows **1 decimal**
   (`12,886.3`, was `12,886.301`) everywhere it is used, and the OMR figures
@@ -569,18 +604,19 @@ stops at last month" problem is structurally closed:
      and the CSV leaves the cell empty. A logged day with no inlet figure is
      its own finding ("Inlet reading missing"). Mobile's STP recovery uses
      the same paired-days rule.
-  4. **Readers fail loudly.** `getSTPOperationsFromSupabase`,
-     `getElectricityMetersFromSupabase` and `getContractorCounts` throw on a
-     failed read (`[]` only when Supabase is not configured). STP now pages
+  4. **Readers fail loudly.** `getSTPOperationsFromSupabase` and
+     `getElectricityMetersFromSupabase` throw on a failed read (`[]` only when
+     Supabase is not configured). `getContractorCounts` returns counts, not
+     rows, and throws in every failure case — including when Supabase is not
+     configured — because "0 contracts" would be a plausible wrong number. STP now pages
      past the 1,000-row cap; electricity readings page in `id` order.
   5. **No zeros after a failed read.** STP, Electricity and Contractors show
      an error panel with Retry when nothing loaded; Fire Safety's "Open
      issues" and the six Assets tiles read "—" with a "could not be read"
      note (Assets' "Needs attention" hides until a summary is read).
 
-  **Still open, highest first:** no CI runs tests/lint/build on pull requests;
-  asset search breaks on commas/brackets; realtime refetch without debounce;
-  missing focus rings on Water filters; light-mode teal text contrast;
+  **Still open, highest first** (CI, asset search and realtime debounce closed
+  2026-10-20 — see the entry above): missing focus rings on Water filters; light-mode teal text contrast;
   Dashboard/STP tickers; Fire Safety's hard-coded PPM schedule still shows
   Cycle 3 (~Aug 2026) as "upcoming"; mobile's STP daily chart still
   plots a missing day as 0 (`mobile/src/features/data/queries.ts`).

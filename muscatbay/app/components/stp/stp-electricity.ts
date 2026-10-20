@@ -28,9 +28,11 @@ export function dayLabel(iso: string | null): string {
 /**
  * Indicative cost per kWh in baisa: Nama bill (before VAT) ÷ OWATCO kWh.
  * Indicative only — the bill's period may not match the OWATCO 26th–25th
- * cycle. Null unless both figures exist.
+ * cycle. Null unless both figures exist and the bill is a confirmed one — an
+ * unreliable bill (e.g. May-26, which repeats June) must not set a rate.
  */
 export function indicativeRateBaisa(row: StpElectricityMonth): number | null {
+    if (row.billedStatus !== "billed") return null;
     if (row.billedOmr === null || row.owatcoKwh === null || row.owatcoKwh <= 0) return null;
     return (row.billedOmr / row.owatcoKwh) * 1000;
 }

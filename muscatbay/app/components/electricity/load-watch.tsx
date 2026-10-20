@@ -247,7 +247,7 @@ function CategoryTable({
                                         </div>
                                     </TableCell>
                                     <TableCell className="num hidden whitespace-nowrap md:table-cell">
-                                        {num(category.total * RATE)}
+                                        {formatOmr(category.total * RATE)}
                                     </TableCell>
                                     <TableCell className="hidden md:table-cell">
                                         <span

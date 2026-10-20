@@ -53,6 +53,11 @@ describe("indicative rate", () => {
         expect(indicativeRateBaisa(month("2026-05-01", { owatcoKwh: 27479, owatcoStatus: "reported", billedStatus: "unreliable" }))).toBeNull();
         expect(indicativeRateBaisa(month("2024-03-01", { namaKwh: 20398 }))).toBeNull();
     });
+
+    it("gives no rate from an unreliable bill even when both figures exist", () => {
+        const unreliable = month("2026-05-01", { owatcoKwh: 27479, owatcoStatus: "reported", billedOmr: 34.241, billedStatus: "unreliable" });
+        expect(indicativeRateBaisa(unreliable)).toBeNull();
+    });
 });
 
 describe("energy per m³ treated", () => {

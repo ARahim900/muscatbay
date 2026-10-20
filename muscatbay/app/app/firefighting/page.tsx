@@ -425,13 +425,19 @@ export default function FirefightingPage() {
                                                     <Building2 className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                                                 </div>
                                                 <p className="text-xs text-muted-foreground mt-2 leading-snug min-h-[2.5rem]">{z.scope}</p>
+                                                {/* Counts come from the live registers. When they could not be
+                                                    read the card says so — a "0" would claim the zone is clear. */}
                                                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/60 text-xs">
                                                     <span className="text-muted-foreground">Equipment</span>
-                                                    <span className="font-semibold text-foreground tabular-nums">{equipmentByZone[z.key]}</span>
+                                                    {connected
+                                                        ? <span className="font-semibold text-foreground tabular-nums">{equipmentByZone[z.key]}</span>
+                                                        : <span className="font-semibold text-muted-foreground tabular-nums" title="Equipment register could not be read">— <span className="sr-only">not read</span></span>}
                                                 </div>
                                                 <div className="flex items-center justify-between mt-1 text-xs">
                                                     <span className="text-muted-foreground">Open issues</span>
-                                                    <span className={cn("font-semibold tabular-nums", zoneIssues > 0 ? "text-destructive" : "text-secondary")}>{zoneIssues}</span>
+                                                    {connected
+                                                        ? <span className={cn("font-semibold tabular-nums", zoneIssues > 0 ? "text-destructive" : "text-secondary")}>{zoneIssues}</span>
+                                                        : <span className="font-semibold text-muted-foreground tabular-nums" title="Issues register could not be read">— <span className="sr-only">not read</span></span>}
                                                 </div>
                                             </CardContent>
                                         </Card>

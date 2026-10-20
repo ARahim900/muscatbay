@@ -20,6 +20,29 @@ const SELECT_COLS = [
     'notes_remarks', 'data_source',
 ].join(', ');
 
+const SEARCH_COLS = [
+    'asset_name', 'asset_tag', 'building_area', 'zone',
+    'discipline', 'category', 'manufacturer', 'amc_contractor',
+];
+
+/** Columns a caller may sort by — any other value falls back to asset_name. */
+const SORTABLE_COLS = new Set(SELECT_COLS.split(', '));
+
+/** Largest page a caller may request (the Assets page's "All" asks for 500). */
+export const MAX_ASSET_PAGE_SIZE = 500;
+
+/**
+ * The PostgREST `or` filter for a free-text asset search. The text is matched
+ * literally: LIKE wildcards (`%`, `_`) are escaped, and each value is quoted so
+ * commas, brackets and dots — "Pump, Zone 3", "AHU (Main)" — are part of the
+ * search rather than filter syntax.
+ */
+export function buildAssetSearchFilter(search: string): string {
+    const literal = search.replace(/[\\%_]/g, '\\$&');
+    const quoted = `"%${literal.replace(/[\\"]/g, '\\$&')}%"`;
+    return SEARCH_COLS.map((col) => `${col}.ilike.${quoted}`).join(',');
+}
+
 export async function getAssetsFromSupabase(
     page: number = 1,
     pageSize: number = 50,
@@ -33,21 +56,19 @@ export async function getAssetsFromSupabase(
     const client = clientOverride ?? getSupabaseClient();
     if (!client) return { data: [], count: 0 };
 
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize - 1;
+    const size = Math.min(Math.max(1, Math.floor(pageSize) || 1), MAX_ASSET_PAGE_SIZE);
+    const start = (Math.max(1, Math.floor(page) || 1) - 1) * size;
+    const end = start + size - 1;
+    const orderBy = SORTABLE_COLS.has(sortField) ? sortField : 'asset_name';
 
     try {
         let query = client
             .from(TABLE)
             .select(SELECT_COLS, { count: 'exact' });
 
-        if (search) {
-            query = query.or(
-                `asset_name.ilike.%${search}%,asset_tag.ilike.%${search}%,` +
-                `building_area.ilike.%${search}%,zone.ilike.%${search}%,` +
-                `discipline.ilike.%${search}%,category.ilike.%${search}%,` +
-                `manufacturer.ilike.%${search}%,amc_contractor.ilike.%${search}%`
-            );
+        const needle = search.trim();
+        if (needle) {
+            query = query.or(buildAssetSearchFilter(needle));
         }
 
         if (statusFilter && statusFilter.length > 0) {
@@ -59,7 +80,9 @@ export async function getAssetsFromSupabase(
         }
 
         const { data, error, count } = await query
-            .order(sortField, { ascending: sortDirection === 'asc' })
+            .order(orderBy, { ascending: sortDirection === 'asc' })
+            // Tie-break on the unique id so a row can't repeat or vanish between pages.
+            .order('asset_uid', { ascending: true })
             .range(start, end);
 
         if (error) throw new Error(`Supabase error: ${error.message}`);

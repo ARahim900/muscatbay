@@ -74,9 +74,28 @@ export function stpEfficiency(inlet: number | null, tse: number | null): number 
     return inlet !== null && inlet > 0 && tse !== null ? (tse / inlet) * 100 : null;
 }
 
+/**
+ * One day's economic impact in OMR. A part whose reading was not recorded stays
+ * null (never 0); the total is null only when both parts are missing.
+ */
+export function stpDayImpact(op: Pick<STPOperation, "tanker_trips" | "tse_for_irrigation">): {
+    income: number | null;
+    savings: number | null;
+    total: number | null;
+} {
+    const income = op.tanker_trips === null ? null : op.tanker_trips * STP_RATES.TANKER_FEE;
+    const savings = op.tse_for_irrigation === null ? null : op.tse_for_irrigation * STP_RATES.TSE_SAVING_RATE;
+    return { income, savings, total: addReading(income, savings) };
+}
+
 /** Add a reading to a running total; a missing reading adds nothing. Stays null until something is recorded. */
 export function addReading(total: number | null, value: number | null): number | null {
     return value === null ? total : (total ?? 0) + value;
+}
+
+/** An OMR amount to one decimal for a table cell: "—" when not recorded. */
+export function fmtOmrReading(value: number | null): string {
+    return value === null ? "—" : value.toFixed(1);
 }
 
 /** A reading for display: "—" when not recorded. */

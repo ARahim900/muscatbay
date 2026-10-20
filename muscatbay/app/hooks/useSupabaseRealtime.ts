@@ -44,6 +44,12 @@ export interface UseSupabaseRealtimeOptions {
     filter?: string;
     /** Set to false to disable the subscription (default: true) */
     enabled?: boolean;
+    /**
+     * Quiet period in ms before `onChanged` fires (default 750). A sync that
+     * writes 300 rows sends 300 events; they collapse into one refetch instead
+     * of 300, each of which used to fan out into a dozen requests per tablet.
+     */
+    debounceMs?: number;
 }
 
 export interface UseSupabaseRealtimeResult {
@@ -68,6 +74,7 @@ export function useSupabaseRealtime({
     onChanged,
     filter,
     enabled = true,
+    debounceMs = 750,
 }: UseSupabaseRealtimeOptions): UseSupabaseRealtimeResult {
     const [isLive, setIsLive] = useState(false);
 
@@ -103,8 +110,20 @@ export function useSupabaseRealtime({
 
         const tables = JSON.parse(tablesKey) as string[];
 
-        // ONE channel for all tables — one postgres_changes listener per table
-        let channel = client.channel(channelName);
+        // Trailing debounce: a burst of row events becomes one onChanged call.
+        let timer: ReturnType<typeof setTimeout> | null = null;
+        const notify = () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+                timer = null;
+                onChangedRef.current();
+            }, debounceMs);
+        };
+
+        // ONE channel for all tables — one postgres_changes listener per table.
+        // A unique suffix per subscription: re-subscribing under the same name
+        // while the previous channel is still leaving could leave this one dead.
+        let channel = client.channel(`${channelName}-${Math.random().toString(36).slice(2, 10)}`);
         for (const tableName of tables) {
             const channelConfig: {
                 event: '*';
@@ -121,9 +140,7 @@ export function useSupabaseRealtime({
                 channelConfig.filter = filter;
             }
 
-            channel = channel.on('postgres_changes', channelConfig, () => {
-                onChangedRef.current();
-            });
+            channel = channel.on('postgres_changes', channelConfig, notify);
         }
 
         channel.subscribe((status) => {
@@ -131,10 +148,11 @@ export function useSupabaseRealtime({
         });
 
         return () => {
+            if (timer) clearTimeout(timer);
             setIsLive(false);
             client.removeChannel(channel);
         };
-    }, [tablesKey, channelName, filter, enabled]);
+    }, [tablesKey, channelName, filter, enabled, debounceMs]);
 
     return { isLive };
 }

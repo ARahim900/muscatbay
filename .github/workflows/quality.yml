@@ -1,0 +1,80 @@
+# Runs the four gates CLAUDE.md requires before any change is finished —
+# TypeScript, ESLint, Vitest and the production build — on every pull request
+# and every push to main, plus the Expo app's type check, which breaks silently
+# when `entities/`, `lib/` or `functions/api/` change.
+#
+# Vercel deploys main on its own; this workflow does not block that deploy.
+# To make a red run block merging, require the "Web app" and "Mobile type
+# check" checks in GitHub → Settings → Branches → main.
+
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web app
+    # The status-log bot's docs-only commit needs no re-check.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: muscatbay/app
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      # The build only needs these to exist; CI never talks to the database.
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: muscatbay/app/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: ESLint
+        run: npx eslint .
+      - name: Unit tests
+        run: npx vitest run
+      - name: Production build
+        run: npm run build
+      - name: Security audit (shipped dependencies)
+        run: npm audit --omit=dev --audit-level=high
+
+  mobile:
+    name: Mobile type check
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            mobile/package-lock.json
+            muscatbay/app/package-lock.json
+      # mobile/ compiles the web app's entities/, lib/ and functions/api/, so
+      # both dependency trees must be present.
+      - run: npm ci --no-audit --no-fund
+        working-directory: muscatbay/app
+      - run: npm ci --no-audit --no-fund
+        working-directory: mobile
+      - name: TypeScript (mobile)
+        run: npx tsc --noEmit
+        working-directory: mobile

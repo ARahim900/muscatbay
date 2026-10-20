@@ -16,6 +16,7 @@ import {
   type OperationalAlertStatus,
 } from "@/hooks/useOperationalAlerts";
 import { Bell } from "lucide-react";
+import { getCurrentUser, onAuthStateChange } from "@/lib/auth";
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -86,8 +87,10 @@ const NotificationContext = createContext<NotificationContextValue | undefined>(
 );
 
 // ─── Permission Banner ──────────────────────────────────────────────────────────
-// Shown once on first visit. Asks the user to enable browser notifications.
-// Persists dismissal in localStorage so it doesn't reappear.
+// Shown once, after sign-in. Asks the user to enable browser notifications.
+// Persists dismissal in localStorage so it doesn't reappear. Never shown to a
+// signed-out visitor: the alerts it offers need a session, and on the login
+// card it covered the "Welcome back" heading.
 
 function PermissionBanner({
   permission,
@@ -98,6 +101,17 @@ function PermissionBanner({
 }) {
   const [dismissed, setDismissed] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    getCurrentUser().then((user) => { if (active) setSignedIn(Boolean(user)); });
+    const { data: { subscription } } = onAuthStateChange((user) => setSignedIn(Boolean(user)));
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Hydration-safe mount: defers localStorage read until after hydration to
   // avoid SSR/CSR mismatch.
@@ -110,7 +124,7 @@ function PermissionBanner({
   }, []);
 
   // Only show when permission hasn't been decided yet
-  if (!mounted || dismissed || permission !== "default") return null;
+  if (!mounted || !signedIn || dismissed || permission !== "default") return null;
 
   // Top offset adds the status-bar inset: the installed app paints under it
   // (viewport-fit=cover), where a plain top-4 put the card behind the clock.

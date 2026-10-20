@@ -1,0 +1,58 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderHook } from "@testing-library/react";
+
+/**
+ * A burst of realtime row events must become one refetch. Every event used to
+ * call onChanged directly, so a 300-row sync triggered 300 full page refetches.
+ */
+
+const handlers: Array<() => void> = [];
+const channel = {
+    on: vi.fn((_type: string, _config: unknown, cb: () => void) => { handlers.push(cb); return channel; }),
+    subscribe: vi.fn(() => channel),
+};
+const client = { channel: vi.fn(() => channel), removeChannel: vi.fn() };
+vi.mock("@/functions/supabase-client", () => ({ getSupabaseClient: () => client }));
+
+const { useSupabaseRealtime } = await import("@/hooks/useSupabaseRealtime");
+
+afterEach(() => {
+    handlers.length = 0;
+    vi.clearAllMocks();
+    vi.useRealTimers();
+});
+
+describe("useSupabaseRealtime", () => {
+    it("collapses a burst of events into one onChanged call", () => {
+        vi.useFakeTimers();
+        const onChanged = vi.fn();
+        renderHook(() => useSupabaseRealtime({ table: "stp_operations", channelName: "t", onChanged, debounceMs: 500 }));
+
+        for (let i = 0; i < 300; i++) handlers[0]();
+        expect(onChanged).not.toHaveBeenCalled();
+
+        vi.advanceTimersByTime(500);
+        expect(onChanged).toHaveBeenCalledTimes(1);
+    });
+
+    it("drops a pending call when the component unmounts", () => {
+        vi.useFakeTimers();
+        const onChanged = vi.fn();
+        const { unmount } = renderHook(() => useSupabaseRealtime({ table: "t", channelName: "t", onChanged }));
+
+        handlers[0]();
+        const removedBefore = client.removeChannel.mock.calls.length;
+        unmount();
+        vi.advanceTimersByTime(5000);
+        expect(onChanged).not.toHaveBeenCalled();
+        expect(client.removeChannel.mock.calls.length).toBe(removedBefore + 1);
+    });
+
+    it("gives each subscription its own channel name", () => {
+        renderHook(() => useSupabaseRealtime({ table: "t", channelName: "water-rt", onChanged: vi.fn() }));
+        renderHook(() => useSupabaseRealtime({ table: "t", channelName: "water-rt", onChanged: vi.fn() }));
+        const [first, second] = client.channel.mock.calls.map((c) => (c as unknown as [string])[0]);
+        expect(first).toMatch(/^water-rt-/);
+        expect(first).not.toBe(second);
+    });
+});

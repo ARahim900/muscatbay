@@ -106,8 +106,12 @@ export function useOperationalAlerts(
     // Whose session the last fetch ran under (undefined = not yet asked,
     // null = signed out). Alerts are read under that user's access rules.
     const lastUserId = useRef<string | null | undefined>(undefined);
+    // Each fetch takes a ticket; only the newest may write state, so a slow
+    // earlier read (initial or realtime) can never overwrite a newer one.
+    const fetchSeq = useRef(0);
 
     const fetchSources = useCallback(async () => {
+        const seq = ++fetchSeq.current;
         if (!isSupabaseConfigured()) {
             setData(null);
             setStatus("unavailable");
@@ -119,6 +123,7 @@ export function useOperationalAlerts(
         // answers 401 and logs a read failure while nothing is actually wrong.
         // getCurrentUser() reads the stored session — no network round-trip.
         const user = await getCurrentUser();
+        if (seq !== fetchSeq.current) return;
         lastUserId.current = user?.id ?? null;
         if (!user) {
             setData(null);
@@ -131,6 +136,7 @@ export function useOperationalAlerts(
             getContractorTrackerData(),
             getSTPOperationsFromSupabase(),
         ]);
+        if (seq !== fetchSeq.current) return;
         // A failed read rejects (STP) or returns [] (water, contractors); a live
         // deployment always has rows, so either means "source unavailable",
         // never "all clear".

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSTPModel, buildHeatmap, buildSTPFindings, addReading, stpEfficiency, fmtReading } from "@/components/stp/stp-analytics";
+import { buildSTPModel, buildHeatmap, buildSTPFindings, addReading, stpEfficiency, fmtReading, stpDayImpact, fmtOmrReading } from "@/components/stp/stp-analytics";
 import { transformSTPOperation, type SupabaseSTPOperation } from "@/entities/stp";
 import type { STPOperation } from "@/lib/mock-data";
 
@@ -95,5 +95,22 @@ describe("tanker income", () => {
     it("adds nothing for a day whose trips were not recorded", () => {
         const model = buildSTPModel([op("2026-07-11", 600, 550, 5), op("2026-07-12", 600, 550, null)]);
         expect(model.summary.income).toBe(25);
+    });
+});
+
+describe("stpDayImpact", () => {
+    it("keeps a part missing when its reading was not recorded", () => {
+        expect(stpDayImpact({ tanker_trips: null, tse_for_irrigation: 600 })).toEqual({ income: null, savings: 600 * 1.32, total: 600 * 1.32 });
+        expect(stpDayImpact({ tanker_trips: 5, tse_for_irrigation: null })).toEqual({ income: 25, savings: null, total: 25 });
+    });
+
+    it("has no total when neither part was recorded — never 0 OMR", () => {
+        expect(stpDayImpact({ tanker_trips: null, tse_for_irrigation: null })).toEqual({ income: null, savings: null, total: null });
+        expect(fmtOmrReading(null)).toBe("—");
+    });
+
+    it("keeps a recorded zero as zero", () => {
+        expect(stpDayImpact({ tanker_trips: 0, tse_for_irrigation: 0 }).total).toBe(0);
+        expect(fmtOmrReading(0)).toBe("0.0");
     });
 });

@@ -49,7 +49,7 @@ import { PeriodFilterPanel } from "@/components/shared/period-filter-panel";
 import dynamic from "next/dynamic";
 // Types only — erased at compile time, so this import pulls no runtime module.
 import type { ChartView, STPChartDataPoint } from "@/components/stp/stp-trend-charts";
-import { addReading, fmtReading, stpEfficiency } from "@/components/stp/stp-analytics";
+import { addReading, fmtOmrReading, fmtReading, stpDayImpact, stpEfficiency } from "@/components/stp/stp-analytics";
 import { StpElectricityPanel } from "@/components/stp/stp-electricity-panel";
 import { formatOmr, formatOmrRate } from "@/lib/currency";
 
@@ -664,10 +664,8 @@ export default function STPPage() {
             let bVal: number | string = 0;
             const aEfficiency = key(stpEfficiency(a.inlet_sewage, a.tse_for_irrigation));
             const bEfficiency = key(stpEfficiency(b.inlet_sewage, b.tse_for_irrigation));
-            const aIncome = (a.tanker_trips ?? 0) * TANKER_FEE;
-            const bIncome = (b.tanker_trips ?? 0) * TANKER_FEE;
-            const aSavings = (a.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
-            const bSavings = (b.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
+            const aImpact = stpDayImpact(a);
+            const bImpact = stpDayImpact(b);
 
             switch (logSortField) {
                 case 'date': aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime(); break;
@@ -675,9 +673,9 @@ export default function STPPage() {
                 case 'tse': aVal = key(a.tse_for_irrigation); bVal = key(b.tse_for_irrigation); break;
                 case 'efficiency': aVal = aEfficiency; bVal = bEfficiency; break;
                 case 'trips': aVal = key(a.tanker_trips); bVal = key(b.tanker_trips); break;
-                case 'income': aVal = aIncome; bVal = bIncome; break;
-                case 'savings': aVal = aSavings; bVal = bSavings; break;
-                case 'total': aVal = aIncome + aSavings; bVal = bIncome + bSavings; break;
+                case 'income': aVal = key(aImpact.income); bVal = key(bImpact.income); break;
+                case 'savings': aVal = key(aImpact.savings); bVal = key(bImpact.savings); break;
+                case 'total': aVal = key(aImpact.total); bVal = key(bImpact.total); break;
                 default: aVal = new Date(a.date).getTime(); bVal = new Date(b.date).getTime();
             }
             const diff = (aVal as number) - (bVal as number);
@@ -730,8 +728,7 @@ export default function STPPage() {
         const data = dailyOperations.map(op => {
             // Missing readings export as empty cells, never as 0.
             const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
-            const income = op.tanker_trips === null ? null : op.tanker_trips * TANKER_FEE;
-            const savings = op.tse_for_irrigation === null ? null : op.tse_for_irrigation * TSE_SAVING_RATE;
+            const { income, savings, total } = stpDayImpact(op);
             return {
                 Date: format(new Date(op.date), "dd/MM/yyyy"),
                 'Inlet (m³)': op.inlet_sewage ?? '',
@@ -740,7 +737,7 @@ export default function STPPage() {
                 'Tanker Trips': op.tanker_trips ?? '',
                 'Income (OMR)': income === null ? '' : Number(income.toFixed(1)),
                 'Savings (OMR)': savings === null ? '' : Number(savings.toFixed(1)),
-                'Total Impact (OMR)': income === null && savings === null ? '' : Number(((income ?? 0) + (savings ?? 0)).toFixed(1)),
+                'Total Impact (OMR)': total === null ? '' : Number(total.toFixed(1)),
             };
         });
         exportToCSV(data, `stp-daily-ops-${selectedMonth}-${getDateForFilename()}`);
@@ -1156,9 +1153,7 @@ export default function STPPage() {
                         <div className="md:hidden space-y-3">
                             {paginatedDailyOperations.map((op) => {
                                 const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
-                                const income = (op.tanker_trips ?? 0) * TANKER_FEE;
-                                const savings = (op.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
-                                const totalImpact = income + savings;
+                                const { total: totalImpact } = stpDayImpact(op);
                                 const efficiencyBadgeColor: BadgeColor = efficiency === null ? 'slate' : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
                                 const efficiencyLabel = efficiency === null ? 'No reading' : `${efficiency.toFixed(1)}%`;
 
@@ -1183,7 +1178,7 @@ export default function STPPage() {
                                             </div>
                                             <div className="space-y-0.5">
                                                 <span className="text-muted-foreground">Total Impact</span>
-                                                <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact.toFixed(1)} OMR</p>
+                                                <p className="font-mono font-semibold text-[var(--mb-success-text)]">{totalImpact === null ? "—" : `${totalImpact.toFixed(1)} OMR`}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -1245,9 +1240,7 @@ export default function STPPage() {
                                 <TableBody>
                                     {paginatedDailyOperations.map((op) => {
                                         const efficiency = stpEfficiency(op.inlet_sewage, op.tse_for_irrigation);
-                                        const income = (op.tanker_trips ?? 0) * TANKER_FEE;
-                                        const savings = (op.tse_for_irrigation ?? 0) * TSE_SAVING_RATE;
-                                        const totalImpact = income + savings;
+                                        const { income, savings, total: totalImpact } = stpDayImpact(op);
                                         const efficiencyBadgeColor: BadgeColor = efficiency === null ? 'slate' : efficiency >= STP_THRESHOLDS.RECOVERY_GOOD ? 'green' : efficiency >= STP_THRESHOLDS.RECOVERY_WATCH ? 'amber' : 'red';
                                         const efficiencyLabel = efficiency === null ? 'No reading' : `${efficiency.toFixed(1)}%`;
 
@@ -1262,9 +1255,9 @@ export default function STPPage() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="num text-mb-warning-text">{fmtReading(op.tanker_trips, 0)}</TableCell>
-                                                <TableCell className="num text-mb-success-text">{income.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-primary">{savings.toFixed(1)}</TableCell>
-                                                <TableCell className="num text-mb-success-text">{totalImpact.toFixed(1)}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{fmtOmrReading(income)}</TableCell>
+                                                <TableCell className="num text-primary">{fmtOmrReading(savings)}</TableCell>
+                                                <TableCell className="num text-mb-success-text">{fmtOmrReading(totalImpact)}</TableCell>
                                             </TableRow>
                                         );
                                     })}
