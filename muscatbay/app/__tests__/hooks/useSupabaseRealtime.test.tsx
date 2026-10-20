@@ -35,6 +35,24 @@ describe("useSupabaseRealtime", () => {
         expect(onChanged).toHaveBeenCalledTimes(1);
     });
 
+    it("still refreshes during a steady stream that never goes quiet", () => {
+        vi.useFakeTimers();
+        const onChanged = vi.fn();
+        renderHook(() => useSupabaseRealtime({ table: "t", channelName: "t", onChanged, debounceMs: 750, maxWaitMs: 5000 }));
+
+        // One event every 500 ms for 12 s — the 750 ms quiet period never arrives.
+        for (let t = 0; t < 12000; t += 500) {
+            handlers[0]();
+            vi.advanceTimersByTime(500);
+        }
+        expect(onChanged.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+        // Once the stream stops, the trailing call still lands.
+        const before = onChanged.mock.calls.length;
+        vi.advanceTimersByTime(1000);
+        expect(onChanged.mock.calls.length).toBe(before + 1);
+    });
+
     it("drops a pending call when the component unmounts", () => {
         vi.useFakeTimers();
         const onChanged = vi.fn();

@@ -37,7 +37,7 @@ in one Next.js app backed by Supabase.
 | iOS Home Screen widget feed | **Water widget data (2026-10-06).** `GET /api/widget/water` with a per-device bearer key returns the latest recorded day's zone supply, loss, worst zone, meters read and a per-zone balance (`zones`: bulk, meters read, loss, severity, N of M meters) — computed with the Daily page's own `processReport`/`computeBriefing` (`lib/widget/water-summary.ts`). Each zone row in the Large widget links to `/water?view=daily&zone=<zone>`, which opens the Daily report on that zone's Zone Analysis (one-shot `zone` link, `lib/deep-links.ts`; shown, not saved as the operator's preference). Keys: `widget_tokens` (SHA-256 only), issued by `create_widget_token` from the signed-in page inside the app (`WidgetPairing`), checked by `widget_water_latest` (`sql/migrations/20261006_widget_tokens.sql`). Spec: `docs/superpowers/specs/2026-10-06-ios-home-widget-design.md`. |
 | iOS app (`mobile-shell/`) | **Full-screen WebView of www.muscatbay.work** (Expo 57, bundle `work.muscatbay.app`, EAS project @arpro900/muscatbay-shell, private TestFlight only). **1.1.0 adds the Home Screen water widget; 1.2.0 adds the Large "Water by zone" widget** (all 7 zones: bulk → meters read, loss %, severity, N missing); **1.3.0 adds dark and tinted app icons, tinted/clear widget looks (severity words, no colour-only dots) and per-zone taps** (a zone row opens the Daily report on that zone) (`targets/water-widget`, WidgetKit via `@bacons/apple-targets`): small + medium + large, Home Screen only, App Group `group.work.muscatbay.app`, polls `/api/widget/water` every 30 min, keeps last figures offline, tap opens `/water?view=daily` (a Large-widget zone row adds `&zone=<zone>`). `App.tsx` exposes `window.MuscatBayNative.widget` and stores the key the page issues. |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (595 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-20, and run by CI (`.github/workflows/quality.yml`) on every PR and push to `main` |
+| Tests / checks | Vitest (596 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-20, and run by CI (`.github/workflows/quality.yml`) on every PR and push to `main` |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -525,7 +525,8 @@ stops at last month" problem is structurally closed:
      HTTP 400, the new one 200, same counts for plain words). Sort column is
      allow-listed, page size capped at 500, ties broken on `asset_uid`.
   5. **Realtime:** `useSupabaseRealtime` debounces events (750 ms default), so
-     a 300-row sync triggers one refetch instead of 300, and gives each
+     a 300-row sync triggers one refetch instead of 300 — with a 5 s maximum
+     wait, so a steady stream can never postpone the refresh — and gives each
      subscription a unique channel name so a re-subscribe cannot go dead.
      `useOperationalAlerts` ignores a superseded fetch.
   6. **Notification prompt** shows only to a signed-in user — no longer on

@@ -50,6 +50,12 @@ export interface UseSupabaseRealtimeOptions {
      * of 300, each of which used to fan out into a dozen requests per tablet.
      */
     debounceMs?: number;
+    /**
+     * Longest a pending refetch may be postponed (default 5000). Under a
+     * steady event stream the quiet period never arrives; this bound still
+     * refreshes the page at least this often.
+     */
+    maxWaitMs?: number;
 }
 
 export interface UseSupabaseRealtimeResult {
@@ -75,6 +81,7 @@ export function useSupabaseRealtime({
     filter,
     enabled = true,
     debounceMs = 750,
+    maxWaitMs = 5000,
 }: UseSupabaseRealtimeOptions): UseSupabaseRealtimeResult {
     const [isLive, setIsLive] = useState(false);
 
@@ -110,14 +117,26 @@ export function useSupabaseRealtime({
 
         const tables = JSON.parse(tablesKey) as string[];
 
-        // Trailing debounce: a burst of row events becomes one onChanged call.
+        // Trailing debounce: a burst of row events becomes one onChanged call,
+        // but a steady stream can never postpone it past maxWaitMs.
         let timer: ReturnType<typeof setTimeout> | null = null;
-        const notify = () => {
+        let firstPendingAt: number | null = null;
+        const fire = () => {
             if (timer) clearTimeout(timer);
-            timer = setTimeout(() => {
-                timer = null;
-                onChangedRef.current();
-            }, debounceMs);
+            timer = null;
+            firstPendingAt = null;
+            onChangedRef.current();
+        };
+        const notify = () => {
+            const now = Date.now();
+            if (firstPendingAt === null) firstPendingAt = now;
+            const waited = now - firstPendingAt;
+            if (waited >= maxWaitMs) {
+                fire();
+                return;
+            }
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(fire, Math.min(debounceMs, maxWaitMs - waited));
         };
 
         // ONE channel for all tables — one postgres_changes listener per table.
@@ -152,7 +171,7 @@ export function useSupabaseRealtime({
             setIsLive(false);
             client.removeChannel(channel);
         };
-    }, [tablesKey, channelName, filter, enabled, debounceMs]);
+    }, [tablesKey, channelName, filter, enabled, debounceMs, maxWaitMs]);
 
     return { isLive };
 }
