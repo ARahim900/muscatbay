@@ -7,8 +7,9 @@
 # ruleset "main: checks must pass" (Settings → Rules → Rulesets): a commit can
 # reach main — and so Vercel's production deploy — only after both pass on a
 # branch or pull request. Renaming either job breaks that rule; update the
-# ruleset in the same change. Exempt: repository admins (emergency override)
-# and the status-log bot's deploy key (see project-status-log.yml).
+# ruleset in the same change. Exempt: repository admins, but only when
+# merging a pull request (emergency override; a direct push is still
+# checked), and the status-log bot's deploy key (see project-status-log.yml).
 
 name: Quality
 

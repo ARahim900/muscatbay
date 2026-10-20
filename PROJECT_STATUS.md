@@ -545,10 +545,13 @@ stops at last month" problem is structurally closed:
      pass": "Web app" and "Mobile type check" (`quality.yml`) must pass before
      a commit can reach `main`, and `main` cannot be deleted or force-pushed.
      So nothing reaches the Vercel production deploy unchecked. Work goes on a
-     branch, checks run there, then it lands on `main`. Exempt: repository
-     admins (emergency override) and the status-log bot, which now pushes with
-     a write deploy key (secret `STATUS_LOG_DEPLOY_KEY`, the repo's only
-     deploy key) because a personal repository cannot exempt GitHub Actions.
+     branch, checks run there, then it lands on `main`. Ruleset id
+     `25491215` (Settings → Rules → Rulesets). Exempt: repository admins
+     **only when merging a pull request** (emergency override — a direct push
+     by anyone, admins and AI sessions included, is still checked), and the
+     status-log bot, which now pushes with a write deploy key (secret
+     `STATUS_LOG_DEPLOY_KEY`, the repo's only deploy key) because a personal
+     repository cannot exempt GitHub Actions.
   2. **Database backups.** The Supabase organisation is on the **free plan**
      (confirmed 2026-10-20): no Supabase backups, no PITR.
      `.github/workflows/db-backup.yml` dumps roles, schema and data nightly
