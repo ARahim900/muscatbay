@@ -1860,6 +1860,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-21 — fix(backup): restore script that handles NOT VALID rules; first test restore
 - 2026-10-20 — docs: record the main ruleset's final bypass settings
 - 2026-10-20 — ci: nightly encrypted database backup; status log pushes via deploy key
 - 2026-10-20 — fix(realtime): keep the max-wait deadline across re-subscribes
