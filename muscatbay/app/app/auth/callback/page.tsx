@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Button } from '@/components/ui/button';
 import { AuthBrandLockup } from '@/components/auth/brand-lockup';
 import { Loader2, AlertCircle, ArrowLeft, HelpCircle, Info } from 'lucide-react';
+import { SUPPORT_EMAIL } from "@/lib/config";
 
 // ── Friendly error mapping ──────────────────────────────────────────────
 // Supabase errors are technical — map known patterns to user-friendly copy.
@@ -467,7 +468,7 @@ function AuthCallbackContent() {
                                 <HelpCircle className="h-3.5 w-3.5" />
                                 <span>Still having trouble?</span>
                                 <a
-                                    href="mailto:support@muscatbay.com"
+                                    href={`mailto:${SUPPORT_EMAIL}`}
                                     className="underline hover:text-mb-primary dark:hover:text-secondary transition-colors"
                                 >
                                     Contact support

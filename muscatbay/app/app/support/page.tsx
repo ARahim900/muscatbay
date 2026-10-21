@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft, LifeBuoy } from "lucide-react";
 
+import { SUPPORT_EMAIL } from "@/lib/config";
+
 export const metadata = {
     title: "Support — Muscat Bay Operations",
     description: "How to get help with the Muscat Bay Operations app.",
 };
-
-/** The one support address, already used on the sign-in error page. */
-const SUPPORT_EMAIL = "support@muscatbay.com";
 
 /**
  * Public support page — the App Store "Support URL" (guideline 1.5) and the

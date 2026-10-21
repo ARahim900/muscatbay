@@ -7,6 +7,16 @@
  */
 
 // ==============================================
+// Contact
+// ==============================================
+
+/**
+ * The one support address, shown on /support (the App Store Support URL) and
+ * on the sign-in error page. Owner's choice, 2026-10-21.
+ */
+export const SUPPORT_EMAIL = 'aalbalushi@muscatbay.com';
+
+// ==============================================
 // Economic Rates
 // ==============================================
 
