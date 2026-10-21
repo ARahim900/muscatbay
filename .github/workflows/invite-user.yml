@@ -1,0 +1,80 @@
+# Invite one person to the dashboard (run by hand: Actions → Invite user →
+# Run workflow).
+#
+# Why: sign-up is invitation-only — the on_auth_user_created trigger refuses
+# any address without an open row in public.auth_invitations — and that table
+# is closed to every app role, so the app has no invite screen. This job adds
+# the row with the SUPABASE_DB_URL secret; the person then creates their
+# account at /signup (browser) with that address and gets the chosen role.
+#
+# Admin is deliberately not offered: grant it in the database by hand.
+# Only people with write access to the repository can run this. The address
+# is masked in the log because the repository is public.
+
+name: Invite user
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: "Email address to invite"
+        required: true
+        type: string
+      role:
+        description: "Role the account receives"
+        required: true
+        default: viewer
+        type: choice
+        options: [viewer, operator, contractor, manager]
+      expires_in_days:
+        description: "Days the invitation stays open"
+        required: true
+        default: "14"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  invite:
+    name: Add invitation
+    if: github.repository == 'ARahim900/muscatbay'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      INVITE_EMAIL: ${{ inputs.email }}
+      INVITE_ROLE: ${{ inputs.role }}
+      INVITE_DAYS: ${{ inputs.expires_in_days }}
+    steps:
+      - name: Check input
+        run: |
+          email=$(printf '%s' "$INVITE_EMAIL" | tr '[:upper:]' '[:lower:]' | xargs)
+          echo "::add-mask::$email"
+          [ -n "$SUPABASE_DB_URL" ] || { echo "::error::Secret SUPABASE_DB_URL is not set"; exit 1; }
+          printf '%s' "$email" | grep -Eq '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' || { echo "::error::Not an email address"; exit 1; }
+          printf '%s' "$INVITE_DAYS" | grep -Eq '^[1-9][0-9]?$' || { echo "::error::expires_in_days must be 1-99"; exit 1; }
+          echo "INVITE_EMAIL=$email" >> "$GITHUB_ENV"
+
+      - name: Add invitation
+        run: |
+          echo "::add-mask::$INVITE_EMAIL"
+          psql "$SUPABASE_DB_URL" --no-psqlrc --quiet --tuples-only --set ON_ERROR_STOP=1 \
+            --set email="$INVITE_EMAIL" --set role="$INVITE_ROLE" --set days="$INVITE_DAYS" <<'SQL'
+          select case
+              when exists (select 1 from auth.users where lower(email) = :'email')
+                  then 'An account with this address already exists — nothing added.'
+              when exists (select 1 from public.auth_invitations
+                            where email = :'email' and accepted_at is null and revoked_at is null
+                              and (expires_at is null or expires_at > now()))
+                  then 'An open invitation for this address already exists — nothing added.'
+              else 'Invitation added.'
+          end as result \gset
+          insert into public.auth_invitations (email, role, expires_at)
+          select :'email', :'role', now() + make_interval(days => :'days'::int)
+          where :'result' = 'Invitation added.';
+          \echo :result
+          select format('Role %s, open until %s UTC', :'role',
+                        to_char(now() + make_interval(days => :'days'::int), 'YYYY-MM-DD HH24:MI'))
+          where :'result' = 'Invitation added.';
+          SQL

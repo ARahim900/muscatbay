@@ -1765,7 +1765,9 @@ tables that no screen reads.
   - **Two consequences to be aware of.** First, there is now **no way to invite a
     user from the app** — the invitation route and form were part of the removed
     set, while the database still requires an invitation to sign up, so new
-    accounts need a row added directly. Second, the accent-as-text contrast
+    accounts need a row added directly (since 2026-10-21 the manual **Invite
+    user** Actions workflow, `.github/workflows/invite-user.yml`, adds it — any
+    role but admin, open 14 days by default). Second, the accent-as-text contrast
     tokens are gone, so the brand teal used as text is back to roughly **1.6:1**
     in light mode and the brand purple to **2.71:1** in dark, against a 4.5:1
     AA floor. Both were stated to the owner at the time.
