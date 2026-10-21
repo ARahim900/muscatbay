@@ -1866,6 +1866,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-21 — fix(ci): keep the invited address out of the Invite user log
 - 2026-10-21 — ci: manual "Invite user" workflow for the invitation-only sign-up
 - 2026-10-21 — feat(ios): App Store readiness — hide Google and sign-up in the app, support page, privacy manifests
 - 2026-10-21 — fix(contractors): store Drive PDF links in the /preview form the database accepts
