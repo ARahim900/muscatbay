@@ -43,13 +43,16 @@ jobs:
     timeout-minutes: 5
     env:
       SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
-      INVITE_EMAIL: ${{ inputs.email }}
       INVITE_ROLE: ${{ inputs.role }}
       INVITE_DAYS: ${{ inputs.expires_in_days }}
     steps:
       - name: Check input
         run: |
-          email=$(printf '%s' "$INVITE_EMAIL" | tr '[:upper:]' '[:lower:]' | xargs)
+          # Read from the event payload, not from env or an inputs expression:
+          # GitHub prints both in the step header before any mask applies.
+          raw=$(jq -r '.inputs.email' "$GITHUB_EVENT_PATH")
+          echo "::add-mask::$raw"
+          email=$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]' | xargs)
           echo "::add-mask::$email"
           [ -n "$SUPABASE_DB_URL" ] || { echo "::error::Secret SUPABASE_DB_URL is not set"; exit 1; }
           printf '%s' "$email" | grep -Eq '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$' || { echo "::error::Not an email address"; exit 1; }
