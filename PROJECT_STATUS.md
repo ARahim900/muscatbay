@@ -1864,6 +1864,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-21 — feat(ios): App Store readiness — hide Google and sign-up in the app, support page, privacy manifests
 - 2026-10-21 — fix(contractors): store Drive PDF links in the /preview form the database accepts
 - 2026-10-21 — fix(backup): restore script that handles NOT VALID rules; first test restore
 - 2026-10-20 — docs: record the main ruleset's final bypass settings
