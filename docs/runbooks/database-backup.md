@@ -50,29 +50,40 @@ cd <stamp> && shasum -a 256 -c SHA256SUMS
 
 Restore into a **new** Supabase project first, check it, and only then decide
 whether to point the app at it. Never restore over the live project without
-that check. With the new project's Session pooler connection string:
+that check. With the unpacked backup folder and the new project's Session
+pooler connection string:
 
 ```bash
-psql \
-  --single-transaction \
-  --variable ON_ERROR_STOP=1 \
-  --file roles.sql \
-  --file schema.sql \
-  --command 'SET session_replication_role = replica' \
-  --file data.sql \
-  --dbname "<new project's connection string>"
+node scripts/restore-db-backup.mjs <unpacked-backup-folder> "<new project's connection string>"
 ```
 
-`session_replication_role = replica` stops triggers firing while the rows load
-(it is the restore command in Supabase's own backup guide). Afterwards: set the
-new project's URL and anon key in Vercel, re-upload Storage files if needed,
-and re-create any Vault secrets and Edge Function secrets.
+Use the script, not Supabase's plain `psql --file roles.sql --file schema.sql
+--file data.sql` command: on this project that command **fails** (found by the
+first test restore, 2026-10-21). The script fixes two things and is otherwise
+the same restore:
+
+1. Three rules were added to the live database `NOT VALID` — they check new
+   rows only. Eight live contracts predate `contractor_contract_pdf_url_approved`
+   (their Drive links end in `/view`, not `/preview`), so applying the rule
+   before the data aborts the load. The script loads data first, then adds the
+   rules back, still `NOT VALID`, as on the live project.
+2. Empty platform tables (e.g. `storage.buckets_vectors`) are rejected with
+   "permission denied" on a fresh project. An empty table carries nothing, so
+   the script skips them.
+
+It runs as one transaction — it restores everything or changes nothing — and
+needs `psql` (macOS: `brew install libpq`; set
+`HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=1` first, or Homebrew may upgrade
+unrelated packages and break Node). Afterwards: set the new project's URL and
+anon key in Vercel, re-upload Storage files if needed, and re-create any Vault
+secrets and Edge Function secrets.
 
 ## Test the backups
 
 A backup that has never been restored is a hope, not a backup. Once a quarter,
 restore the latest one into a scratch Supabase project (or a local
-`supabase start` stack) and compare row counts for a few key tables
+`supabase start` stack, on non-default ports if another local project is
+running) with the script above, and compare row counts for a few key tables
 (`stp_operations`, `water_monthly_consumption`, `master_assets_register`,
 `auth.users`) against the live project.
 
@@ -82,3 +93,9 @@ If the organisation moves to Supabase **Pro**, Supabase adds daily backups
 (7 days) of its own; point-in-time recovery is a further paid add-on. Keep
 this job running anyway: it is an off-platform copy that survives a deleted
 project or a locked account.
+
+## Test log
+
+| Date | Backup | Result |
+|---|---|---|
+| 2026-10-21 | `muscatbay-db-20261021T0439Z` (first run) | Decrypted and checksum-verified on the owner's Mac; restored into a local Supabase stack (Postgres 17) with `scripts/restore-db-backup.mjs`. Row counts match the backup: `auth.users` 9, `master_assets_register` 3,061, `stp_operations` 792, `water_monthly_consumption` 11,279, `storage.objects` 14; 113 tables with data; 80 of 80 public tables with RLS, 157 policies. |

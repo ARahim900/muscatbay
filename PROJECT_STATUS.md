@@ -556,12 +556,23 @@ stops at last month" problem is structurally closed:
      (confirmed 2026-10-20): no Supabase backups, no PITR.
      `.github/workflows/db-backup.yml` dumps roles, schema and data nightly
      (02:17 Muscat), checks the dump, encrypts it (AES-256, the repo is
-     public) and keeps it 30 days as an artifact. **Inactive until the owner
-     adds two secrets** — `SUPABASE_DB_URL` (Session pooler string) and
-     `BACKUP_PASSPHRASE`; until then each run fails with a message naming the
-     missing secret. Not covered: Storage files and Vault secrets. Setup,
-     download, decrypt, restore and quarterly test-restore:
-     `docs/runbooks/database-backup.md`.
+     public) and keeps it 30 days as an artifact. **Active since 2026-10-21**:
+     both secrets set (`BACKUP_PASSPHRASE` also kept in the owner's macOS
+     Keychain); the first run's backup was decrypted, checksum-verified and
+     **test-restored** into a local Supabase stack with matching row counts.
+     Not covered: Storage files and Vault secrets. Setup, download, decrypt,
+     restore and quarterly test-restore: `docs/runbooks/database-backup.md`.
+     **Restore with `scripts/restore-db-backup.mjs`, not the plain Supabase
+     command** — that one fails here (NOT VALID constraints, empty platform
+     tables); see the runbook.
+  3. **Open data item (owner): 8 contract PDF links break the database's own
+     rule.** `contractor_contracts.contract_pdf_url` must be a Drive
+     `/preview` link (`contractor_contract_pdf_url_approved`, added NOT VALID),
+     but the rows for Al Khalili, Gulf Expert (BMS), Gulf Expert (HVAC),
+     Kalhat Services, KONE Assarain LLC, Muna Noor, OWATCO and Tadoom end in
+     `/view`. They still display today; any edit to those rows will be refused
+     until each link is changed to `/preview`. Found by the 2026-10-21 test
+     restore.
 
 - **Fixed 2026-10-11 — figures to one decimal, full gauge figures, no KPI
   animation (owner request).** (1) `formatOmr` now shows **1 decimal**
