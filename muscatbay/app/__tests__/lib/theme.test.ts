@@ -105,7 +105,11 @@ describe("THEME_INIT_SCRIPT (runs in <head> before first paint)", () => {
         expect(run({ stored: null, ua: SAFARI_UA, systemDark: true })).toEqual({ cls: "dark", scheme: "dark" });
     });
     it("ignores an old manual Light choice inside the app", () => {
-        expect(run({ stored: "light", ua: APP_UA, systemDark: true })).toEqual({ cls: "dark", scheme: "dark" });
+        expect(run({ stored: "light", ua: APP_UA, systemDark: true })).toEqual({ cls: "in-app dark", scheme: "dark" });
+    });
+    it("marks the page as in-app only inside the iOS app", () => {
+        expect(run({ stored: null, ua: APP_UA, systemDark: false }).cls.split(" ")).toContain("in-app");
+        expect(run({ stored: null, ua: SAFARI_UA, systemDark: false }).cls.split(" ")).not.toContain("in-app");
     });
     it("honours a manual choice in a browser", () => {
         expect(run({ stored: "light", ua: SAFARI_UA, systemDark: true })).toEqual({ cls: "light", scheme: "light" });

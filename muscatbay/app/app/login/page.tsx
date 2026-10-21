@@ -437,8 +437,13 @@ function LoginContent() {
                                 )}
                             </Button>
 
-                            {/* Divider — password sign-in vs Google OAuth */}
-                            <div className="relative">
+                            {/* Divider — password sign-in vs Google OAuth.
+                                Google and self sign-up are hidden inside the iOS
+                                app (`in-app:`): Apple requires Sign in with Apple
+                                beside any third-party sign-in (4.8) and in-app
+                                account deletion beside any sign-up (5.1.1(v)).
+                                The browser keeps both. */}
+                            <div className="relative in-app:hidden">
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-border" />
                                 </div>
@@ -452,7 +457,7 @@ function LoginContent() {
                             {/* Google OAuth — one button covers sign-in AND first-time
                                 sign-up: Google has already verified the address, so new
                                 users skip the confirmation-email round-trip entirely. */}
-                            <div className="space-y-2">
+                            <div className="space-y-2 in-app:hidden">
                                 <GoogleSignInButton
                                     onError={setError}
                                     className="h-12 rounded-xl border-2 border-border hover:border-muted-foreground/40 transition-design"
@@ -463,7 +468,7 @@ function LoginContent() {
                             </div>
 
                             {/* Divider */}
-                            <div className="relative">
+                            <div className="relative in-app:hidden">
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-border" />
                                 </div>
@@ -475,7 +480,7 @@ function LoginContent() {
                             </div>
 
                             {/* Sign Up Link */}
-                            <div className="text-center">
+                            <div className="text-center in-app:hidden">
                                 <Link
                                     href="/signup"
                                     className="inline-flex items-center justify-center w-full h-12 border-2 border-primary/20 hover:border-primary text-primary dark:text-secondary dark:border-secondary/20 dark:hover:border-secondary font-semibold rounded-xl transition-design hover:bg-primary/5 dark:hover:bg-secondary/5"
@@ -483,6 +488,14 @@ function LoginContent() {
                                     Create an account
                                 </Link>
                             </div>
+
+                            {/* In the iOS app, accounts come from an invitation. */}
+                            <p className="hidden text-center text-sm text-muted-foreground in-app:block">
+                                Accounts are issued by Muscat Bay Operations. Need access?{' '}
+                                <Link href="/support" className="text-primary dark:text-secondary hover:underline">
+                                    Contact support
+                                </Link>
+                            </p>
                         </form>
                     </div>
 
@@ -496,6 +509,11 @@ function LoginContent() {
                             and{' '}
                             <Link href="/privacy" className="text-primary dark:text-secondary hover:underline">
                                 Privacy Policy
+                            </Link>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            <Link href="/support" className="text-primary dark:text-secondary hover:underline">
+                                Support
                             </Link>
                         </p>
                         <p className="text-xs text-muted-foreground mt-2">

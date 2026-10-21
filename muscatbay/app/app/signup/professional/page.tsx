@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Building2, User, Mail, Phone, FileText, Briefcase, CheckCircle2, ArrowLeft } from "lucide-react";
 import { validateEmail, validateFullName } from "@/lib/validation";
 import { getSupabaseClient } from "@/lib/supabase";
+import { InAppSignupNotice } from "@/components/auth/in-app-signup-notice";
 
 const SERVICE_CATEGORIES = [
     "Electrical & Power Systems",
@@ -212,7 +213,9 @@ export default function ProfessionalApplicationPage() {
                     </div>
                 </div>
 
-                <Card className="card-elevated">
+                <InAppSignupNotice />
+
+                <Card className="card-elevated in-app:hidden">
                     <CardHeader className="space-y-1 pb-4">
                         <CardTitle className="text-2xl font-bold text-center">Professional Application</CardTitle>
                         <CardDescription className="text-center">
@@ -426,7 +429,7 @@ export default function ProfessionalApplicationPage() {
                     </form>
                 </Card>
 
-                <p className="text-center text-xs text-muted-foreground mt-6">
+                <p className="text-center text-xs text-muted-foreground mt-6 in-app:hidden">
                     Your application will be reviewed by our team. We&apos;ll contact you within 2-3 business days.
                 </p>
             </div>

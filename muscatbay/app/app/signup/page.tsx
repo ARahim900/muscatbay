@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "@/co
 import { AuthBrandLockup } from "@/components/auth/brand-lockup";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { Loader2, Mail, Lock, Eye, EyeOff, User, CheckCircle2 } from "lucide-react";
+import { InAppSignupNotice } from "@/components/auth/in-app-signup-notice";
 
 type SignUpStatus =
     | { kind: "form" }
@@ -167,7 +168,9 @@ export default function SignUpPage() {
                     <AuthBrandLockup />
                 </div>
 
-                <Card className="card-elevated">
+                <InAppSignupNotice />
+
+                <Card className="card-elevated in-app:hidden">
                     <CardHeader className="space-y-1 pb-4">
                         {/* Written as a raw <h1> rather than <CardTitle>: this card title IS
                             the page heading (WCAG 1.3.1 — the page previously opened at <h2>,
@@ -355,7 +358,7 @@ export default function SignUpPage() {
                     </form>
                 </Card>
 
-                <p className="text-center text-xs text-muted-foreground mt-6">
+                <p className="text-center text-xs text-muted-foreground mt-6 in-app:hidden">
                     By creating an account, you agree to our Terms of Service and Privacy Policy.
                 </p>
             </div>

@@ -15,6 +15,13 @@ export type ResolvedTheme = "light" | "dark";
 export const THEME_STORAGE_KEY = "theme";
 export const DARK_MEDIA_QUERY = "(prefers-color-scheme: dark)";
 const APP_SHELL_UA = "MuscatBayApp/";
+/**
+ * Class set on <html> inside the iOS app, before first paint. Drives the
+ * Tailwind `in-app:` variant, which hides what Apple will not accept in the
+ * app (Google sign-in without Sign in with Apple, open self sign-up) while the
+ * browser keeps both.
+ */
+export const IN_APP_CLASS = "in-app";
 
 export const THEME_LABEL: Record<ThemePreference, string> = { system: "System", light: "Light", dark: "Dark" };
 
@@ -49,8 +56,9 @@ export const THEME_INIT_SCRIPT = `(function(){try{
 var ua=navigator.userAgent||"";var stored=null;
 try{stored=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});}catch(e){}
 var pref=(stored==="light"||stored==="dark"||stored==="system")?stored:"system";
-if(ua.indexOf(${JSON.stringify(APP_SHELL_UA)})!==-1)pref="system";
+var inApp=ua.indexOf(${JSON.stringify(APP_SHELL_UA)})!==-1;if(inApp)pref="system";
 var dark=pref==="dark"||(pref==="system"&&window.matchMedia(${JSON.stringify(DARK_MEDIA_QUERY)}).matches);
 var t=dark?"dark":"light";var r=document.documentElement;
+if(inApp)r.classList.add(${JSON.stringify(IN_APP_CLASS)});
 r.classList.remove("light","dark");r.classList.add(t);r.style.colorScheme=t;
 }catch(e){}})();`;

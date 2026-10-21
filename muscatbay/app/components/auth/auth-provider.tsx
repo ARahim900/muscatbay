@@ -43,13 +43,14 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 // Public routes that don't require authentication
-const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/callback", "/auth/reset-password", "/privacy", "/terms"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/forgot-password", "/auth/callback", "/auth/reset-password", "/privacy", "/terms", "/support"];
 
-// Public routes that stay reachable while signed in. The legal pages are
-// linked from the Google OAuth consent screen and from every auth page, so
-// bouncing a visitor to /login (signed out) or / (signed in) breaks them;
+// Public routes that stay reachable while signed in. The legal and support
+// pages are linked from the Google OAuth consent screen, every auth page and
+// the App Store listing, so bouncing a visitor to /login (signed out) or /
+// (signed in) breaks them;
 // the recovery flow arrives carrying a session and must not be bounced.
-const OPEN_WHEN_AUTHENTICATED = ["/auth/reset-password", "/privacy", "/terms"];
+const OPEN_WHEN_AUTHENTICATED = ["/auth/reset-password", "/privacy", "/terms", "/support"];
 
 interface AuthProviderProps {
     children: ReactNode;

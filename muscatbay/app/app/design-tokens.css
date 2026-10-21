@@ -10,6 +10,8 @@
 /* The app toggles <html class="light|dark">. Make Tailwind's `dark:`
    variant follow that class instead of the OS media query. */
 @custom-variant dark (&:where(.dark, .dark *));
+/* Inside the iOS app shell (class set by THEME_INIT_SCRIPT in lib/theme.ts). */
+@custom-variant in-app (&:where(.in-app, .in-app *));
 
 /* ---------- 1. Raw palette (never used directly in components) ---------- */
 :root {

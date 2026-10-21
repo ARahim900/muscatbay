@@ -9,7 +9,7 @@ import { WidgetPairing } from "@/components/providers/widget-pairing";
 
 // Routes that render without AuthProvider + sidebar:
 // auth flows (login/signup/etc.) and public legal pages (privacy/terms).
-const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth", "/privacy", "/terms"];
+const AUTH_PAGES = ["/login", "/signup", "/forgot-password", "/auth", "/privacy", "/terms", "/support"];
 
 export function LayoutRouter({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
