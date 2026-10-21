@@ -37,7 +37,7 @@ in one Next.js app backed by Supabase.
 | iOS Home Screen widget feed | **Water widget data (2026-10-06).** `GET /api/widget/water` with a per-device bearer key returns the latest recorded day's zone supply, loss, worst zone, meters read and a per-zone balance (`zones`: bulk, meters read, loss, severity, N of M meters) — computed with the Daily page's own `processReport`/`computeBriefing` (`lib/widget/water-summary.ts`). Each zone row in the Large widget links to `/water?view=daily&zone=<zone>`, which opens the Daily report on that zone's Zone Analysis (one-shot `zone` link, `lib/deep-links.ts`; shown, not saved as the operator's preference). Keys: `widget_tokens` (SHA-256 only), issued by `create_widget_token` from the signed-in page inside the app (`WidgetPairing`), checked by `widget_water_latest` (`sql/migrations/20261006_widget_tokens.sql`). Spec: `docs/superpowers/specs/2026-10-06-ios-home-widget-design.md`. |
 | iOS app (`mobile-shell/`) | **Full-screen WebView of www.muscatbay.work** (Expo 57, bundle `work.muscatbay.app`, EAS project @arpro900/muscatbay-shell, private TestFlight only). **1.1.0 adds the Home Screen water widget; 1.2.0 adds the Large "Water by zone" widget** (all 7 zones: bulk → meters read, loss %, severity, N missing); **1.3.0 adds dark and tinted app icons, tinted/clear widget looks (severity words, no colour-only dots) and per-zone taps** (a zone row opens the Daily report on that zone) (`targets/water-widget`, WidgetKit via `@bacons/apple-targets`): small + medium + large, Home Screen only, App Group `group.work.muscatbay.app`, polls `/api/widget/water` every 30 min, keeps last figures offline, tap opens `/water?view=daily` (a Large-widget zone row adds `&zone=<zone>`). `App.tsx` exposes `window.MuscatBayNative.widget` and stores the key the page issues. |
 | Auth | Supabase email/password + Google OAuth (added 2026-08-28 — "Continue with Google" on `/login` and `/signup`; instant sign-up, no confirmation-email round-trip; **inert until the Google provider is enabled in the Supabase dashboard**, see §4); client-side route protection (`components/auth/auth-provider.tsx`); RBAC role column (2026-05-13 migration) |
-| Tests / checks | Vitest (598 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-20, and run by CI (`.github/workflows/quality.yml`) on every PR and push to `main` |
+| Tests / checks | Vitest (614 tests), ESLint (incl. the design rule on migrated folders), `tsc --noEmit`, `next build` (+ `mobile/` `tsc --noEmit`) — all green as of 2026-10-20, and run by CI (`.github/workflows/quality.yml`) on every PR and push to `main` |
 
 Users are operations staff on control-room tablets (dark mode primary) and
 executives (dashboard KPIs). Live data — there is no demo mode.
@@ -552,8 +552,11 @@ stops at last month" problem is structurally closed:
      status-log bot, which now pushes with a write deploy key (secret
      `STATUS_LOG_DEPLOY_KEY`, the repo's only deploy key) because a personal
      repository cannot exempt GitHub Actions.
-  2. **Database backups.** The Supabase organisation is on the **free plan**
-     (confirmed 2026-10-20): no Supabase backups, no PITR.
+  2. **Database backups.** The live project's organisation is on the **free
+     plan** per §5 (2026-09-02): no Supabase backups, no PITR. (The Supabase
+     MCP connector is linked to a different organisation, "securitymuscatbay";
+     its plan says nothing about the live project — check Billing in the
+     dashboard of the organisation that owns `utnlgeuqajmwibqmdmgt`.)
      `.github/workflows/db-backup.yml` dumps roles, schema and data nightly
      (02:17 Muscat), checks the dump, encrypts it (AES-256, the repo is
      public) and keeps it 30 days as an artifact. **Active since 2026-10-21**:
@@ -565,13 +568,14 @@ stops at last month" problem is structurally closed:
      **Restore with `scripts/restore-db-backup.mjs`, not the plain Supabase
      command** — that one fails here (NOT VALID constraints, empty platform
      tables); see the runbook.
-  3. **Open data item (owner): 8 contract PDF links break the database's own
-     rule.** `contractor_contracts.contract_pdf_url` must be a Drive
-     `/preview` link (`contractor_contract_pdf_url_approved`, added NOT VALID),
-     but the rows for Al Khalili, Gulf Expert (BMS), Gulf Expert (HVAC),
-     Kalhat Services, KONE Assarain LLC, Muna Noor, OWATCO and Tadoom end in
-     `/view`. They still display today; any edit to those rows will be refused
-     until each link is changed to `/preview`. Found by the 2026-10-21 test
+  3. **Fixed 2026-10-21 — contract PDF links.** The dialog asks for a Drive
+     share link (`/view?usp=…`) but `contractor_contract_pdf_url_approved`
+     accepts only `/preview`, so every save from the dialog was refused, and
+     all 8 stored links (added before the rule) broke it. The 8 rows were
+     converted to `/preview` with the owner's approval (same Drive file; the
+     viewer already displayed them as `/preview`), and `updateContractPdfUrl`
+     now converts any Drive file link with `toDrivePreviewUrl` before writing
+     (non-Drive links are refused with a message). Found by the 2026-10-21 test
      restore.
 
 - **Fixed 2026-10-11 — figures to one decimal, full gauge figures, no KPI

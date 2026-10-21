@@ -8,8 +8,8 @@
  * Supabase's plain restore command (roles → schema → data) fails on this
  * project, found by the first test restore on 2026-10-21:
  *
- * 1. Three CHECK constraints were added NOT VALID: they bind new rows only, and
- *    8 live contractor_contracts rows predate contractor_contract_pdf_url_approved.
+ * 1. Three CHECK constraints were added NOT VALID: they bind new rows only, so
+ *    old rows may break them (8 contractor_contracts rows did until 2026-10-21).
  *    pg_dump puts them in schema.sql, so they would check every row during the
  *    data load and abort it. They are moved after the data and stay NOT VALID,
  *    exactly as on the live project.

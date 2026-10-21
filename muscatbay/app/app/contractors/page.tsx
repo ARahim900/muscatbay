@@ -227,9 +227,12 @@ export default function ContractorsPage() {
         // dialog looking exactly like a successful save.
         const result = await updateContractPdfUrl(pdfModal.contractId, url);
         if (result.ok) {
-            setPdfModal(prev => ({ ...prev, pdfUrl: url }));
+            // Show the link as stored: a Drive share link is saved in /preview form.
+            const saved = result.url ?? null;
+            setPdfModal(prev => ({ ...prev, pdfUrl: saved }));
+            setPdfLinkInput(saved ?? '');
             setContracts(prev => prev.map(c =>
-                c.id === pdfModal.contractId ? { ...c, contract_pdf_url: url } : c
+                c.id === pdfModal.contractId ? { ...c, contract_pdf_url: saved } : c
             ));
             setPdfLinkEditing(false);
         } else {

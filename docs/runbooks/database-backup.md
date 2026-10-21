@@ -63,10 +63,11 @@ first test restore, 2026-10-21). The script fixes two things and is otherwise
 the same restore:
 
 1. Three rules were added to the live database `NOT VALID` — they check new
-   rows only. Eight live contracts predate `contractor_contract_pdf_url_approved`
-   (their Drive links end in `/view`, not `/preview`), so applying the rule
-   before the data aborts the load. The script loads data first, then adds the
-   rules back, still `NOT VALID`, as on the live project.
+   rows only, so old rows may break them. At the first test restore eight
+   contracts did (Drive links ending `/view`, not `/preview`; fixed
+   2026-10-21), and applying the rule before the data aborted the load. The
+   script loads data first, then adds the rules back, still `NOT VALID`, as on
+   the live project — so a row that predates a rule can never block a restore.
 2. Empty platform tables (e.g. `storage.buckets_vectors`) are rejected with
    "permission denied" on a fresh project. An empty table carries nothing, so
    the script skips them.

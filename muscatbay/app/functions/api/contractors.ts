@@ -73,6 +73,25 @@ export async function getContractorYearlyCosts(): Promise<ContractorYearlyCost[]
 export interface ContractPdfUpdateResult {
     ok: boolean;
     error?: string;
+    /** The link as stored (normalised), when the write succeeded. */
+    url?: string | null;
+}
+
+/**
+ * A Google Drive file link in the one form the database accepts
+ * (constraint contractor_contract_pdf_url_approved): `/file/d/<id>/preview`,
+ * keeping `resourcekey` when present. Drive's Share button gives `/view?usp=…`
+ * links; those are converted, not rejected. Null for anything that is not a
+ * Drive file link.
+ */
+export function toDrivePreviewUrl(input: string): string | null {
+    const match = input.trim().match(
+        /^https:\/\/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]{10,200})(?:\/(?:view|preview|edit))?\/?(?:\?([^#]*))?(?:#.*)?$/,
+    );
+    if (!match) return null;
+    const resourceKey = new URLSearchParams(match[2] ?? '').get('resourcekey');
+    if (resourceKey !== null && !/^[A-Za-z0-9_-]{1,200}$/.test(resourceKey)) return null;
+    return `https://drive.google.com/file/d/${match[1]}/preview${resourceKey ? `?resourcekey=${resourceKey}` : ''}`;
 }
 
 /**
@@ -84,16 +103,21 @@ export async function updateContractPdfUrl(id: number, pdfUrl: string | null): P
     const client = getSupabaseClient();
     if (!client) return { ok: false, error: 'Not connected to the database.' };
 
+    const stored = pdfUrl === null ? null : toDrivePreviewUrl(pdfUrl);
+    if (pdfUrl !== null && stored === null) {
+        return { ok: false, error: 'Paste a Google Drive file link (drive.google.com/file/d/…).' };
+    }
+
     const { error } = await client
         .from('contractor_contracts')
-        .update({ contract_pdf_url: pdfUrl })
+        .update({ contract_pdf_url: stored })
         .eq('id', id);
 
     if (error) {
         console.error('Error updating contract_pdf_url:', error.message);
         return { ok: false, error: error.message };
     }
-    return { ok: true };
+    return { ok: true, url: stored };
 }
 
 // =============================================================================
