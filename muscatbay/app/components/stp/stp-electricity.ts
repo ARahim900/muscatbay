@@ -87,17 +87,54 @@ export interface YearSummary {
     billedMonths: number;
 }
 
-export function yearSummary(rows: StpElectricityMonth[], year: string): YearSummary {
-    const inYear = rows.filter((r) => r.reportMonth.startsWith(`${year}-`));
-    const reported = inYear.filter((r) => r.owatcoKwh !== null);
-    const billed = inYear.filter((r) => r.billedStatus === "billed" && r.billedOmr !== null);
+export type PeriodSummary = Omit<YearSummary, "year">;
+
+/**
+ * Totals over any run of months. Each sum covers only the months that have the
+ * figure, and says how many those are — the UI shows "n of m", never a gap as 0.
+ */
+export function periodSummary(rows: StpElectricityMonth[]): PeriodSummary {
+    const reported = rows.filter((r) => r.owatcoKwh !== null);
+    const billed = rows.filter((r) => r.billedStatus === "billed" && r.billedOmr !== null);
     return {
-        year,
         owatcoKwh: reported.reduce((s, r) => s + (r.owatcoKwh ?? 0), 0),
         owatcoMonths: reported.length,
         billedOmr: billed.reduce((s, r) => s + (r.billedOmr ?? 0), 0),
         billedMonths: billed.length,
     };
+}
+
+export function yearSummary(rows: StpElectricityMonth[], year: string): YearSummary {
+    return { year, ...periodSummary(rows.filter((r) => r.reportMonth.startsWith(`${year}-`))) };
+}
+
+const SUMMER = new Set(["05", "06", "07", "08", "09"]);
+
+export interface IndicativeRates {
+    /** Σ bill ÷ Σ kWh over every qualifying month, baisa/kWh. */
+    overall: number | null;
+    /** The same over May–Sep only. */
+    summer: number | null;
+    /** The same over Oct–Apr only. */
+    winter: number | null;
+}
+
+/**
+ * Indicative cost per kWh for a run of months, split by season. Only months
+ * where {@link indicativeRateBaisa} is defined count; a bucket with none is null.
+ */
+export function indicativeRates(rows: StpElectricityMonth[]): IndicativeRates {
+    const acc = { all: { omr: 0, kwh: 0 }, summer: { omr: 0, kwh: 0 }, winter: { omr: 0, kwh: 0 } };
+    for (const r of rows) {
+        if (indicativeRateBaisa(r) === null) continue;
+        const bucket = SUMMER.has(r.reportMonth.slice(5, 7)) ? acc.summer : acc.winter;
+        for (const b of [acc.all, bucket]) {
+            b.omr += r.billedOmr ?? 0;
+            b.kwh += r.owatcoKwh ?? 0;
+        }
+    }
+    const rate = (b: { omr: number; kwh: number }) => (b.kwh > 0 ? (b.omr / b.kwh) * 1000 : null);
+    return { overall: rate(acc.all), summer: rate(acc.summer), winter: rate(acc.winter) };
 }
 
 /** The latest calendar year with all 12 OWATCO reports, or null. */
