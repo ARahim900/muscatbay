@@ -20,6 +20,7 @@ import type { ManualMeter, ManualReadingSystem } from "@/entities/manual-reading
 import {
     deriveDay,
     indexReadings,
+    isHandReadOnly,
     parseReadingInput,
     type ManualReadingEntry,
 } from "@/functions/api/manual-readings";
@@ -165,8 +166,8 @@ export function ManualReadingsEntry({
                                                     {system === "potable" && <span className="meter">{meter.key}</span>}
                                                     {meter.location && <span>{meter.location}</span>}
                                                     {system === "potable" && (
-                                                        <Badge tone={meter.manualOwned ? "info" : "neutral"}>
-                                                            {meter.manualOwned ? "Hand-read only" : "Fills Grafana gaps"}
+                                                        <Badge tone={isHandReadOnly(meter, date) ? "info" : "neutral"}>
+                                                            {isHandReadOnly(meter, date) ? "Hand-read only" : "Fills Grafana gaps"}
                                                         </Badge>
                                                     )}
                                                 </span>

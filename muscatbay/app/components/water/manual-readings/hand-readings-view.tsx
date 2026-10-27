@@ -367,8 +367,9 @@ function SystemPanel({
 
             {system === "potable" && (
                 <p className="text-caption text-muted">
-                    “Hand-read only” meters (Main Bulk, Zone 8, Central Park) are never reported by Grafana: the figure recorded here is
-                    their only daily value and a correction always replaces it. For the other bulks the figure fills an empty day
+                    “Hand-read only” meters use the figure recorded here as their only daily value: anything Grafana reports for that
+                    day is ignored, a correction always replaces it, and a day with no figure stays empty. From 1 Oct 2026 this covers
+                    Main Bulk and the Zone 3A, 3B, 5, 8 and Village Square bulks. For the other meters the figure fills an empty day
                     only — an instrumented Grafana reading is never overwritten.
                 </p>
             )}

@@ -131,6 +131,7 @@ function normalisePotableMeter(row: WaterManualMeterRow): ManualMeter {
         location: null,
         role: null,
         manualOwned: row.manual_owned,
+        manualOnlyFrom: row.manual_only_from,
         sortOrder: row.sort_order,
     };
 }
@@ -142,6 +143,7 @@ function normaliseIrrigationMeter(row: IrrigationMeterRow): ManualMeter {
         location: row.location,
         role: row.role,
         manualOwned: true,
+        manualOnlyFrom: null,
         sortOrder: row.sort_order,
     };
 }
@@ -192,7 +194,7 @@ export async function fetchManualMeters(
         if (system === 'potable') {
             const { data, error } = await client
                 .from(tables.meters)
-                .select('account_number, display_name, sort_order, manual_owned, is_active')
+                .select('account_number, display_name, sort_order, manual_owned, manual_only_from, is_active')
                 .eq('is_active', true)
                 .order('sort_order')
                 .returns<WaterManualMeterRow[]>();
@@ -280,6 +282,15 @@ export interface DerivedDay {
 }
 
 /** `readings` indexed as key → date → row. */
+/**
+ * Whether the hand reading for `date` is the meter's only daily value — the
+ * database then replaces anything Grafana writes for that day. Mirrors the
+ * ownership test in `water_manual_apply_day` (20261027 migration).
+ */
+export function isHandReadOnly(meter: ManualMeter, date: string): boolean {
+    return meter.manualOwned || (meter.manualOnlyFrom !== null && date >= meter.manualOnlyFrom);
+}
+
 export function indexReadings(readings: ManualReading[]): Map<string, Map<string, ManualReading>> {
     const byKey = new Map<string, Map<string, ManualReading>>();
     for (const r of readings) {

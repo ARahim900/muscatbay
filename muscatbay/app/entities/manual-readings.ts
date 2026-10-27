@@ -24,6 +24,8 @@ export interface WaterManualMeterRow {
     display_name: string;
     sort_order: number;
     manual_owned: boolean;
+    /** ISO date from which the hand reading is the only source (Grafana ignored); `null` = not cut over. */
+    manual_only_from: string | null;
     is_active: boolean;
 }
 
@@ -73,6 +75,8 @@ export interface ManualMeter {
     role: IrrigationMeterRow['role'] | null;
     /** Potable only: Grafana never reports it, the hand reading is the sole source. */
     manualOwned: boolean;
+    /** Potable only: ISO date from which the hand reading is the only source, even when Grafana reports. */
+    manualOnlyFrom: string | null;
     sortOrder: number;
 }
 

@@ -3,6 +3,7 @@ import {
     buildLedger,
     deriveDay,
     indexReadings,
+    isHandReadOnly,
     monthDateKeys,
     monthLabel,
     muscatToday,
@@ -23,7 +24,7 @@ import type { ManualMeter, ManualReading } from '@/entities/manual-readings';
  */
 
 const meter = (key: string, role: ManualMeter['role'] = 'source'): ManualMeter =>
-    ({ key, name: key, location: null, role, manualOwned: true, sortOrder: 0 });
+    ({ key, name: key, location: null, role, manualOwned: true, manualOnlyFrom: null, sortOrder: 0 });
 
 const row = (key: string, date: string, consumption: number, note: string | null = null): ManualReading =>
     ({ key, date, consumption, note, appliedConsumption: null });
@@ -173,5 +174,24 @@ describe('parseReadingInput', () => {
         expect(parseReadingInput('12a')).toBeUndefined();
         expect(parseReadingInput('1.2345')).toBeUndefined();
         expect(parseReadingInput('New Meter')).toBeUndefined();
+    });
+});
+
+describe('isHandReadOnly — which source owns a potable day cell', () => {
+    const bulk = (manualOwned: boolean, manualOnlyFrom: string | null): ManualMeter =>
+        ({ key: 'C43659', name: 'Main Bulk', location: null, role: null, manualOwned, manualOnlyFrom, sortOrder: 0 });
+
+    it('is hand-read only on and after the cutover date', () => {
+        expect(isHandReadOnly(bulk(false, '2026-10-01'), '2026-10-01')).toBe(true);
+        expect(isHandReadOnly(bulk(false, '2026-10-01'), '2026-10-20')).toBe(true);
+    });
+
+    it('keeps the old fill-gaps rule before the cutover', () => {
+        expect(isHandReadOnly(bulk(false, '2026-10-01'), '2026-09-30')).toBe(false);
+    });
+
+    it('treats a meter with no cutover by its manual_owned flag', () => {
+        expect(isHandReadOnly(bulk(false, null), '2026-10-20')).toBe(false);
+        expect(isHandReadOnly(bulk(true, null), '2026-10-20')).toBe(true);
     });
 });
