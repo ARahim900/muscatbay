@@ -12,7 +12,7 @@
 
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
-    BUILDING_CHILD_METERS,
+    BUILDING_CHILD_METERS, zoneBalanceAccounts,
 } from "@/lib/water-accounts";
 
 // ─── Computed row types ───────────────────────────────────────────────────────
@@ -79,7 +79,8 @@ export function processReport(readings: Record<string, number | null>): ReportDa
     // TABLE 1 — Zone rows
     const zoneRows: ZoneRow[] = ZONE_BULK_CONFIG.map(z => {
         const l2Value = get(z.l2Account);
-        const l3Sum = z.l3Accounts.reduce((s, a) => s + (get(a) ?? 0), 0);
+        // End-user meters: building bulks are replaced by their L4 meters.
+        const l3Sum = zoneBalanceAccounts(z).reduce((s, a) => s + (get(a) ?? 0), 0);
         const diff = l2Value !== null ? r2(l2Value - l3Sum) : null;
         return {
             zoneName: z.zoneName,

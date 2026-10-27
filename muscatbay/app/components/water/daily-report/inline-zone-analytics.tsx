@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { LiquidProgressRing } from "@/components/charts/liquid-progress-ring";
 import { ChartFrame, chartTheme, SectionCard } from "@/components/ui";
-import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
+import { ZONE_BULK_CONFIG, zoneBalanceAccounts } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
 import {
     type ReportData,
@@ -80,7 +80,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 return v != null ? Number(v) : null;
             };
             const l2 = getVal(zc.l2Account);
-            const l3 = zc.l3Accounts.reduce((s, a) => s + (getVal(a) ?? 0), 0);
+            const l3 = zoneBalanceAccounts(zc).reduce((s, a) => s + (getVal(a) ?? 0), 0);
             if (l2 === null && l3 === 0) continue;
             results.push({
                 day: `D${String(day).padStart(2, '0')}`,
@@ -142,7 +142,7 @@ function ZoneAnalyticsPanel({ reportData, monthData, selectedDay, month, activeZ
                 </h2>
                 <p className="mt-1 text-body text-muted">
                     <span className="font-medium text-fg">L2 Bulk</span> = zone entry meter &bull;{" "}
-                    <span className="font-medium text-fg">ΣL3 Total</span> = sum of all L3 meters &bull;{" "}
+                    <span className="font-medium text-fg">ΣL3 Total</span> = sum of the end-user meters — villas and other L3, with each building counted by its apartments and common meter (L4), never its building bulk &bull;{" "}
                     <span className="font-medium text-danger">Difference</span> = L2 &minus; ΣL3
                 </p>
             </div>
