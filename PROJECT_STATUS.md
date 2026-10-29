@@ -1866,6 +1866,7 @@ Entries below the marker are appended automatically on every push to `main`.
 Do not hand-edit existing entries; curate meaning in the sections above.
 
 <!-- STATUS:LOG:BEGIN -->
+- 2026-10-29 — Merge PR #126: Zone 3A/3B balance uses villas + L4
 - 2026-10-29 — Merge PR #125: manual-only readings for Main Bulk and zone bulks
 - 2026-10-21 — fix: support address is aalbalushi@muscatbay.com
 - 2026-10-21 — fix(ci): keep the invited address out of the Invite user log
