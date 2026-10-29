@@ -19,6 +19,12 @@ into `water_daily_consumption.day_N`, corrections and deletions propagate for
 while an empty cell is filled, negatives are kept, irrigation readings never
 reach the potable table, viewers cannot write, and registries are admin-only.
 
+`manual-only-bulks.test.sql` asserts the 2026-10-27 cutover: from
+`manual_only_from` a Grafana write to a cut-over bulk (update or new month row)
+is replaced by the hand reading or NULL, a hand reading replaces an older
+Grafana value, withdrawing it leaves the day empty, and months before the
+cutover, Zone FM and non-registry meters are untouched.
+
 The two older assertion files below (`rls-roles`, `alert-incidents`) predate
 the runner and are not wired into it yet.
 
