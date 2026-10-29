@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-    energyIntensity, indicativeRateBaisa, latestCompleteYear, latestReported, monthLabel, yearSummary,
+    energyIntensity, indicativeRateBaisa, indicativeRates, latestCompleteYear, latestReported, monthLabel,
+    periodSummary, yearSummary,
 } from "@/components/stp/stp-electricity";
 import { transformStpElectricityMonth } from "@/functions/api/stp-electricity";
 import type { StpElectricityMonth } from "@/entities/stp-electricity";
@@ -96,5 +97,29 @@ describe("year summaries", () => {
     it("finds the latest reported month, skipping a report not yet received", () => {
         expect(latestReported(rows)?.reportMonth).toBe("2026-01-01");
         expect(monthLabel("2026-01-01")).toBe("Jan-26");
+    });
+});
+
+describe("period summaries and indicative rates", () => {
+    const jun = month("2026-06-01", { owatcoKwh: 25000, owatcoStatus: "reported", billedOmr: 1000, billedStatus: "billed" });
+    const jul = month("2026-07-01", { owatcoKwh: 26000, owatcoStatus: "reported", billedOmr: 1200, billedStatus: "unreliable" });
+    const oct = month("2025-10-01", { owatcoKwh: 20000, owatcoStatus: "reported", billedOmr: 600, billedStatus: "billed" });
+    const nov = month("2025-11-01", { owatcoStatus: "not_received" });
+
+    it("sums only the months that have each figure and says how many", () => {
+        expect(periodSummary([oct, nov, jun, jul])).toEqual({ owatcoKwh: 71000, owatcoMonths: 3, billedOmr: 1600, billedMonths: 2 });
+        expect(periodSummary([nov])).toEqual({ owatcoKwh: 0, owatcoMonths: 0, billedOmr: 0, billedMonths: 0 });
+    });
+
+    it("splits the indicative rate by season and ignores unreliable bills", () => {
+        const r = indicativeRates([oct, jun, jul]);
+        expect(r.summer).toBeCloseTo(40, 5);   // 1000 / 25000 — Jul's unreliable bill is excluded
+        expect(r.winter).toBeCloseTo(30, 5);   // 600 / 20000
+        expect(r.overall).toBeCloseTo(35.556, 2);
+    });
+
+    it("returns null where no month in the period qualifies", () => {
+        expect(indicativeRates([jul, nov])).toEqual({ overall: null, summer: null, winter: null });
+        expect(indicativeRates([jun]).winter).toBeNull();
     });
 });
