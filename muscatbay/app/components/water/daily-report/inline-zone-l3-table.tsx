@@ -18,7 +18,7 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
-import { periodDifferences } from "@/lib/water-building-balance";
+import { BUILDING_BALANCE_STATUS_LABEL, balanceBuilding, periodDifferences, type BuildingBalanceStatus } from "@/lib/water-building-balance";
 import { cn } from "@/lib/cn";
 import {
     type ZoneRow, type BuildingRow, type SortState,
@@ -236,9 +236,11 @@ function ZoneL3Table({
         childGrandTotal: number;
         /** Bulk − ΣL4 per day; null when the bulk or any L4 meter was unread. */
         diffDayTotals: (number | null)[];
-        /** Sum over the compared days only. */
-        diffGrandTotal: number;
+        /** Sum over the compared days only; null when no day could be compared. */
+        diffGrandTotal: number | null;
         comparedDays: number;
+        /** Shared building-balance status — the same verdict as the summary table. */
+        status: BuildingBalanceStatus;
     }
     const buildingL4Data = useMemo<Map<string, BuildingL4Detail>>(() => {
         const map = new Map<string, BuildingL4Detail>();
@@ -278,19 +280,15 @@ function ZoneL3Table({
             const childGrandTotal = r2(childDayTotals.reduce((s, v) => s + v, 0));
 
             // Missing ≠ zero: a day with an unread meter has no difference.
-            const diffDayTotals = periodDifferences(
-                b,
-                acc => {
-                    const row = accountMap.get(acc);
-                    return row ? days.map(d => {
-                        const v = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
-                        return v != null ? Number(v) : null;
-                    }) : undefined;
-                },
-                days.length,
-            );
-            const compared = diffDayTotals.filter((d): d is number => d != null);
-            const diffGrandTotal = r2(compared.reduce((s, v) => s + v, 0));
+            const read = (acc: string) => {
+                const row = accountMap.get(acc);
+                return row ? days.map(d => {
+                    const v = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                    return v != null ? Number(v) : null;
+                }) : undefined;
+            };
+            const diffDayTotals = periodDifferences(b, read, days.length);
+            const balance = balanceBuilding(b, read, days.length);
 
             map.set(b.bulkAccount, {
                 buildingName: b.buildingName,
@@ -300,8 +298,9 @@ function ZoneL3Table({
                 childDayTotals,
                 childGrandTotal,
                 diffDayTotals,
-                diffGrandTotal,
-                comparedDays: compared.length,
+                diffGrandTotal: balance.difference,
+                comparedDays: balance.compared,
+                status: balance.status,
             });
         }
         return map;
@@ -631,8 +630,8 @@ function ZoneL3Table({
                                 );
 
                                 // Difference sub-footer — bulk − sum
-                                const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
-                                const diffRole: StatusRole = isHighBuildingDiff ? 'danger' : 'success';
+                                const isHighBuildingDiff = detail.status === 'possible-leak' || detail.status === 'bulk-suspect';
+                                const diffRole: StatusRole = isHighBuildingDiff ? 'danger' : detail.status === 'missing' ? 'info' : 'success';
                                 rows.push(
                                     <TableRow
                                         key={`${meter.account}-l4diff`}
@@ -651,7 +650,7 @@ function ZoneL3Table({
                                             }}
                                             colSpan={3}
                                         >
-                                            Difference (Bulk − Σ) · {detail.comparedDays} of {days.length} days compared
+                                            Difference (Bulk − Σ) · {detail.comparedDays} of {days.length} days compared · {BUILDING_BALANCE_STATUS_LABEL[detail.status]}
                                         </TableCell>
                                         {detail.diffDayTotals.map((t, i) => (
                                             <TableCell

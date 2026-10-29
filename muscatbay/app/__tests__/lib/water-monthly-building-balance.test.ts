@@ -66,3 +66,27 @@ describe("computePeriod — buildings with nothing to compare", () => {
         expect(p.buildings.map((b) => b.name)).toEqual(["D-44"]);
     });
 });
+
+describe("buildingExceptions", () => {
+    it("lists buildings by their shared balance status, not a separate % rule", async () => {
+        const { buildingExceptions } = await import("@/lib/water-monthly-data");
+        const base = { zone: "Zone 3A", compared: 1, periods: 1 };
+        const rows = buildingExceptions([
+            { ...base, name: "D-1", bulk: 100, sub: 80, loss: 20, lossPct: 20, status: "possible-leak" },
+            { ...base, name: "D-2", bulk: 10, sub: 6, loss: 4, lossPct: 40, status: "within" },
+            { ...base, name: "D-3", bulk: 50, sub: 61, loss: -11, lossPct: -22, status: "bulk-suspect" },
+        ]);
+        expect(rows.map((r) => [r.Category, r.Item])).toEqual([
+            ["High-loss building", "D-1"],
+            ["Building bulk meter suspect", "D-3"],
+        ]);
+    });
+});
+
+describe("buildingExceptions severity", () => {
+    it("never labels a possible leak as Normal", async () => {
+        const { buildingExceptions } = await import("@/lib/water-monthly-data");
+        const [row] = buildingExceptions([{ name: "D-1", zone: "Zone 3A", compared: 1, periods: 1, bulk: 100, sub: 88, loss: 12, lossPct: 12, status: "possible-leak" }]);
+        expect(row.Severity).not.toBe("Normal");
+    });
+});

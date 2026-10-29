@@ -406,6 +406,25 @@ function toBuildingRows(data: WaterData, year: string, rows: BuildingBalance[]):
     }));
 }
 
+/**
+ * Exceptions-register rows for the building balance, driven by the shared
+ * status so the register and the Building balance table always agree.
+ */
+export function buildingExceptions(buildings: readonly BuildingRow[]): { Category: string; Item: string; Severity: string; Value: string; Remarks: string }[] {
+    const leaks = buildings.filter((b) => b.status === "possible-leak").slice(0, 12).map((b) => ({
+        // A flagged leak is at least "Watch", even when its % sits inside the zone target.
+        Category: "High-loss building", Item: b.name, Severity: b.lossPct > 25 ? "Critical" : "Watch",
+        Value: `${b.lossPct}% · ${fmt(b.loss)} m³`,
+        Remarks: "Bulk reads more than its apartment and common meters — check the line between them and the common areas for leaks.",
+    }));
+    const suspect = buildings.filter((b) => b.status === "bulk-suspect").map((b) => ({
+        Category: "Building bulk meter suspect", Item: b.name, Severity: "Watch",
+        Value: `${fmt(b.loss)} m³`,
+        Remarks: "Bulk reads below its apartment and common meters, or has a negative reading — test or replace the bulk meter before reading the balance.",
+    }));
+    return [...leaks, ...suspect];
+}
+
 /** Is this an end-user meter (counts toward A3)? */
 const isEnd = (c: YearCache): boolean =>
     (c.label === "L3" || c.label === "L4") && c.typ !== "D_Building_Bulk";

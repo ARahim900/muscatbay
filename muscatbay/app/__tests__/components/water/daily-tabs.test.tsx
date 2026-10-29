@@ -260,3 +260,38 @@ describe('Zone 3A building balance (owner ruling 2026-10-29)', () => {
         expect(cells.slice(1)).toEqual(['+3.0', '—', '+3.0']);
     });
 });
+
+describe('Building breakdown follows the shared rule', () => {
+    const Z3A = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+    const D44 = BUILDING_CONFIG.find(b => b.buildingName === 'D-44')!;
+    const render44 = (readings: Record<string, (number | null)[]>) => {
+        const data = Object.entries(readings).map(([a, v]) => row(a, v));
+        const report = processReport(Object.fromEntries(Object.entries(readings).map(([a, v]) => [a, v[0]])));
+        render(<ZoneL3Table zoneRow={report.zoneRows.find(r => r.zoneName === 'Zone 3A')!} zoneConfig={Z3A} monthData={data} buildingRows={report.buildingRows} />);
+        fireEvent.change(screen.getByLabelText('Search meter or account...'), { target: { value: 'D-44' } });
+        fireEvent.click(screen.getByText('D-44'));
+        return screen.getByText(/Difference \(Bulk − Σ\)/).closest('tr')!;
+    };
+
+    it('shows no total difference when no day could be compared', () => {
+        const diff = render44({
+            [Z3A.l2Account]: [100],
+            [D44.bulkAccount]: [10],
+            ...Object.fromEntries(D44.l4Accounts.map((a, i) => [a, [i === 0 ? null : 1]])),
+        });
+        expect(diff).toHaveTextContent('0 of 1 days compared');
+        const cells = Array.from(diff.querySelectorAll('td')).map(td => td.textContent);
+        expect(cells.at(-1)).toBe('—');
+    });
+
+    it('does not mark a gap inside max(5 m³, 10% of the bulk) as high', () => {
+        // Bulk 100, seven meters total 91 → gap 9, inside the 10 m³ tolerance.
+        const diff = render44({
+            [Z3A.l2Account]: [200],
+            [D44.bulkAccount]: [100],
+            ...Object.fromEntries(D44.l4Accounts.map((a, i) => [a, [i === 0 ? 1 : 15]])),
+        });
+        expect(diff.querySelector('td')).toHaveStyle({ color: 'var(--color-success)' });
+        expect(diff).toHaveTextContent('Within tolerance');
+    });
+});

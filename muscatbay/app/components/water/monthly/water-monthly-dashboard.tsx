@@ -46,7 +46,7 @@ import type { DerivedMonth } from "@/functions/api/water";
 import {
     buildMonthlyData, computePeriod, MONTHS, TARGET_LOSS_PCT, LOSS_RATE_OMR,
     fmt, fmt1, pct, isRangeSel, periodValue, monthInSelection, sev, statusFromLoss,
-    actionFromLoss, lastReadingLabel, downloadRows, meterFlags, meanReading,
+    actionFromLoss, lastReadingLabel, downloadRows, meterFlags, meanReading, buildingExceptions,
     type WaterData, type PeriodResult, type Sel, type ZoneRow, type Severity,
 } from "@/lib/water-monthly-data";
 import { useChartMotion } from "@/hooks/useReducedMotion";
@@ -1270,10 +1270,7 @@ function buildExceptionRows(data: WaterData, year: string, sel: Sel, period: Per
         Category: "Missing zone bulk reading", Item: z.name, Severity: "Critical", Value: "L2 not read",
         Remarks: "The zone bulk (L2) meter has no reading this period, so this zone's loss cannot be computed. Recover the reading before interpreting the balance.",
     }));
-    period.buildings.filter((b) => b.lossPct > TARGET_LOSS_PCT && b.loss > 0).slice(0, 12).forEach((b) => out.push({
-        Category: "High-loss building", Item: b.name.replace(" Building Bulk Meter", ""), Severity: statusFromLoss(b.lossPct).label, Value: `${b.lossPct}% · ${fmt(b.loss)} m³`,
-        Remarks: "Compare bulk meter with apartment meters; inspect common area leakage.",
-    }));
+    out.push(...buildingExceptions(period.buildings));
     data.meters.forEach((m) => {
         const c = m.y[year]; if (!c || c.label === "N/A") return;
         const shown = periodValue(c, sel);
