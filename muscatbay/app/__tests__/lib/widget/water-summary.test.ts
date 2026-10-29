@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { summariseWidgetWater, type WidgetWaterRow } from "@/lib/widget/water-summary";
 import { processReport } from "@/components/water/daily-report/report-data";
 import { computeBriefing } from "@/components/water/daily-report/briefing-metrics";
-import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
+import { ZONE_BULK_CONFIG, zoneBalanceAccounts } from "@/lib/water-accounts";
 
-const ACCOUNTS = [...new Set(ZONE_BULK_CONFIG.flatMap((z) => [z.l2Account, ...z.l3Accounts]))];
+const ACCOUNTS = [...new Set(ZONE_BULK_CONFIG.flatMap((z) => [z.l2Account, ...z.l3Accounts, ...zoneBalanceAccounts(z)]))];
 
 /** Every zone account read on days 1–4 (L2 = 100, each L3 = 1); day 5 left to each test. */
 function month(day5: (account: string) => number | null): WidgetWaterRow[] {

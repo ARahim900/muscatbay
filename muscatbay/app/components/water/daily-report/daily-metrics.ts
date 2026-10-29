@@ -16,6 +16,7 @@
 
 import {
     ZONE_BULK_CONFIG, BUILDING_CONFIG, DC_METERS,
+    zoneBalanceAccounts,
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
@@ -132,11 +133,12 @@ export interface ZoneDaySeries {
 export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
     return ZONE_BULK_CONFIG.map((z) => {
         const points: ZoneDayPoint[] = [];
+        const accounts = zoneBalanceAccounts(z);
         for (let d = 1; d <= grid.latestDay; d++) {
             const l2raw = gridValue(grid, z.l2Account, d);
             let l3 = 0;
             let reported = 0;
-            for (const a of z.l3Accounts) {
+            for (const a of accounts) {
                 const v = gridValue(grid, a, d);
                 if (v !== null) {
                     l3 += v;
@@ -152,7 +154,7 @@ export function buildZoneDaySeries(grid: DailyGrid): ZoneDaySeries[] {
                 loss, lossPct, severity: dailySeverity(loss, lossPct),
             });
         }
-        return { zoneName: z.zoneName, l2Account: z.l2Account, meterCount: z.l3Accounts.length, points };
+        return { zoneName: z.zoneName, l2Account: z.l2Account, meterCount: accounts.length, points };
     });
 }
 
@@ -349,15 +351,16 @@ export interface ZoneCoverage {
 }
 
 export function zoneMeterCoverage(grid: DailyGrid, zone: ZoneBulkConfig, day: number): ZoneCoverage {
+    const accounts = zoneBalanceAccounts(zone);
     const unread: UnreadMeter[] = [];
-    for (const account of zone.l3Accounts) {
+    for (const account of accounts) {
         if (gridValue(grid, account, day) === null) {
             unread.push({ account, name: meterLabel(grid, account) });
         }
     }
     return {
-        configured: zone.l3Accounts.length,
-        reported: zone.l3Accounts.length - unread.length,
+        configured: accounts.length,
+        reported: accounts.length - unread.length,
         unread,
     };
 }
@@ -376,7 +379,7 @@ export function buildZoneDayBreakdown(
     const l2raw = gridValue(grid, zone.l2Account, day);
     const l2 = l2raw !== null ? r2(l2raw) : null;
 
-    const meters = zone.l3Accounts.map((account) => ({
+    const meters = zoneBalanceAccounts(zone).map((account) => ({
         account,
         label: meterLabel(grid, account),
         value: gridValue(grid, account, day),

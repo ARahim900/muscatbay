@@ -5,7 +5,8 @@ import { DailyDatabase } from '@/components/water/daily-report/daily-database';
 import { DailyExceptions } from '@/components/water/daily-report/daily-exceptions';
 import { ZoneL3Table } from '@/components/water/daily-report/inline-zone-l3-table';
 import type { ZoneRow } from '@/components/water/daily-report/inline-shared';
-import { DC_METERS, ZEN_APARTMENT_ACCOUNTS, ZONE_BULK_CONFIG } from '@/lib/water-accounts';
+import { BUILDING_CONFIG, DC_METERS, ZEN_APARTMENT_ACCOUNTS, ZONE_BULK_CONFIG, zoneBalanceAccounts } from '@/lib/water-accounts';
+import { processReport } from '@/components/water/daily-report/report-data';
 import { ZONE_CONFIG } from '@/lib/water-data';
 import type { SupabaseDailyWaterConsumption } from '@/entities/water';
 
@@ -192,5 +193,34 @@ describe('ZoneL3Table', () => {
         // With no name, the account number stands in for the meter label, so it
         // appears in BOTH the Meter and Account columns (≥ 2 occurrences).
         expect(screen.getAllByText(FM.l3Accounts[0]).length).toBeGreaterThanOrEqual(2);
+    });
+});
+
+describe('ZoneL3Table — Zone 3A on Villas + L4 (owner ruling 2026-10-27)', () => {
+    const Z3A = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+    const D44 = BUILDING_CONFIG.find(b => b.buildingName === 'D-44')!;
+    const villa = Z3A.l3Accounts.find(a => !BUILDING_CONFIG.some(b => b.bulkAccount === a))!;
+    const readings: Record<string, number> = {
+        [Z3A.l2Account]: 100, [villa]: 10, [D44.bulkAccount]: 500,
+        ...Object.fromEntries(D44.l4Accounts.map(a => [a, 1])),
+    };
+    const data = Object.entries(readings).map(([a, v]) => row(a, [v]));
+    const report = processReport(readings);
+
+    it('totals the villas and L4 meters, never the faulty building bulk', () => {
+        render(
+            <ZoneL3Table
+                zoneRow={report.zoneRows.find(r => r.zoneName === 'Zone 3A')!}
+                zoneConfig={Z3A}
+                monthData={data}
+                buildingRows={report.buildingRows}
+            />,
+        );
+        const footer = screen.getByText(`Σ Individuals — ${zoneBalanceAccounts(Z3A).length} meters (building bulks excluded)`).closest('tr')!;
+        expect(footer).toHaveTextContent('17.0');
+        expect(footer).not.toHaveTextContent('517');
+        // The bulk is still shown, labelled as such, for reference.
+        fireEvent.change(screen.getByLabelText('Search meter or account...'), { target: { value: 'D-44' } });
+        expect(screen.getByText('D-44').closest('tr')).toHaveTextContent('Building bulk');
     });
 });

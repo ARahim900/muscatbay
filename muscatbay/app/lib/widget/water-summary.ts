@@ -16,7 +16,7 @@
 import { processReport, type ZoneRow } from "@/components/water/daily-report/report-data";
 import { computeBriefing } from "@/components/water/daily-report/briefing-metrics";
 import { dailySeverity, type DailySeverity } from "@/components/water/daily-report/daily-metrics";
-import { ZONE_BULK_CONFIG } from "@/lib/water-accounts";
+import { ZONE_BULK_CONFIG, zoneBalanceAccounts } from "@/lib/water-accounts";
 
 /** One `water_daily_consumption` row as the feed reads it. */
 export interface WidgetWaterRow {
@@ -69,9 +69,9 @@ export interface WidgetWaterSummary {
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-/** Every zone bulk (L2) and zone meter (L3) account, once each. */
+/** Every zone bulk (L2) and end-user meter account, once each. */
 const ZONE_ACCOUNTS = [
-    ...new Set(ZONE_BULK_CONFIG.flatMap((zone) => [zone.l2Account, ...zone.l3Accounts])),
+    ...new Set(ZONE_BULK_CONFIG.flatMap((zone) => [zone.l2Account, ...zoneBalanceAccounts(zone)])),
 ];
 
 function reading(row: WidgetWaterRow, day: number): number | null {
@@ -114,8 +114,8 @@ function zoneBalances(
     readings: Record<string, number | null>,
 ): WidgetZoneBalance[] {
     return zoneRows.map((zone) => {
-        const accounts =
-            ZONE_BULK_CONFIG.find((config) => config.l2Account === zone.l2Account)?.l3Accounts ?? [];
+        const config = ZONE_BULK_CONFIG.find((c) => c.l2Account === zone.l2Account);
+        const accounts = config ? zoneBalanceAccounts(config) : [];
         const lossPct = lossShare(zone);
         return {
             name: zone.zoneName,

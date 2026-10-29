@@ -230,6 +230,27 @@ export const BUILDING_CONFIG: BuildingConfig[] = [
     },
 ];
 
+// ─── Zone balance basis ───────────────────────────────────────────────────────
+// A zone bulk (L2) is compared with every end-user meter it feeds: the zone's
+// L3 meters with each building bulk replaced by that building's L4 meters
+// (apartments + building common). Owner ruling 2026-10-27 — several building
+// bulks read wrong (Oct-26: D-46 −634.8 m³, D-51 223.7 m³ against 121.1 on its
+// L4s), and counting a bulk together with its own L4s would count the building
+// twice. Same basis as the Monthly A3 ("L3/L4, building bulks excluded").
+// Zones without buildings are unchanged.
+
+const BUILDING_BY_BULK = new Map(BUILDING_CONFIG.map(b => [b.bulkAccount, b]));
+const balanceAccountsCache = new WeakMap<ZoneBulkConfig, readonly string[]>();
+
+/** The accounts whose sum a zone bulk is balanced against (see above). */
+export function zoneBalanceAccounts(zone: ZoneBulkConfig): readonly string[] {
+    const cached = balanceAccountsCache.get(zone);
+    if (cached) return cached;
+    const accounts = zone.l3Accounts.flatMap(a => BUILDING_BY_BULK.get(a)?.l4Accounts ?? [a]);
+    balanceAccountsCache.set(zone, accounts);
+    return accounts;
+}
+
 // ─── Direct Connection (DC) Meters ────────────────────────────────────────────
 
 // A direct connection is a meter fed straight off the NAMA main inlet, i.e. a

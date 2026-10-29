@@ -195,11 +195,16 @@ describe('buildZoneDayBreakdown', () => {
         expect(empty.unread).toBe(FM.l3Accounts.length);
     });
 
-    it('names a building bulk by its curated building name, like the L3 table', () => {
+    it('counts a building by its L4 meters and leaves its bulk out (owner ruling 2026-10-27)', () => {
         const zone3a = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
         const building = BUILDING_CONFIG.find(b => b.zone === '3A')!;
-        const grid = buildDailyGrid([row(building.bulkAccount, days(9), 'db name')]);
-        expect(buildZoneDayBreakdown(grid, zone3a, 1).bars[0].label).toBe(building.buildingName);
+        const grid = buildDailyGrid([
+            row(building.bulkAccount, days(900), 'faulty bulk'),
+            row(building.l4Accounts[0], days(7), 'Apartment 1A'),
+        ]);
+        const bars = buildZoneDayBreakdown(grid, zone3a, 1).bars;
+        expect(bars[0].label).toBe('Apartment 1A');
+        expect(bars.some(b => b.label === building.buildingName || b.label === 'faulty bulk')).toBe(false);
     });
 });
 
@@ -221,11 +226,12 @@ describe('zoneMeterCoverage', () => {
         expect(zoneMeterCoverage(grid, FM, 2).unread.some(m => m.account === FM.l3Accounts[2])).toBe(false);
     });
 
-    it('names a building bulk by its building, like the breakdown chart', () => {
+    it('rests on a building\'s L4 meters, not its bulk (owner ruling 2026-10-27)', () => {
         const zone3a = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
         const building = BUILDING_CONFIG.find(b => b.zone === '3A')!;
         const cov = zoneMeterCoverage(buildDailyGrid([]), zone3a, 1);
-        expect(cov.unread.find(m => m.account === building.bulkAccount)?.name).toBe(building.buildingName);
+        expect(cov.unread.some(m => m.account === building.bulkAccount)).toBe(false);
+        for (const l4 of building.l4Accounts) expect(cov.unread.some(m => m.account === l4)).toBe(true);
     });
 
     it('reports a full set when every meter has a reading', () => {

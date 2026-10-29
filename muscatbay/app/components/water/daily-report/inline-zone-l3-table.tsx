@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import {
     BUILDING_CONFIG, BUILDING_CHILD_METERS,
+    zoneBalanceAccounts,
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
@@ -107,10 +108,16 @@ function ZoneL3Table({
         return map;
     }, [buildingRows, zoneConfig]);
 
-    // Determine latest day with data for any L3 account in this zone
+    // End-user meters the zone balance is summed over: building bulks are
+    // replaced by their L4 meters (see zoneBalanceAccounts). Building rows stay
+    // in the table so a faulty bulk is still visible, but never enter Σ.
+    const balanceAccounts = zoneBalanceAccounts(zoneConfig);
+    const hasBuildings = buildingMap.size > 0;
+
+    // Determine latest day with data for any meter shown or summed in this zone
     const latestDay = useMemo(() => {
         let maxDay = 0;
-        for (const account of zoneConfig.l3Accounts) {
+        for (const account of new Set([...zoneConfig.l3Accounts, ...balanceAccounts])) {
             const row = accountMap.get(account);
             if (!row) continue;
             for (let d = 31; d >= 1; d--) {
@@ -120,7 +127,7 @@ function ZoneL3Table({
             }
         }
         return Math.max(maxDay, 1);
-    }, [accountMap, zoneConfig]);
+    }, [accountMap, zoneConfig, balanceAccounts]);
 
     const days = useMemo(() => Array.from({ length: latestDay }, (_, i) => i + 1), [latestDay]);
 
@@ -154,10 +161,13 @@ function ZoneL3Table({
         });
     }, [zoneConfig, accountMap, buildingMap, latestDay]);
 
-    // Per-day ΣL3 totals for footer
+    // Per-day Σ end-user totals for footer — the same accounts as the gauges
     const dayTotals = useMemo(() => {
-        return days.map((_, i) => r2(l3Meters.reduce((sum, m) => sum + (m.dailyValues[i] ?? 0), 0)));
-    }, [days, l3Meters]);
+        return days.map(d => r2(balanceAccounts.reduce((sum, account) => {
+            const raw = accountMap.get(account)?.[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+            return sum + (raw != null ? r2(Number(raw)) : 0);
+        }, 0)));
+    }, [days, balanceAccounts, accountMap]);
     const grandTotal = r2(dayTotals.reduce((s, v) => s + v, 0));
 
     // L2 per-day values for tiles
@@ -285,17 +295,37 @@ function ZoneL3Table({
     const colCount = 3 + days.length + 1; // Meter, Account, Type, ...days, Total
 
     // CSV mirrors the on-screen matrix; missing readings export as empty cells,
-    // never 0 — the no-fabrication rule.
-    type L3MeterRow = (typeof l3Meters)[number];
-    const exportColumns = useMemo<ExportColumn<L3MeterRow>[]>(() => [
+    // never 0 — the no-fabrication rule. Each building bulk is followed by its
+    // L4 meters, and "In Σ" marks the rows that add up to Σ Individuals, so the
+    // file reconciles with the table total.
+    interface ExportRow {
+        label: string;
+        account: string;
+        type: string;
+        inSum: boolean;
+        dailyValues: (number | null)[];
+        total: number;
+    }
+    const exportRows = useMemo<ExportRow[]>(() => filtered.flatMap((m): ExportRow[] => {
+        if (!m.building) {
+            return [{ label: m.label, account: m.account, type: m.isIrrigation ? 'Irrigation' : 'Individual', inSum: true, dailyValues: m.dailyValues, total: m.total }];
+        }
+        const children = buildingL4Data.get(m.account)?.children ?? [];
+        return [
+            { label: m.label, account: m.account, type: 'Building bulk (reference)', inSum: false, dailyValues: m.dailyValues, total: m.total },
+            ...children.map((c) => ({ label: c.label, account: c.account, type: `${c.type} (L4, ${m.label})`, inSum: true, dailyValues: c.dailyValues, total: c.total })),
+        ];
+    }), [filtered, buildingL4Data]);
+    const exportColumns = useMemo<ExportColumn<ExportRow>[]>(() => [
         { key: 'label', header: 'Meter' },
         { key: 'account', header: 'Account' },
-        { key: 'building', header: 'Type', format: (m) => m.building ? 'Building bulk' : m.isIrrigation ? 'Irrigation' : 'Individual' },
+        { key: 'type', header: 'Type' },
+        { key: 'inSum', header: 'In Σ', format: (r) => r.inSum ? 'Yes' : 'No' },
         ...days.map((d) => ({
             key: 'dailyValues',
             header: `Day ${d}`,
-            format: (m: L3MeterRow) => m.dailyValues[d - 1] ?? '',
-        } as ExportColumn<L3MeterRow>)),
+            format: (r: ExportRow) => r.dailyValues[d - 1] ?? '',
+        } as ExportColumn<ExportRow>)),
         { key: 'total', header: 'Total (m³)' },
     ], [days]);
 
@@ -312,13 +342,21 @@ function ZoneL3Table({
                 {/* Zone summary KPIs — the app-wide StatsGrid tile */}
                 <StatsGrid stats={[
                     { label: "L2 Bulk", value: n(l2GrandTotal), unit: "m³", subtitle: "Zone entry meter · month to date", icon: Droplets, variant: "primary" },
-                    { label: "Σ Individuals", value: n(grandTotal), unit: "m³", subtitle: `${l3Meters.length} L3 meters · month to date`, icon: Activity, variant: "info" },
+                    { label: "Σ Individuals", value: n(grandTotal), unit: "m³", subtitle: `${balanceAccounts.length} ${hasBuildings ? "villa, L3 and L4" : "L3"} meters · month to date`, icon: Activity, variant: "info" },
                     { label: "Difference", value: diffCell(diffGrandTotal), unit: "m³", subtitle: highZoneDiff ? "Above the 20 m³ tolerance" : "Within the 20 m³ tolerance", icon: ArrowUpDown, variant: highZoneDiff ? "danger" : "success" },
                 ]} />
 
+                {hasBuildings && (
+                    <p className="text-caption text-muted">
+                        Σ Individuals counts each building by its apartments and common meter (L4), not its building bulk —
+                        several bulks read wrong, and counting both would count the building twice. Building rows show the
+                        bulk for reference; expand one to compare it with its L4 meters.
+                    </p>
+                )}
+
                 <div className="flex flex-wrap items-center gap-2">
                     <TableSearch value={search} onChange={setSearch} placeholder="Search meter or account..." />
-                    <ExportButton rows={filtered} filename={`water-zone-l3-${zoneRow.zoneName.replace(/\s+/g, '-').toLowerCase()}`} columns={exportColumns} className="ml-auto" />
+                    <ExportButton rows={exportRows} filename={`water-zone-l3-${zoneRow.zoneName.replace(/\s+/g, '-').toLowerCase()}`} columns={exportColumns} className="ml-auto" />
                 </div>
 
                 {/* Horizontally scrollable table */}
@@ -453,7 +491,7 @@ function ZoneL3Table({
                                     </TableCell>
                                     <TableCell className={cn(tdBase, "meter text-muted")}>{meter.account}</TableCell>
                                     <TableCell className={cn(tdBase, "text-center")}>
-                                        <Badge tone={meter.building ? "info" : "neutral"}>{meter.building ? "Building" : "Individual"}</Badge>
+                                        <Badge tone={meter.building ? "info" : "neutral"}>{meter.building ? "Building bulk" : "Individual"}</Badge>
                                     </TableCell>
                                     {meter.dailyValues.map((val, i) => (
                                         <TableCell key={i} className={cn(tdBase, "px-2 text-right tabular-nums", val === null && MISSING_CELL)}>
@@ -613,7 +651,7 @@ function ZoneL3Table({
                                     boxShadow: `inset 4px 0 0 ${STATUS_BASE.info}`,
                                 }}
                             >
-                                Σ Individuals — {l3Meters.length} meters
+                                Σ Individuals — {balanceAccounts.length} meters{hasBuildings ? " (building bulks excluded)" : ""}
                             </TableCell>
                             {dayTotals.map((t, i) => (
                                 <TableCell
