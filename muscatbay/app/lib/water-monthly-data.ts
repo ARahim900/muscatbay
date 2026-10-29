@@ -17,6 +17,8 @@
  */
 
 import { ZONE_CONFIG, type WaterMeter } from "@/lib/water-data";
+import { BUILDING_CONFIG } from "@/lib/water-accounts";
+import { balanceBuilding, sortBuildingBalances, type BuildingBalance, type BuildingBalanceStatus } from "@/lib/water-building-balance";
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -139,14 +141,23 @@ export interface DcRow {
     total: number;
 }
 
-/** Building bulk vs. apartment-sum aggregation for a period. */
+/**
+ * Building bulk vs. its individual meters (apartments + building common) for a
+ * period. Totals cover only the months where every one of the building's
+ * meters was read — see `lib/water-building-balance.ts`.
+ */
 export interface BuildingRow {
+    /** Building name, e.g. `D-44`. */
     name: string;
     zone: string;
     bulk: number;
     sub: number;
     loss: number;
     lossPct: number;
+    /** Months compared / months in the selection. */
+    compared: number;
+    periods: number;
+    status: BuildingBalanceStatus;
 }
 
 /** Full balance + breakdowns for a single period. */
@@ -164,6 +175,8 @@ export interface PeriodResult {
     types: TypeRow[];
     dcs: DcRow[];
     buildings: BuildingRow[];
+    /** The same buildings on the shared Daily/Monthly balance rules, worst first. */
+    buildingBalances: BuildingBalance[];
     /**
      * Meters (excluding `N/A`) with no reading at all in this period. The
      * balance above treats them as contributing nothing, which is the only
@@ -347,6 +360,52 @@ export function meterFlags(
 /*  Core compute                                                       */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Month indices covered by a selection. "Whole year" means the months of that
+ * year that have any reading, so future months are not counted as unread.
+ */
+function selectedMonths(data: WaterData, year: string, sel: Sel): number[] {
+    if (isRangeSel(sel)) return Array.from({ length: sel[1] - sel[0] + 1 }, (_, i) => sel[0] + i);
+    if (sel != null) return [sel];
+    const yy = year.slice(2);
+    return data.meta.availableMonths
+        .filter((k) => k.endsWith(`-${yy}`))
+        .map((k) => (MONTHS as readonly string[]).indexOf(k.slice(0, 3)))
+        .filter((i) => i >= 0);
+}
+
+/** Zone 3A/3B building balance for a period, on the shared Daily/Monthly rules. */
+function buildingBalances(data: WaterData, year: string, sel: Sel): BuildingBalance[] {
+    const months = selectedMonths(data, year, sel);
+    const byAcct = new Map(data.meters.map((m) => [m.acct, m.y[year]]));
+    const read = (account: string) => {
+        const c = byAcct.get(account);
+        return c ? months.map((i) => c.vals[i]) : undefined;
+    };
+    return sortBuildingBalances(BUILDING_CONFIG.map((b) => balanceBuilding(b, read, months.length)));
+}
+
+/**
+ * Legacy row shape for the zone drill-down and exceptions, from the shared
+ * balance. Buildings with no comparable month are left out here — they would
+ * otherwise read as 0 m³ — and are listed as "Readings missing" in the
+ * Building balance table instead.
+ */
+function toBuildingRows(data: WaterData, year: string, rows: BuildingBalance[]): BuildingRow[] {
+    const zoneOf = new Map(data.meters.map((m) => [m.acct, m.y[year]?.zoneName]));
+    return rows.filter((r) => r.status !== "missing").map((r) => ({
+        name: r.buildingName,
+        zone: zoneOf.get(r.bulkAccount) ?? `Zone ${r.zone}`,
+        bulk: r.bulk ?? 0,
+        sub: r.individuals ?? 0,
+        loss: r.difference ?? 0,
+        lossPct: r.differencePct ?? 0,
+        compared: r.compared,
+        periods: r.periods,
+        status: r.status,
+    }));
+}
+
 /** Is this an end-user meter (counts toward A3)? */
 const isEnd = (c: YearCache): boolean =>
     (c.label === "L3" || c.label === "L4") && c.typ !== "D_Building_Bulk";
@@ -369,8 +428,6 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
     const zname: Record<string, string> = {};
     const tt: Record<string, number> = {};
     const dcs: DcRow[] = [];
-    const bulks: Record<string, { v: number; zone: string }> = {};
-    const childSum: Record<string, number> = {};
 
     for (const m of data.meters) {
         const c = m.y[year];
@@ -401,8 +458,6 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
             zname[c.zone] = c.zoneName;
             tt[c.typ] = (tt[c.typ] || 0) + v;
         }
-        if (c.typ === "D_Building_Bulk") bulks[m.name] = { v, zone: c.zoneName };
-        if (c.label === "L4") childSum[c.parent] = (childSum[c.parent] || 0) + v;
     }
 
     const A2 = L2 + DC, A3 = END + DC;
@@ -424,13 +479,8 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
         .map((k) => ({ type: k, total: tt[k], pct: pct(tt[k], tot) }))
         .sort((a, b) => b.total - a.total);
 
-    const buildings: BuildingRow[] = Object.keys(bulks)
-        .map((n) => {
-            const b = bulks[n].v, s = childSum[n] || 0;
-            return { name: n, zone: bulks[n].zone, bulk: b, sub: s, loss: b - s, lossPct: pct(b - s, b) };
-        })
-        .filter((b) => b.bulk > 0)
-        .sort((a, b) => b.loss - a.loss);
+    const balances = buildingBalances(data, year, sel);
+    const buildings = toBuildingRows(data, year, balances);
 
     return {
         A1, A2, A3,
@@ -440,6 +490,7 @@ export function computePeriod(data: WaterData, year: string, sel: Sel): PeriodRe
         types,
         dcs: dcs.sort((a, b) => b.total - a.total),
         buildings,
+        buildingBalances: balances,
         missingMeters,
         negativeMeters,
     };

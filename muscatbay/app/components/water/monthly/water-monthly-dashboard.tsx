@@ -33,6 +33,7 @@ import {
 import { Badge, Button, ChartFrame, chartTheme, DateRangePicker, SectionCard, Tabs } from "@/components/ui";
 // The KPI row is the app-wide StatsGrid tile (the HVAC card) — owner decision 2026-09-02.
 import { StatsGrid, type StatItem, type StatVariant } from "@/components/shared/stats-grid";
+import { BuildingBalanceTable } from "@/components/water/building-balance-table";
 import { CHART_PALETTE } from "@/lib/tokens";
 import { SectionBoundary } from "@/components/shared/section-boundary";
 import { saveFilterPreferences, loadFilterPreferences, type FilterPreferences } from "@/lib/filter-preferences";
@@ -1074,64 +1075,15 @@ function ZonesView({ data, period, monthly, sel, nMonths, year }: ZonesViewProps
 /* ================= BUILDINGS / DIRECT / COMMON ================= */
 function AssetsView({ period }: { period: PeriodResult }) {
     const chartMotion = useChartMotion();
-    // This is now the single home for the building bulk-vs-apartment table (the
-    // zone drill-down used to repeat it), so it shows every building rather than
-    // an arbitrary top-12 slice.
-    const [rowsShown, setRowsShown] = useState("20");
-    const blds = period.buildings;
+    // The single home for the building balance (bulk vs apartments + common),
+    // shared with the Daily report's Zone Analysis — same rules on both pages.
     const dcs = period.dcs;
     return (
         <div className="grid grid-cols-12 gap-3.5">
-            <div className="col-span-12 lg:col-span-6">
-                <SectionCard>
-                    <SectionCard.Header
-                        icon={Building2}
-                        title="Buildings — bulk vs apartment meters"
-                        action={<PanelExport onClick={() => downloadRows(blds.map((b) => { const s = sev(b.lossPct); return { Building: b.name.replace(" Building Bulk Meter", ""), Zone: b.zone, "Bulk (m3)": b.bulk.toFixed(1), "Apartments (m3)": b.sub.toFixed(1), "Loss (m3)": b.loss.toFixed(1), "Loss %": b.lossPct, Band: s.label }; }), "water-building-balance.csv")} />}
-                    />
-                    <SectionCard.Body>
-                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                            <Note className="mb-0 max-w-prose">Building bulk meter minus the sum of its apartment meters. A positive gap points at in-building leakage or a meter problem.</Note>
-                            <RowsPicker value={rowsShown} setValue={setRowsShown} total={blds.length} />
-                        </div>
-                        <div className="overflow-auto rounded-control border border-line" style={{ maxHeight: rowsShown === "All" ? 480 : undefined }}>
-                            <table className="w-full">
-                                <caption className="sr-only">
-                                    Building bulk meters compared with the sum of their apartment meters: bulk volume, apartment total, the gap in cubic metres, and the gap as a percentage with its severity band.
-                                </caption>
-                                <thead>
-                                    <tr>
-                                        <th scope="col" className={TH}>Building</th>
-                                        <th scope="col" className={TH}>Zone</th>
-                                        <th scope="col" className={cn(TH, "text-right")}>Bulk</th>
-                                        <th scope="col" className={cn(TH, "text-right")}>Apts</th>
-                                        <th scope="col" className={cn(TH, "text-right")}>Loss</th>
-                                        <th scope="col" className={cn(TH, "text-right")}>Loss % · band</th>
-                                    </tr>
-                                </thead>
-                                <tbody className={TBODY}>
-                                    {blds.length === 0 && <tr><td colSpan={6} className={cn(TD, "text-center text-muted")}>No building data for this period.</td></tr>}
-                                    {limitRows(blds, rowsShown).map((b) => { const s = sev(b.lossPct); const st = sevStyle(s); return (
-                                        <tr key={b.name}>
-                                            <th scope="row" className={cn(TD, "text-left font-medium")}>{b.name.replace(" Building Bulk Meter", "")}</th>
-                                            <td className={cn(TD, "text-muted")}>{b.zone}</td>
-                                            <td className={cn(TD, "text-right tabular-nums")}>{fmt(b.bulk)}</td>
-                                            <td className={cn(TD, "text-right tabular-nums")}>{fmt(b.sub)}</td>
-                                            <td className={cn(TD, "text-right font-medium tabular-nums")}>{fmt(b.loss)}</td>
-                                            <td className={cn(TD, "whitespace-nowrap text-right")}>
-                                                {/* Percentage + named band: the colour is a reinforcement, never the only signal. */}
-                                                <span className="font-medium tabular-nums" style={{ color: st.text }}>{b.lossPct}%</span>
-                                                <Badge tone={st.tone} className="ml-1.5">{s.label}</Badge>
-                                            </td>
-                                        </tr>); })}
-                                </tbody>
-                            </table>
-                        </div>
-                        <SeverityLegend caption="Loss band:" />
-                    </SectionCard.Body>
-                </SectionCard>
+            <div className="col-span-12">
+                <BuildingBalanceTable rows={period.buildingBalances} unit="month" filename="water-building-balance" />
             </div>
-            <div className="col-span-12 lg:col-span-6">
+            <div className="col-span-12">
                 <SectionCard>
                     <SectionCard.Header icon={Plug} title="Direct connections" description="Meters fed straight from the main inlet, bypassing the zones" />
                     <SectionCard.Body>

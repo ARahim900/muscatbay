@@ -18,6 +18,7 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { periodDifferences } from "@/lib/water-building-balance";
 import { cn } from "@/lib/cn";
 import {
     type ZoneRow, type BuildingRow, type SortState,
@@ -64,16 +65,25 @@ function MissingReading() {
 
 // ─── Zone L3 Meters Table — All-Days View ────────────────────────────────────
 
+/** A request to open one building's breakdown; `seq` changes on every click. */
+export interface BuildingFocusRequest {
+    bulkAccount: string;
+    seq: number;
+}
+
 function ZoneL3Table({
     zoneRow,
     zoneConfig,
     monthData,
     buildingRows,
+    focus,
 }: {
     zoneRow: ZoneRow;
     zoneConfig: ZoneBulkConfig;
     monthData: SupabaseDailyWaterConsumption[];
     buildingRows: BuildingRow[];
+    /** From the Building balance summary: expand this building and bring it into view. */
+    focus?: BuildingFocusRequest;
 }) {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
@@ -89,6 +99,22 @@ function ZoneL3Table({
             return next;
         });
     }, []);
+
+    // A new focus request (adjusted during render, not in an effect): expand the
+    // building and filter the table to it, so pagination cannot hide the row.
+    const [handledFocus, setHandledFocus] = useState<number | null>(null);
+    if (focus && focus.seq !== handledFocus) {
+        setHandledFocus(focus.seq);
+        const target = BUILDING_CONFIG.find(b => b.bulkAccount === focus.bulkAccount);
+        if (target) {
+            setExpandedBuildings(prev => new Set(prev).add(focus.bulkAccount));
+            setSearch(target.buildingName);
+        }
+    }
+    useEffect(() => {
+        if (!focus) return;
+        document.getElementById(`l3-row-${focus.bulkAccount}`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }, [focus]);
 
     // Build account map for quick lookups
     const accountMap = useMemo(() => {
@@ -208,8 +234,11 @@ function ZoneL3Table({
         children: BuildingChildReading[];
         childDayTotals: number[];
         childGrandTotal: number;
-        diffDayTotals: number[];
+        /** Bulk − ΣL4 per day; null when the bulk or any L4 meter was unread. */
+        diffDayTotals: (number | null)[];
+        /** Sum over the compared days only. */
         diffGrandTotal: number;
+        comparedDays: number;
     }
     const buildingL4Data = useMemo<Map<string, BuildingL4Detail>>(() => {
         const map = new Map<string, BuildingL4Detail>();
@@ -248,10 +277,20 @@ function ZoneL3Table({
             );
             const childGrandTotal = r2(childDayTotals.reduce((s, v) => s + v, 0));
 
-            const diffDayTotals = days.map((_, i) =>
-                r2((bulkDailyValues[i] ?? 0) - childDayTotals[i]),
+            // Missing ≠ zero: a day with an unread meter has no difference.
+            const diffDayTotals = periodDifferences(
+                b,
+                acc => {
+                    const row = accountMap.get(acc);
+                    return row ? days.map(d => {
+                        const v = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                        return v != null ? Number(v) : null;
+                    }) : undefined;
+                },
+                days.length,
             );
-            const diffGrandTotal = r2(bulkTotal - childGrandTotal);
+            const compared = diffDayTotals.filter((d): d is number => d != null);
+            const diffGrandTotal = r2(compared.reduce((s, v) => s + v, 0));
 
             map.set(b.bulkAccount, {
                 buildingName: b.buildingName,
@@ -262,6 +301,7 @@ function ZoneL3Table({
                 childGrandTotal,
                 diffDayTotals,
                 diffGrandTotal,
+                comparedDays: compared.length,
             });
         }
         return map;
@@ -453,6 +493,7 @@ function ZoneL3Table({
                             rows.push(
                                 <TableRow
                                     key={meter.account}
+                                    id={`l3-row-${meter.account}`}
                                     className={cn(
                                         "border-b border-line transition-colors hover:bg-component",
                                         !isExpanded && "even:bg-component",
@@ -610,7 +651,7 @@ function ZoneL3Table({
                                             }}
                                             colSpan={3}
                                         >
-                                            Difference (Bulk − Σ)
+                                            Difference (Bulk − Σ) · {detail.comparedDays} of {days.length} days compared
                                         </TableCell>
                                         {detail.diffDayTotals.map((t, i) => (
                                             <TableCell

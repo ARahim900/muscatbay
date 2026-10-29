@@ -20,6 +20,7 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { balanceBuilding, sortBuildingBalances, type BuildingBalance } from "@/lib/water-building-balance";
 
 /** Round to 2 decimal places. */
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -631,4 +632,25 @@ export function buildDailyExceptions(grid: DailyGrid, series: ZoneDaySeries[], d
     }
 
     return rows.sort((a, b) => (a.Severity === "Critical" ? 0 : 1) - (b.Severity === "Critical" ? 0 : 1));
+}
+
+// ─── Building balance (Zone 3A/3B) ───────────────────────────────────────────
+
+/**
+ * Each building in the zone: bulk vs apartments + common, over day 1 to the
+ * zone's latest day with data — the same window as the zone's L3 table, so
+ * the summary and the day-by-day breakdown line up. Worst first.
+ */
+export function zoneBuildingBalances(grid: DailyGrid, zone: ZoneBulkConfig): BuildingBalance[] {
+    const buildings = BUILDING_CONFIG.filter((b) => zone.l3Accounts.includes(b.bulkAccount));
+    if (buildings.length === 0) return [];
+    let days = 0;
+    for (const account of new Set([...zone.l3Accounts, ...zoneBalanceAccounts(zone)])) {
+        const v = grid.values.get(account);
+        if (!v) continue;
+        for (let d = 31; d > days; d--) if (v[d - 1] != null) { days = d; break; }
+    }
+    days = Math.max(days, 1);
+    const read = (account: string) => grid.values.get(account)?.slice(0, days);
+    return sortBuildingBalances(buildings.map((b) => balanceBuilding(b, read, days)));
 }
