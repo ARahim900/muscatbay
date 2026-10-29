@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { ZoneWatch } from '@/components/water/daily-report/zone-watch';
 import { DailyDatabase } from '@/components/water/daily-report/daily-database';
 import { DailyExceptions } from '@/components/water/daily-report/daily-exceptions';
@@ -222,5 +222,76 @@ describe('ZoneL3Table — Zone 3A on Villas + L4 (owner ruling 2026-10-27)', () 
         // The bulk is still shown, labelled as such, for reference.
         fireEvent.change(screen.getByLabelText('Search meter or account...'), { target: { value: 'D-44' } });
         expect(screen.getByText('D-44').closest('tr')).toHaveTextContent('Building bulk');
+    });
+});
+
+describe('Zone 3A building balance (owner ruling 2026-10-29)', () => {
+    const Z3A = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+    const D44 = BUILDING_CONFIG.find(b => b.buildingName === 'D-44')!;
+    // Day 1: bulk 10, seven meters × 1. Day 2: bulk 10, one flat unread.
+    const readings: Record<string, (number | null)[]> = {
+        [Z3A.l2Account]: [100, 100],
+        [D44.bulkAccount]: [10, 10],
+        ...Object.fromEntries(D44.l4Accounts.map((a, i) => [a, [1, i === 2 ? null : 1]])),
+    };
+    const data = Object.entries(readings).map(([a, v]) => row(a, v));
+    const report = processReport(Object.fromEntries(Object.entries(readings).map(([a, v]) => [a, v[0]])));
+    const zoneRow = report.zoneRows.find(r => r.zoneName === 'Zone 3A')!;
+
+    it('lists every building and opens its day-by-day breakdown from the summary', async () => {
+        const { ZoneBuildingSection } = await import('@/components/water/daily-report/zone-building-section');
+        render(<ZoneBuildingSection zoneRow={zoneRow} zoneConfig={Z3A} monthData={data} buildingRows={report.buildingRows} />);
+        const summary = screen.getByRole('table', { name: /Building bulk meters compared/ });
+        const d44 = within(summary).getByText('D-44').closest('tr')!;
+        expect(d44).toHaveTextContent('1 of 2');
+        expect(d44).toHaveTextContent('+3.0');
+        fireEvent.click(screen.getByRole('button', { name: 'Open the day-by-day breakdown for D-44' }));
+        expect(screen.getByText('Σ Individuals — 7 meters')).toBeInTheDocument();
+    });
+
+    it('shows no difference on a day when a flat was not read, instead of counting it as zero', () => {
+        render(<ZoneL3Table zoneRow={zoneRow} zoneConfig={Z3A} monthData={data} buildingRows={report.buildingRows} />);
+        fireEvent.change(screen.getByLabelText('Search meter or account...'), { target: { value: 'D-44' } });
+        fireEvent.click(screen.getByText('D-44'));
+        const diff = screen.getByText(/Difference \(Bulk − Σ\)/).closest('tr')!;
+        expect(diff).toHaveTextContent('1 of 2 days compared');
+        const cells = Array.from(diff.querySelectorAll('td')).map(td => td.textContent);
+        // label cell, day 1, day 2, total
+        expect(cells.slice(1)).toEqual(['+3.0', '—', '+3.0']);
+    });
+});
+
+describe('Building breakdown follows the shared rule', () => {
+    const Z3A = ZONE_BULK_CONFIG.find(z => z.zoneName === 'Zone 3A')!;
+    const D44 = BUILDING_CONFIG.find(b => b.buildingName === 'D-44')!;
+    const render44 = (readings: Record<string, (number | null)[]>) => {
+        const data = Object.entries(readings).map(([a, v]) => row(a, v));
+        const report = processReport(Object.fromEntries(Object.entries(readings).map(([a, v]) => [a, v[0]])));
+        render(<ZoneL3Table zoneRow={report.zoneRows.find(r => r.zoneName === 'Zone 3A')!} zoneConfig={Z3A} monthData={data} buildingRows={report.buildingRows} />);
+        fireEvent.change(screen.getByLabelText('Search meter or account...'), { target: { value: 'D-44' } });
+        fireEvent.click(screen.getByText('D-44'));
+        return screen.getByText(/Difference \(Bulk − Σ\)/).closest('tr')!;
+    };
+
+    it('shows no total difference when no day could be compared', () => {
+        const diff = render44({
+            [Z3A.l2Account]: [100],
+            [D44.bulkAccount]: [10],
+            ...Object.fromEntries(D44.l4Accounts.map((a, i) => [a, [i === 0 ? null : 1]])),
+        });
+        expect(diff).toHaveTextContent('0 of 1 days compared');
+        const cells = Array.from(diff.querySelectorAll('td')).map(td => td.textContent);
+        expect(cells.at(-1)).toBe('—');
+    });
+
+    it('does not mark a gap inside max(5 m³, 10% of the bulk) as high', () => {
+        // Bulk 100, seven meters total 91 → gap 9, inside the 10 m³ tolerance.
+        const diff = render44({
+            [Z3A.l2Account]: [200],
+            [D44.bulkAccount]: [100],
+            ...Object.fromEntries(D44.l4Accounts.map((a, i) => [a, [i === 0 ? 1 : 15]])),
+        });
+        expect(diff.querySelector('td')).toHaveStyle({ color: 'var(--color-success)' });
+        expect(diff).toHaveTextContent('Within tolerance');
     });
 });

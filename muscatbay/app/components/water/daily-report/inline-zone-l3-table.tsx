@@ -18,6 +18,7 @@ import {
     type ZoneBulkConfig,
 } from "@/lib/water-accounts";
 import type { SupabaseDailyWaterConsumption } from "@/entities/water";
+import { BUILDING_BALANCE_STATUS_LABEL, balanceBuilding, periodDifferences, type BuildingBalanceStatus } from "@/lib/water-building-balance";
 import { cn } from "@/lib/cn";
 import {
     type ZoneRow, type BuildingRow, type SortState,
@@ -64,16 +65,25 @@ function MissingReading() {
 
 // ─── Zone L3 Meters Table — All-Days View ────────────────────────────────────
 
+/** A request to open one building's breakdown; `seq` changes on every click. */
+export interface BuildingFocusRequest {
+    bulkAccount: string;
+    seq: number;
+}
+
 function ZoneL3Table({
     zoneRow,
     zoneConfig,
     monthData,
     buildingRows,
+    focus,
 }: {
     zoneRow: ZoneRow;
     zoneConfig: ZoneBulkConfig;
     monthData: SupabaseDailyWaterConsumption[];
     buildingRows: BuildingRow[];
+    /** From the Building balance summary: expand this building and bring it into view. */
+    focus?: BuildingFocusRequest;
 }) {
     const [search, setSearch] = useState('');
     const [sort, setSort] = useState<SortState>({ key: '', dir: null });
@@ -89,6 +99,22 @@ function ZoneL3Table({
             return next;
         });
     }, []);
+
+    // A new focus request (adjusted during render, not in an effect): expand the
+    // building and filter the table to it, so pagination cannot hide the row.
+    const [handledFocus, setHandledFocus] = useState<number | null>(null);
+    if (focus && focus.seq !== handledFocus) {
+        setHandledFocus(focus.seq);
+        const target = BUILDING_CONFIG.find(b => b.bulkAccount === focus.bulkAccount);
+        if (target) {
+            setExpandedBuildings(prev => new Set(prev).add(focus.bulkAccount));
+            setSearch(target.buildingName);
+        }
+    }
+    useEffect(() => {
+        if (!focus) return;
+        document.getElementById(`l3-row-${focus.bulkAccount}`)?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    }, [focus]);
 
     // Build account map for quick lookups
     const accountMap = useMemo(() => {
@@ -208,8 +234,13 @@ function ZoneL3Table({
         children: BuildingChildReading[];
         childDayTotals: number[];
         childGrandTotal: number;
-        diffDayTotals: number[];
-        diffGrandTotal: number;
+        /** Bulk − ΣL4 per day; null when the bulk or any L4 meter was unread. */
+        diffDayTotals: (number | null)[];
+        /** Sum over the compared days only; null when no day could be compared. */
+        diffGrandTotal: number | null;
+        comparedDays: number;
+        /** Shared building-balance status — the same verdict as the summary table. */
+        status: BuildingBalanceStatus;
     }
     const buildingL4Data = useMemo<Map<string, BuildingL4Detail>>(() => {
         const map = new Map<string, BuildingL4Detail>();
@@ -248,10 +279,16 @@ function ZoneL3Table({
             );
             const childGrandTotal = r2(childDayTotals.reduce((s, v) => s + v, 0));
 
-            const diffDayTotals = days.map((_, i) =>
-                r2((bulkDailyValues[i] ?? 0) - childDayTotals[i]),
-            );
-            const diffGrandTotal = r2(bulkTotal - childGrandTotal);
+            // Missing ≠ zero: a day with an unread meter has no difference.
+            const read = (acc: string) => {
+                const row = accountMap.get(acc);
+                return row ? days.map(d => {
+                    const v = row[`day_${d}` as keyof SupabaseDailyWaterConsumption];
+                    return v != null ? Number(v) : null;
+                }) : undefined;
+            };
+            const diffDayTotals = periodDifferences(b, read, days.length);
+            const balance = balanceBuilding(b, read, days.length);
 
             map.set(b.bulkAccount, {
                 buildingName: b.buildingName,
@@ -261,7 +298,9 @@ function ZoneL3Table({
                 childDayTotals,
                 childGrandTotal,
                 diffDayTotals,
-                diffGrandTotal,
+                diffGrandTotal: balance.difference,
+                comparedDays: balance.compared,
+                status: balance.status,
             });
         }
         return map;
@@ -453,6 +492,7 @@ function ZoneL3Table({
                             rows.push(
                                 <TableRow
                                     key={meter.account}
+                                    id={`l3-row-${meter.account}`}
                                     className={cn(
                                         "border-b border-line transition-colors hover:bg-component",
                                         !isExpanded && "even:bg-component",
@@ -590,8 +630,8 @@ function ZoneL3Table({
                                 );
 
                                 // Difference sub-footer — bulk − sum
-                                const isHighBuildingDiff = Math.abs(detail.diffGrandTotal) > 5;
-                                const diffRole: StatusRole = isHighBuildingDiff ? 'danger' : 'success';
+                                const isHighBuildingDiff = detail.status === 'possible-leak' || detail.status === 'bulk-suspect';
+                                const diffRole: StatusRole = isHighBuildingDiff ? 'danger' : detail.status === 'missing' ? 'info' : 'success';
                                 rows.push(
                                     <TableRow
                                         key={`${meter.account}-l4diff`}
@@ -610,7 +650,7 @@ function ZoneL3Table({
                                             }}
                                             colSpan={3}
                                         >
-                                            Difference (Bulk − Σ)
+                                            Difference (Bulk − Σ) · {detail.comparedDays} of {days.length} days compared · {BUILDING_BALANCE_STATUS_LABEL[detail.status]}
                                         </TableCell>
                                         {detail.diffDayTotals.map((t, i) => (
                                             <TableCell

@@ -25,7 +25,7 @@ import {
     processReport,
 } from "./daily-report/inline-shared";
 import { ZoneAnalyticsPanel } from "./daily-report/inline-zone-analytics";
-import { ZoneL3Table } from "./daily-report/inline-zone-l3-table";
+import { ZoneBuildingSection } from "./daily-report/zone-building-section";
 import { DCAnalyticsPanel, SupplyReconciliationTable } from "./daily-report/inline-dc-panel";
 import { LoadingState, ErrorState, EmptyState } from "./daily-report/inline-states";
 import { computeBriefing } from "./daily-report/briefing-metrics";
@@ -504,7 +504,7 @@ export function DailyWaterReport({ onStatusChange }: { onStatusChange?: (status:
                                 month={selectedMonth}
                                 activeZoneName={activeZone}
                             />
-                            <ZoneL3Table
+                            <ZoneBuildingSection
                                 key={activeZone}
                                 zoneRow={reportData.zoneRows.find(r => r.zoneName === activeZone)!}
                                 zoneConfig={ZONE_BULK_CONFIG.find(z => z.zoneName === activeZone)!}
